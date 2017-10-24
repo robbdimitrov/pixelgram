@@ -1,0 +1,36 @@
+{
+  "name": "pixelgram-api",
+  "version": "1.0.0",
+  "description": "REST API for Image sharing service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node ./dist/server.bundle.js",
+    "build": "webpack --progress -p",
+    "watch": "webpack --progress --watch"
+  },
+  "author": "Robert Dimitrov",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "mongodb": "^2.2.33"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robbdimitrov/pixelgram-api"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.16.5",
+    "@types/debug": "0.0.30",
+    "@types/express": "^4.0.37",
+    "@types/mongodb": "^2.2.14",
+    "awesome-typescript-loader": "^3.2.3",
+    "clean-webpack-plugin": "^0.1.17",
+    "debug": "^3.1.0",
+    "source-map-loader": "^0.2.2",
+    "tslint": "^5.8.0",
+    "typescript": "^2.5.3",
+    "webpack": "^3.8.1",
+    "webpack-dev-middleware": "^1.12.0"
+  }
+}
