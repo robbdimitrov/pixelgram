@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { APIRouter } from './api-router';
+import { Db } from 'mongodb';
 
 export class ImageRouter extends APIRouter {
 
@@ -8,12 +9,14 @@ export class ImageRouter extends APIRouter {
         var limit = parseInt(query.limit, 10) || 25
         var page = parseInt(query.page, 10) || 0
 
-        this.dbClient.get().collection('images').find({}).skip(page * limit).limit(limit).toArray((err, result) => {
-            if (err) {
-                res.send({'error':'An error has occurred'});
-            } else {
-                res.send(result);
-            }
+        this.dbClient.get().then((db: Db) => {
+            db.collection('images').find({}).skip(page * limit).limit(limit).toArray((err, result) => {
+                if (err) {
+                    res.send({'error':'An error has occurred'});
+                } else {
+                    res.send(result);
+                }
+            });
         });
     }
 

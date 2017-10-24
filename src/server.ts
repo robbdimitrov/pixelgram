@@ -1,11 +1,11 @@
 import * as express             from "express";
 import * as bodyParser          from 'body-parser';
 import * as config              from "../config/env";
+
 import { DBClient }             from './dbclient';
 import { ImageRouter }          from './routes/image-router';
 import { SessionRouter }        from './routes/session-router';
 import { UserRouter }           from './routes/user-router';
-import { APIRouter } from './routes/api-router';
 
 export class Server {
 
@@ -17,7 +17,7 @@ export class Server {
 
     constructor() {
         this.app = express();
-        this.dbClient = new DBClient();
+        this.dbClient = new DBClient(config.dbURI);
         this.port = 3000;
         this.apiVersion = 1.0;
         this.apiRootPath = 'api';
@@ -42,7 +42,6 @@ export class Server {
     routes() {
         let apiRoot = this.apiRoot();
 
-        this.app.use('/', new APIRouter(this.dbClient).router);
         this.app.use(`/${apiRoot}/sessions`, new SessionRouter(this.dbClient).router);
         this.app.use(`/${apiRoot}/users`, new UserRouter(this.dbClient).router);
         this.app.use(`/${apiRoot}/images`, new ImageRouter(this.dbClient).router);
@@ -50,13 +49,8 @@ export class Server {
 
     // Connect to database and start listening to port
     start() {
-        this.dbClient.connect(config.dbURI, () => {
-            console.log('Unable to connect to Mongo.');
-            process.exit(1);
-        }, (error) => {
-            this.app.listen(this.port, () => {
-                console.log('We are live on ' + this.port);
-            });
+        this.app.listen(this.port, () => {
+            console.log('We are live on ' + this.port);
         });
     }
 
