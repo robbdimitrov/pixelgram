@@ -5,6 +5,7 @@ import { DBClient }             from './dbclient';
 import { ImageRouter }          from './routes/image-router';
 import { SessionRouter }        from './routes/session-router';
 import { UserRouter }           from './routes/user-router';
+import { APIRouter } from './routes/api-router';
 
 export class Server {
 
@@ -22,6 +23,8 @@ export class Server {
         this.apiRootPath = 'api';
 
         this.configure();
+
+        this.start();
     }
 
     // Configure Express middleware
@@ -32,16 +35,17 @@ export class Server {
     }
 
     apiRoot(): string {
-        return '/${this.apiRootPath}/${this.apiVersion}';
+        return `${this.apiRootPath}/v${this.apiVersion.toFixed(1)}`;
     }
 
     // Configure API endpoints
     routes() {
         let apiRoot = this.apiRoot();
 
-        this.app.use('${apiRoot}/session', new SessionRouter(this.dbClient).router);
-        this.app.use('${apiRoot}/users', new UserRouter(this.dbClient).router);
-        this.app.use('${apiRoot}/images', new ImageRouter(this.dbClient).router);
+        this.app.use('/', new APIRouter(this.dbClient).router);
+        this.app.use(`/${apiRoot}/sessions`, new SessionRouter(this.dbClient).router);
+        this.app.use(`/${apiRoot}/users`, new UserRouter(this.dbClient).router);
+        this.app.use(`/${apiRoot}/images`, new ImageRouter(this.dbClient).router);
     }
 
     // Connect to database and start listening to port

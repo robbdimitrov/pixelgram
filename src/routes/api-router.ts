@@ -8,7 +8,7 @@ export class APIRouter implements Routable {
     validationRegex: string;
 
     constructor(public dbClient: DBClient) {
-        console.log('hello from ${this} constructor');
+        console.log('hello from ' + this.constructor.name + ' constructor');
 
         this.router = Router();
         this.validationRegex = '[0-9a-zA-Z]+';
@@ -17,6 +17,8 @@ export class APIRouter implements Routable {
     }
 
     connectRouter(router: Router) {
+        console.log('connect router: ' + router);
+
         router.get('/', this.getAll);
         router.post('/', this.createOne);
         router.get('/:id(${this.validationRegex})', this.getOne);
@@ -26,6 +28,8 @@ export class APIRouter implements Routable {
 
     // Get all objects
     getAll(req: Request, res: Response) {
+        console.log("hello all");
+
         res.status(404).send({
             message: 'Invalid request.',
             status: res.status

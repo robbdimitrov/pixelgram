@@ -14,7 +14,7 @@ fs.readdirSync('node_modules')
 
 module.exports = {
     entry: {
-        server: './src/server.ts'
+        server: './src/index.ts'
     },
     target: 'node',
     devtool: 'source-map',

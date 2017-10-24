@@ -2,10 +2,10 @@
   "name": "pixelgram-api",
   "version": "1.0.0",
   "description": "REST API for Image sharing service",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "node ./dist/server.bundle.js",
-    "build": "webpack --progress -p",
+    "build": "webpack --progress",
     "watch": "webpack --progress --watch"
   },
   "author": "Robert Dimitrov",
