@@ -1,25 +1,26 @@
-import { Router, Request, Response } from 'express';
-import { DBClient } from '../dbclient';
-import { Routable } from './routable';
+import { Router, Request, Response }  from 'express';
 
-export class APIRouter implements Routable {
+import { DBClient }                   from '../data/db-client';
+import { Routable }                   from './routable';
+
+export abstract class APIRouter implements Routable {
 
     router: Router;
-    validationRegex: string;
+    protected validationRegex: string;
 
-    constructor(public dbClient: DBClient) {
+    constructor(protected dbClient: DBClient) {
         this.router = Router();
         this.validationRegex = '[0-9a-zA-Z]+';
 
         this.connectRouter(this.router);
     }
 
-    connectRouter(router: Router) {
-        router.get('/', this.getAll);
-        router.post('/', this.createOne);
-        router.get('/:id(${this.validationRegex})', this.getOne);
-        router.put('/:id(${this.validationRegex})', this.updateOne);
-        router.delete('/:id(${this.validationRegex})', this.deleteOne);
+    private connectRouter(router: Router) {
+        router.get('/', this.getAll.bind(this));
+        router.post('/', this.createOne.bind(this));
+        router.get(`/:id(${this.validationRegex})`, this.getOne.bind(this));
+        router.put(`/:id(${this.validationRegex})`, this.updateOne.bind(this));
+        router.delete(`/:id(${this.validationRegex})`, this.deleteOne.bind(this));
     }
 
     // Get all objects

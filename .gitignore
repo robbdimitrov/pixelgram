@@ -18,7 +18,7 @@ public/css/main.css
 
 # API keys and secrets
 .env
-config/env.ts
+config/
 
 # Dependency directory
 node_modules
@@ -31,6 +31,9 @@ bower_components
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# VS Code
+.vscode
 
 # Ignore built ts files
 dist/**/*

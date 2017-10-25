@@ -1,54 +1,52 @@
 import * as express             from "express";
 import * as bodyParser          from 'body-parser';
-import * as config              from "../config/env";
 
-import { DBClient }             from './dbclient';
+import { DBClient }             from './data/db-client';
 import { ImageRouter }          from './routes/image-router';
 import { SessionRouter }        from './routes/session-router';
 import { UserRouter }           from './routes/user-router';
 
 export class Server {
 
-    port: number;
     app: express.Application;
-    dbClient: DBClient;
-    apiRootPath: string;
-    apiVersion: number;
 
-    constructor() {
+    private routers = {
+        "sessions": new SessionRouter(this.dbClient),
+        "users": new UserRouter(this.dbClient),
+        "images": new ImageRouter(this.dbClient)
+    };
+
+    constructor(private port: number, private apiRootPath: string,
+        private apiVersion: number, private dbClient: DBClient) {
+
         this.app = express();
-        this.dbClient = new DBClient(config.dbURI);
-        this.port = 3000;
-        this.apiVersion = 1.0;
-        this.apiRootPath = 'api';
-
         this.configure();
-
         this.start();
     }
 
     // Configure Express middleware
-    configure() {
+    private configure() {
         this.app.use(bodyParser.urlencoded({ extended: true }));
-
         this.routes();
     }
 
-    apiRoot(): string {
+    private apiRoot(): string {
         return `${this.apiRootPath}/v${this.apiVersion.toFixed(1)}`;
     }
 
     // Configure API endpoints
-    routes() {
+    private routes() {
         let apiRoot = this.apiRoot();
 
-        this.app.use(`/${apiRoot}/sessions`, new SessionRouter(this.dbClient).router);
-        this.app.use(`/${apiRoot}/users`, new UserRouter(this.dbClient).router);
-        this.app.use(`/${apiRoot}/images`, new ImageRouter(this.dbClient).router);
+        // Create and map express routers
+        for (let key in this.routers) {
+            let value = this.routers[key];
+            this.app.use(`/${apiRoot}/${key}`, value.router);
+        }
     }
 
     // Connect to database and start listening to port
-    start() {
+    private start() {
         this.app.listen(this.port, () => {
             console.log('We are live on ' + this.port);
         });
