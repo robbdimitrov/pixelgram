@@ -1,10 +1,10 @@
-import { Request, Response }    from 'express';
+import { Request, Response, NextFunction }    from 'express';
 
 import { APIRouter }            from './api-router';
 
 export class ImageRouter extends APIRouter {
 
-    getAll(req: Request, res: Response) {
+    getAll(req: Request, res: Response, next: NextFunction) {
         var query = req.query || {}
         var limit = parseInt(query.limit, 10) || 25
         var page = parseInt(query.page, 10) || 0

@@ -18,7 +18,7 @@ export class DBWorker extends DBClient {
             MongoClient.connect(url, (err, db) => {
                 if (err) return reject(err);
 
-                console.log('connected to database');
+                console.log('Connected to database');
                 this.database = db;
                 resolve(this.database);
             });

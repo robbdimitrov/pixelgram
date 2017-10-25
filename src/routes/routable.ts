@@ -1,20 +1,20 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 export interface Routable {
 
     // Get all objects
-    getAll(req: Request, res: Response): void;
+    getAll(req: Request, res: Response, next: NextFunction): void;
 
     // Create a new object
-    createOne(req: Request, res: Response): void;
+    createOne(req: Request, res: Response, next: NextFunction): void;
 
     // Get an object
-    getOne(req: Request, res: Response): void;
+    getOne(req: Request, res: Response, next: NextFunction): void;
 
     // Update existing object
-    updateOne(req: Request, res: Response): void;
+    updateOne(req: Request, res: Response, next: NextFunction): void;
 
     // Delete existing object
-    deleteOne(req: Request, res: Response): void;
+    deleteOne(req: Request, res: Response, next: NextFunction): void;
 
 }

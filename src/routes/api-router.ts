@@ -1,11 +1,13 @@
-import { Router, Request, Response }  from 'express';
+import { Router, Request, Response, NextFunction }  from 'express';
 
-import { DBClient }                   from '../data/db-client';
-import { Routable }                   from './routable';
+import { DBClient }                                 from '../data/db-client';
+import { Routable }                                 from './routable';
 
 export abstract class APIRouter implements Routable {
 
     router: Router;
+
+    // Regex used for single object requests
     protected validationRegex: string;
 
     constructor(protected dbClient: DBClient) {
@@ -15,52 +17,71 @@ export abstract class APIRouter implements Routable {
         this.connectRouter(this.router);
     }
 
+    // Bind routes to router functions
+
     private connectRouter(router: Router) {
-        router.get('/', this.getAll.bind(this));
-        router.post('/', this.createOne.bind(this));
-        router.get(`/:id(${this.validationRegex})`, this.getOne.bind(this));
-        router.put(`/:id(${this.validationRegex})`, this.updateOne.bind(this));
-        router.delete(`/:id(${this.validationRegex})`, this.deleteOne.bind(this));
+        // Get all objects
+        router.get('/', (req, res, next) => {
+            this.getAll(req, res, next);
+        });
+
+        // Post new object
+        router.post('/', (req, res, next) => {
+            this.createOne(req, res, next);
+        });
+
+        // Get specific object
+        router.get(`/:id(${this.validationRegex})`, (req, res, next) => {
+            this.getOne(req, res, next);
+        });
+
+        // Edit specific object
+        router.put(`/:id(${this.validationRegex})`, (req, res, next) => {
+            this.updateOne(req, res, next);
+        });
+
+        // Delete specific object
+        router.delete(`/:id(${this.validationRegex})`, (req, res, next) => {
+            this.deleteOne(req, res, next);
+        });
     }
 
-    // Get all objects
-    getAll(req: Request, res: Response) {
+    // Helpers
+
+    sendNotFound(req: Request, res: Response, next: NextFunction,
+        message: string = 'Invalid request.') {
+
         res.status(404).send({
-            message: 'Invalid request.',
-            status: res.status
+            message: 'Invalid request.'
         });
+        next();
+    }
+
+    // Router functions
+
+    // Get all objects
+    getAll(req: Request, res: Response, next: NextFunction) {
+        this.sendNotFound(req, res, next);
     }
 
     // Create a new object
-    createOne(req: Request, res: Response) {
-        res.status(404).send({
-            message: 'Invalid request.',
-            status: res.status
-        });
+    createOne(req: Request, res: Response, next: NextFunction) {
+        this.sendNotFound(req, res, next);
     }
 
     // Get an object
-    getOne(req: Request, res: Response) {
-        res.status(404).send({
-            message: 'Invalid request.',
-            status: res.status
-        });
+    getOne(req: Request, res: Response, next: NextFunction) {
+        this.sendNotFound(req, res, next);
     }
 
     // Update existing object
-    updateOne(req: Request, res: Response) {
-        res.status(404).send({
-            message: 'Invalid request.',
-            status: res.status
-        });
+    updateOne(req: Request, res: Response, next: NextFunction) {
+        this.sendNotFound(req, res, next);
     }
 
     // Delete existing object
-    deleteOne(req: Request, res: Response) {
-        res.status(404).send({
-            message: 'Invalid request.',
-            status: res.status
-        });
+    deleteOne(req: Request, res: Response, next: NextFunction) {
+        this.sendNotFound(req, res, next);
     }
 
 }
