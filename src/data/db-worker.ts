@@ -1,5 +1,5 @@
-import { ObjectID, Db, MongoClient }      from 'mongodb';
-import { DBClient }                       from './db-client';
+import { ObjectID, Db, MongoClient } from 'mongodb';
+import { DBClient } from './db-client';
 
 export type DatabaseCallback = (database: Db) => void;
 

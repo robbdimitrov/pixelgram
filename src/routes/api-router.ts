@@ -1,7 +1,7 @@
-import { Router, Request, Response, NextFunction }  from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 
-import { DBClient }                                 from '../data/db-client';
-import { Routable }                                 from './routable';
+import { DBClient } from '../data/db-client';
+import { Routable } from './routable';
 
 export abstract class APIRouter implements Routable {
 

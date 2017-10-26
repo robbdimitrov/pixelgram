@@ -1,7 +1,7 @@
-import { Server }               from './server';
-import { DBClient }             from './data/db-client';
-import { DBWorker }             from './data/db-worker';
-import * as config              from "../config/server.config";
+import { Server } from './server';
+import { DBClient } from './data/db-client';
+import { DBWorker } from './data/db-worker';
+import * as config from "../config/server.config";
 
 // Create a server instance
 const port           = config.port || 3000;

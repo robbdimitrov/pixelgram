@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction }    from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-import { APIRouter }            from './api-router';
+import { APIRouter } from './api-router';
 
 export class ImageRouter extends APIRouter {
 

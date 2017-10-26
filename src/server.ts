@@ -1,10 +1,10 @@
-import * as express             from "express";
-import * as bodyParser          from 'body-parser';
+import * as express from "express";
+import * as bodyParser from 'body-parser';
 
-import { DBClient }             from './data/db-client';
-import { ImageRouter }          from './routes/image-router';
-import { SessionRouter }        from './routes/session-router';
-import { UserRouter }           from './routes/user-router';
+import { DBClient } from './data/db-client';
+import { ImageRouter } from './routes/image-router';
+import { SessionRouter } from './routes/session-router';
+import { UserRouter } from './routes/user-router';
 
 export class Server {
 

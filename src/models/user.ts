@@ -1,5 +1,5 @@
-import { Image }    from './image';
-import { Session }  from './session';
+import { Image } from './image';
+import { Session } from './session';
 
 export class User {
 

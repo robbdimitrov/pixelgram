@@ -2,12 +2,17 @@
 
 ## How to run
 
-Install dependencies:
+Install dependencies
 ```
-> npm install
+$ npm install
 ```
 
-Run nodemon
+Build project
 ```
-> npm run dev
+$ npm run build
+```
+
+Run project
+```
+$ npm run start
 ```

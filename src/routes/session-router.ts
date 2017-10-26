@@ -1,6 +1,6 @@
-import { Request, Response }    from 'express';
+import { Request, Response } from 'express';
 
-import { APIRouter }            from './api-router';
+import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
 
