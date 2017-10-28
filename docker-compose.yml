@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  web:
+    build: .
+    command: ["npm", "start"]
+    restart: always
+    ports:
+      - "3000:3000"
+
+  db:
+    image: mongo:3.4
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - "db_data:/var/lib/postgresql/data/"
+
+volumes:
+  db_data:
+  image_data:
