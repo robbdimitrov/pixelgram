@@ -4,7 +4,7 @@ export class Image {
 
     owner: User;
     url: string;
-    uploadDate: Date;
+    dateCreated: Date;
     description: string;
     likedUsed: User[];
 

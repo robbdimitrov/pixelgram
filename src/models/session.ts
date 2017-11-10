@@ -4,5 +4,6 @@ export class Session {
 
     token: string;
     user: User;
+    authDate: Date;
 
 }
