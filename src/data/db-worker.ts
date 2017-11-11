@@ -1,5 +1,7 @@
 import { ObjectID, Db, MongoClient } from 'mongodb';
+
 import { DBClient } from './db-client';
+import { User } from '../models/user';
 
 export type DatabaseCallback = (database: Db) => void;
 
@@ -53,6 +55,21 @@ export class DBWorker extends DBClient {
         let db = await this.get();
         return new Promise((resolve, reject) => {
             db.collection('images').find({}).skip(page * limit).limit(limit).toArray((err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve(result);
+            });
+        });
+    }
+
+    // User methods
+
+    async createOneUser(user: User) {
+        let db = await this.get();
+        return new Promise((resolve, reject) => {
+            db.collection('users').insertOne(user, (err, result) => {
                 if (err) {
                     return reject(err);
                 }

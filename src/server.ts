@@ -26,7 +26,9 @@ export class Server {
 
     // Configure Express middleware
     private configure() {
-        this.app.use(bodyParser.urlencoded({ extended: true }));
+        this.app.use(bodyParser.urlencoded({
+            extended: true
+        }));
         this.routes();
     }
 
