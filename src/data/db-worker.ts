@@ -130,7 +130,8 @@ export class DBWorker extends DBClient {
                         authObject['user'] = UserFactory.createJsonUser(result);
 
                         let payload = {
-                            username: authObject['user']['username']
+                            username: authObject['user']['username'],
+                            id: authObject['user']['id']
                         };
 
                         let token = jwt.sign(payload, config.secret, {

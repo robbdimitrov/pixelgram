@@ -1,7 +1,6 @@
 import { ObjectID } from 'bson';
 
 import { Image } from './image';
-import { Session } from './session';
 
 export class User {
 
@@ -16,6 +15,5 @@ export class User {
     postedImages: Image[];
     registrationDate: string;
     lastLoginDate: string;
-    sessions: Session[];
 
 }

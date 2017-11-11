@@ -18,7 +18,6 @@ export class UserFactory {
             user.likedImages = [];
             user.postedImages = [];
             user.registrationDate = moment().format();
-            user.sessions = [];
 
             bcrypt.genSalt(10, (err, salt) => {
                 bcrypt.hash(password, salt, (err, hash) => {
@@ -43,7 +42,6 @@ export class UserFactory {
         // jsonUser['likedImages'] = [];
         // jsonUser['postedImages'] = [];
         jsonUser['registrationDate'] = user.registrationDate;
-        // jsonUser['sessions'] = user.sessions;
 
         return jsonUser;
     }
