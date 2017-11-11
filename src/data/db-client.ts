@@ -8,4 +8,6 @@ export abstract class DBClient {
 
     abstract async createOneUser(user: User);
 
+    abstract async login(email: string, password: string);
+
 }

@@ -15,7 +15,6 @@ export class UserFactory {
             user.email = email;
             user.avatar = '';
             user.bio = '';
-            user.avatar = '';
             user.likedImages = [];
             user.postedImages = [];
             user.registrationDate = moment().format();
@@ -28,6 +27,25 @@ export class UserFactory {
                 });
             });
         });
+    }
+
+    // Creates a JSON user by stripping passwords and
+    // replacing ObjectID with string representation
+    static createJsonUser(user: User): Object {
+        let jsonUser = new Object();
+
+        jsonUser['id'] = user._id.toString();
+        jsonUser['name'] = user.name;
+        jsonUser['username'] = user.username;
+        jsonUser['email'] = user.email;
+        jsonUser['avatar'] = user.avatar;
+        jsonUser['bio'] = user.bio;
+        // jsonUser['likedImages'] = [];
+        // jsonUser['postedImages'] = [];
+        jsonUser['registrationDate'] = user.registrationDate;
+        // jsonUser['sessions'] = user.sessions;
+
+        return jsonUser;
     }
 
 }

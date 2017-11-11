@@ -34,7 +34,7 @@ export class UserRouter extends APIRouter {
                 });
             }).catch((error) => {
                 res.send({
-                    'error': 'An error has occurred ' + error
+                    'error': error.message
                 });
             });
         });

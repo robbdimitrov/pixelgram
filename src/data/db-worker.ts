@@ -1,7 +1,11 @@
 import { ObjectID, Db, MongoClient } from 'mongodb';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
 import { DBClient } from './db-client';
 import { User } from '../models/user';
+import { UserFactory } from '../models/factories/user-factory';
+import * as config from '../../config/server.config';
 
 export type DatabaseCallback = (database: Db) => void;
 
@@ -66,15 +70,82 @@ export class DBWorker extends DBClient {
 
     // User methods
 
+    async userNotExists(username: string, email: string) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('users').find({
+                $or: [{ email: email }, { username: username }]
+            }).toArray((err, result) => {
+                if (result.length > 0) {
+                    let firstUser = result[0];
+                    if (firstUser.email === email) {
+                        return reject(new Error('User with this email already exists'));
+                    } else if (firstUser.username === username) {
+                        return reject(new Error('User with this username already exists'));
+                    }
+                }
+                resolve();
+            });
+        });
+    }
+
     async createOneUser(user: User) {
         let db = await this.get();
+
         return new Promise((resolve, reject) => {
-            db.collection('users').insertOne(user, (err, result) => {
+            this.userNotExists(user.username, user.email).then(() => {
+                db.collection('users').insertOne(user, (err, result) => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    resolve(result);
+                });
+            }).catch((err) => {
+                return reject(err);
+            });
+        });
+    }
+
+    // Authentication
+
+    async login(email: string, password: string) {
+        let db = await this.get();
+        return new Promise((resolve, reject) => {
+            db.collection('users').findOne({
+                email: email
+            }, (err, result) => {
                 if (err) {
                     return reject(err);
                 }
 
-                resolve(result);
+                if (result === undefined) {
+                    return reject(new Error('Authentication failed. User not found.'));
+                }
+
+                bcrypt.compare(password, result.password).then((res) => {
+                    if (res === true) {
+                        let authObject = new Object();
+                        authObject['user'] = UserFactory.createJsonUser(result);
+
+                        let payload = {
+                            username: authObject['user']['username']
+                        };
+
+                        let token = jwt.sign(payload, config.secret, {
+                            expiresIn: '1h'
+                        });
+
+                        authObject['token'] = token;
+
+                        return resolve(authObject);
+                    } else {
+                        return reject(new Error('Authentication failed. Incorrect email or password.'));
+                    }
+                }).catch((err) => {
+                    return reject(new Error('Authentication failed. Incorrect email or password.'));
+                });
             });
         });
     }
