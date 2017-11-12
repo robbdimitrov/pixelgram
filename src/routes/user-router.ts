@@ -14,12 +14,23 @@ export class UserRouter extends APIRouter {
         super.connectRouter(router);
 
         let uploader = multer({
-            dest: '../' + config.imageDir,
+            dest: config.imageDir,
             limits: { fileSize: 1000000, files: 1 }
         });
 
         router.post('/upload', uploader.single('avatar'), (req, res, next) => {
-
+            if (req.file) {
+                res.send({
+                    'success': true,
+                    'filename': req.file.filename
+                });
+            } else {
+                res.send({
+                    'success': false,
+                    'message': 'File missing from request. Should be sent as a multipart/form-data.'
+                });
+            }
+            next();
         });
     }
 

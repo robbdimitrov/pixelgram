@@ -33,6 +33,7 @@ export class Server {
             extended: true
         }));
         this.routes();
+        this.app.use('/uploads', express.static(config.imageDir));
     }
 
     private apiRoot(): string {
@@ -40,7 +41,7 @@ export class Server {
     }
 
     private authChecker(req, res, next) {
-        if (req.path.indexOf('sessions') !== -1 ||
+        if (req.path.indexOf('uploads') !== -1 || req.path.indexOf('sessions') !== -1 ||
         (req.method === 'POST' && req.path.indexOf('users') !== -1)) {
             return next();
         }

@@ -11,4 +11,4 @@ export const port = 3000;
 export const apiVersion = 1.0;
 export const apiRootPath = 'api';
 export const secret = 'secret';
-export const imageDir = 'public/uploads/'
+export const imageDir = 'uploads/'

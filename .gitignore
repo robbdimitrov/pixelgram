@@ -16,6 +16,9 @@ tmp
 #Build
 public/css/main.css
 
+# Development
+uploads
+
 # API keys and secrets
 .env
 config/server.config.ts
