@@ -19,7 +19,7 @@ export abstract class APIRouter implements Routable {
 
     // Bind routes to router functions
 
-    private connectRouter(router: Router) {
+    protected connectRouter(router: Router) {
         // Get all objects
         router.get('/', (req, res, next) => {
             this.getAll(req, res, next);

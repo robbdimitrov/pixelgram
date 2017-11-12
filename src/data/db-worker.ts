@@ -58,7 +58,7 @@ export class DBWorker extends DBClient {
     async getAllImages(page: number, limit: number) {
         let db = await this.get();
         return new Promise((resolve, reject) => {
-            db.collection('images').find({}).skip(page * limit).limit(limit).toArray((err, result) => {
+            db.collection('images').find().skip(page * limit).limit(limit).toArray((err, result) => {
                 if (err) {
                     return reject(err);
                 }
@@ -108,6 +108,21 @@ export class DBWorker extends DBClient {
         });
     }
 
+    async getOneUser(userID: string) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('users').findOne({ _id: new ObjectID(userID) }, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                let user = UserFactory.createJsonUser(result);
+                resolve(user);
+            });
+        });
+    }
+
     // Authentication
 
     async login(email: string, password: string) {
@@ -145,7 +160,7 @@ export class DBWorker extends DBClient {
                         return reject(new Error('Authentication failed. Incorrect email or password.'));
                     }
                 }).catch((err) => {
-                    return reject(new Error('Authentication failed. Incorrect email or password.'));
+                    return reject(new Error('Authentication failed. ' + err));
                 });
             });
         });

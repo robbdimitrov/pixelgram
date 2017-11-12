@@ -1,11 +1,26 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, Router } from 'express';
+import * as multer from 'multer';
 
 import { APIRouter } from './api-router';
-
 import { User } from '../models/user';
 import { UserFactory } from '../models/factories/user-factory';
+import * as config from '../../config/server.config';
+import { DBClient } from '../data/db-client';
 
 export class UserRouter extends APIRouter {
+
+    connectRouter(router: Router) {
+        super.connectRouter(router);
+
+        let uploader = multer({
+            dest: '../' + config.imageDir,
+            limits: { fileSize: 1000000, files: 1 }
+        });
+
+        router.post('/upload', uploader.single('avatar'), (req, res, next) => {
+
+        });
+    }
 
     createOne(req: Request, res: Response, next: NextFunction) {
         let body = req.body || {}
@@ -32,12 +47,37 @@ export class UserRouter extends APIRouter {
                     'success': true,
                     'message': 'User ' + result.ops[0].email + ' created successfully'
                 });
-            }).catch((error) => {
+            }).catch((err) => {
                 res.send({
-                    'error': error.message
+                    'error': err.message
                 });
             });
         });
+    }
+
+    updateOne(req: Request, res: Response, next: NextFunction) {
+
+    }
+
+    getOne(req: Request, res: Response, next: NextFunction) {
+        let id = req.params.id;
+
+        this.dbClient.getOneUser(id).then((result) => {
+            if (result) {
+                res.send({
+                    'success': true,
+                    'user': result
+                });
+            }
+        }).catch((err) => {
+            res.send({
+                'error': err.message
+            })
+        });
+    }
+
+    deleteOne() {
+
     }
 
 }
