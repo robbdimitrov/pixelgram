@@ -40,8 +40,8 @@ export class Server {
     }
 
     private authChecker(req, res, next) {
-        if (req.path.indexOf('sessions') !== -1 || (req.method === 'POST' &&
-        req.path.indexOf('users') !== -1)) {
+        if (req.path.indexOf('sessions') !== -1 ||
+        (req.method === 'POST' && req.path.indexOf('users') !== -1)) {
             return next();
         }
 
@@ -53,7 +53,10 @@ export class Server {
             // verifies secret and checks exp
             jwt.verify(token, config.secret, (err, decoded) => {
                 if (err) {
-                    return res.json({ success: false, message: 'Failed to authenticate token.' });
+                    return res.status(403).send({
+                        success: false,
+                        message: 'Failed to authenticate token.'
+                    });
                 } else {
                     // if everything is good, save to request for use in other routes
                     req.user = decoded;

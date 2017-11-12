@@ -123,6 +123,34 @@ export class DBWorker extends DBClient {
         });
     }
 
+    async updateOneUser(userID: string, userUpdates: Object) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('users').updateOne({ _id: new ObjectID(userID) }, userUpdates, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve();
+            });
+        });
+    }
+
+    async deleteOneUser(userID: string) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('users').deleteOne({ _id: new ObjectID(userID) }, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve();
+            });
+        });
+    }
+
     // Authentication
 
     async login(email: string, password: string) {

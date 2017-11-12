@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction, Router } from 'express';
 import * as multer from 'multer';
+import * as bcrypt from 'bcryptjs';
 
 import { APIRouter } from './api-router';
 import { User } from '../models/user';
@@ -55,10 +56,6 @@ export class UserRouter extends APIRouter {
         });
     }
 
-    updateOne(req: Request, res: Response, next: NextFunction) {
-
-    }
-
     getOne(req: Request, res: Response, next: NextFunction) {
         let id = req.params.id;
 
@@ -76,8 +73,60 @@ export class UserRouter extends APIRouter {
         });
     }
 
-    deleteOne() {
+    updateOne(req: Request, res: Response, next: NextFunction) {
+        let id = req.params.id;
+        let body = req.body;
 
+        if (id !== req['user'].id) {
+            return res.status(403).send({
+                'error': 'Can\'t update other people\'s accounts.'
+            });
+        }
+
+        let updateClosure = (dbClient: DBClient, id: string, updatedUser: Object) => {
+            dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
+                res.send({
+                    'success': true,
+                    'message': 'User with id ' + id + ' is updated.'
+                });
+            }).catch((err) => {
+                res.send({
+                    'error': err.message
+                })
+            });
+        };
+
+        if (body.password !== undefined) {
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(body.password, salt, (err, hash) => {
+                    body.password = hash;
+                    updateClosure(this.dbClient, id, body);
+                });
+            });
+        } else {
+            updateClosure(this.dbClient, id, body);
+        }
+    }
+
+    deleteOne(req: Request, res: Response, next: NextFunction) {
+        let id = req.params.id;
+
+        if (id !== req['user'].id) {
+            return res.status(403).send({
+                'error': 'Can\'t delete other people\'s accounts.'
+            });
+        }
+
+        this.dbClient.deleteOneUser(id).then((result) => {
+            res.send({
+                'success': true,
+                'message': 'User with id ' + id + ' is no more.'
+            });
+        }).catch((err) => {
+            res.send({
+                'error': err.message
+            })
+        });
     }
 
 }
