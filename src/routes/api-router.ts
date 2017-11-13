@@ -6,7 +6,7 @@ import { Routable } from './routable';
 export abstract class APIRouter implements Routable {
 
     router: Router;
-    subRouters: [APIRouter];
+    subRouters = <APIRouter[]>[];
 
     // Regex used for single object requests
     protected validationRegex: string;
