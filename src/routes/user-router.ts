@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction, Router } from 'express';
-import * as bcrypt from 'bcryptjs';
 
 import { APIRouter } from './api-router';
 import { User } from '../models/user';
 import { UserFactory } from '../models/factories/user-factory';
 import { DBClient } from '../data/db-client';
+import { AuthService } from '../services/auth-service';
 
 export class UserRouter extends APIRouter {
 
@@ -82,11 +82,13 @@ export class UserRouter extends APIRouter {
         };
 
         if (body.password !== undefined) {
-            bcrypt.genSalt(10, (err, salt) => {
-                bcrypt.hash(body.password, salt, (err, hash) => {
-                    body.password = hash;
-                    updateClosure(this.dbClient, id, body);
-                });
+            AuthService.getInstance().generateHash(body.password).then((res) => {
+                body.password = res;
+                updateClosure(this.dbClient, id, body);
+            }).catch((err) => {
+                res.send({
+                    'error': err.message
+                })
             });
         } else {
             updateClosure(this.dbClient, id, body);

@@ -1,6 +1,4 @@
 import { ObjectID, Db, MongoClient } from 'mongodb';
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
 
 import { DBClient } from './db-client';
 import { User } from '../models/user';
@@ -192,15 +190,31 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getOneUser(userID: string) {
+    async getOneUser(userID?: string, email?: string, username?: string, raw: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('users').findOne({ _id: new ObjectID(userID) }, (err, result) => {
+            let query: Object;
+
+            if (userID) {
+                query = { _id: new ObjectID(userID) };
+            } else if (email) {
+                query = { email: email };
+            } else if (username) {
+                query = { username: username };
+            } else {
+                let err = new Error('Missing user identifier. Either of userID, email or username should be present.');
+                return reject(err);
+            }
+
+            db.collection('users').findOne(query, (err, result) => {
                 if (err) {
                     return reject(err);
                 }
 
+                if (raw) {
+                    return resolve(result);
+                }
                 let user = UserFactory.createJsonUser(result);
                 resolve(user);
             });
@@ -231,49 +245,6 @@ export class DBWorker extends DBClient {
                 }
 
                 resolve();
-            });
-        });
-    }
-
-    // Authentication
-
-    async login(email: string, password: string) {
-        let db = await this.get();
-        return new Promise((resolve, reject) => {
-            db.collection('users').findOne({
-                email: email
-            }, (err, result) => {
-                if (err) {
-                    return reject(err);
-                }
-
-                if (result === undefined) {
-                    return reject(new Error('Authentication failed. User not found.'));
-                }
-
-                bcrypt.compare(password, result.password).then((res) => {
-                    if (res === true) {
-                        let authObject = new Object();
-                        authObject['user'] = UserFactory.createJsonUser(result);
-
-                        let payload = {
-                            username: authObject['user']['username'],
-                            id: authObject['user']['id']
-                        };
-
-                        let token = jwt.sign(payload, config.secret, {
-                            expiresIn: '1h'
-                        });
-
-                        authObject['token'] = token;
-
-                        return resolve(authObject);
-                    } else {
-                        return reject(new Error('Authentication failed. Incorrect email or password.'));
-                    }
-                }).catch((err) => {
-                    return reject(new Error('Authentication failed. ' + err));
-                });
             });
         });
     }

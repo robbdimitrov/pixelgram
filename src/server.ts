@@ -1,6 +1,5 @@
 import * as express from "express";
 import * as bodyParser from 'body-parser';
-import * as jwt from 'jsonwebtoken';
 import { Router, Request, Response, NextFunction } from 'express';
 
 import * as config from '../config/server.config';
@@ -9,6 +8,7 @@ import { ImageRouter } from './routes/image-router';
 import { SessionRouter } from './routes/session-router';
 import { UserRouter } from './routes/user-router';
 import { UploadRouter } from './routes/upload-router';
+import { AuthService } from './services/auth-service';
 
 export class Server {
 
@@ -56,17 +56,14 @@ export class Server {
         // decode token
         if (token) {
             // verifies secret and checks exp
-            jwt.verify(token, config.secret, (err, decoded) => {
-                if (err) {
-                    return res.status(403).send({
-                        success: false,
-                        message: 'Failed to authenticate token.'
-                    });
-                } else {
-                    // if everything is good, save to request for use in other routes
-                    req.user = decoded;
-                    next();
-                }
+            AuthService.getInstance().validateToken(token).then((result) => {
+                req.user = result;
+                next();
+            }).catch((err) => {
+                return res.status(403).send({
+                    success: false,
+                    message: 'Failed to authenticate token.'
+                });
             });
         } else {
             // if there is no token

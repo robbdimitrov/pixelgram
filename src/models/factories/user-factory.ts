@@ -1,7 +1,7 @@
 import * as moment from 'moment';
-import * as bcrypt from 'bcryptjs';
 
 import { User } from '../user';
+import { AuthService } from '../../services/auth-service';
 
 export class UserFactory {
 
@@ -19,11 +19,11 @@ export class UserFactory {
             user.postedImages = [];
             user.registrationDate = moment().format();
 
-            bcrypt.genSalt(10, (err, salt) => {
-                bcrypt.hash(password, salt, (err, hash) => {
-                    user.password = hash;
-                    resolve(user);
-                });
+            AuthService.getInstance().generateHash(password).then((res) => {
+                user.password = res;
+                resolve(user);
+            }).catch((err) => {
+                reject(err);
             });
         });
     }

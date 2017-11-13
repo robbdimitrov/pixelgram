@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { APIRouter } from './api-router';
+import { AuthService } from '../services/auth-service';
+import { UserFactory } from '../models/factories/user-factory';
 
 export class SessionRouter extends APIRouter {
 
@@ -20,11 +22,25 @@ export class SessionRouter extends APIRouter {
         let email = body.email || '';
         let password = body.password || '';
 
-        this.dbClient.login(email, password).then((result) => {
-            res.send({
-                'success': true,
-                'user': result.user,
-                'token': result.token
+        this.dbClient.getOneUser(undefined, email, undefined, true).then((user) => {
+            AuthService.getInstance().validatePassword(password, user.password).then((result) => {
+                if (result === true) {
+                    let jsonUser = UserFactory.createJsonUser(user);
+                    let token = AuthService.getInstance().generateToken(jsonUser);
+                    res.send({
+                        'success': true,
+                        'user': jsonUser,
+                        'token': token
+                    });
+                } else {
+                    res.send({
+                        'error': 'Authentication failed. Incorrect email or password.'
+                    });
+                }
+            }).catch((error) => {
+                res.send({
+                    'error': error.message
+                });
             });
         }).catch((error) => {
             res.send({

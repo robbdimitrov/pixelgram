@@ -21,14 +21,11 @@ export abstract class DBClient {
 
     abstract async createOneUser(user: User);
 
-    abstract async getOneUser(userID: string);
+    // Use raw = true to get the User object with password and ObjectID identifier
+    abstract async getOneUser(userID?: string, email?: string, username?: string, raw?: boolean);
 
     abstract async updateOneUser(userID: string, userUpdates: Object);
 
     abstract async deleteOneUser(userID: string);
-
-    // Authentication
-
-    abstract async login(email: string, password: string);
 
 }
