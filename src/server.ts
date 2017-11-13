@@ -8,6 +8,7 @@ import { DBClient } from './data/db-client';
 import { ImageRouter } from './routes/image-router';
 import { SessionRouter } from './routes/session-router';
 import { UserRouter } from './routes/user-router';
+import { UploadRouter } from './routes/upload-router';
 
 export class Server {
 
@@ -16,7 +17,8 @@ export class Server {
     private routers = {
         "sessions": new SessionRouter(this.dbClient),
         "users": new UserRouter(this.dbClient),
-        "images": new ImageRouter(this.dbClient)
+        "images": new ImageRouter(this.dbClient),
+        "upload": new UploadRouter()
     };
 
     constructor(private port: number, private apiRootPath: string,
@@ -41,8 +43,11 @@ export class Server {
     }
 
     private authChecker(req, res, next) {
-        if (req.path.indexOf('uploads') !== -1 || req.path.indexOf('sessions') !== -1 ||
-        (req.method === 'POST' && req.path.indexOf('users') !== -1)) {
+        // If this is a login request or create a user request,
+        // don't check for token
+        if (req.method === 'POST' &&
+        (req.path.indexOf('/sessions') !== -1 ||
+        req.path.indexOf('/users') !== -1)) {
             return next();
         }
 
@@ -50,7 +55,6 @@ export class Server {
 
         // decode token
         if (token) {
-
             // verifies secret and checks exp
             jwt.verify(token, config.secret, (err, decoded) => {
                 if (err) {
@@ -64,16 +68,13 @@ export class Server {
                     next();
                 }
             });
-
         } else {
-
             // if there is no token
             // return an error
             return res.status(403).send({
                 success: false,
                 message: 'No token provided.'
             });
-
         }
     }
 

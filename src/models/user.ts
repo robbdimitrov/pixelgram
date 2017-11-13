@@ -14,6 +14,5 @@ export class User {
     likedImages: Image[];
     postedImages: Image[];
     registrationDate: string;
-    lastLoginDate: string;
 
 }

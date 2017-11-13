@@ -4,7 +4,9 @@ import * as jwt from 'jsonwebtoken';
 
 import { DBClient } from './db-client';
 import { User } from '../models/user';
+import { Image } from '../models/image';
 import { UserFactory } from '../models/factories/user-factory';
+import { ImageFactory } from '../models/factories/image-factory';
 import * as config from '../../config/server.config';
 
 export type DatabaseCallback = (database: Db) => void;
@@ -55,8 +57,25 @@ export class DBWorker extends DBClient {
 
     // Image methods
 
+    async imageIsOwnedByUser(userID: string, imageID: string) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('images').find({
+                _id: new ObjectID(imageID),
+                ownerID: new ObjectID(userID)
+            }).toArray((err, result) => {
+                if (result.length > 0) {
+                    return resolve();
+                }
+                return reject(new Error('Image not existing or owned by other user.'));
+            });
+        });
+    }
+
     async getAllImages(page: number, limit: number) {
         let db = await this.get();
+
         return new Promise((resolve, reject) => {
             db.collection('images').find().skip(page * limit).limit(limit).toArray((err, result) => {
                 if (err) {
@@ -64,6 +83,71 @@ export class DBWorker extends DBClient {
                 }
 
                 resolve(result);
+            });
+        });
+    }
+
+    async createOneImage(image: Image) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('images').insertOne(image, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve(result);
+            });
+        });
+    }
+
+    async getOneImage(imageID: string) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            db.collection('images').findOne({ _id: new ObjectID(imageID) }, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                let user = ImageFactory.createJsonImage(result);
+                resolve(user);
+            });
+        });
+    }
+
+    async updateOneImage(userID: string, imageID: string, imageUpdates: Object) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            this.imageIsOwnedByUser(userID, imageID).then(() => {
+                db.collection('images').updateOne({ _id: new ObjectID(imageID) }, imageUpdates, (err, result) => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    resolve();
+                });
+            }).catch((err) => {
+                return reject(err);
+            });
+        });
+    }
+
+    async deleteOneImage(userID: string, imageID: string) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            this.imageIsOwnedByUser(userID, imageID).then(() => {
+                db.collection('images').deleteOne({ _id: new ObjectID(imageID) }, (err, result) => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    resolve();
+                });
+            }).catch((err) => {
+                return reject(err);
             });
         });
     }

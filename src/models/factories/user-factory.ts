@@ -39,8 +39,6 @@ export class UserFactory {
         jsonUser['email'] = user.email;
         jsonUser['avatar'] = user.avatar;
         jsonUser['bio'] = user.bio;
-        // jsonUser['likedImages'] = [];
-        // jsonUser['postedImages'] = [];
         jsonUser['registrationDate'] = user.registrationDate;
 
         return jsonUser;

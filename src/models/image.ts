@@ -5,9 +5,9 @@ import { User } from './user';
 export class Image {
 
     _id: ObjectID;
-    owner: User;
+    ownerID: ObjectID;
     url: string;
-    dateCreated: Date;
+    dateCreated: string;
     description: string;
     likedUsed: User[];
 

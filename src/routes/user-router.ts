@@ -1,38 +1,12 @@
 import { Request, Response, NextFunction, Router } from 'express';
-import * as multer from 'multer';
 import * as bcrypt from 'bcryptjs';
 
 import { APIRouter } from './api-router';
 import { User } from '../models/user';
 import { UserFactory } from '../models/factories/user-factory';
-import * as config from '../../config/server.config';
 import { DBClient } from '../data/db-client';
 
 export class UserRouter extends APIRouter {
-
-    connectRouter(router: Router) {
-        super.connectRouter(router);
-
-        let uploader = multer({
-            dest: config.imageDir,
-            limits: { fileSize: 1000000, files: 1 }
-        });
-
-        router.post('/upload', uploader.single('avatar'), (req, res, next) => {
-            if (req.file) {
-                res.send({
-                    'success': true,
-                    'filename': req.file.filename
-                });
-            } else {
-                res.send({
-                    'success': false,
-                    'message': 'File missing from request. Should be sent as a multipart/form-data.'
-                });
-            }
-            next();
-        });
-    }
 
     createOne(req: Request, res: Response, next: NextFunction) {
         let body = req.body || {}
@@ -98,7 +72,7 @@ export class UserRouter extends APIRouter {
             dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
                 res.send({
                     'success': true,
-                    'message': 'User with id ' + id + ' is updated.'
+                    'message': 'User is updated.'
                 });
             }).catch((err) => {
                 res.send({
@@ -131,7 +105,7 @@ export class UserRouter extends APIRouter {
         this.dbClient.deleteOneUser(id).then((result) => {
             res.send({
                 'success': true,
-                'message': 'User with id ' + id + ' is no more.'
+                'message': 'User is no more.'
             });
         }).catch((err) => {
             res.send({

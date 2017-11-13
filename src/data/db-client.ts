@@ -1,4 +1,5 @@
 import { User } from '../models/user';
+import { Image } from '../models/image';
 
 export abstract class DBClient {
 
@@ -7,6 +8,14 @@ export abstract class DBClient {
     // Images
 
     abstract async getAllImages(page: number, limit: number);
+
+    abstract async createOneImage(image: Image);
+
+    abstract async getOneImage(imageID: string);
+
+    abstract async updateOneImage(userID: string, imageID: string, imageUpdates: Object);
+
+    abstract async deleteOneImage(userID: string, imageID: string);
 
     // Users
 
