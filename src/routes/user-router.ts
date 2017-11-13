@@ -5,8 +5,20 @@ import { User } from '../models/user';
 import { UserFactory } from '../models/factories/user-factory';
 import { DBClient } from '../data/db-client';
 import { AuthService } from '../services/auth-service';
+import { UserImagesRouter } from './user-images-router';
+import { UserLikesRouter } from './user-likes-router';
 
 export class UserRouter extends APIRouter {
+
+    setupSubrouters() {
+        let imagesRouter = new UserImagesRouter(this.dbClient, { mergeParams: true });
+        this.router.use('/:userId/images', imagesRouter.router);
+
+        let likedRouter = new UserLikesRouter(this.dbClient, { mergeParams: true });
+        this.router.use('/:userId/likes', imagesRouter.router);
+
+        this.subRouters.push(imagesRouter, likedRouter);
+    }
 
     createOne(req: Request, res: Response, next: NextFunction) {
         let body = req.body || {}

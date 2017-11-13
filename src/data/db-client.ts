@@ -11,21 +11,21 @@ export abstract class DBClient {
 
     abstract async createOneImage(image: Image);
 
-    abstract async getOneImage(imageID: string);
+    abstract async getOneImage(imageId: string);
 
-    abstract async updateOneImage(userID: string, imageID: string, imageUpdates: Object);
+    abstract async updateOneImage(userId: string, imageId: string, imageUpdates: Object);
 
-    abstract async deleteOneImage(userID: string, imageID: string);
+    abstract async deleteOneImage(userId: string, imageId: string);
 
     // Users
 
     abstract async createOneUser(user: User);
 
     // Use raw = true to get the User object with password and ObjectID identifier
-    abstract async getOneUser(userID?: string, email?: string, username?: string, raw?: boolean);
+    abstract async getOneUser(userId?: string, email?: string, username?: string, raw?: boolean);
 
-    abstract async updateOneUser(userID: string, userUpdates: Object);
+    abstract async updateOneUser(userId: string, userUpdates: Object);
 
-    abstract async deleteOneUser(userID: string);
+    abstract async deleteOneUser(userId: string);
 
 }

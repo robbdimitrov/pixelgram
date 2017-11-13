@@ -6,15 +6,21 @@ import { Routable } from './routable';
 export abstract class APIRouter implements Routable {
 
     router: Router;
+    subRouters: [APIRouter];
 
     // Regex used for single object requests
     protected validationRegex: string;
 
-    constructor(protected dbClient: DBClient) {
-        this.router = Router();
+    constructor(protected dbClient: DBClient, options?: Object) {
+        this.router = Router(options);
         this.validationRegex = '[0-9a-zA-Z]+';
 
+        this.setupSubrouters(this.router);
         this.connectRouter(this.router);
+    }
+
+    setupSubrouters(router: Router){
+        // Implemented by subclasses
     }
 
     // Bind routes to router functions

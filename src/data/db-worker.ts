@@ -55,13 +55,13 @@ export class DBWorker extends DBClient {
 
     // Image methods
 
-    async imageIsOwnedByUser(userID: string, imageID: string) {
+    async imageIsOwnedByUser(userId: string, imageId: string) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
             db.collection('images').find({
-                _id: new ObjectID(imageID),
-                ownerID: new ObjectID(userID)
+                _id: new ObjectID(imageId),
+                ownerID: new ObjectID(userId)
             }).toArray((err, result) => {
                 if (result.length > 0) {
                     return resolve();
@@ -99,11 +99,11 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getOneImage(imageID: string) {
+    async getOneImage(imageId: string) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('images').findOne({ _id: new ObjectID(imageID) }, (err, result) => {
+            db.collection('images').findOne({ _id: new ObjectID(imageId) }, (err, result) => {
                 if (err) {
                     return reject(err);
                 }
@@ -114,12 +114,12 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async updateOneImage(userID: string, imageID: string, imageUpdates: Object) {
+    async updateOneImage(userId: string, imageId: string, imageUpdates: Object) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            this.imageIsOwnedByUser(userID, imageID).then(() => {
-                db.collection('images').updateOne({ _id: new ObjectID(imageID) }, imageUpdates, (err, result) => {
+            this.imageIsOwnedByUser(userId, imageId).then(() => {
+                db.collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err, result) => {
                     if (err) {
                         return reject(err);
                     }
@@ -132,12 +132,12 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async deleteOneImage(userID: string, imageID: string) {
+    async deleteOneImage(userId: string, imageId: string) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            this.imageIsOwnedByUser(userID, imageID).then(() => {
-                db.collection('images').deleteOne({ _id: new ObjectID(imageID) }, (err, result) => {
+            this.imageIsOwnedByUser(userId, imageId).then(() => {
+                db.collection('images').deleteOne({ _id: new ObjectID(imageId) }, (err, result) => {
                     if (err) {
                         return reject(err);
                     }
@@ -190,20 +190,20 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getOneUser(userID?: string, email?: string, username?: string, raw: boolean = false) {
+    async getOneUser(userId?: string, email?: string, username?: string, raw: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
             let query: Object;
 
-            if (userID) {
-                query = { _id: new ObjectID(userID) };
+            if (userId) {
+                query = { _id: new ObjectID(userId) };
             } else if (email) {
                 query = { email: email };
             } else if (username) {
                 query = { username: username };
             } else {
-                let err = new Error('Missing user identifier. Either of userID, email or username should be present.');
+                let err = new Error('Missing user identifier. Either of userId, email or username should be present.');
                 return reject(err);
             }
 
@@ -221,11 +221,11 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async updateOneUser(userID: string, userUpdates: Object) {
+    async updateOneUser(userId: string, userUpdates: Object) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('users').updateOne({ _id: new ObjectID(userID) }, userUpdates, (err, result) => {
+            db.collection('users').updateOne({ _id: new ObjectID(userId) }, userUpdates, (err, result) => {
                 if (err) {
                     return reject(err);
                 }
@@ -235,11 +235,11 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async deleteOneUser(userID: string) {
+    async deleteOneUser(userId: string) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('users').deleteOne({ _id: new ObjectID(userID) }, (err, result) => {
+            db.collection('users').deleteOne({ _id: new ObjectID(userId) }, (err, result) => {
                 if (err) {
                     return reject(err);
                 }

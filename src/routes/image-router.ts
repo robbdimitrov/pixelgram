@@ -2,8 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 
 import { APIRouter } from './api-router';
 import { ImageFactory } from '../models/factories/image-factory';
+import { ImageUsersRouter } from './image-users-router';
 
 export class ImageRouter extends APIRouter {
+
+    setupSubrouters() {
+        let usersRouter = new ImageUsersRouter(this.dbClient, { mergeParams: true });
+        this.router.use('/:userId/users', usersRouter.router);
+
+        this.subRouters.push(usersRouter);
+    }
 
     getAll(req: Request, res: Response, next: NextFunction) {
         let query = req.query || {};
@@ -29,11 +37,11 @@ export class ImageRouter extends APIRouter {
             return next(err)
         }
 
-        let userID = req['user'].id;
+        let userId = req['user'].id;
         let url = body.url || '';
         let description = body.description || '';
 
-        let image = ImageFactory.createImage(userID, url, description);
+        let image = ImageFactory.createImage(userId, url, description);
 
         this.dbClient.createOneImage(image).then((result) => {
             res.send({
@@ -65,11 +73,11 @@ export class ImageRouter extends APIRouter {
     }
 
     updateOne(req: Request, res: Response, next: NextFunction) {
-        let userID = req['user'].id;
-        let imageID = req.params.id;
+        let userId = req['user'].id;
+        let imageId = req.params.id;
         let body = req.body;
 
-        this.dbClient.updateOneImage(userID, imageID, { $set: body }).then((result) => {
+        this.dbClient.updateOneImage(userId, imageId, { $set: body }).then((result) => {
             res.send({
                 'success': true,
                 'message': 'Image is updated.'
@@ -82,10 +90,10 @@ export class ImageRouter extends APIRouter {
     }
 
     deleteOne(req: Request, res: Response, next: NextFunction) {
-        let userID = req['user'].id;
-        let imageID = req.params.id;
+        let userId = req['user'].id;
+        let imageId = req.params.id;
 
-        this.dbClient.deleteOneImage(userID, imageID).then((result) => {
+        this.dbClient.deleteOneImage(userId, imageId).then((result) => {
             res.send({
                 'success': true,
                 'message': 'Image is no more.'
