@@ -1,7 +1,7 @@
 import * as moment from 'moment';
 
 import { Image } from '../image';
-import { ObjectID } from 'bson';
+import { ObjectID } from 'mongodb';
 
 export class ImageFactory {
 

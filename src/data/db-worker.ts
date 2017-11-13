@@ -6,6 +6,7 @@ import { Image } from '../models/image';
 import { UserFactory } from '../models/factories/user-factory';
 import { ImageFactory } from '../models/factories/image-factory';
 import * as config from '../../config/server.config';
+import { error } from 'util';
 
 export type DatabaseCallback = (database: Db) => void;
 
@@ -71,17 +72,27 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getAllImages(query: Object, page: number, limit: number) {
+    async getAllImages(query: Object, page: number, limit: number, countOnly: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('images').find(query).skip(page * limit).limit(limit).toArray((err, result) => {
-                if (err) {
-                    return reject(err);
-                }
+            let cursor = db.collection('images').find(query);
 
-                resolve(result);
-            });
+            if (countOnly) {
+                cursor.count().then((res) => {
+                    return resolve(res);
+                }).catch((error) => {
+                    reject(error);
+                });
+            } else {
+                cursor.skip(page * limit).limit(limit).toArray((err, result) => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    resolve(result);
+                });
+            }
         });
     }
 

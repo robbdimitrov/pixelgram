@@ -1,4 +1,4 @@
-import { ObjectID } from 'bson';
+import { ObjectID } from 'mongodb';
 
 import { Image } from './image';
 
@@ -11,8 +11,8 @@ export class User {
     password: string;
     bio: string;
     avatar: string;
-    likedImages: Image[];
-    postedImages: Image[];
+    likedImages: ObjectID[];
+    postedImages: ObjectID[];
     registrationDate: string;
 
 }

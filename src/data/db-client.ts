@@ -7,7 +7,7 @@ export abstract class DBClient {
 
     // Images
 
-    abstract async getAllImages(query: Object, page: number, limit: number);
+    abstract async getAllImages(query: Object, page: number, limit: number, countOnly?: boolean);
 
     abstract async createOneImage(image: Image);
 

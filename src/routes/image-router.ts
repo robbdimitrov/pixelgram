@@ -91,14 +91,14 @@ export class ImageRouter extends APIRouter {
         let userId = req['user'].id;
         let imageId = req.params.id;
 
-        this.dbClient.deleteOneImage(userId, imageId).then((result) => {
+        this.imageService.deleteImage(imageId, userId).then((result) => {
             res.send({
                 'success': true,
-                'message': 'Image is no more.'
+                'message': 'Image deleted.'
             });
-        }).catch((err) => {
+        }).catch((error) => {
             res.send({
-                'error': err.message
+                'error': error.message
             })
         });
     }
