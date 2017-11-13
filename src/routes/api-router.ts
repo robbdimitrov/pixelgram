@@ -6,7 +6,8 @@ import { Routable } from './routable';
 export abstract class APIRouter implements Routable {
 
     router: Router;
-    subRouters = <APIRouter[]>[];
+
+    protected subrouters = {};
 
     // Regex used for single object requests
     protected validationRegex: string;
@@ -15,12 +16,20 @@ export abstract class APIRouter implements Routable {
         this.router = Router(options);
         this.validationRegex = '[0-9a-zA-Z]+';
 
+        this.createSubrouters();
         this.setupSubrouters(this.router);
         this.connectRouter(this.router);
     }
 
-    setupSubrouters(router: Router){
+    createSubrouters() {
         // Implemented by subclasses
+    }
+
+    setupSubrouters(router: Router){
+        for (let key in this.subrouters) {
+            let value = this.subrouters[key];
+            this.router.use(`/:parentId(${this.validationRegex})/${key}`, value.router);
+        }
     }
 
     // Bind routes to router functions

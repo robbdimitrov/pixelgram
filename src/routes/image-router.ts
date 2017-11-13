@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { APIRouter } from './api-router';
-import { ImageFactory } from '../models/factories/image-factory';
 import { ImageUsersRouter } from './image-users-router';
+import { ImageService } from '../services/image-service';
 
 export class ImageRouter extends APIRouter {
 
-    setupSubrouters() {
-        let usersRouter = new ImageUsersRouter(this.dbClient, { mergeParams: true });
-        this.router.use('/:userId/users', usersRouter.router);
+    imageService: ImageService;
 
-        this.subRouters.push(usersRouter);
+    createSubrouters() {
+        let usersRouter = new ImageUsersRouter(this.dbClient, { mergeParams: true });
+        this.subrouters['users'] = usersRouter;
     }
 
     getAll(req: Request, res: Response, next: NextFunction) {
@@ -18,7 +18,7 @@ export class ImageRouter extends APIRouter {
         let limit = parseInt(query.limit, 10) || 25;
         let page = parseInt(query.page, 10) || 0;
 
-        this.dbClient.getAllImages(page, limit).then((result) => {
+        this.imageService.getAllImages(page, limit).then((result) => {
             res.send(result);
         }).catch((error) => {
             res.send({'error':'An error has occurred ' + error});
@@ -41,16 +41,14 @@ export class ImageRouter extends APIRouter {
         let url = body.url || '';
         let description = body.description || '';
 
-        let image = ImageFactory.createImage(userId, url, description);
-
-        this.dbClient.createOneImage(image).then((result) => {
+        this.imageService.createImage(userId, url, description).then((result) => {
             res.send({
                 'success': true,
                 'message': 'Image created successfully'
             });
-        }).catch((err) => {
+        }).catch((error) => {
             res.send({
-                'error': err.message
+                'error': error.message
             });
         });
     }

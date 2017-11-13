@@ -9,22 +9,20 @@ import { SessionRouter } from './routes/session-router';
 import { UserRouter } from './routes/user-router';
 import { UploadRouter } from './routes/upload-router';
 import { AuthService } from './services/auth-service';
+import { ImageService } from "./services/image-service";
 
 export class Server {
 
     app: express.Application;
 
-    private routers = {
-        "sessions": new SessionRouter(this.dbClient),
-        "users": new UserRouter(this.dbClient),
-        "images": new ImageRouter(this.dbClient),
-        "upload": new UploadRouter()
-    };
+    private routers = {};
+    private imageService: ImageService;
 
     constructor(private port: number, private apiRootPath: string,
         private apiVersion: number, private dbClient: DBClient) {
 
         this.app = express();
+        this.imageService = new ImageService(dbClient);
         this.configure();
         this.start();
     }
@@ -34,7 +32,8 @@ export class Server {
         this.app.use(bodyParser.urlencoded({
             extended: true
         }));
-        this.routes();
+        this.configureRoutes()
+        this.connectRoutes();
         this.app.use('/uploads', express.static(config.imageDir));
     }
 
@@ -75,8 +74,24 @@ export class Server {
         }
     }
 
+    // Create API routers
+    private configureRoutes() {
+        let sessionRouter = new SessionRouter(this.dbClient);
+        this.routers['sessions'] = sessionRouter;
+
+        let userRouter = new UserRouter(this.dbClient);
+        this.routers['users'] = userRouter;
+
+        let imageRouter = new ImageRouter(this.dbClient);
+        imageRouter.imageService = new ImageService(this.dbClient);
+        this.routers['images'] = imageRouter;
+
+        let uploadRouter = new UploadRouter();
+        this.routers['upload'] = uploadRouter;
+    }
+
     // Configure API endpoints
-    private routes() {
+    private connectRoutes() {
         let apiRoot = this.apiRoot();
 
         this.app.use((req, res, next) => {

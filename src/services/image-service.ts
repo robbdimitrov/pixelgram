@@ -1,15 +1,10 @@
-class ImageService {
+import { DBClient } from "../data/db-client";
 
-    private static instance: ImageService;
+import { ImageFactory } from '../models/factories/image-factory';
 
-    private constructor() {}
+export class ImageService {
 
-    static getInstance() {
-        if (!ImageService.instance) {
-            ImageService.instance = new ImageService();
-        }
-        return ImageService.instance;
-    }
+    constructor(protected dbClient: DBClient) {}
 
     likeImage(imageId: string, userId: string) {
 
@@ -19,11 +14,21 @@ class ImageService {
 
     }
 
-    allImagesForUser(userId: string) {
+    getAllImages(page: number, limit: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.dbClient.getAllImages({}, page, limit).then((result) => {
+                resolve(result);
+            }).catch((error) => {
+                reject(error);
+            });
+        })
+    }
+
+    getAllImagesForUser(userId: string, page: number, limit: number) {
 
     }
 
-    allImagesLikedByUser(userId: string) {
+    getAllImagesLikedByUser(userId: string, page: number, limit: number) {
 
     }
 
@@ -31,8 +36,16 @@ class ImageService {
 
     }
 
-    createImage(ownerId: string, url: string, description: string) {
+    createImage(userId: string, url: string, description: string): Promise<any> {
+        let image = ImageFactory.createImage(userId, url, description);
 
+        return new Promise((resolve, reject) => {
+            this.dbClient.createOneImage(image).then((result) => {
+                resolve();
+            }).catch((err) => {
+                reject(err);
+            });
+        });
     }
 
 }

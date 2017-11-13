@@ -10,14 +10,11 @@ import { UserLikesRouter } from './user-likes-router';
 
 export class UserRouter extends APIRouter {
 
-    setupSubrouters() {
+    createSubrouters() {
         let imagesRouter = new UserImagesRouter(this.dbClient, { mergeParams: true });
-        this.router.use('/:userId/images', imagesRouter.router);
-
+        this.subrouters['images'] = imagesRouter;
         let likedRouter = new UserLikesRouter(this.dbClient, { mergeParams: true });
-        this.router.use('/:userId/likes', imagesRouter.router);
-
-        this.subRouters.push(imagesRouter, likedRouter);
+        this.subrouters['likes'] = imagesRouter;
     }
 
     createOne(req: Request, res: Response, next: NextFunction) {

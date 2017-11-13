@@ -71,11 +71,11 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getAllImages(page: number, limit: number) {
+    async getAllImages(query: Object, page: number, limit: number) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('images').find().skip(page * limit).limit(limit).toArray((err, result) => {
+            db.collection('images').find(query).skip(page * limit).limit(limit).toArray((err, result) => {
                 if (err) {
                     return reject(err);
                 }
