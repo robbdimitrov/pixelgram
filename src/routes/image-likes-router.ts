@@ -19,7 +19,9 @@ export class ImageLikesRouter extends APIRouter {
 
         if (count === true) {
             this.imageService.getNumberOfUsersLikedImage(imageId, page, limit).then((result) => {
-                res.send({ 'users': result })
+                res.send({
+                    'users': result
+                });
             }).catch((error) => {
                 res.send({
                     'error': error.message
@@ -27,13 +29,45 @@ export class ImageLikesRouter extends APIRouter {
             });
         } else {
             this.imageService.getUsersLikedImage(imageId, page, limit).then((result) => {
-                res.send({ 'likes': result })
+                res.send({
+                    'likes': result
+                });
             }).catch((error) => {
                 res.send({
                     'error': error.message
                 });
             });
         }
+    }
+
+    createOne(req: Request, res: Response, next: NextFunction) {
+        let imageId = req.params.parentId;
+        let userId = req['user'].id;
+
+        this.imageService.likeImage(imageId, userId).then((result) => {
+            res.send({
+                'message': 'Image liked successfully.'
+            });
+        }).catch((error) => {
+            res.send({
+                'error': error.message
+            });
+        });
+    }
+
+    deleteOne(req: Request, res: Response, next: NextFunction) {
+        let imageId = req.params.parentId;
+        let userId = req.params.id;
+
+        this.imageService.unlikeImage(imageId, userId).then((result) => {
+            res.send({
+                'message': 'Image unliked successfully.'
+            });
+        }).catch((error) => {
+            res.send({
+                'error': error.message
+            });
+        });
     }
 
 }

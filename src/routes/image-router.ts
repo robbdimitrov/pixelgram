@@ -52,7 +52,7 @@ export class ImageRouter extends APIRouter {
 
         this.imageService.createImage(userId, url, description).then((result) => {
             res.send({
-                'message': 'Image created successfully'
+                'message': 'Image created successfully.'
             });
         }).catch((error) => {
             res.send({
@@ -85,13 +85,13 @@ export class ImageRouter extends APIRouter {
         this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
             this.dbClient.updateOneImage(imageId, { $set: body }).then((result) => {
                 res.send({
-                    'message': 'Image is updated.'
+                    'message': 'Image updated successfully.'
                 });
             });
         }).catch((err) => {
             res.send({
                 'error': err.message
-            })
+            });
         });
 
     }
@@ -102,12 +102,12 @@ export class ImageRouter extends APIRouter {
 
         this.imageService.deleteImage(imageId, userId).then((result) => {
             res.send({
-                'message': 'Image deleted.'
+                'message': 'Image deleted successfully.'
             });
         }).catch((error) => {
             res.send({
                 'error': error.message
-            })
+            });
         });
     }
 

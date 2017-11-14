@@ -64,7 +64,7 @@ export class UserRouter extends APIRouter {
         UserFactory.createUser(name, username, email, password).then((user) => {
             this.dbClient.createOneUser(user).then((result) => {
                 res.send({
-                    'message': 'User with email ' + result.ops[0].email + ' created successfully'
+                    'message': 'User with email ' + result.ops[0].email + ' created successfully.'
                 });
             }).catch((err) => {
                 res.send({
@@ -103,12 +103,12 @@ export class UserRouter extends APIRouter {
         let updateClosure = (dbClient: DBClient, id: string, updatedUser: Object) => {
             dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
                 res.send({
-                    'message': 'User is updated.'
+                    'message': 'User updated successfully.'
                 });
             }).catch((err) => {
                 res.send({
                     'error': err.message
-                })
+                });
             });
         };
 
@@ -119,7 +119,7 @@ export class UserRouter extends APIRouter {
             }).catch((err) => {
                 res.send({
                     'error': err.message
-                })
+                });
             });
         } else {
             updateClosure(this.dbClient, id, body);
@@ -137,12 +137,12 @@ export class UserRouter extends APIRouter {
 
         this.dbClient.deleteOneUser(id).then((result) => {
             res.send({
-                'message': 'User deleted.'
+                'message': 'User deleted successfully.'
             });
         }).catch((err) => {
             res.send({
                 'error': err.message
-            })
+            });
         });
     }
 

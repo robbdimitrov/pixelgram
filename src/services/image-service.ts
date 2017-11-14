@@ -23,10 +23,10 @@ export class ImageService {
     likeImage(imageId: string, userId: string) {
         return new Promise((resolve, reject) => {
             this.dbClient.updateOneUser(userId,
-                { $push: { likedImages: new ObjectID(imageId) } }
+                { $addToSet: { likedImages: new ObjectID(imageId) } }
             ).then((result) => {
                 this.dbClient.updateOneImage(imageId,
-                    { $push: { likedUsers: new ObjectID(userId) } }
+                    { $addToSet: { likedUsers: new ObjectID(userId) } }
                 ).then((result) => {
                     resolve();
                 })

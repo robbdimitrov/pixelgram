@@ -45,7 +45,7 @@ export class AuthService {
     generateToken(user: Object): string {
         let payload = {
             username: user['username'],
-            id: user['id']
+            id: user['_id'].toString()
         };
 
         let token = jwt.sign(payload, config.secret, {
