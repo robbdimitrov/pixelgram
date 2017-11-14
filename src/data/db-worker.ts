@@ -48,7 +48,6 @@ export class DBWorker extends DBClient {
                 if (err) {
                     return reject(err);
                 }
-
                 resolve(this.database);
             });
         });
@@ -89,7 +88,6 @@ export class DBWorker extends DBClient {
                     if (err) {
                         return reject(err);
                     }
-
                     resolve(result);
                 });
             }
@@ -171,7 +169,7 @@ export class DBWorker extends DBClient {
 
     // User methods
 
-    async getAllUsers(query: Object, page: number, limit: number, countOnly?: boolean) {
+    async getAllUsers(query: Object, page: number, limit: number, countOnly: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
@@ -223,7 +221,6 @@ export class DBWorker extends DBClient {
                     if (err) {
                         return reject(err);
                     }
-
                     resolve(result);
                 });
             }).catch((err) => {
@@ -253,7 +250,6 @@ export class DBWorker extends DBClient {
                 if (err) {
                     return reject(err);
                 }
-
                 return resolve(result);
             };
 
@@ -273,7 +269,6 @@ export class DBWorker extends DBClient {
                 if (err) {
                     return reject(err);
                 }
-
                 resolve();
             });
         });
@@ -287,7 +282,6 @@ export class DBWorker extends DBClient {
                 if (err) {
                     return reject(err);
                 }
-
                 resolve();
             });
         });

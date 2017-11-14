@@ -17,27 +17,15 @@ export class ImageLikesRouter extends APIRouter {
         let limit = parseInt(query.limit, 10) || 25;
         let page = parseInt(query.page, 10) || 0;
 
-        if (count === true) {
-            this.imageService.getNumberOfUsersLikedImage(imageId, page, limit).then((result) => {
-                res.send({
-                    'likes': result
-                });
-            }).catch((error) => {
-                res.send({
-                    'error': error.message
-                });
+        this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
+            res.send({
+                'likes': result
             });
-        } else {
-            this.imageService.getUsersLikedImage(imageId, page, limit).then((result) => {
-                res.send({
-                    'users': result
-                });
-            }).catch((error) => {
-                res.send({
-                    'error': error.message
-                });
+        }).catch((error) => {
+            res.send({
+                'error': error.message
             });
-        }
+        });
     }
 
     createOne(req: Request, res: Response, next: NextFunction) {
@@ -58,6 +46,12 @@ export class ImageLikesRouter extends APIRouter {
     deleteOne(req: Request, res: Response, next: NextFunction) {
         let imageId = req.params.parentId;
         let userId = req.params.id;
+
+        if (userId !== req['user'].id) {
+            return res.send({
+                'error': 'Can\'t unlike other people\'s likes.'
+            });
+        }
 
         this.imageService.unlikeImage(imageId, userId).then((result) => {
             res.send({
