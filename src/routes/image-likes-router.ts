@@ -20,7 +20,7 @@ export class ImageLikesRouter extends APIRouter {
         if (count === true) {
             this.imageService.getNumberOfUsersLikedImage(imageId, page, limit).then((result) => {
                 res.send({
-                    'users': result
+                    'likes': result
                 });
             }).catch((error) => {
                 res.send({
@@ -30,7 +30,7 @@ export class ImageLikesRouter extends APIRouter {
         } else {
             this.imageService.getUsersLikedImage(imageId, page, limit).then((result) => {
                 res.send({
-                    'likes': result
+                    'users': result
                 });
             }).catch((error) => {
                 res.send({
