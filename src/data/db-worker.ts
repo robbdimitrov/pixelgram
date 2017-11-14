@@ -105,7 +105,14 @@ export class DBWorker extends DBClient {
                     return reject(err);
                 }
 
-                resolve(result);
+                db.collection('users').updateOne(
+                    { _id: image.ownerID },
+                    { $push: { postedImages: result.insertedId } }
+                ).then((result) => {
+                    resolve(result);
+                }).catch((error) => {
+                    return reject(error);
+                });
             });
         });
     }
@@ -118,27 +125,21 @@ export class DBWorker extends DBClient {
                 if (err) {
                     return reject(err);
                 }
-
                 let user = ImageFactory.createJsonImage(result);
                 resolve(user);
             });
         });
     }
 
-    async updateOneImage(userId: string, imageId: string, imageUpdates: Object) {
+    async updateOneImage(imageId: string, imageUpdates: Object) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            this.imageIsOwnedByUser(userId, imageId).then(() => {
-                db.collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err, result) => {
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    resolve();
-                });
-            }).catch((err) => {
-                return reject(err);
+            db.collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve();
             });
         });
     }
@@ -148,12 +149,20 @@ export class DBWorker extends DBClient {
 
         return new Promise((resolve, reject) => {
             this.imageIsOwnedByUser(userId, imageId).then(() => {
-                db.collection('images').deleteOne({ _id: new ObjectID(imageId) }, (err, result) => {
-                    if (err) {
-                        return reject(err);
-                    }
+                let imageObjectId = new ObjectID(imageId);
 
-                    resolve();
+                db.collection('users').update({},
+                    { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
+                    { multi: true }
+                ).then((result) => {
+                    db.collection('images').deleteOne({ _id: new ObjectID(imageId) }, (err, result) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        resolve();
+                    });
+                }).catch((error) => {
+                    return reject(error);
                 });
             }).catch((err) => {
                 return reject(err);

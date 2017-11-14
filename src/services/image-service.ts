@@ -21,18 +21,39 @@ export class ImageService {
     }
 
     likeImage(imageId: string, userId: string) {
-
+        return new Promise((resolve, reject) => {
+            this.dbClient.updateOneUser(userId,
+                { $put: { likedImages: new ObjectID(imageId) } }
+            ).then((result) => {
+                this.dbClient.updateOneImage(imageId,
+                    { $pull: { likedUsers: new ObjectID(userId) } }
+                ).then((result) => {
+                    resolve();
+                })
+            }).catch((error) => {
+                reject(error);
+            });
+        });
     }
 
     unlikeImage(imageId: string, userId: string) {
-
+        return new Promise((resolve, reject) => {
+            this.dbClient.updateOneUser(userId,
+                { $pull: { likedImages: new ObjectID(imageId) } }
+            ).then((result) => {
+                this.dbClient.updateOneImage(imageId,
+                    { $pull: { likedUsers: new ObjectID(userId) } }
+                ).then((result) => {
+                    resolve();
+                })
+            }).catch((error) => {
+                reject(error);
+            });
+        });
     }
 
     deleteImage(imageId: string, userId: string) {
         return new Promise((resolve, reject) => {
-            //TODO: Remove image from owner's images array
-            //TODO: Remove image from liked users' likedImages
-
             this.dbClient.deleteOneImage(userId, imageId).then((result) => {
                 resolve();
             }).catch((error) => {

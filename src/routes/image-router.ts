@@ -75,16 +75,19 @@ export class ImageRouter extends APIRouter {
         let imageId = req.params.id;
         let body = req.body;
 
-        this.dbClient.updateOneImage(userId, imageId, { $set: body }).then((result) => {
-            res.send({
-                'success': true,
-                'message': 'Image is updated.'
+        this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
+            this.dbClient.updateOneImage(imageId, { $set: body }).then((result) => {
+                res.send({
+                    'success': true,
+                    'message': 'Image is updated.'
+                });
             });
         }).catch((err) => {
             res.send({
                 'error': err.message
             })
         });
+
     }
 
     deleteOne(req: Request, res: Response, next: NextFunction) {
