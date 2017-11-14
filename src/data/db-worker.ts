@@ -152,17 +152,15 @@ export class DBWorker extends DBClient {
                     { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
                     { multi: true }
                 ).then((result) => {
-                    db.collection('images').deleteOne({ _id: new ObjectID(imageId) }, (err, result) => {
-                        if (err) {
-                            return reject(err);
+                    db.collection('images').deleteOne({ _id: new ObjectID(imageId) }, (error, result) => {
+                        if (error) {
+                            return reject(error);
                         }
                         resolve();
                     });
-                }).catch((error) => {
-                    return reject(error);
                 });
-            }).catch((err) => {
-                return reject(err);
+            }).catch((error) => {
+                return reject(error);
             });
         });
     }
@@ -217,14 +215,14 @@ export class DBWorker extends DBClient {
 
         return new Promise((resolve, reject) => {
             this.userNotExists(user.username, user.email).then(() => {
-                db.collection('users').insertOne(user, (err, result) => {
-                    if (err) {
-                        return reject(err);
+                db.collection('users').insertOne(user, (error, result) => {
+                    if (error) {
+                        return reject(error);
                     }
                     resolve(result);
                 });
-            }).catch((err) => {
-                return reject(err);
+            }).catch((error) => {
+                return reject(error);
             });
         });
     }

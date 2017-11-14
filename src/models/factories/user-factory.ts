@@ -22,8 +22,8 @@ export class UserFactory {
             AuthService.getInstance().generateHash(password).then((res) => {
                 user.password = res;
                 resolve(user);
-            }).catch((err) => {
-                reject(err);
+            }).catch((error) => {
+                reject(error);
             });
         });
     }

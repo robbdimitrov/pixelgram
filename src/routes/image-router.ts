@@ -70,9 +70,9 @@ export class ImageRouter extends APIRouter {
                     'image': result
                 });
             }
-        }).catch((err) => {
+        }).catch((error) => {
             res.send({
-                'error': err.message
+                'error': error.message
             })
         });
     }
@@ -88,9 +88,9 @@ export class ImageRouter extends APIRouter {
                     'message': 'Image updated successfully.'
                 });
             });
-        }).catch((err) => {
+        }).catch((error) => {
             res.send({
-                'error': err.message
+                'error': error.message
             });
         });
 

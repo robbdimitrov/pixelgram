@@ -66,9 +66,9 @@ export class UserRouter extends APIRouter {
                 res.send({
                     'message': 'User with email ' + result.ops[0].email + ' created successfully.'
                 });
-            }).catch((err) => {
+            }).catch((error) => {
                 res.send({
-                    'error': err.message
+                    'error': error.message
                 });
             });
         });
@@ -83,9 +83,9 @@ export class UserRouter extends APIRouter {
                     'user': result
                 });
             }
-        }).catch((err) => {
+        }).catch((error) => {
             res.send({
-                'error': err.message
+                'error': error.message
             })
         });
     }
@@ -105,9 +105,9 @@ export class UserRouter extends APIRouter {
                 res.send({
                     'message': 'User updated successfully.'
                 });
-            }).catch((err) => {
+            }).catch((error) => {
                 res.send({
-                    'error': err.message
+                    'error': error.message
                 });
             });
         };
@@ -116,9 +116,9 @@ export class UserRouter extends APIRouter {
             AuthService.getInstance().generateHash(body.password).then((res) => {
                 body.password = res;
                 updateClosure(this.dbClient, id, body);
-            }).catch((err) => {
+            }).catch((error) => {
                 res.send({
-                    'error': err.message
+                    'error': error.message
                 });
             });
         } else {
@@ -139,9 +139,9 @@ export class UserRouter extends APIRouter {
             res.send({
                 'message': 'User deleted successfully.'
             });
-        }).catch((err) => {
+        }).catch((error) => {
             res.send({
-                'error': err.message
+                'error': error.message
             });
         });
     }

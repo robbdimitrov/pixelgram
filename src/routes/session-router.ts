@@ -36,10 +36,6 @@ export class SessionRouter extends APIRouter {
                         'error': 'Authentication failed. Incorrect email or password.'
                     });
                 }
-            }).catch((error) => {
-                res.send({
-                    'error': error.message
-                });
             });
         }).catch((error) => {
             res.send({

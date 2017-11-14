@@ -58,7 +58,7 @@ export class Server {
             AuthService.getInstance().validateToken(token).then((result) => {
                 req.user = result;
                 next();
-            }).catch((err) => {
+            }).catch((error) => {
                 return res.status(403).send({
                     success: false,
                     message: 'Failed to authenticate token.'

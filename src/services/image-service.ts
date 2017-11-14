@@ -14,8 +14,8 @@ export class ImageService {
         return new Promise((resolve, reject) => {
             this.dbClient.createOneImage(image).then((result) => {
                 resolve();
-            }).catch((err) => {
-                reject(err);
+            }).catch((ererrorr) => {
+                reject(error);
             });
         });
     }
@@ -87,8 +87,6 @@ export class ImageService {
             this.dbClient.getOneUser(userId).then((user) => {
                 this.dbClient.getAllImages({ _id: { $in: user.likedImages } }, page, limit, countOnly).then((result) => {
                     resolve(result);
-                }).catch((error) => {
-                    reject(error);
                 });
             }).catch((error) => {
                 reject(error);
@@ -101,8 +99,6 @@ export class ImageService {
             this.dbClient.getOneImage(imageId).then((image) => {
                 this.dbClient.getAllUsers({ _id: { $in: image.likedUsers } }, page, limit, countOnly).then((result) => {
                     resolve(result);
-                }).catch((error) => {
-                    reject(error);
                 });
             }).catch((error) => {
                 reject(error);
