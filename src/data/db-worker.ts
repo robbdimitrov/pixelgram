@@ -125,8 +125,7 @@ export class DBWorker extends DBClient {
                 if (err) {
                     return reject(err);
                 }
-                let user = ImageFactory.createJsonImage(result);
-                resolve(user);
+                return resolve(result);
             });
         });
     }
@@ -171,6 +170,29 @@ export class DBWorker extends DBClient {
     }
 
     // User methods
+
+    async getAllUsers(query: Object, page: number, limit: number, countOnly?: boolean) {
+        let db = await this.get();
+
+        return new Promise((resolve, reject) => {
+            let cursor = db.collection('users').find(query, { fields: { password: 0 } });
+
+            if (countOnly) {
+                cursor.count().then((res) => {
+                    return resolve(res);
+                }).catch((error) => {
+                    reject(error);
+                });
+            } else {
+                cursor.skip(page * limit).limit(limit).toArray((err, result) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve(result);
+                });
+            }
+        });
+    }
 
     async userNotExists(username: string, email: string) {
         let db = await this.get();
@@ -227,17 +249,19 @@ export class DBWorker extends DBClient {
                 return reject(err);
             }
 
-            db.collection('users').findOne(query, (err, result) => {
+            let completion = (err, result) => {
                 if (err) {
                     return reject(err);
                 }
 
-                if (raw) {
-                    return resolve(result);
-                }
-                let user = UserFactory.createJsonUser(result);
-                resolve(user);
-            });
+                return resolve(result);
+            };
+
+            if (raw) {
+                db.collection('users').findOne(query, completion);
+            } else {
+                db.collection('users').findOne(query, { fields: { password: 0 } }, completion);
+            }
         });
     }
 

@@ -7,14 +7,39 @@ import { DBClient } from '../data/db-client';
 import { AuthService } from '../services/auth-service';
 import { UserImagesRouter } from './user-images-router';
 import { UserLikesRouter } from './user-likes-router';
+import { ImageService } from '../services/image-service';
 
 export class UserRouter extends APIRouter {
 
+    constructor(protected dbClient: DBClient, private imageService: ImageService, options?: Object) {
+        super(dbClient, options);
+
+        this.createSubrouters();
+        this.setupSubrouters(this.router);
+    }
+
     createSubrouters() {
-        let imagesRouter = new UserImagesRouter(this.dbClient, { mergeParams: true });
+        let imagesRouter = new UserImagesRouter(this.dbClient,
+            this.imageService, { mergeParams: true });
         this.subrouters['images'] = imagesRouter;
-        let likedRouter = new UserLikesRouter(this.dbClient, { mergeParams: true });
+
+        let likedRouter = new UserLikesRouter(this.dbClient,
+            this.imageService, { mergeParams: true });
         this.subrouters['likes'] = imagesRouter;
+    }
+
+    getAll(req: Request, res: Response, next: NextFunction) {
+        let query = req.query || {};
+        let limit = parseInt(query.limit, 10) || 25;
+        let page = parseInt(query.page, 10) || 0;
+
+        this.dbClient.getAllUsers({}, page, limit).then((result) => {
+            res.send(result);
+        }).catch((error) => {
+            res.send({
+                'error': error.message
+            });
+        });
     }
 
     createOne(req: Request, res: Response, next: NextFunction) {
@@ -39,8 +64,7 @@ export class UserRouter extends APIRouter {
         UserFactory.createUser(name, username, email, password).then((user) => {
             this.dbClient.createOneUser(user).then((result) => {
                 res.send({
-                    'success': true,
-                    'message': 'User ' + result.ops[0].email + ' created successfully'
+                    'message': 'User with email ' + result.ops[0].email + ' created successfully'
                 });
             }).catch((err) => {
                 res.send({
@@ -56,7 +80,6 @@ export class UserRouter extends APIRouter {
         this.dbClient.getOneUser(id).then((result) => {
             if (result) {
                 res.send({
-                    'success': true,
                     'user': result
                 });
             }
@@ -80,7 +103,6 @@ export class UserRouter extends APIRouter {
         let updateClosure = (dbClient: DBClient, id: string, updatedUser: Object) => {
             dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
                 res.send({
-                    'success': true,
                     'message': 'User is updated.'
                 });
             }).catch((err) => {
@@ -115,8 +137,7 @@ export class UserRouter extends APIRouter {
 
         this.dbClient.deleteOneUser(id).then((result) => {
             res.send({
-                'success': true,
-                'message': 'User is no more.'
+                'message': 'User deleted.'
             });
         }).catch((err) => {
             res.send({

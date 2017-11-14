@@ -25,11 +25,10 @@ export class SessionRouter extends APIRouter {
         this.dbClient.getOneUser(undefined, email, undefined, true).then((user) => {
             AuthService.getInstance().validatePassword(password, user.password).then((result) => {
                 if (result === true) {
-                    let jsonUser = UserFactory.createJsonUser(user);
-                    let token = AuthService.getInstance().generateToken(jsonUser);
+                    delete user['password'];
+                    let token = AuthService.getInstance().generateToken(user);
                     res.send({
-                        'success': true,
-                        'user': jsonUser,
+                        'user': user,
                         'token': token
                     });
                 } else {

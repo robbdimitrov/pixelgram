@@ -23,7 +23,6 @@ export class UploadRouter {
         router.post('/', uploader.single('image'), (req, res, next) => {
             if (req.file) {
                 res.send({
-                    'success': true,
                     'filename': req.file.filename
                 });
             } else {

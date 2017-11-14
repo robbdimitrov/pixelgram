@@ -1,16 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { APIRouter } from './api-router';
-import { ImageUsersRouter } from './image-users-router';
+import { ImageLikesRouter } from './image-likes-router';
 import { ImageService } from '../services/image-service';
+import { DBClient } from '../data/db-client';
 
 export class ImageRouter extends APIRouter {
 
-    imageService: ImageService;
+    constructor(protected dbClient: DBClient, private imageService: ImageService, options?: Object) {
+        super(dbClient, options);
+
+        this.createSubrouters();
+        this.setupSubrouters(this.router);
+    }
 
     createSubrouters() {
-        let usersRouter = new ImageUsersRouter(this.dbClient, { mergeParams: true });
-        this.subrouters['users'] = usersRouter;
+        let usersRouter = new ImageLikesRouter(this.dbClient,
+            this.imageService, { mergeParams: true });
+        this.subrouters['likes'] = usersRouter;
     }
 
     getAll(req: Request, res: Response, next: NextFunction) {
@@ -21,7 +28,9 @@ export class ImageRouter extends APIRouter {
         this.imageService.getAllImages(page, limit).then((result) => {
             res.send(result);
         }).catch((error) => {
-            res.send({'error':'An error has occurred ' + error});
+            res.send({
+                'error': error.message
+            });
         });
     }
 
@@ -43,7 +52,6 @@ export class ImageRouter extends APIRouter {
 
         this.imageService.createImage(userId, url, description).then((result) => {
             res.send({
-                'success': true,
                 'message': 'Image created successfully'
             });
         }).catch((error) => {
@@ -59,7 +67,6 @@ export class ImageRouter extends APIRouter {
         this.dbClient.getOneImage(id).then((result) => {
             if (result) {
                 res.send({
-                    'success': true,
                     'image': result
                 });
             }
@@ -78,7 +85,6 @@ export class ImageRouter extends APIRouter {
         this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
             this.dbClient.updateOneImage(imageId, { $set: body }).then((result) => {
                 res.send({
-                    'success': true,
                     'message': 'Image is updated.'
                 });
             });
@@ -96,7 +102,6 @@ export class ImageRouter extends APIRouter {
 
         this.imageService.deleteImage(imageId, userId).then((result) => {
             res.send({
-                'success': true,
                 'message': 'Image deleted.'
             });
         }).catch((error) => {

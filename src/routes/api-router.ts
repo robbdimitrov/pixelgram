@@ -16,16 +16,10 @@ export abstract class APIRouter implements Routable {
         this.router = Router(options);
         this.validationRegex = '[0-9a-zA-Z]+';
 
-        this.createSubrouters();
-        this.setupSubrouters(this.router);
         this.connectRouter(this.router);
     }
 
-    createSubrouters() {
-        // Implemented by subclasses
-    }
-
-    setupSubrouters(router: Router){
+    protected setupSubrouters(router: Router){
         for (let key in this.subrouters) {
             let value = this.subrouters[key];
             this.router.use(`/:parentId(${this.validationRegex})/${key}`, value.router);

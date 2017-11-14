@@ -47,7 +47,7 @@ export abstract class DBClient {
      * Returns a Promise with image object with a given identifier
      *
      * @param imageId id of the image
-     * @returns Promise with Image JS Object
+     * @returns Promise with Image Object
      */
     abstract async getOneImage(imageId: string);
 
@@ -70,6 +70,17 @@ export abstract class DBClient {
     abstract async deleteOneImage(userId: string, imageId: string);
 
     // Users
+
+    /**
+     * Returns all users or their count for a given query.
+     *
+     * @param query used for searching the users
+     * @param page current page of content
+     * @param limit number of items per page
+     * @param countOnly if true, function returns just count. Default is false.
+     * @returns Promise with either image array or count
+     */
+    abstract async getAllUsers(query: Object, page: number, limit: number, countOnly?: boolean);
 
     /**
      * Creates a user in the database for a given User object

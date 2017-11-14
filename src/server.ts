@@ -79,11 +79,10 @@ export class Server {
         let sessionRouter = new SessionRouter(this.dbClient);
         this.routers['sessions'] = sessionRouter;
 
-        let userRouter = new UserRouter(this.dbClient);
+        let userRouter = new UserRouter(this.dbClient, this.imageService);
         this.routers['users'] = userRouter;
 
-        let imageRouter = new ImageRouter(this.dbClient);
-        imageRouter.imageService = new ImageService(this.dbClient);
+        let imageRouter = new ImageRouter(this.dbClient, this.imageService);
         this.routers['images'] = imageRouter;
 
         let uploadRouter = new UploadRouter();

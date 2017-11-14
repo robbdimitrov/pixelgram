@@ -23,10 +23,10 @@ export class ImageService {
     likeImage(imageId: string, userId: string) {
         return new Promise((resolve, reject) => {
             this.dbClient.updateOneUser(userId,
-                { $put: { likedImages: new ObjectID(imageId) } }
+                { $push: { likedImages: new ObjectID(imageId) } }
             ).then((result) => {
                 this.dbClient.updateOneImage(imageId,
-                    { $pull: { likedUsers: new ObjectID(userId) } }
+                    { $push: { likedUsers: new ObjectID(userId) } }
                 ).then((result) => {
                     resolve();
                 })
@@ -85,7 +85,7 @@ export class ImageService {
     getAllImagesLikedByUser(userId: string, page: number, limit: number): Promise<any> {
         return new Promise((resolve, reject) => {
             this.dbClient.getOneUser(userId).then((user) => {
-                this.dbClient.getAllImages({ _id: { $in: user.likedImages } }, page, limit).then((result) => {
+                this.dbClient.getAllUsers({ _id: { $in: user.likedImages } }, page, limit).then((result) => {
                     resolve(result);
                 }).catch((error) => {
                     reject(error);
@@ -96,10 +96,10 @@ export class ImageService {
         });
     }
 
-    usersLikedImage(imageId: string, page: number, limit: number): Promise<any> {
+    getUsersLikedImage(imageId: string, page: number, limit: number): Promise<any> {
         return new Promise((resolve, reject) => {
             this.dbClient.getOneImage(imageId).then((image) => {
-                this.dbClient.getAllImages({ _id: { $in: image.likedUsed } }, page, limit).then((result) => {
+                this.dbClient.getAllUsers({ _id: { $in: image.likedUsers } }, page, limit).then((result) => {
                     resolve(result);
                 }).catch((error) => {
                     reject(error);
@@ -110,7 +110,7 @@ export class ImageService {
         });
     }
 
-    numberOfUsersLikedImage(imageId: string, page: number, limit: number): Promise<number> {
+    getNumberOfUsersLikedImage(imageId: string, page: number, limit: number): Promise<number> {
         return new Promise((resolve, reject) => {
             this.dbClient.getOneImage(imageId).then((image) => {
                 this.dbClient.getAllImages({ _id: { $in: image.likedUsed } }, page, limit, true).then((result) => {

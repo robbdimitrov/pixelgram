@@ -28,20 +28,4 @@ export class UserFactory {
         });
     }
 
-    // Creates a JSON user by stripping passwords and
-    // replacing ObjectID with string representation
-    static createJsonUser(user: User): Object {
-        let jsonUser = new Object();
-
-        jsonUser['id'] = user._id.toString();
-        jsonUser['name'] = user.name;
-        jsonUser['username'] = user.username;
-        jsonUser['email'] = user.email;
-        jsonUser['avatar'] = user.avatar;
-        jsonUser['bio'] = user.bio;
-        jsonUser['registrationDate'] = user.registrationDate;
-
-        return jsonUser;
-    }
-
 }
