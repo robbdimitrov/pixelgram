@@ -1,6 +1,7 @@
 import * as express from "express";
 import * as bodyParser from 'body-parser';
 import { Router, Request, Response, NextFunction } from 'express';
+import * as helmet from 'helmet';
 
 import * as config from '../config/server.config';
 import { DBClient } from './data/db-client';
@@ -32,6 +33,7 @@ export class Server {
         this.app.use(bodyParser.urlencoded({
             extended: true
         }));
+        this.app.use(helmet());
         this.configureRoutes()
         this.connectRoutes();
         this.app.use('/uploads', express.static(config.imageDir));
