@@ -2,7 +2,8 @@
 
 The following are all of the supported API calls. Almost all of them require JSON Web Token 
 in the headers. The only exclusions are `POST /sessions` and `POST /users`. Everything else won't 
-work unless valid token is supplied. Token duration is `1 hour`.
+work unless valid token is supplied. Token duration is `1 hour`. 
+All request have the prefix `/api/v1.0` or whatever are set in the `server.config.ts` file.
 
 ## Sessions
 
@@ -59,8 +60,8 @@ POST /users
 Parameters in the request body:
 
 ```
-email: name
-password: username
+name: string
+username: string
 email: string
 password: string
 ```
@@ -127,7 +128,7 @@ Response:
 }
 ```
 
-### Get a user
+### Get user
 
 ```
 GET /users/<userId>
@@ -262,7 +263,7 @@ Response:
             "_id": "5a0c5629ca682d61abcd5786",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
             "url": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Sweet doggy",
+            "description": "Image description",
             "dateCreated": "2017-11-15T16:58:49+02:00",
             "likedUsers": []
         },
@@ -270,7 +271,7 @@ Response:
             "_id": "5a0c5630ca682d61abcd5787",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
             "url": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Sweet doggy",
+            "description": "Other description #awesome",
             "dateCreated": "2017-11-15T16:58:56+02:00",
             "likedUsers": []
         }
@@ -307,12 +308,304 @@ Response:
             "_id": "5a0c5629ca682d61abcd5786",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
             "url": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Sweet doggy",
+            "description": "Image description",
             "dateCreated": "2017-11-15T16:58:49+02:00",
             "likedUsers": [
                 "5a09b5acc3d0655f6f6225cb"
             ]
         }
     ]
+}
+```
+
+## Images
+
+### Upload an image
+
+An image asset has to be uploaded before creating an Image object. The returned image name
+is used for the `url` parameter. File size should be less than 1MB. 
+This is used for uploading user's avatars as well.
+
+```
+POST /upload
+```
+
+Parameters in the request body:
+
+```
+image: file sent as multipart/form-data
+```
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "filename": "d4aab3fd72517522479c08520bc150a3"
+}
+```
+
+### Create an image
+
+```
+POST /images
+```
+
+Parameters in the request body:
+
+```
+url: string
+description: string
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "message": "Image created successfully."
+}
+```
+
+### Get all images
+
+```
+GET /images
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "images": [
+        {
+            "_id": "5a0996ba2775b637bd49b0ab",
+            "ownerID": "5a069fd03bd9992ce9520ec5",
+            "url": "6710497b36573655ed145f1bc1e01052",
+            "description": "Some image description",
+            "dateCreated": "2017-11-13T14:57:19+02:00",
+            "likedUsers": []
+        },
+        {
+            "_id": "5a0c5629ca682d61abcd5786",
+            "ownerID": "5a09b5acc3d0655f6f6225cb",
+            "url": "d1d99db3ac32052b9dd66cb5914508dd",
+            "description": "Image description 2",
+            "dateCreated": "2017-11-15T16:58:49+02:00",
+            "likedUsers": [
+                "5a09b5acc3d0655f6f6225cb"
+            ]
+        }
+    ]
+}
+```
+
+### Get image
+
+```
+GET /images/<imageId>
+```
+
+Parameters in the URL:
+
+```
+imageId - id of the image
+```
+
+Parameters in the request body:
+
+```
+description: string
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "image": {
+        "_id": "5a0996ba2775b637bd49b0ab",
+        "ownerID": "5a069fd03bd9992ce9520ec5",
+        "url": "6710497b36573655ed145f1bc1e01052",
+        "description": "Image description",
+        "dateCreated": "2017-11-13T14:57:19+02:00",
+        "likedUsers": []
+    }
+}
+```
+
+### Edit image
+
+```
+PUT /images/<imageId>
+```
+
+Parameters in the URL:
+
+```
+imageId - id of the image
+```
+
+Parameters in the request body:
+
+```
+description: string
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "message": "Image updated successfully."
+}
+```
+
+### Delete image
+
+```
+DELETE /images/<imageId>
+```
+
+Parameters in the URL:
+
+```
+imageId - id of the image
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "message": "Image deleted successfully."
+}
+```
+
+### Add image to the current user's likes
+
+```
+POST /images/<imageId>/likes
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "message": "Image liked successfully."
+}
+```
+
+### Get all users liked the image
+
+```
+GET /images/<imageId>/likes
+```
+
+Parameters in the URL:
+
+```
+imageId - id of the image
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "likes": [
+        {
+            "_id": "5a09b5acc3d0655f6f6225cb",
+            "name": "Bruce Wayne",
+            "username": "batman",
+            "email": "bruce@wayneindustries.com",
+            "avatar": "",
+            "bio": "The dark knight",
+            "likedImages": [
+                "5a0996ba2775b637bd49b0ab"
+            ],
+            "postedImages": [
+                "5a0c5630ca682d61abcd5787",
+                "5a0c5ee49e6d89692ff365c5"
+            ],
+            "registrationDate": "2017-11-13T17:09:19+02:00"
+        }
+    ]
+}
+```
+
+### Remove image from user's likes
+
+```
+DELETE /images/<imageId>/likes/<userId>
+```
+
+Parameters in the URL:
+
+```
+imageId - id of the image
+userId - id of the user
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "message": "Image unliked successfully."
 }
 ```

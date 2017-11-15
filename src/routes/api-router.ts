@@ -61,7 +61,7 @@ export abstract class APIRouter implements Routable {
         message: string = 'Invalid request.') {
 
         res.status(404).send({
-            message: 'Invalid request.'
+            'error': message
         });
         next();
     }

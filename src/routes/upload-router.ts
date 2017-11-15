@@ -27,8 +27,7 @@ export class UploadRouter {
                 });
             } else {
                 res.send({
-                    'success': false,
-                    'message': 'File missing from request. Should be sent as a multipart/form-data.'
+                    'error': 'File missing from request. Should be sent as a multipart/form-data.'
                 });
             }
         });
