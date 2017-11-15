@@ -7,6 +7,12 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    depends_on:
+      - db
+    links:
+      - db:mongo
+    volumes:
+      - "image_data:/usr/src/app/uploads"
 
   db:
     image: mongo:3.4
@@ -14,7 +20,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - "db_data:/var/lib/postgresql/data/"
+      - "db_data:/data/db"
 
 volumes:
   db_data:
