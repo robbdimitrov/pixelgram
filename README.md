@@ -81,7 +81,7 @@ $ npm run start
 
 ## API
 
-The api documentation is available [here](API.md).
+The API documentation is available [here](API.md).
 
 ## Contact
 

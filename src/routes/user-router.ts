@@ -25,7 +25,7 @@ export class UserRouter extends APIRouter {
 
         let likedRouter = new UserLikesRouter(this.dbClient,
             this.imageService, { mergeParams: true });
-        this.subrouters['likes'] = imagesRouter;
+        this.subrouters['likes'] = likedRouter;
     }
 
     getAll(req: Request, res: Response, next: NextFunction) {

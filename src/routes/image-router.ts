@@ -26,7 +26,9 @@ export class ImageRouter extends APIRouter {
         let page = parseInt(query.page, 10) || 0;
 
         this.imageService.getAllImages(page, limit).then((result) => {
-            res.send(result);
+            res.send({
+                'images': result
+            });
         }).catch((error) => {
             res.send({
                 'error': error.message
