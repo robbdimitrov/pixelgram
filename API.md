@@ -27,7 +27,7 @@ All request have the prefix `/api/v1.0` or whatever are set in the `server.confi
   * [Edit image](#edit-image)
   * [Delete image](#delete-image)
   * [Add image to the current user's likes](#add-image-to-the-current-users-likes)
-  * [Get all users liked the image](#get-all-users-liked-the-image)
+  * [Get all users liked an image](#get-all-users-liked-an-image)
   * [Remove image from user's likes](#remove-image-from-users-likes)
 
 ## Sessions
