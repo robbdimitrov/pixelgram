@@ -2,6 +2,19 @@
 
 REST API for image sharing service
 
+## Table of contents
+
+* [Pixelgram API](#pixelgram-api)
+* [Table of contents](#table-of-contents)
+* [Setup](#setup)
+  * [Clone the repository](#clone-the-repository)
+  * [Config file](#config-file)
+  * [Using Docker](#using-docker)
+  * [Using npm](#using-npm)
+* [API](#api)
+* [Contact](#contact)
+* [License](#license)
+
 ## Setup
 
 ### Clone the repository
