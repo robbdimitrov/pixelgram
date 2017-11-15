@@ -34,7 +34,9 @@ export class UserRouter extends APIRouter {
         let page = parseInt(query.page, 10) || 0;
 
         this.dbClient.getAllUsers({}, page, limit).then((result) => {
-            res.send(result);
+            res.send({
+                'users': result
+            });
         }).catch((error) => {
             res.send({
                 'error': error.message
