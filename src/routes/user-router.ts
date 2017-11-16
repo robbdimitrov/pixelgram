@@ -8,6 +8,8 @@ import { AuthService } from '../services/auth-service';
 import { UserImagesRouter } from './user-images-router';
 import { UserLikesRouter } from './user-likes-router';
 import { ImageService } from '../services/image-service';
+import { BodyParser } from '../services/body-parser';
+import { ValidatorService } from '../services/validator-service';
 
 export class UserRouter extends APIRouter {
 
@@ -63,10 +65,22 @@ export class UserRouter extends APIRouter {
         let email = body.email || '';
         let password = body.password || '';
 
+        if (password === '') {
+            return res.send({
+                'error': 'Password can\'t be empty.'
+            });
+        }
+
+        if (!ValidatorService.isValidEmail(email)) {
+            return res.send({
+                'error': 'Invalid email address.'
+            });
+        }
+
         UserFactory.createUser(name, username, email, password).then((user) => {
             this.dbClient.createOneUser(user).then((result) => {
                 res.send({
-                    'message': 'User with email ' + result.ops[0].email + ' created successfully.'
+                    'message': 'User with email ' + email + ' created successfully.'
                 });
             }).catch((error) => {
                 res.send({
@@ -102,6 +116,15 @@ export class UserRouter extends APIRouter {
             });
         }
 
+        if (Object.keys(body).length < 1) {
+            res.send({
+                'message': 'Nothing to update.'
+            });
+        }
+
+        let allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
+        let updatedUser = BodyParser.parseBodyParametersToObject(body, allowedKeys);
+
         let updateClosure = (dbClient: DBClient, id: string, updatedUser: Object) => {
             dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
                 res.send({
@@ -114,17 +137,48 @@ export class UserRouter extends APIRouter {
             });
         };
 
+        if (body.email !== undefined) {
+            if (!ValidatorService.isValidEmail(body.email)) {
+                return res.send({
+                    'error': 'Invalid email address.'
+                });
+            }
+        }
+
         if (body.password !== undefined) {
-            AuthService.getInstance().generateHash(body.password).then((res) => {
-                body.password = res;
-                updateClosure(this.dbClient, id, body);
+            let password = body.password;
+            let oldPassword = body.oldPassword;
+
+            if (oldPassword === undefined) {
+                return res.send({
+                    'error': 'Both password and the current password are required.'
+                });
+            }
+
+            if (password === '') {
+                return res.send({
+                    'error': 'Password can\'t be empty.'
+                });
+            }
+
+            this.dbClient.getOneUser(req['user'].id, undefined, undefined, true).then((user) => {
+                AuthService.getInstance().validatePassword(oldPassword, user.password).then((value) => {
+                    AuthService.getInstance().generateHash(password).then((res) => {
+                        updatedUser['password'] = res;
+                        updateClosure(this.dbClient, id, updatedUser);
+                    });
+                }).catch((error) => {
+                    res.send({
+                        'error': 'Wrong password. Enter the correct current password.'
+                    });
+                });
             }).catch((error) => {
                 res.send({
                     'error': error.message
                 });
             });
         } else {
-            updateClosure(this.dbClient, id, body);
+            updateClosure(this.dbClient, id, updatedUser);
         }
     }
 

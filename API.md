@@ -209,10 +209,13 @@ userId - id of the user
 Parameters in the request body:
 
 ```
-email: string
-password: string
-avatar: string
-bio: string
+name: string (optional)
+username: string (optional)
+email: string (optional)
+password: string (optional)
+oldPassword: string (optional, required if password is present)
+avatar: string (optional)
+bio: string (optional)
 ```
 
 Headers:

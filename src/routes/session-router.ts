@@ -10,13 +10,11 @@ export class SessionRouter extends APIRouter {
         let body = req.body || {}
 
         if (body.email === undefined || body.password === undefined) {
-
-            let err = new Error('Missing argument(s). Email and password are required.');
-
+            let error = new Error('Missing argument(s). Email and password are required.');
             res.send({
-                'error': err.message
+                'error': error.message
             });
-            return next(err)
+            return next(error)
         }
 
         let email = body.email || '';

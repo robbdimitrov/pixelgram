@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { APIRouter } from './api-router';
 import { ImageLikesRouter } from './image-likes-router';
 import { ImageService } from '../services/image-service';
+import { BodyParser } from '../services/body-parser';
 import { DBClient } from '../data/db-client';
 
 export class ImageRouter extends APIRouter {
@@ -84,8 +85,10 @@ export class ImageRouter extends APIRouter {
         let imageId = req.params.id;
         let body = req.body;
 
+        let updatedImage = BodyParser.parseBodyParametersToObject(body, ['description']);
+
         this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
-            this.dbClient.updateOneImage(imageId, { $set: body }).then((result) => {
+            this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then((result) => {
                 res.send({
                     'message': 'Image updated successfully.'
                 });
