@@ -44,7 +44,6 @@ export class AuthService {
 
     generateToken(user: Object): string {
         let payload = {
-            username: user['username'],
             id: user['_id'].toString()
         };
 
