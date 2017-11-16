@@ -240,13 +240,16 @@ export class DBWorker extends DBClient {
             } else if (username) {
                 query = { username: username };
             } else {
-                let err = new Error('Missing user identifier. Either of userId, email or username should be present.');
-                return reject(err);
+                let error = new Error('Missing user identifier. Either of userId, email or username should be present.');
+                return reject(error);
             }
 
-            let completion = (err, result) => {
-                if (err) {
-                    return reject(err);
+            let completion = (error, result) => {
+                if (error) {
+                    return reject(error);
+                } else if (!result) {
+                    let error = new Error('User not found.');
+                    return reject(error);
                 }
                 return resolve(result);
             };
