@@ -22,7 +22,7 @@ export class UserImagesRouter extends APIRouter {
                 'images': result
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });

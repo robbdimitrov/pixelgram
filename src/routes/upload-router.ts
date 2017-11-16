@@ -26,7 +26,7 @@ export class UploadRouter {
                     'filename': req.file.filename
                 });
             } else {
-                res.send({
+                res.status(400).send({
                     'error': 'File missing from request. Should be sent as a multipart/form-data.'
                 });
             }

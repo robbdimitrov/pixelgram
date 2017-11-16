@@ -38,7 +38,7 @@ export class UserRouter extends APIRouter {
                 'users': result
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -50,12 +50,11 @@ export class UserRouter extends APIRouter {
         if (body.name === undefined || body.username === undefined ||
             body.email === undefined || body.password === undefined) {
 
-            let err = new Error('Missing argument(s). Name, username, email and password are expected.');
-
-            res.send({
-                'error': err.message
+            let error = new Error('Missing argument(s). Name, username, email and password are expected.');
+            res.status(400).send({
+                'error': error.message
             });
-            return next(err)
+            return next(error);
         }
 
         let name = body.name || '';
@@ -68,7 +67,7 @@ export class UserRouter extends APIRouter {
                 'message': 'User with email ' + email + ' created successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -84,7 +83,7 @@ export class UserRouter extends APIRouter {
                 });
             }
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             })
         });
@@ -111,7 +110,7 @@ export class UserRouter extends APIRouter {
                 'message': 'User updated successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -131,7 +130,7 @@ export class UserRouter extends APIRouter {
                 'message': 'User deleted successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });

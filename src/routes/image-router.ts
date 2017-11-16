@@ -31,7 +31,7 @@ export class ImageRouter extends APIRouter {
                 'images': result
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -41,12 +41,12 @@ export class ImageRouter extends APIRouter {
         let body = req.body || {}
 
         if (body.url === undefined) {
-            let err = new Error('Missing argument(s). Image url is expected.');
+            let error = new Error('Missing argument(s). Image url is expected.');
 
-            res.send({
-                'error': err.message
+            res.status(400).send({
+                'error': error.message
             });
-            return next(err)
+            return next(error);
         }
 
         let userId = req['user'].id;
@@ -58,7 +58,7 @@ export class ImageRouter extends APIRouter {
                 'message': 'Image created successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -74,7 +74,7 @@ export class ImageRouter extends APIRouter {
                 });
             }
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             })
         });
@@ -94,7 +94,7 @@ export class ImageRouter extends APIRouter {
                 });
             });
         }).catch((error) => {
-            res.send({
+            res.status(401).send({
                 'error': error.message
             });
         });
@@ -110,7 +110,7 @@ export class ImageRouter extends APIRouter {
                 'message': 'Image deleted successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(401).send({
                 'error': error.message
             });
         });

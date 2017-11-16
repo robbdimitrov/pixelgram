@@ -22,7 +22,7 @@ export class ImageLikesRouter extends APIRouter {
                 'likes': result
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -37,7 +37,7 @@ export class ImageLikesRouter extends APIRouter {
                 'message': 'Image liked successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -48,7 +48,7 @@ export class ImageLikesRouter extends APIRouter {
         let userId = req.params.id;
 
         if (userId !== req['user'].id) {
-            return res.send({
+            return res.status(403).send({
                 'error': 'Can\'t unlike other people\'s likes.'
             });
         }
@@ -58,7 +58,7 @@ export class ImageLikesRouter extends APIRouter {
                 'message': 'Image unliked successfully.'
             });
         }).catch((error) => {
-            res.send({
+            res.status(400).send({
                 'error': error.message
             });
         });
