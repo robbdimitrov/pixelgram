@@ -2,18 +2,16 @@ import { Request, Response, NextFunction, Router } from 'express';
 
 import { APIRouter } from './api-router';
 import { User } from '../models/user';
-import { UserFactory } from '../models/factories/user-factory';
 import { DBClient } from '../data/db-client';
-import { AuthService } from '../services/auth-service';
 import { UserImagesRouter } from './user-images-router';
 import { UserLikesRouter } from './user-likes-router';
 import { ImageService } from '../services/image-service';
-import { BodyParser } from '../services/body-parser';
-import { ValidatorService } from '../services/validator-service';
+import { UserService } from '../services/user-service';
 
 export class UserRouter extends APIRouter {
 
-    constructor(protected dbClient: DBClient, private imageService: ImageService, options?: Object) {
+    constructor(protected dbClient: DBClient, private userService: UserService,
+    private imageService: ImageService, options?: Object) {
         super(dbClient, options);
 
         this.createSubrouters();
@@ -52,7 +50,7 @@ export class UserRouter extends APIRouter {
         if (body.name === undefined || body.username === undefined ||
             body.email === undefined || body.password === undefined) {
 
-            let err = new Error('Missing argument(s). name, username, email and password are expected.');
+            let err = new Error('Missing argument(s). Name, username, email and password are expected.');
 
             res.send({
                 'error': err.message
@@ -65,27 +63,13 @@ export class UserRouter extends APIRouter {
         let email = body.email || '';
         let password = body.password || '';
 
-        if (password === '') {
-            return res.send({
-                'error': 'Password can\'t be empty.'
+        this.userService.createUser(name, username, email, password).then((result) => {
+            res.send({
+                'message': 'User with email ' + email + ' created successfully.'
             });
-        }
-
-        if (!ValidatorService.isValidEmail(email)) {
-            return res.send({
-                'error': 'Invalid email address.'
-            });
-        }
-
-        UserFactory.createUser(name, username, email, password).then((user) => {
-            this.dbClient.createOneUser(user).then((result) => {
-                res.send({
-                    'message': 'User with email ' + email + ' created successfully.'
-                });
-            }).catch((error) => {
-                res.send({
-                    'error': error.message
-                });
+        }).catch((error) => {
+            res.send({
+                'error': error.message
             });
         });
     }
@@ -107,10 +91,10 @@ export class UserRouter extends APIRouter {
     }
 
     updateOne(req: Request, res: Response, next: NextFunction) {
-        let id = req.params.id;
+        let userId = req.params.id;
         let body = req.body;
 
-        if (id !== req['user'].id) {
+        if (userId !== req['user'].id) {
             return res.status(403).send({
                 'error': 'Can\'t update other people\'s accounts.'
             });
@@ -122,64 +106,15 @@ export class UserRouter extends APIRouter {
             });
         }
 
-        let allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
-        let updatedUser = BodyParser.parseBodyParametersToObject(body, allowedKeys);
-
-        let updateClosure = (dbClient: DBClient, id: string, updatedUser: Object) => {
-            dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
-                res.send({
-                    'message': 'User updated successfully.'
-                });
-            }).catch((error) => {
-                res.send({
-                    'error': error.message
-                });
+        this.userService.updateUser(userId, body).then((result) => {
+            res.send({
+                'message': 'User updated successfully.'
             });
-        };
-
-        if (body.email !== undefined) {
-            if (!ValidatorService.isValidEmail(body.email)) {
-                return res.send({
-                    'error': 'Invalid email address.'
-                });
-            }
-        }
-
-        if (body.password !== undefined) {
-            let password = body.password;
-            let oldPassword = body.oldPassword;
-
-            if (oldPassword === undefined) {
-                return res.send({
-                    'error': 'Both password and the current password are required.'
-                });
-            }
-
-            if (password === '') {
-                return res.send({
-                    'error': 'Password can\'t be empty.'
-                });
-            }
-
-            this.dbClient.getOneUser(req['user'].id, undefined, undefined, true).then((user) => {
-                AuthService.getInstance().validatePassword(oldPassword, user.password).then((value) => {
-                    AuthService.getInstance().generateHash(password).then((res) => {
-                        updatedUser['password'] = res;
-                        updateClosure(this.dbClient, id, updatedUser);
-                    });
-                }).catch((error) => {
-                    res.send({
-                        'error': 'Wrong password. Enter the correct current password.'
-                    });
-                });
-            }).catch((error) => {
-                res.send({
-                    'error': error.message
-                });
+        }).catch((error) => {
+            res.send({
+                'error': error.message
             });
-        } else {
-            updateClosure(this.dbClient, id, updatedUser);
-        }
+        });
     }
 
     deleteOne(req: Request, res: Response, next: NextFunction) {

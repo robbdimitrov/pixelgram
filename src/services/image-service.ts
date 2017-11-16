@@ -1,8 +1,7 @@
-import { DBClient } from '../data/db-client';
-
-import { ImageFactory } from '../models/factories/image-factory';
 import { ObjectID } from 'mongodb';
-import { error } from 'util';
+
+import { DBClient } from '../data/db-client';
+import { ImageFactory } from '../models/factories/image-factory';
 
 export class ImageService {
 
@@ -14,7 +13,7 @@ export class ImageService {
         return new Promise((resolve, reject) => {
             this.dbClient.createOneImage(image).then((result) => {
                 resolve();
-            }).catch((ererrorr) => {
+            }).catch((error) => {
                 reject(error);
             });
         });

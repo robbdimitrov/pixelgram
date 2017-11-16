@@ -1,4 +1,4 @@
-import * as express from "express";
+import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { Router, Request, Response, NextFunction } from 'express';
 import * as helmet from 'helmet';
@@ -10,7 +10,8 @@ import { SessionRouter } from './routes/session-router';
 import { UserRouter } from './routes/user-router';
 import { UploadRouter } from './routes/upload-router';
 import { AuthService } from './services/auth-service';
-import { ImageService } from "./services/image-service";
+import { ImageService } from './services/image-service';
+import { UserService } from './services/user-service';
 
 export class Server {
 
@@ -18,12 +19,14 @@ export class Server {
 
     private routers = {};
     private imageService: ImageService;
+    private userService: UserService;
 
     constructor(private port: number, private apiRootPath: string,
         private apiVersion: number, private dbClient: DBClient) {
 
         this.app = express();
         this.imageService = new ImageService(dbClient);
+        this.userService = new UserService(dbClient);
         this.configure();
         this.start();
     }
@@ -81,7 +84,7 @@ export class Server {
         let sessionRouter = new SessionRouter(this.dbClient);
         this.routers['sessions'] = sessionRouter;
 
-        let userRouter = new UserRouter(this.dbClient, this.imageService);
+        let userRouter = new UserRouter(this.dbClient, this.userService, this.imageService);
         this.routers['users'] = userRouter;
 
         let imageRouter = new ImageRouter(this.dbClient, this.imageService);
