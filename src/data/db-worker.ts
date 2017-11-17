@@ -235,8 +235,10 @@ export class DBWorker extends DBClient {
 
             if (field === 'id') {
                 query = { "_id": new ObjectID(value) };
-            } else if (field === 'email' || field === 'username') {
-                query = { field: value };
+            } else if (field === 'email') {
+                query = { email: value };
+            } else if (field === 'username') {
+                query = { username: value };
             } else {
                 let error = new Error('Missing user identifier. Possible field names are id, email or username.');
                 return reject(error);
