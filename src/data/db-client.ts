@@ -94,13 +94,12 @@ export abstract class DBClient {
      * Returns a Promise with user object with a given identifier. Identifiers work in the
      * following priority: userId > email > username.
      *
-     * @param userId id of the user
-     * @param email email of the user
-     * @param username username of the user
+     * @param field field by which to search. Possible values are 'id', 'email' and 'username'
+     * @param value value of the field
      * @param raw if true, the raw User object is returned. Default is false.
      * @returns Promise with User JS Object
      */
-    abstract async getOneUser(userId?: string, email?: string, username?: string, raw?: boolean);
+    abstract async getOneUser(field: string, value: string, raw?: boolean);
 
     /**
      * Updates a user

@@ -76,7 +76,7 @@ export class UserRouter extends APIRouter {
     getOne(req: Request, res: Response, next: NextFunction) {
         let id = req.params.id;
 
-        this.dbClient.getOneUser(id).then((result) => {
+        this.dbClient.getOneUser('id', id).then((result) => {
             if (result) {
                 res.send({
                     'user': result

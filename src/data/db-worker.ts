@@ -227,20 +227,18 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getOneUser(userId?: string, email?: string, username?: string, raw: boolean = false) {
+    async getOneUser(field: string, value: string, raw: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
             let query: Object;
 
-            if (userId) {
-                query = { _id: new ObjectID(userId) };
-            } else if (email) {
-                query = { email: email };
-            } else if (username) {
-                query = { username: username };
+            if (field === 'id') {
+                query = { "_id": new ObjectID(value) };
+            } else if (field === 'email' || field === 'username') {
+                query = { field: value };
             } else {
-                let error = new Error('Missing user identifier. Either of userId, email or username should be present.');
+                let error = new Error('Missing user identifier. Possible field names are id, email or username.');
                 return reject(error);
             }
 

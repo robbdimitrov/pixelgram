@@ -83,7 +83,7 @@ export class ImageService {
 
     getAllImagesLikedByUser(userId: string, page: number, limit: number, countOnly: boolean = false): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.dbClient.getOneUser(userId).then((user) => {
+            this.dbClient.getOneUser('id', userId).then((user) => {
                 this.dbClient.getAllImages({ _id: { $in: user.likedImages } }, page, limit, countOnly).then((result) => {
                     resolve(result);
                 });

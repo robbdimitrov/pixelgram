@@ -20,7 +20,7 @@ export class SessionRouter extends APIRouter {
         let email = body.email || '';
         let password = body.password || '';
 
-        this.dbClient.getOneUser(undefined, email, undefined, true).then((user) => {
+        this.dbClient.getOneUser('email', email, true).then((user) => {
             AuthService.getInstance().validatePassword(password, user.password).then((result) => {
                 if (result === true) {
                     delete user['password'];

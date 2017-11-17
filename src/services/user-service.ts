@@ -64,7 +64,7 @@ export class UserService {
                     return reject(error);
                 }
 
-                this.dbClient.getOneUser(userId, undefined, undefined, true).then((user) => {
+                this.dbClient.getOneUser('id', userId, true).then((user) => {
                     AuthService.getInstance().validatePassword(oldPassword, user.password).then((value) => {
                         AuthService.getInstance().generateHash(password).then((result) => {
                             updatedUser['password'] = result;
