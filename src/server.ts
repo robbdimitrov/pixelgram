@@ -39,7 +39,8 @@ export class Server {
         this.app.use(helmet());
         this.configureRoutes()
         this.connectRoutes();
-        this.app.use('/uploads', express.static(config.imageDir));
+
+        this.app.use(`/${this.apiRoot()}/uploads`, express.static(config.imageDir));
     }
 
     private apiRoot(): string {

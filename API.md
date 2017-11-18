@@ -636,3 +636,28 @@ Response:
     "message": "Image unliked successfully."
 }
 ```
+
+### Load image asset
+
+```
+GET /uploads/<filename>
+```
+
+Parameters in the URL:
+
+```
+filename - filename returned from the upload function
+```
+
+Headers:
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+The image data
+```
