@@ -1,6 +1,6 @@
 import { ObjectID } from 'mongodb';
 
-import { DBClient } from '../data/db-client';
+import { DBClient, UserSearchField } from '../data/db-client';
 import { ImageFactory } from '../models/factories/image-factory';
 
 export class ImageService {
@@ -83,7 +83,7 @@ export class ImageService {
 
     getAllImagesLikedByUser(userId: string, page: number, limit: number, countOnly: boolean = false): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.dbClient.getOneUser('id', userId).then((user) => {
+            this.dbClient.getOneUser(UserSearchField.Identifier, userId).then((user) => {
                 this.dbClient.getAllImages({ _id: { $in: user.likedImages } }, page, limit, countOnly).then((result) => {
                     resolve(result);
                 });

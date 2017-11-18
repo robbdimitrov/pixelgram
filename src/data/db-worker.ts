@@ -1,6 +1,6 @@
 import { ObjectID, Db, MongoClient } from 'mongodb';
 
-import { DBClient } from './db-client';
+import { DBClient, UserSearchField } from './db-client';
 import { User } from '../models/user';
 import { Image } from '../models/image';
 import { UserFactory } from '../models/factories/user-factory';
@@ -227,21 +227,22 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getOneUser(field: string, value: string, raw: boolean = false) {
+    async getOneUser(field: UserSearchField, value: string, raw: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            let query: Object;
+            let query: Object = {};
 
-            if (field === 'id') {
-                query = { "_id": new ObjectID(value) };
-            } else if (field === 'email') {
-                query = { email: value };
-            } else if (field === 'username') {
-                query = { username: value };
-            } else {
-                let error = new Error('Missing user identifier. Possible field names are id, email or username.');
-                return reject(error);
+            switch (field) {
+                case UserSearchField.Identifier:
+                    query = { "_id": new ObjectID(value) };
+                    break;
+                case UserSearchField.Username:
+                    query = { username: value };
+                    break;
+                case UserSearchField.Email:
+                    query = { email: value };
+                    break;
             }
 
             let completion = (error, result) => {

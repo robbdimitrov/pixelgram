@@ -2,6 +2,15 @@ import { User } from '../models/user';
 import { Image } from '../models/image';
 
 /**
+ * An enum with types of user fields to search by.
+ */
+export enum UserSearchField {
+    Identifier,
+    Username,
+    Email,
+}
+
+/**
  * An abstract class used for database operations.
  */
 export abstract class DBClient {
@@ -94,12 +103,12 @@ export abstract class DBClient {
      * Returns a Promise with user object with a given identifier. Identifiers work in the
      * following priority: userId > email > username.
      *
-     * @param field field by which to search. Possible values are 'id', 'email' and 'username'
+     * @param field field by which to search. Possible values defined in UserSearchField enum
      * @param value value of the field
      * @param raw if true, the raw User object is returned. Default is false.
      * @returns Promise with User JS Object
      */
-    abstract async getOneUser(field: string, value: string, raw?: boolean);
+    abstract async getOneUser(field: UserSearchField, value: string, raw?: boolean);
 
     /**
      * Updates a user
