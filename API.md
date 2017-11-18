@@ -20,7 +20,6 @@ All request have the prefix `/api/v1.0` or whatever are set in the `server.confi
   * [Get user's images](#get-users-images)
   * [Get user's liked images](#get-users-liked-images)
 * [Images](#images)
-  * [Upload an image](#upload-an-image)
   * [Create an image](#create-an-image)
   * [Get all images](#get-all-images)
   * [Get image](#get-image)
@@ -29,6 +28,9 @@ All request have the prefix `/api/v1.0` or whatever are set in the `server.confi
   * [Add image to the current user's likes](#add-image-to-the-current-users-likes)
   * [Get all users liked an image](#get-all-users-liked-an-image)
   * [Remove image from user's likes](#remove-image-from-users-likes)
+* [Image assets](#image-assets)
+  * [Upload an image](#upload-an-image)
+  * [Load image asset](#load-image-asset)
 
 ## Sessions
 
@@ -346,35 +348,6 @@ Response:
 
 ## Images
 
-### Upload an image
-
-An image asset has to be uploaded before creating an Image object. The returned image name
-is used for the `url` parameter. File size should be less than 1MB. 
-This is used for uploading user's avatars as well.
-
-```
-POST /upload
-```
-
-Parameters in the request body:
-
-```
-image: file sent as multipart/form-data
-```
-
-```
-Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
-```
-
-Response:
-
-```
-{
-    "filename": "d4aab3fd72517522479c08520bc150a3"
-}
-```
-
 ### Create an image
 
 ```
@@ -634,6 +607,37 @@ Response:
 ```
 {
     "message": "Image unliked successfully."
+}
+```
+
+## Image assets
+
+### Upload an image
+
+An image asset has to be uploaded before creating an Image object. The returned image name
+is used for the `url` parameter. File size should be less than 1MB. 
+This is used for uploading user's avatars as well.
+
+```
+POST /upload
+```
+
+Parameters in the request body:
+
+```
+image: file sent as multipart/form-data
+```
+
+```
+Content-Type: application/x-www-form-urlencoded
+x-access-token: <valid-session-token>
+```
+
+Response:
+
+```
+{
+    "filename": "d4aab3fd72517522479c08520bc150a3"
 }
 ```
 

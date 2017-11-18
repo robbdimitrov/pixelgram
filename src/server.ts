@@ -65,17 +65,15 @@ export class Server {
                 req.user = result;
                 next();
             }).catch((error) => {
-                return res.status(403).send({
-                    success: false,
-                    message: 'Failed to authenticate token.'
+                return res.status(401).send({
+                    error: 'Failed to authenticate token.'
                 });
             });
         } else {
             // if there is no token
             // return an error
-            return res.status(403).send({
-                success: false,
-                message: 'No token provided.'
+            return res.status(401).send({
+                error: 'No token provided.'
             });
         }
     }

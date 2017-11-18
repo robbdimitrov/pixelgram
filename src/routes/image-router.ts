@@ -94,7 +94,7 @@ export class ImageRouter extends APIRouter {
                 });
             });
         }).catch((error) => {
-            res.status(401).send({
+            res.status(400).send({
                 'error': error.message
             });
         });
@@ -110,7 +110,7 @@ export class ImageRouter extends APIRouter {
                 'message': 'Image deleted successfully.'
             });
         }).catch((error) => {
-            res.status(401).send({
+            res.status(400).send({
                 'error': error.message
             });
         });
