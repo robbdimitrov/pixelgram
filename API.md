@@ -290,7 +290,7 @@ Response:
         {
             "_id": "5a0c5629ca682d61abcd5786",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
-            "url": "d1d99db3ac32052b9dd66cb5914508dd",
+            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Image description",
             "dateCreated": "2017-11-15T16:58:49+02:00",
             "likedUsers": []
@@ -298,7 +298,7 @@ Response:
         {
             "_id": "5a0c5630ca682d61abcd5787",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
-            "url": "d1d99db3ac32052b9dd66cb5914508dd",
+            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Other description #awesome",
             "dateCreated": "2017-11-15T16:58:56+02:00",
             "likedUsers": []
@@ -335,7 +335,7 @@ Response:
         {
             "_id": "5a0c5629ca682d61abcd5786",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
-            "url": "d1d99db3ac32052b9dd66cb5914508dd",
+            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Image description",
             "dateCreated": "2017-11-15T16:58:49+02:00",
             "likedUsers": [
@@ -357,7 +357,7 @@ POST /images
 Parameters in the request body:
 
 ```
-url: string
+filename: string
 description: string
 ```
 
@@ -397,7 +397,7 @@ Response:
         {
             "_id": "5a0996ba2775b637bd49b0ab",
             "ownerID": "5a069fd03bd9992ce9520ec5",
-            "url": "6710497b36573655ed145f1bc1e01052",
+            "filename": "6710497b36573655ed145f1bc1e01052",
             "description": "Some image description",
             "dateCreated": "2017-11-13T14:57:19+02:00",
             "likedUsers": []
@@ -405,7 +405,7 @@ Response:
         {
             "_id": "5a0c5629ca682d61abcd5786",
             "ownerID": "5a09b5acc3d0655f6f6225cb",
-            "url": "d1d99db3ac32052b9dd66cb5914508dd",
+            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Image description 2",
             "dateCreated": "2017-11-15T16:58:49+02:00",
             "likedUsers": [
@@ -448,7 +448,7 @@ Response:
     "image": {
         "_id": "5a0996ba2775b637bd49b0ab",
         "ownerID": "5a069fd03bd9992ce9520ec5",
-        "url": "6710497b36573655ed145f1bc1e01052",
+        "filename": "6710497b36573655ed145f1bc1e01052",
         "description": "Image description",
         "dateCreated": "2017-11-13T14:57:19+02:00",
         "likedUsers": []
@@ -615,7 +615,7 @@ Response:
 ### Upload an image
 
 An image asset has to be uploaded before creating an Image object. The returned image name
-is used for the `url` parameter. File size should be less than 1MB. 
+is used for the `filename` parameter. File size should be less than 1MB. 
 This is used for uploading user's avatars as well.
 
 ```

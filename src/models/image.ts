@@ -6,7 +6,7 @@ export class Image {
 
     _id: ObjectID;
     ownerID: ObjectID;
-    url: string;
+    filename: string;
     dateCreated: string;
     description: string;
     likedUsers: ObjectID[];

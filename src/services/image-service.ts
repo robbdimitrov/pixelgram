@@ -7,8 +7,8 @@ export class ImageService {
 
     constructor(protected dbClient: DBClient) {}
 
-    createImage(userId: string, url: string, description: string): Promise<any> {
-        let image = ImageFactory.createImage(userId, url, description);
+    createImage(userId: string, filename: string, description: string): Promise<any> {
+        let image = ImageFactory.createImage(userId, filename, description);
 
         return new Promise((resolve, reject) => {
             this.dbClient.createOneImage(image).then((result) => {

@@ -40,8 +40,8 @@ export class ImageRouter extends APIRouter {
     createOne(req: Request, res: Response, next: NextFunction) {
         let body = req.body || {}
 
-        if (body.url === undefined) {
-            let error = new Error('Missing argument(s). Image url is expected.');
+        if (body.filename === undefined) {
+            let error = new Error('Missing argument(s). Image filename is expected.');
 
             res.status(400).send({
                 'error': error.message
@@ -50,10 +50,10 @@ export class ImageRouter extends APIRouter {
         }
 
         let userId = req['user'].id;
-        let url = body.url || '';
+        let filename = body.filename || '';
         let description = body.description || '';
 
-        this.imageService.createImage(userId, url, description).then((result) => {
+        this.imageService.createImage(userId, filename, description).then((result) => {
             res.send({
                 'message': 'Image created successfully.'
             });

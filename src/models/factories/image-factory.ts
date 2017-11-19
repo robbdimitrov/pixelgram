@@ -5,12 +5,12 @@ import { ObjectID } from 'mongodb';
 
 export class ImageFactory {
 
-    static createImage(ownerID: string, url: string,
+    static createImage(ownerID: string, filename: string,
         description: string): Image {
 
         let image = new Image();
         image.ownerID = new ObjectID(ownerID);
-        image.url = url;
+        image.filename = filename;
         image.description = description;
         image.dateCreated = moment().format();
         image.likedUsers = [];
