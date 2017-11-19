@@ -16,8 +16,9 @@ export class UserLikesRouter extends APIRouter {
         let count = Boolean(parseInt(query.count, 10) || 0);
         let limit = parseInt(query.limit, 10) || 25;
         let page = parseInt(query.page, 10) || 0;
+        let currentUserId = req['user'].id;
 
-        this.imageService.getAllImagesLikedByUser(userId, page, limit, count).then((result) => {
+        this.imageService.getAllImagesLikedByUser(userId, page, limit, count, currentUserId).then((result) => {
             res.send({
                 'images': result
             });

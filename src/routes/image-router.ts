@@ -25,8 +25,9 @@ export class ImageRouter extends APIRouter {
         let query = req.query || {};
         let limit = parseInt(query.limit, 10) || 25;
         let page = parseInt(query.page, 10) || 0;
+        let userId = req['user'].id;
 
-        this.imageService.getAllImages(page, limit).then((result) => {
+        this.imageService.getAllImages(page, limit, userId).then((result) => {
             res.send({
                 'images': result
             });
@@ -66,8 +67,9 @@ export class ImageRouter extends APIRouter {
 
     getOne(req: Request, res: Response, next: NextFunction) {
         let id = req.params.id;
+        let userId = req['user'].id;
 
-        this.dbClient.getOneImage(id).then((result) => {
+        this.dbClient.getOneImage(id, userId).then((result) => {
             if (result) {
                 res.send({
                     'image': result

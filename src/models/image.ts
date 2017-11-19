@@ -5,7 +5,7 @@ import { User } from './user';
 export class Image {
 
     _id: ObjectID;
-    ownerID: ObjectID;
+    ownerId: ObjectID;
     filename: string;
     dateCreated: string;
     description: string;

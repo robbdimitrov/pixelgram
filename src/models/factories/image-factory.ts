@@ -5,11 +5,11 @@ import { ObjectID } from 'mongodb';
 
 export class ImageFactory {
 
-    static createImage(ownerID: string, filename: string,
+    static createImage(ownerId: string, filename: string,
         description: string): Image {
 
         let image = new Image();
-        image.ownerID = new ObjectID(ownerID);
+        image.ownerId = new ObjectID(ownerId);
         image.filename = filename;
         image.description = description;
         image.dateCreated = moment().format();

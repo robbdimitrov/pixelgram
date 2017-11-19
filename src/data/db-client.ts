@@ -40,9 +40,11 @@ export abstract class DBClient {
      * @param page current page of content
      * @param limit number of items per page
      * @param countOnly if true, function returns just count. Default is false.
+     * @param userId used for checking if the current user has liked the image
      * @returns Promise with either image array or count
      */
-    abstract async getAllImages(query: Object, page: number, limit: number, countOnly?: boolean);
+    abstract async getAllImages(query: Object, page: number, limit: number,
+        countOnly?: boolean, userId?: string);
 
     /**
      * Creates an image in the database for a given Image object
@@ -56,9 +58,10 @@ export abstract class DBClient {
      * Returns a Promise with image object with a given identifier
      *
      * @param imageId id of the image
+     * @param userId used for checking if the current user has liked the image
      * @returns Promise with Image Object
      */
-    abstract async getOneImage(imageId: string);
+    abstract async getOneImage(imageId: string, userId?: string);
 
     /**
      * Updates an image

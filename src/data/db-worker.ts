@@ -12,7 +12,7 @@ export type DatabaseCallback = (database: Db) => void;
 
 export class DBWorker extends DBClient {
 
-    private database: Db | undefined;
+    private database?: Db;
 
     // Database connection methods
 
@@ -53,6 +53,43 @@ export class DBWorker extends DBClient {
         });
     }
 
+    // Aggregation
+
+    userAggregationProperties(raw: boolean = false): Object {
+        let properties = {
+            name: 1,
+            username: 1,
+            email: 1,
+            bio: 1,
+            avatar: 1,
+            registrationDate: 1,
+            likes: { $size: '$likedImages' },
+            images: { $size: '$postedImages' }
+        };
+
+        if (raw) {
+            properties['password'] = 1
+        }
+
+        return properties;
+    }
+
+    imageAggregationProperties(userId?: string): Object {
+        let properties = {
+            ownerId: 1,
+            filename: 1,
+            dateCreated: 1,
+            description: 1,
+            likes: { $size: '$likedUsers' }
+        };
+
+        if (userId !== undefined) {
+            properties['isLiked'] = { $in: [ new ObjectID(userId), '$likedUsers' ] }
+        }
+
+        return properties;
+    }
+
     // Image methods
 
     async imageIsOwnedByUser(userId: string, imageId: string) {
@@ -61,9 +98,12 @@ export class DBWorker extends DBClient {
         return new Promise((resolve, reject) => {
             db.collection('images').find({
                 _id: new ObjectID(imageId),
-                ownerID: new ObjectID(userId)
-            }).toArray((err, result) => {
-                if (result.length > 0) {
+                ownerId: new ObjectID(userId)
+            },
+            {
+                id: 1, ownerId: 1
+            }).count((error, result) =>{
+                if (result > 0) {
                     return resolve();
                 }
                 return reject(new Error('Image not existing or owned by other user.'));
@@ -71,20 +111,23 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getAllImages(query: Object, page: number, limit: number, countOnly: boolean = false) {
+    async getAllImages(query: Object, page: number, limit: number,
+        countOnly: boolean = false, userId?: string) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            let cursor = db.collection('images').find(query);
 
             if (countOnly) {
-                cursor.count().then((res) => {
+                db.collection('images').find(query, { _id: 1 }).count().then((res) => {
                     return resolve(res);
                 }).catch((error) => {
                     reject(error);
                 });
             } else {
-                cursor.skip(page * limit).limit(limit).toArray((err, result) => {
+                db.collection('images').aggregate([
+                    { $match: query },
+                    { $project: this.imageAggregationProperties(userId) }
+                ]).skip(page * limit).limit(limit).toArray((err, result) => {
                     if (err) {
                         return reject(err);
                     }
@@ -104,7 +147,7 @@ export class DBWorker extends DBClient {
                 }
 
                 db.collection('users').updateOne(
-                    { _id: image.ownerID },
+                    { _id: image.ownerId },
                     { $push: { postedImages: result.insertedId } }
                 ).then((result) => {
                     resolve(result);
@@ -115,16 +158,21 @@ export class DBWorker extends DBClient {
         });
     }
 
-    async getOneImage(imageId: string) {
+    async getOneImage(imageId: string, userId?: string) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('images').findOne({ _id: new ObjectID(imageId) }, (err, result) => {
-                if (err) {
-                    return reject(err);
+            let query = { _id: new ObjectID(imageId) };
+
+            db.collection('images').aggregate([
+                { $match: query },
+                { $project: this.imageAggregationProperties(userId) }
+            ], (error, result) => {
+                if (error) {
+                    return reject(error);
                 }
-                return resolve(result);
-            });
+                return resolve(result[0]);
+            })
         });
     }
 
@@ -166,25 +214,6 @@ export class DBWorker extends DBClient {
     }
 
     // User methods
-
-    userAggregationProperties(raw: boolean = false): Object {
-        let properties = {
-            name: 1,
-            username: 1,
-            email: 1,
-            bio: 1,
-            avatar: 1,
-            registrationDate: 1,
-            likes: { $size: '$likedImages' },
-            images: { $size: '$postedImages' }
-        };
-
-        if (raw) {
-            properties['password'] = 1
-        }
-
-        return properties;
-    }
 
     async getAllUsers(query: Object, page: number, limit: number, countOnly: boolean = false) {
         let db = await this.get();

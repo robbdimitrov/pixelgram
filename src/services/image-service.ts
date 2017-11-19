@@ -61,32 +61,35 @@ export class ImageService {
         });
     }
 
-    getAllImages(page: number, limit: number): Promise<any> {
+    getAllImages(page: number, limit: number, userId?: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.dbClient.getAllImages({}, page, limit).then((result) => {
+            this.dbClient.getAllImages({}, page, limit, false, userId).then((result) => {
                 resolve(result);
             }).catch((error) => {
                 reject(error);
             });
-        })
+        });
     }
 
-    getAllImagesForUser(userId: string, page: number, limit: number, countOnly: boolean = false): Promise<any> {
+    getAllImagesForUser(ownerId: string, page: number, limit: number, countOnly: boolean = false, userId?: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.dbClient.getAllImages({ ownerID: new ObjectID(userId) }, page, limit, countOnly).then((result) => {
+            let query = { ownerId: new ObjectID(ownerId) };
+
+            this.dbClient.getAllImages(query, page, limit, countOnly, userId).then((result) => {
                 resolve(result);
             }).catch((error) => {
                 reject(error);
             });
-        })
+        });
     }
 
-    getAllImagesLikedByUser(userId: string, page: number, limit: number, countOnly: boolean = false): Promise<any> {
+    getAllImagesLikedByUser(userId: string, page: number, limit: number,
+        countOnly: boolean = false, currentUserId?: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.dbClient.getOneUser(UserSearchField.Identifier, userId).then((user) => {
-                this.dbClient.getAllImages({ _id: { $in: user.likedImages } }, page, limit, countOnly).then((result) => {
-                    resolve(result);
-                });
+            let query = { likedUsers: new ObjectID(userId) };
+
+            this.dbClient.getAllImages(query, page, limit, countOnly, currentUserId).then((result) => {
+                resolve(result);
             }).catch((error) => {
                 reject(error);
             });
@@ -95,10 +98,10 @@ export class ImageService {
 
     getUsersLikedImage(imageId: string, page: number, limit: number, countOnly: boolean = false): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.dbClient.getOneImage(imageId).then((image) => {
-                this.dbClient.getAllUsers({ _id: { $in: image.likedUsers } }, page, limit, countOnly).then((result) => {
-                    resolve(result);
-                });
+            let query = { likedImages: new ObjectID(imageId) };
+
+            this.dbClient.getAllUsers(query, page, limit, countOnly).then((result) => {
+                resolve(result);
             }).catch((error) => {
                 reject(error);
             });

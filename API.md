@@ -277,19 +277,21 @@ Response:
     "images": [
         {
             "_id": "5a0c5629ca682d61abcd5786",
-            "ownerID": "5a09b5acc3d0655f6f6225cb",
+            "ownerId": "5a09b5acc3d0655f6f6225cb",
             "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Image description",
             "dateCreated": "2017-11-15T16:58:49+02:00",
-            "likedUsers": []
+            "likes": 2,
+            "isLiked": true
         },
         {
             "_id": "5a0c5630ca682d61abcd5787",
-            "ownerID": "5a09b5acc3d0655f6f6225cb",
+            "ownerId": "5a09b5acc3d0655f6f6225cb",
             "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Other description #awesome",
             "dateCreated": "2017-11-15T16:58:56+02:00",
-            "likedUsers": []
+            "likes": 1,
+            "isLiked": false
         }
     ]
 }
@@ -322,13 +324,12 @@ Response:
     "images": [
         {
             "_id": "5a0c5629ca682d61abcd5786",
-            "ownerID": "5a09b5acc3d0655f6f6225cb",
+            "ownerId": "5a09b5acc3d0655f6f6225cb",
             "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Image description",
             "dateCreated": "2017-11-15T16:58:49+02:00",
-            "likedUsers": [
-                "5a09b5acc3d0655f6f6225cb"
-            ]
+            "likes": 2,
+            "isLiked": true
         }
     ]
 }
@@ -384,21 +385,21 @@ Response:
     "images": [
         {
             "_id": "5a0996ba2775b637bd49b0ab",
-            "ownerID": "5a069fd03bd9992ce9520ec5",
+            "ownerId": "5a069fd03bd9992ce9520ec5",
             "filename": "6710497b36573655ed145f1bc1e01052",
             "description": "Some image description",
             "dateCreated": "2017-11-13T14:57:19+02:00",
-            "likedUsers": []
+            "likes": 0,
+            "isLiked": false
         },
         {
             "_id": "5a0c5629ca682d61abcd5786",
-            "ownerID": "5a09b5acc3d0655f6f6225cb",
+            "ownerId": "5a09b5acc3d0655f6f6225cb",
             "filename": "d1d99db3ac32052b9dd66cb5914508dd",
             "description": "Image description 2",
             "dateCreated": "2017-11-15T16:58:49+02:00",
-            "likedUsers": [
-                "5a09b5acc3d0655f6f6225cb"
-            ]
+            "likes": 1,
+            "isLiked": true
         }
     ]
 }
@@ -435,11 +436,12 @@ Response:
 {
     "image": {
         "_id": "5a0996ba2775b637bd49b0ab",
-        "ownerID": "5a069fd03bd9992ce9520ec5",
+        "ownerId": "5a069fd03bd9992ce9520ec5",
         "filename": "6710497b36573655ed145f1bc1e01052",
         "description": "Image description",
         "dateCreated": "2017-11-13T14:57:19+02:00",
-        "likedUsers": []
+        "likes": 2,
+        "isLiked": true
     }
 }
 ```
