@@ -167,20 +167,40 @@ export class DBWorker extends DBClient {
 
     // User methods
 
+    userAggregationProperties(raw: boolean = false): Object {
+        let properties = {
+            name: 1,
+            username: 1,
+            email: 1,
+            bio: 1,
+            avatar: 1,
+            registrationDate: 1,
+            likes: { $size: '$likedImages' },
+            images: { $size: '$postedImages' }
+        };
+
+        if (raw) {
+            properties['password'] = 1
+        }
+
+        return properties;
+    }
+
     async getAllUsers(query: Object, page: number, limit: number, countOnly: boolean = false) {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            let cursor = db.collection('users').find(query, { fields: { password: 0 } });
-
             if (countOnly) {
-                cursor.count().then((res) => {
+                db.collection('users').find(query, { _id: 1 }).count().then((res) => {
                     return resolve(res);
                 }).catch((error) => {
                     reject(error);
                 });
             } else {
-                cursor.skip(page * limit).limit(limit).toArray((err, result) => {
+                db.collection('users').aggregate([
+                    { $match: query },
+                    { $project: this.userAggregationProperties() }
+                ]).skip(page * limit).limit(limit).toArray((err, result) => {
                     if (err) {
                         return reject(err);
                     }
@@ -194,9 +214,10 @@ export class DBWorker extends DBClient {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-            db.collection('users').find({
-                $or: [{ email: email }, { username: username }]
-            }).toArray((err, result) => {
+            db.collection('users').aggregate([
+                { $match: { $or: [{ email: email }, { username: username }] } },
+                { $project: { _id: 1 } }
+            ]).toArray((err, result) => {
                 if (result.length > 0) {
                     let firstUser = result[0];
                     if (firstUser.email === email) {
@@ -252,14 +273,13 @@ export class DBWorker extends DBClient {
                     let error = new Error('User not found.');
                     return reject(error);
                 }
-                return resolve(result);
+                return resolve(result[0]);
             };
 
-            if (raw) {
-                db.collection('users').findOne(query, completion);
-            } else {
-                db.collection('users').findOne(query, { fields: { password: 0 } }, completion);
-            }
+            db.collection('users').aggregate([
+                { $match: query },
+                { $project: this.userAggregationProperties(raw) }
+            ], completion)
         });
     }
 

@@ -64,12 +64,8 @@ Response:
         "email": "clark.kent@dailyplanet.com",
         "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
         "bio": "Kriptonian hero",
-        "likedImages": [
-            "5a0c186b7ceeae000ffc8bdc"
-        ],
-        "postedImages": [
-            "5a0c186b7ceeae000ffc8bdc"
-        ],
+        "likes": 0,
+        "images": 1,
         "registrationDate": "2017-11-15T10:05:28+00:00"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN1cGVybWFuIiwiaWQiOiI1YTBjMTE2ODJjZTdlMTAwMGYyYTFmNWEiLCJpYXQiOjE1MTA3NDg4ODksImV4cCI6MTUxMDc1MjQ4OX0.ZDmxdzis314r1VNSXWKjqHDCVrilfdeJO9d5Rviids0"
@@ -132,12 +128,8 @@ Response:
             "email": "clark.kent@dailyplanet.com",
             "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
             "bio": "Kriptonian hero",
-            "likedImages": [
-                "5a0c186b7ceeae000ffc8bdc"
-            ],
-            "postedImages": [
-                "5a0c186b7ceeae000ffc8bdc"
-            ],
+            "likes": 0,
+            "images": 2,
             "registrationDate": "2017-11-15T10:05:28+00:00"
         },
         {
@@ -147,8 +139,8 @@ Response:
             "email": "bruce@wayneindustries.com",
             "avatar": "",
             "bio": "The dark knight",
-            "likedImages": [],
-            "postedImages": [],
+            "likes": 1,
+            "images": 1,
             "registrationDate": "2017-11-15T12:42:03+00:00"
         }
     ]
@@ -185,12 +177,8 @@ Response:
         "email": "clark.kent@dailyplanet.com",
         "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
         "bio": "",
-        "likedImages": [
-            "5a0c186b7ceeae000ffc8bdc"
-        ],
-        "postedImages": [
-            "5a0c186b7ceeae000ffc8bdc"
-        ],
+        "likes": 1,
+        "images": 1,
         "registrationDate": "2017-11-15T10:05:28+00:00"
     }
 }
@@ -569,13 +557,8 @@ Response:
             "email": "bruce@wayneindustries.com",
             "avatar": "",
             "bio": "The dark knight",
-            "likedImages": [
-                "5a0996ba2775b637bd49b0ab"
-            ],
-            "postedImages": [
-                "5a0c5630ca682d61abcd5787",
-                "5a0c5ee49e6d89692ff365c5"
-            ],
+            "likes": 1,
+            "images": 2,
             "registrationDate": "2017-11-13T17:09:19+02:00"
         }
     ]
