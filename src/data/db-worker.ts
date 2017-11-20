@@ -116,7 +116,6 @@ export class DBWorker extends DBClient {
         let db = await this.get();
 
         return new Promise((resolve, reject) => {
-
             if (countOnly) {
                 db.collection('images').find(query, { _id: 1 }).count().then((res) => {
                     return resolve(res);
@@ -124,10 +123,12 @@ export class DBWorker extends DBClient {
                     reject(error);
                 });
             } else {
+                let sortQuery = { dateCreated: -1 };
+
                 db.collection('images').aggregate([
                     { $match: query },
                     { $project: this.imageAggregationProperties(userId) }
-                ]).skip(page * limit).limit(limit).toArray((err, result) => {
+                ]).sort(sortQuery).skip(page * limit).limit(limit).toArray((err, result) => {
                     if (err) {
                         return reject(err);
                     }
