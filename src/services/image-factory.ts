@@ -1,6 +1,6 @@
 import * as moment from 'moment';
 
-import { Image } from '../image';
+import { Image } from '../models/image';
 import { ObjectID } from 'mongodb';
 
 export class ImageFactory {

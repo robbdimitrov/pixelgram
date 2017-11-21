@@ -3,8 +3,8 @@ import { ObjectID, Db, MongoClient } from 'mongodb';
 import { DBClient, UserSearchField } from './db-client';
 import { User } from '../models/user';
 import { Image } from '../models/image';
-import { UserFactory } from '../models/factories/user-factory';
-import { ImageFactory } from '../models/factories/image-factory';
+import { UserFactory } from '../services/user-factory';
+import { ImageFactory } from '../services/image-factory';
 import * as config from '../../config/server.config';
 import { error } from 'util';
 

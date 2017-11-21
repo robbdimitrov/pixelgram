@@ -1,7 +1,7 @@
 import * as moment from 'moment';
 
-import { User } from '../user';
-import { AuthService } from '../../services/auth-service';
+import { User } from '../models/user';
+import { AuthService } from './auth-service';
 
 export class UserFactory {
 

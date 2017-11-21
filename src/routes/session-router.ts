@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 import { APIRouter } from './api-router';
 import { AuthService } from '../services/auth-service';
-import { UserFactory } from '../models/factories/user-factory';
+import { UserFactory } from '../services/user-factory';
 import { UserSearchField } from '../data/db-client';
 
 export class SessionRouter extends APIRouter {
@@ -21,7 +21,17 @@ export class SessionRouter extends APIRouter {
         let email = body.email || '';
         let password = body.password || '';
 
+        let authFailedBlock = () => {
+            res.status(401).send({
+                'error': 'Authentication failed. Incorrect email or password.'
+            });
+        };
+
         this.dbClient.getOneUser(UserSearchField.Email, email, true).then((user) => {
+            if (user == undefined) {
+                return authFailedBlock();
+            }
+
             AuthService.getInstance().validatePassword(password, user.password).then((result) => {
                 if (result === true) {
                     delete user['password'];
@@ -31,9 +41,7 @@ export class SessionRouter extends APIRouter {
                         'token': token
                     });
                 } else {
-                    res.status(401).send({
-                        'error': 'Authentication failed. Incorrect email or password.'
-                    });
+                    authFailedBlock();
                 }
             });
         }).catch((error) => {

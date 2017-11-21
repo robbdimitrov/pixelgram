@@ -1,7 +1,7 @@
 import { ObjectID } from 'mongodb';
 
 import { DBClient, UserSearchField } from '../data/db-client';
-import { ImageFactory } from '../models/factories/image-factory';
+import { ImageFactory } from '../services/image-factory';
 
 export class ImageService {
 
