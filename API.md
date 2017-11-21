@@ -551,7 +551,7 @@ Response:
 
 ```
 {
-    "likes": [
+    "users": [
         {
             "_id": "5a09b5acc3d0655f6f6225cb",
             "name": "Bruce Wayne",
