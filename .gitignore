@@ -29,8 +29,14 @@ bower_components
 
 # Editors
 .idea
-.vscode
 *.iml
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # OS metadata
 .DS_Store
