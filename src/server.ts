@@ -56,7 +56,7 @@ export class Server {
             return next();
         }
 
-        var token = req.body.token || req.query.token || req.headers['x-access-token'];
+        var token = req.body.token || req.query.token || req.headers['X-Access-Token'];
 
         // decode token
         if (token) {

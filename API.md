@@ -113,7 +113,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -163,7 +163,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -212,7 +212,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -239,7 +239,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -267,7 +267,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -314,7 +314,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -354,7 +354,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -375,7 +375,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -427,7 +427,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -468,7 +468,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -495,7 +495,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -516,7 +516,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -544,7 +544,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -584,7 +584,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -615,7 +615,7 @@ image: file sent as multipart/form-data
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
@@ -642,7 +642,7 @@ Headers:
 
 ```
 Content-Type: application/x-www-form-urlencoded
-x-access-token: <valid-session-token>
+X-Access-Token: <valid-session-token>
 ```
 
 Response:
