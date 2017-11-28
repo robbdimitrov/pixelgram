@@ -2,7 +2,7 @@
 
 The following are all of the supported API calls. Almost all of them require JSON Web Token 
 in the headers. The only exclusions are `POST /sessions` and `POST /users`. Everything else won't 
-work unless valid token is supplied. Token duration is `1 hour`. 
+work unless valid token is supplied. Token duration is `12 hours`. 
 All request have the prefix `/api/v1.0` or whatever are set in the `server.config.ts` file.
 
 ## Table of contents
