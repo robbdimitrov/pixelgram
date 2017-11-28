@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { Router, Request, Response, NextFunction } from 'express';
 import * as helmet from 'helmet';
+import * as cors from 'cors';
 
 import * as config from '../config/server.config';
 import { DBClient } from './data/db-client';
@@ -36,6 +37,7 @@ export class Server {
         this.app.use(bodyParser.urlencoded({
             extended: true
         }));
+        this.configureCORS();
         this.app.use(helmet());
         this.configureRoutes()
         this.connectRoutes();
@@ -76,6 +78,22 @@ export class Server {
                 error: 'No token provided.'
             });
         }
+    }
+
+    // Configure and enable CORS
+    private configureCORS() {
+        var whitelist = [config.clientURL]
+        var options = {
+          origin: function (origin, callback) {
+            if (whitelist.indexOf(origin) !== -1) {
+              callback(null, true)
+            } else {
+              callback(new Error('Not allowed by CORS'))
+            }
+          }
+        };
+        this.app.options('*', cors(options));
+        this.app.use(cors(options));
     }
 
     // Create API routers

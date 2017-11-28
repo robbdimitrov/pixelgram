@@ -5,6 +5,7 @@
 // apiVersion and apiRootPath are used as an API prefix. Example <server>/api/1.0/
 // secret - used to sign JSON Web Tokens
 // imageDir - the directory where images are stored
+// clientURL - the address of the client web app, used for CORS
 //
 
 export const dbURI = 'mongodb://mongo:27017/pixelgram-db';
@@ -13,3 +14,4 @@ export const apiVersion = 1.0;
 export const apiRootPath = 'api';
 export const secret = 'secret';
 export const imageDir = 'uploads/';
+export const clientURL = 'http://127.0.0.1:4200';
