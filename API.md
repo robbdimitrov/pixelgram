@@ -1,8 +1,8 @@
 # API
 
 The following are all of the supported API calls. Almost all of them require JSON Web Token 
-in the headers. The only exclusions are `POST /sessions` and `POST /users`. Everything else won't 
-work unless valid token is supplied. Token duration is `12 hours`. 
+in the headers. The only exclusions are `POST /sessions`, `POST /users` and `GET /uploads`. 
+Everything else won't work unless valid token is supplied. Token duration is `12 hours`. 
 All request have the prefix `/api/v1.0` or whatever are set in the `server.config.ts` file.
 
 ## Table of contents
@@ -636,13 +636,6 @@ Parameters in the URL:
 
 ```
 filename - filename returned from the upload function
-```
-
-Headers:
-
-```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
 ```
 
 Response:

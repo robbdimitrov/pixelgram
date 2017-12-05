@@ -50,11 +50,11 @@ export class Server {
     }
 
     private authChecker(req, res, next) {
-        // If this is a login request or create a user request,
-        // don't check for token
-        if (req.method === 'POST' &&
-        (req.path.indexOf('/sessions') !== -1 ||
-        req.path.indexOf('/users') !== -1)) {
+        // If this is a login request, create a user request or
+        // get an image request, don't check for token
+        if ((req.method === 'POST' &&
+        (req.path.indexOf('/sessions') !== -1 || req.path.indexOf('/users') !== -1)) ||
+        (req.method === 'GET' && req.path.indexOf('/uploads') !== -1)) {
             return next();
         }
 
@@ -85,7 +85,7 @@ export class Server {
         var whitelist = [config.clientURL]
         var options = {
           origin: function (origin, callback) {
-            if (whitelist.indexOf(origin) !== -1) {
+            if (!origin || whitelist.indexOf(origin) !== -1) {
               callback(null, true)
             } else {
               callback(new Error('Not allowed by CORS'))
