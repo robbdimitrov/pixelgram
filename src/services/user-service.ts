@@ -66,10 +66,14 @@ export class UserService {
 
                 this.dbClient.getOneUser(UserSearchField.Identifier, userId, true).then((user) => {
                     AuthService.getInstance().validatePassword(oldPassword, user.password).then((value) => {
-                        AuthService.getInstance().generateHash(password).then((result) => {
-                            updatedUser['password'] = result;
-                            updateClosure(this.dbClient, userId, updatedUser);
-                        });
+                        if (value) {
+                            AuthService.getInstance().generateHash(password).then((result) => {
+                                updatedUser['password'] = result;
+                                updateClosure(this.dbClient, userId, updatedUser);
+                            });
+                        } else {
+                            throw new Error('Authentication failed.');
+                        }
                     }).catch((err) => {
                         let error = new Error('Wrong password. Enter the correct current password.');
                         reject(error);
