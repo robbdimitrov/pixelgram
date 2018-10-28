@@ -1,0 +1,49 @@
+@import '~stylesheets/variables';
+@import '~stylesheets/flexbox';
+
+.container {
+  margin: $vertical-spacing-medium;
+}
+
+.avatar {
+  width: $avatar-side-large;
+  height: $avatar-side-large;
+  border-radius: $avatar-side-large / 2;
+  object-fit: cover;
+}
+
+.user-content, .counters-buttons, .control-buttons, .counter-container {
+  @include flexbox;
+  @include justify-content(space-between);
+}
+
+.counters-buttons {
+  @include flex-direction(column);
+}
+
+#settings-button {
+  margin-left: $vertical-spacing-internal;
+  background-image: url('/assets/images/settings.svg');
+  background-repeat: no-repeat;
+  width: $icon-button-width;
+  background-position: center;
+}
+
+.counter-container {
+  @include justify-content(flex-end);
+}
+
+.counter {
+  display: inline-block;
+
+  span {
+    text-align: center;
+  }
+}
+
+.user-info, .counter {
+  span {
+    display: inline-block;
+    width: 100%;
+  }
+}

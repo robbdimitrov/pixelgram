@@ -1,8 +1,8 @@
 version: "3"
 
 services:
-  web:
-    build: .
+  backend:
+    build: ./backend
     command: ["npm", "start"]
     restart: always
     ports:
@@ -12,7 +12,15 @@ services:
     links:
       - db:mongo
     volumes:
-      - "image_data:/usr/src/app/uploads"
+      - "image_data:/ng-app/uploads"
+
+  frontend:
+    build: ./frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
   db:
     image: mongo:3.4

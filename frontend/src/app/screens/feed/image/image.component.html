@@ -1,0 +1,39 @@
+<div class="container">
+
+  <div class="header">
+    <div class="user-content">
+      <img
+        [src]="'avatar' | user:image.owner | async | image:'/assets/images/avatar_placeholder.png'"
+        (click)="onProfileClick()">
+
+      <span class="bold"
+        (click)="onProfileClick()">
+        {{'username' | user:image.owner | async}}
+      </span>
+    </div>
+
+    <button *ngIf="isOwnedByCurrentUser()"
+      class="dropdown-button"
+      (click)="optionsOpened = !optionsOpened">
+    </button>
+    <div *ngIf="optionsOpened" class="dropdown-options">
+      <ul>
+        <li (click)="onDeleteClick()">Delete image</li>
+      </ul>
+    </div>
+  </div> <!-- End of header -->
+
+  <img class="image" [src]="image.filename | image">
+
+  <div class="likes">
+    <button class="like" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()"></button>
+    <span class="bold">{{image.likes}} {{image.likes == 1 ? "like" : "likes"}}</span>
+  </div> <!-- End of header -->
+
+  <div class="content">
+    <span class="bold">{{'name' | user:image.owner  | async}}</span>
+    <p>{{image.description}}</p>
+    <span class="small date">{{image.dateCreated | moment}}</span>
+  </div> <!-- End of content -->
+
+</div> <!-- End of container -->

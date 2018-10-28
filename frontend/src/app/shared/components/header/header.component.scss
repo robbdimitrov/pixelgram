@@ -1,0 +1,62 @@
+@import '~stylesheets/variables';
+@import '~stylesheets/flexbox';
+@import '~stylesheets/mixins';
+
+.container {
+  height: $navigation-bar-height;
+  @include flexbox;
+  @include justify-content(space-between);
+  background-color: $component-background;
+}
+
+.logo {
+  margin: $vertical-spacing-internal;
+
+  img {
+    margin-top: $vertical-spacing-internal / 2;
+  }
+}
+
+.logo, ul {
+  margin-left: $vertical-spacing-internal;
+  margin-right: $vertical-spacing-internal;
+}
+
+.nav-button {
+  width: 26px;
+  height: 26px;
+  background-repeat: no-repeat;
+}
+
+.nav-home {
+  background-image: url('/assets/images/home.svg');
+}
+
+.nav-new {
+  background-image: url('/assets/images/add_new.svg');
+}
+
+.nav-profile {
+  background-image: url('/assets/images/profile.svg');
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  @include flexbox;
+  margin: 0;
+  height: 100%;
+  margin-right: $vertical-spacing-internal;
+
+  li {
+    text-align: center;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: $vertical-spacing-internal;
+    margin-right: $vertical-spacing-internal;
+  }
+
+  li a {
+    display: block;
+  }
+}

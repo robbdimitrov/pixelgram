@@ -1,0 +1,16 @@
+@import '~stylesheets/mixins';
+@import '~stylesheets/variables';
+
+.container {
+  padding-bottom: $vertical-spacing-medium;
+}
+
+button#next {
+  @include center-block;
+  min-width: $min-button-width;
+  margin-top: $vertical-spacing-medium;
+}
+
+.image-container {
+  font-size: $vertical-spacing-internal;
+}

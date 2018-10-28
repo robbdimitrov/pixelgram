@@ -1,0 +1,22 @@
+<div class="container full-width">
+
+  <h1 class="title">New Post</h1>
+
+  <div class="post-section">
+    <div class="image-container">
+      <img *ngIf="imagePreview" class="image" [src]="imagePreview">
+    </div>
+
+    <textarea placeholder="Write a caption..."
+      maxlength="160"
+      [(ngModel)]="captionValue">
+    </textarea>
+  </div>
+
+  <button class="round-corners centered outline-button"
+    (click)="onSubmitClick()"
+    [disabled]="!uploadService.selectedFile()">
+    Share
+  </button>
+
+</div> <!-- End of container -->

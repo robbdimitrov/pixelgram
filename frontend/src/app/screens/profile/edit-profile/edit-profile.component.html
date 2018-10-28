@@ -1,0 +1,46 @@
+<div class="container full-width">
+
+  <h1 class="title">Edit Profile</h1>
+
+  <form (ngSubmit)="onSubmit()" #form="ngForm">
+
+    <div class="avatar-secton">
+      <img class="avatar"
+        [src]="imagePreview ? imagePreview : user?.avatar | image:'/assets/images/avatar_placeholder.png'">
+
+      <label for="file" class="round-corners outline-button">
+        Change Profile Photo
+      </label>
+      <input type="file" id="file" #file
+        accept="image/*" (change)="onChange(file.files)"/>
+    </div>
+
+    <div class="fieldset">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" #name="ngModel" [(ngModel)]="nameValue"
+        placeholder="John Doe" required>
+    </div> <!-- End of name field -->
+
+    <div class="fieldset">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" #username="ngModel" [(ngModel)]="usernameValue"
+        placeholder="johndoe" required>
+    </div> <!-- End of username field -->
+
+    <div class="fieldset">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" #email="ngModel" [(ngModel)]="emailValue"
+        placeholder="johndoe@mail.com" pattern="[^@]+@[^@]+\.[^@]+" required>
+    </div> <!-- End of email field -->
+
+    <div class="fieldset">
+      <label for="bio">Bio</label>
+      <input type="text" id="bio" name="bio" #bio="ngModel" [(ngModel)]="bioValue"
+        maxlength="160" required>
+    </div> <!-- End of email field -->
+
+    <button type="submit" class="round-corners outline-button" [disabled]="!form.form.valid">Save Changes</button>
+
+  </form> <!-- End of form -->
+
+</div> <!-- End of container -->

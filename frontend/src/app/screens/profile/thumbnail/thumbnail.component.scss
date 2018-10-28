@@ -1,0 +1,13 @@
+@import '~stylesheets/variables';
+
+$image-side: (($big-component-width - $vertical-spacing-internal) / 2);
+
+.container {
+  display: inline-block;
+}
+
+.container img {
+  width: $image-side;
+  height: $image-side;
+  object-fit: cover;
+}

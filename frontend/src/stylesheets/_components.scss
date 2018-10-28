@@ -1,0 +1,57 @@
+@import 'colors';
+@import 'mixins';
+@import 'variables';
+
+.button {
+  @include button-background($button-background-color);
+}
+
+.outline-button {
+  @include button-outline($button-background-color, $primary-text-color, $button-border-width);
+}
+
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.button, .outline-button {
+  padding: 5px;
+}
+
+.image-button {
+  opacity: 0.4;
+}
+
+.image-button.active {
+  opacity: 0.8;
+}
+
+.image-button, .button, .outline-button {
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.round-corners {
+  border-radius: $button-border-radius;
+}
+
+button.like {
+  background: url(../assets/images/like.svg);
+  background-repeat: no-repeat;
+  width: 26px;
+  height: 26px;
+}
+
+button.like.active {
+  background: url(../assets/images/like_active.svg);
+  background-repeat: no-repeat;
+}
+
+@include breakpoint($break-extra-small) {
+  .full-width {
+    width: $big-component-width;
+    @include center-block;
+  }
+}

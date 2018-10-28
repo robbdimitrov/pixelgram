@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+    <title>like</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="iPhone-7" transform="translate(-128.000000, -156.000000)" stroke="#000000" stroke-width="2">
+            <path d="M140.00006,178.413848 L139.87664,178.26188 C137.831142,175.817888 135.380297,173.358643 132.514199,171.059909 C127.185908,166.797936 128.16561,157 133.687749,157 C136.298499,157 137.972371,158.299107 139.113322,160.487003 L140,162.187302 L140.886678,160.487003 C142.027629,158.299107 143.701501,157 146.312251,157 C151.83439,157 152.814092,166.797936 147.486832,171.059084 C144.619703,173.358643 142.168858,175.817888 140.132775,178.250462 L140.00006,178.413848 Z" id="like"></path>
+        </g>
+    </g>
+</svg>

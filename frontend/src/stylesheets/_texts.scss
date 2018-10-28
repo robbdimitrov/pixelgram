@@ -1,0 +1,24 @@
+@import 'fonts';
+@import 'functions';
+
+body {
+  font-size: 100%;
+  font-family: $text-font;
+}
+
+h1 {
+  font-size: rem(26);
+  font-weight: $font-weight-regular;
+}
+
+p, label, button, input, span {
+  font-size: rem(15);
+}
+
+.small {
+  font-size: rem(13);
+}
+
+.bold {
+  font-weight: $font-weight-bold;
+}

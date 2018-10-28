@@ -1,0 +1,25 @@
+body, h1, h2, h3, h4, h5, h6, p, fieldset, button {
+  margin:0;
+  padding:0;
+}
+
+button {
+  border: 0;
+}
+
+textarea, input:not([type='checkbox']),
+  button, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button, input:not([type='checkbox']) {
+  &:focus {
+    outline: 0;
+  }
+}
+
+fieldset {
+  border-style: none;
+  border-width: 0;
+}
