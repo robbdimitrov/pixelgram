@@ -7,20 +7,16 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    depends_on:
-      - db
     links:
       - db:mongo
     volumes:
-      - "image_data:/ng-app/uploads"
+      - "image_data:/usr/src/app/uploads"
 
   frontend:
     build: ./frontend
     restart: always
     ports:
       - "80:80"
-    depends_on:
-      - backend
 
   db:
     image: mongo:3.4

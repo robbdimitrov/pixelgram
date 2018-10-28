@@ -13,7 +13,7 @@ import { Image } from '../models/image.model';
 import { ImageFactory } from './image-factory.service';
 import { User } from '../models/user.model';
 import { UserFactory } from './user-factory.service';
-import * as config from '../config/client.config';
+import * as config from '../../config/client.config';
 
 enum StatusCode {
     Ok = 200,
