@@ -22,14 +22,12 @@ export class DBWorker extends DBClient {
                 return resolve(this.client);
             }
 
-            MongoClient.connect(url, (err, client) => {
-                if (err) {
-                    return reject(err);
-                }
-
+            MongoClient.connect(url, { useNewUrlParser: true }).then((result) => {
                 console.log('Connected to database');
-                this.client = client;
+                this.client = result;
                 resolve(this.client);
+            }).catch((error) => {
+                return reject(error);
             });
         });
     }
