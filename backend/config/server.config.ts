@@ -4,4 +4,4 @@ export const apiVersion = 1.0;
 export const apiRootPath = 'api';
 export const secret = 'jwt-secret-awesome';
 export const imageDir = 'uploads/';
-export const clientURL = 'http://127.0.0.1:4200';
+export const clientURL = 'http://localhost';
