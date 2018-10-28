@@ -1,9 +1,9 @@
-var webpack = require('webpack');
+const webpack = require('webpack');
 const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin')
-var fs = require('fs');
+const fs = require('fs');
 
-var nodeModules = {};
+let nodeModules = {};
 fs.readdirSync('node_modules')
     .filter(function(x) {
         return ['.bin'].indexOf(x) === -1;
@@ -29,7 +29,7 @@ module.exports = {
             {
               enforce: 'pre',
               test: /\.ts?$/,
-              exclude: ['node_modules'],
+              exclude: [path.resolve(__dirname, 'node_modules')],
               use: ['awesome-typescript-loader', 'source-map-loader']
             }
         ]

@@ -7,8 +7,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./dist/server.bundle.js",
-    "build": "webpack --progress",
-    "watch": "webpack --progress --watch",
+    "build": "webpack --progress --mode=production",
+    "watch": "webpack --progress --watch --mode=development",
     "lint": "tslint --project tslint.json"
   },
   "dependencies": {

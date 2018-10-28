@@ -1,20 +1,5 @@
-lib-cov
-*.seed
-*.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
-*.swp
-
-pids
-logs
-results
-tmp
-
 #Build
-public/css/main.css
+dist
 
 # Development
 uploads
@@ -30,17 +15,8 @@ bower_components
 # Editors
 .idea
 *.iml
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode
 
 # OS metadata
 .DS_Store
 Thumbs.db
-
-# Ignore built ts files
-dist/**/*
