@@ -22,8 +22,8 @@ Screenshots are available in the [`screenshots`](screenshots) directory.
 2. Clone the project and open in your favorite editor
 
 ```
-$ git clone git@github.com:robbdimitrov/pixelgram-pwa.git
-$ cd pixelgram-pwa
+$ git clone git@github.com:robbdimitrov/pixelgram-app.git
+$ cd pixelgram-app
 ```
 
 3. Change the `apiRoot` inside `src/app/config/client.config.ts` to point to your server.
