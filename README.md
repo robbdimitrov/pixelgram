@@ -12,7 +12,7 @@ Pixelgram is an image sharing service.
 
 ## Screenshots
 
-Screenshots are available in the [`Screenshots`](Screenshots) directory.
+Screenshots are available in the [`screenshots`](screenshots) directory.
 
 
 

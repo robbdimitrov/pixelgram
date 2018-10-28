@@ -6,11 +6,9 @@ uploads
 
 # API keys and secrets
 .env
-config/server.config.ts
 
 # Dependency directory
 node_modules
-bower_components
 
 # Editors
 .idea
