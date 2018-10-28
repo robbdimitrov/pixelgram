@@ -15,7 +15,7 @@
 
   <button class="round-corners centered outline-button"
     (click)="onSubmitClick()"
-    [disabled]="!uploadService.selectedFile()">
+    [disabled]="!hasSelectedFile()">
     Share
   </button>
 

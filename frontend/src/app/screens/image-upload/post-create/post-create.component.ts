@@ -35,6 +35,10 @@ export class PostCreateComponent implements OnDestroy {
         });
     }
 
+    hasSelectedFile(): boolean {
+        return this.uploadService.selectedFile() !== undefined;
+    }
+
     getImagePreview(file: File) {
         if (!file) {
             return;
