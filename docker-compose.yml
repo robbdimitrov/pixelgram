@@ -3,7 +3,6 @@ version: "3"
 services:
   backend:
     build: ./backend
-    command: ["npm", "start"]
     restart: always
     ports:
       - "3000:3000"
