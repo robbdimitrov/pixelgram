@@ -7,6 +7,7 @@ import { UserFactory } from '../services/user-factory';
 import { ImageFactory } from '../services/image-factory';
 import * as config from '../../config/server.config';
 import { error } from 'util';
+import { inspect } from 'util';
 
 export type DatabaseCallback = (database: Db) => void;
 
@@ -294,14 +295,24 @@ export class DBWorker extends DBClient {
             }
 
             let completion = (error, result) => {
+                console.log(`User seach result: ${result} error: ${inspect(error)}`);
+
                 if (error) {
-                    return reject(error);
+                    reject(error);
                 } else if (!result) {
                     let error = new Error('User not found.');
-                    return reject(error);
+                    reject(error);
+                } else {
+                    result.toArray().then(res => {
+                        console.log(`User seach result: ${inspect(res[0])}`);
+                        resolve(res[0]);
+                    }).catch(err => {
+                        reject('Something went wrong.');
+                    });
                 }
-                return resolve(result[0]);
             };
+
+            console.log(`Searching with query: ${JSON.stringify(query)}`);
 
             client.db().collection('users').aggregate([
                 { $match: query },
