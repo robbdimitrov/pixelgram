@@ -1,4 +1,3 @@
-// export const dbURI = 'mongodb://mongo:27017/pixelgram-db';
 export const dbURI = 'mongodb://localhost:27017/pixelgram-db';
 export const port = 3000;
 export const apiVersion = 1.0;
