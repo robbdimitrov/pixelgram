@@ -30,8 +30,6 @@ export class SessionRouter extends APIRouter {
         console.log(`Login for user ${email}`);
 
         this.dbClient.getOneUser(UserSearchField.Email, email, true).then((user) => {
-            console.log(`Found user ${JSON.stringify(user)}`);
-
             if (user === undefined) {
                 return authFailedBlock();
             }

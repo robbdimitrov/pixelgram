@@ -5,7 +5,7 @@ services:
     build: ./backend
     restart: always
     ports:
-      - "3000"
+      - "3000:3000"
     volumes:
       - "image_data:/usr/src/app/uploads"
 
@@ -19,7 +19,7 @@ services:
     image: mongo:3.4
     restart: always
     ports:
-      - "27017"
+      - "27017:27017"
     volumes:
       - "db_data:/data/db"
 

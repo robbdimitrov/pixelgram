@@ -7,7 +7,6 @@ import { UserFactory } from '../services/user-factory';
 import { ImageFactory } from '../services/image-factory';
 import * as config from '../../config/server.config';
 import { error } from 'util';
-import { inspect } from 'util';
 
 export type DatabaseCallback = (database: Db) => void;
 
@@ -170,7 +169,11 @@ export class DBWorker extends DBClient {
                 if (error) {
                     return reject(error);
                 }
-                return resolve(result[0]);
+                result.toArray().then(res => {
+                    resolve(res[0]);
+                }).catch(err => {
+                    reject('Something went wrong.');
+                });
             });
         });
     }
@@ -295,8 +298,6 @@ export class DBWorker extends DBClient {
             }
 
             let completion = (error, result) => {
-                console.log(`User seach result: ${result} error: ${inspect(error)}`);
-
                 if (error) {
                     reject(error);
                 } else if (!result) {
@@ -304,15 +305,12 @@ export class DBWorker extends DBClient {
                     reject(error);
                 } else {
                     result.toArray().then(res => {
-                        console.log(`User seach result: ${inspect(res[0])}`);
                         resolve(res[0]);
                     }).catch(err => {
                         reject('Something went wrong.');
                     });
                 }
             };
-
-            console.log(`Searching with query: ${JSON.stringify(query)}`);
 
             client.db().collection('users').aggregate([
                 { $match: query },

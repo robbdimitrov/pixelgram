@@ -26,7 +26,7 @@ export class ImageRouter extends APIRouter {
         let limit = parseInt(query.limit, 10) || 25;
         let page = parseInt(query.page, 10) || 0;
         let userId = req['user'].id;
-
+        console.log('get all images called');
         this.imageService.getAllImages(page, limit, userId).then((result) => {
             res.send({
                 'images': result
