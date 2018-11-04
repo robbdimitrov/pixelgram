@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import * as config from '../../../config/client.config';
+import * as config from '../../../../config/client.config';
 
 @Pipe({
     name: 'image'
