@@ -1,0 +1,32 @@
+<div class="container">
+
+    <a class="logo" routerLink="/"><img src="/assets/images/logo.svg" alt="PixelGram Logo"></a>
+
+    <div class="navigation">
+      <ul *ngIf="isAuthed()">
+        <li><a class="image-button nav-button nav-home"
+          routerLinkActive="active"
+          aria-label="Feed"
+          routerLink="/feed">
+        </a></li>
+
+        <li><a class="image-button nav-button nav-new"
+          routerLinkActive="active"
+          aria-label="New Image"
+          routerLink="/upload">
+        </a></li>
+
+        <li><a class="image-button nav-button nav-profile"
+          routerLinkActive="active"
+          aria-label="My Profile"
+          [routerLink]="['user', userId()]">
+        </a></li>
+      </ul>
+
+      <ul *ngIf="!isAuthed()">
+        <li><a class="outline-button round-corners" routerLink="/login">Log In</a></li>
+        <li><a class="outline-button round-corners" routerLink="/signup">Sign Up</a></li>
+      </ul>
+    </div>
+
+</div>

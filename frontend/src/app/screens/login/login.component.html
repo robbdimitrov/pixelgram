@@ -1,0 +1,31 @@
+<div class="container full-width">
+
+  <h1 class="title">Log In</h1>
+
+  <p class="description subtitle centered">Log in to your account to post amazing images and catch up with the community</p>
+
+  <form (ngSubmit)="onSubmit()" #form="ngForm">
+
+    <div class="fieldset">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" #email="ngModel" [(ngModel)]="emailValue"
+        placeholder="johndoe@mail.com" pattern="[^@]+@[^@]+\.[^@]+" required>
+    </div> <!-- End of email field -->
+
+    <div class="fieldset">
+      <label for="password">Password</label>
+      <input type={{passwordFieldType}} id="password" name="password" #password="ngModel" [(ngModel)]="passwordValue"
+        placeholder="password" minlength="4" maxlength="30" required>
+      <button type="button" class="round-corners outline-button" (click)="onVisibilityToggle()">{{showButtonTitle | uppercase}}</button>
+    </div> <!-- End of password field -->
+
+    <button type="submit" class="round-corners outline-button" [disabled]="!form.form.valid">Log In</button>
+
+  </form> <!-- End of form -->
+
+  <div class="reference">
+    <span>Don't have an accout?</span>
+    <a routerLink="/signup">Register</a>
+  </div> <!-- End of reference -->
+
+</div> <!-- End of container -->

@@ -1,0 +1,30 @@
+@import '~stylesheets/form';
+@import '~stylesheets/flexbox';
+@import '~stylesheets/variables';
+
+$avatar-side: $avatar-side-large * 0.75;
+
+.avatar-secton {
+  @include flexbox;
+  @include align-items(center);
+  @include flex-direction(column);
+
+  label {
+    margin-top: $vertical-spacing-medium;
+    margin-bottom: $vertical-spacing-internal;
+  }
+
+  .avatar {
+    width: $avatar-side;
+    height: $avatar-side;
+    border-radius: $avatar-side / 2;
+    background-color: $background-color;
+    object-fit: cover;
+  }
+
+  #file {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+}

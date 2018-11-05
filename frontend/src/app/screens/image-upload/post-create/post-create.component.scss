@@ -1,0 +1,47 @@
+@import '~stylesheets/form';
+@import '~stylesheets/variables';
+@import '~stylesheets/flexbox';
+
+.post-section {
+  @include flexbox;
+  @include align-items(center);
+  margin-top: $vertical-spacing-internal;
+}
+
+.image-container {
+  width: $avatar-side-large;
+  height: $avatar-side-large;
+  background-color: $background-color;
+  margin: $vertical-spacing-internal;
+}
+
+textarea {
+  resize: none;
+  border: 0;
+  flex-grow: 1;
+  margin-top: $vertical-spacing-internal;
+  margin-right: $vertical-spacing-internal;
+  margin-bottom: $vertical-spacing-internal;
+  height: $avatar-side-large;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+button {
+  margin-top: $vertical-spacing-internal;
+  margin-bottom: $vertical-spacing-large;
+  display: block;
+}
+
+label {
+  display: inline-block;
+  margin-bottom: $vertical-spacing-large;
+}
+
+#file {
+  display: none;
+}

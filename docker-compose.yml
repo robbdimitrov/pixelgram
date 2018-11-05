@@ -1,18 +1,19 @@
 version: "3"
 
 services:
-  web:
-    build: .
-    command: ["npm", "start"]
+  backend:
+    build: ./backend
     restart: always
     ports:
       - "3000:3000"
-    depends_on:
-      - db
-    links:
-      - db:mongo
     volumes:
       - "image_data:/usr/src/app/uploads"
+
+  frontend:
+    build: ./frontend
+    restart: always
+    ports:
+      - "4000:80"
 
   db:
     image: mongo:3.4

@@ -1,0 +1,104 @@
+@import 'functions';
+
+// rem sizing
+// $font-size - target font size
+// $base-font-size - base font size of the browser (default 16px)
+// row | row-reverse | column | column-reverse
+@mixin rem-font-size($font-size, $base-font-size: 16) {
+  font-size: #{$font-size}px;
+  font-size: rem($font-size, $base-font-size);
+}
+
+@mixin placeholder {
+  ::-webkit-input-placeholder { @content }
+  :-moz-placeholder           { @content }
+  ::-moz-placeholder          { @content }
+  :-ms-input-placeholder      { @content }
+}
+
+@mixin border-box {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+@mixin button-background($background) {
+  background: $background;
+  &:not(:disabled) {
+    &:hover, &:focus {
+      background: darken($background,8%);
+      transition: all 0.3s ease;
+    }
+    &:active {
+      background: darken($background, 25%);
+    }
+  }
+}
+
+@mixin button-outline($color, $text-color: gray, $border-width: 1px) {
+  border-style: solid;
+  border-width: $border-width;
+  border-color: $color;
+  color: $text-color;
+  &:not(:disabled) {
+    &:hover, &:focus {
+      border-color: darken($color,8%);
+      color: darken($text-color, 8%);
+      transition: all 0.3s ease;
+    }
+    &:active {
+      border-color: darken($color, 25%);
+      color: darken($text-color, 25%);
+    }
+  }
+}
+
+// Quickly center any element within its parent.
+// Requires width or max-width to be set.
+@mixin center-block {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@mixin center-vertically {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+// Retina-specific media query
+@mixin retina {
+  @media
+    only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (min--moz-device-pixel-ratio: 2),
+    only screen and (-o-min-device-pixel-ratio: 2/1),
+    only screen and (min-device-pixel-ratio: 2),
+    only screen and (min-resolution: 192dpi),
+    only screen and (min-resolution: 2dppx) {
+    @content;
+  }
+}
+
+@mixin print {
+  @media print {
+    @content;
+  }
+}
+
+// Given a width and an optional type, return a media query
+// $width - width in pixels
+// $type can be either min or max, min is default
+@mixin breakpoint($width, $type: min) {
+  @if $type == min {
+    @media only screen and (min-width: $width) { @content; }
+  }
+  @else if $type == max {
+    @media only screen and (max-width: $width) { @content; }
+  }
+}
+
+@mixin transition($transition) {
+  transition: $transition;
+  -moz-transition: $transition;
+  -webkit-transition: $transition;
+}

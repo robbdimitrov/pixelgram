@@ -1,0 +1,23 @@
+@import '~stylesheets/variables';
+@import '~stylesheets/flexbox';
+
+li {
+  list-style: none;
+  border-bottom: 1px black solid;
+  height: $icon-button-width;
+  vertical-align: middle;
+  @include flexbox;
+  @include justify-content(space-between);
+
+  span {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+
+  .disclosure {
+    background-image: url('/assets/images/forward.svg');
+    background-repeat: no-repeat;
+    width: 10px;
+    height: 16px;
+  }
+}

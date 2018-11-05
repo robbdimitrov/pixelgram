@@ -1,0 +1,32 @@
+@import '~stylesheets/form';
+@import '~stylesheets/variables';
+@import '~stylesheets/flexbox';
+
+.image-section {
+  @include flexbox;
+  @include align-items(center);
+  @include flex-direction(column);
+}
+
+.image-container {
+  width: 100%;
+  height: $big-component-width;
+  background-color: $background-color;
+  margin-top: $vertical-spacing-medium;
+  margin-bottom: $vertical-spacing-medium;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+label {
+  display: inline-block;
+  margin-bottom: $vertical-spacing-large;
+}
+
+#file {
+  display: none;
+}

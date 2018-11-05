@@ -1,0 +1,28 @@
+@import 'colors';
+@import 'fonts';
+@import 'functions';
+
+// Components
+$button-border-radius: 5px;
+$button-border-width: 2px;
+$fieldset-height: 40px;
+$navigation-bar-height: 50px;
+$component-border-radius: 4px;
+$avatar-side-large: 100px;
+$icon-button-width: 40px;
+$big-component-width: 450px;
+$min-button-width: 100px;
+$dropdown-width: 200px;
+
+// Spacing
+$spacing: rem(12);
+$vertical-spacing-large: 40px;
+$vertical-spacing-medium: 20px;
+$vertical-spacing-internal: 10px;
+
+// Screen media query breaks
+$break-extra-small: 450px;
+$break-small: 576px;
+$break-medium: 768px;
+$break-large: 992px;
+$break-extra-large: 1200px;

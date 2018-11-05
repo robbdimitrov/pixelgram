@@ -1,0 +1,54 @@
+@import '~stylesheets/colors';
+@import '~stylesheets/flexbox';
+@import '~stylesheets/variables';
+@import '~stylesheets/mixins';
+
+.description {
+  width: 75%;
+}
+
+.title, .description, .reference {
+  text-align: center;
+}
+
+.title, .description, form, button[type=submit] {
+  margin-top: $vertical-spacing-medium;
+}
+
+.reference {
+  margin-top: $vertical-spacing-large;
+  margin-bottom: $vertical-spacing-medium;
+}
+
+.title, .fieldset, button[type=submit], .reference, .alert {
+  margin-left: $spacing;
+  margin-right: $spacing;
+}
+
+button[type=submit] {
+  width: 40%;
+  @include center-block;
+}
+
+.fieldset {
+  margin-top: $vertical-spacing-internal;
+  height: $fieldset-height;
+}
+
+.fieldset {
+  @include flexbox;
+  border-bottom: $button-border-width solid $button-border-color;
+
+  label {
+    width: 30%;
+  }
+
+  input {
+    @include flex(1);
+    border: none;
+  }
+
+  button, label {
+    @include center-vertically;
+  }
+}

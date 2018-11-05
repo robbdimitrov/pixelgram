@@ -1,19 +1,31 @@
-# Pixelgram API
+# Pixelgram
 
-REST API for image sharing service
+Pixelgram is an image sharing service.
 
 ## Table of contents
 
-* [Pixelgram API](#pixelgram-api)
-* [Table of contents](#table-of-contents)
-* [Setup](#setup)
-  * [Clone the repository](#clone-the-repository)
-  * [Config file](#config-file)
-  * [Using Docker](#using-docker)
-  * [Using npm](#using-npm)
-* [API](#api)
-* [Contact](#contact)
-* [License](#license)
+- [Pixelgram](#pixelgram)
+  - [Table of contents](#table-of-contents)
+  - [Stack](#stack)
+  - [Screenshots](#screenshots)
+  - [Setup](#setup)
+    - [Clone the repository](#clone-the-repository)
+    - [Build and run](#build-and-run)
+  - [API](#api)
+  - [Contact](#contact)
+  - [License](#license)
+
+## Stack
+
+- Angular front end
+- Express back end
+- MongoDB database
+- NGINX
+- Docker
+
+## Screenshots
+
+Screenshots are available in the [`screenshots`](screenshots) directory.
 
 ## Setup
 
@@ -22,26 +34,11 @@ REST API for image sharing service
 Clone the repository to your filesystem
 
 ```
-$ git clone git@github.com:robbdimitrov/pixelgram-api.git
-$ cd pixelgram-api
+$ git clone git@github.com:robbdimitrov/pixelgram.git
+$ cd pixelgram
 ```
 
-### Config file
-
-Copy over the sample config file and edit the default settings if need
-
-```
-$ cp ./config/sample.server.config.ts ./config/sample.config.ts
-```
-
-### Using Docker
-
-Create a `Docker` machine
-
-```
-$ docker-machine create --driver virtualbox default
-$ eval $(docker-machine env default)
-```
+### Build and run
 
 Build images
 
@@ -61,37 +58,6 @@ Stop containers
 $ docker-compose down
 ```
 
-### Using npm
-
-This method will require setting supplying your own [MongoDB](https://www.mongodb.com/) instance. 
-For download and configuration see https://docs.mongodb.com/manual/installation/.
-After instalation make sure the instance is running and the correct URI is added to your `condig/server.config.ts` file.
-It should look like `mongodb://<user>:<pass>@<server>:<mongo-port: default: 27017>/<database-name>`.
-
-#### Install dependencies
-
-Install the node dependencies required for the project
-
-```
-$ npm install
-```
-
-#### Build
-
-Run the build script. This produces the compiled `js` file.
-
-```
-$ npm run build
-```
-
-#### Run
-
-Run the project. By default it runs on port `3000`. This can be changed in `server.config.ts`.
-
-```
-$ npm run start
-```
-
 ## API
 
 The API documentation is available [here](API.md).
@@ -99,8 +65,11 @@ The API documentation is available [here](API.md).
 ## Contact
 
 [Robert Dimitrov](http://robbdimitrov.com)   
+
 [@robbdimitrov](https://twitter.com/robbdimitrov)
 
 ## License
 
-Copyright (c) 2017 Robert Dimitrov. Code released under the [MIT license](LICENSE).
+Copyright (c) Robert Dimitrov.
+
+Licensed under the [MIT](LICENSE) License.
