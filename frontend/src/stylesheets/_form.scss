@@ -18,6 +18,10 @@
 .reference {
   margin-top: $vertical-spacing-large;
   margin-bottom: $vertical-spacing-medium;
+
+  span {
+    margin-right: $spacing;
+  }
 }
 
 .title, .fieldset, button[type=submit], .reference, .alert {

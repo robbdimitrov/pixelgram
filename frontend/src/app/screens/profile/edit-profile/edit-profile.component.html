@@ -36,7 +36,7 @@
     <div class="fieldset">
       <label for="bio">Bio</label>
       <input type="text" id="bio" name="bio" #bio="ngModel" [(ngModel)]="bioValue"
-        maxlength="160" required>
+        maxlength="160">
     </div> <!-- End of email field -->
 
     <button type="submit" class="round-corners outline-button" [disabled]="!form.form.valid">Save Changes</button>
