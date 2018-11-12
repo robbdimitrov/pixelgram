@@ -1,4 +1,6 @@
-export const dbURI = 'mongodb://db:27017/pixelgram-db';
+// TODO: Remove before merging
+export const dbURI = 'mongodb://localhost:27017/pixelgram-db';
+// export const dbURI = 'mongodb://db:27017/pixelgram-db';
 export const port = 3000;
 export const apiVersion = 1.0;
 export const apiRootPath = 'api';

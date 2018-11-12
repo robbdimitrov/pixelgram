@@ -1,15 +1,14 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
-import { NextFunction, Request, Response, Router } from 'express';
 import * as helmet from 'helmet';
 
 import * as config from '../config/server.config';
-import { DBClient } from './data/db-client';
 import { ImageRouter } from './routes/image-router';
 import { SessionRouter } from './routes/session-router';
 import { UploadRouter } from './routes/upload-router';
 import { UserRouter } from './routes/user-router';
 import { AuthService } from './services/auth-service';
+import { DBClient } from './services/db-client';
 import { ImageService } from './services/image-service';
 import { UserService } from './services/user-service';
 
@@ -39,6 +38,15 @@ export class Server {
         this.app.use(helmet());
         this.configureRoutes();
         this.connectRoutes();
+
+        // TODO: Remove before merging
+        let allowCrossDomain = (req, res, next) => {
+            res.header('Access-Control-Allow-Origin', 'localhost:3000');
+            res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+            res.header('Access-Control-Allow-Headers', 'Content-Type');
+            next();
+        };
+        this.app.use(allowCrossDomain);
 
         this.app.use(`/${this.apiRoot()}/uploads`, express.static(config.imageDir));
     }
@@ -97,9 +105,7 @@ export class Server {
     private connectRoutes() {
         let apiRoot = this.apiRoot();
 
-        this.app.use((req, res, next) => {
-            this.authChecker(req, res, next);
-        });
+        this.app.use(this.authChecker);
 
         // Create and map express routers
         for (let key in this.routers) {

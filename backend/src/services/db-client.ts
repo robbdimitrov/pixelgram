@@ -1,18 +1,29 @@
 import { Db, MongoClient, ObjectID } from 'mongodb';
 
-import { error } from 'util';
-import * as config from '../../config/server.config';
 import { Image } from '../models/image';
 import { User } from '../models/user';
-import { ImageFactory } from '../services/image-factory';
-import { UserFactory } from '../services/user-factory';
-import { DBClient, UserSearchField } from './db-client';
 
 export type DatabaseCallback = (database: Db) => void;
 
-export class DBWorker extends DBClient {
+/**
+ * An enum with types of user fields to search by.
+ */
+export enum UserSearchField {
+    Identifier,
+    Username,
+    Email,
+}
+
+export class DBClient {
 
     private client?: MongoClient;
+
+    /**
+     * Default constructor
+     *
+     * @param url url of the database
+     */
+    constructor(protected url: string) {}
 
     // Database connection methods
 
@@ -92,6 +103,13 @@ export class DBWorker extends DBClient {
 
     // Image methods
 
+    /**
+     * Returns a promise if the image with imageId is owned by the user with userId.
+     *
+     * @param userId if of the user
+     * @param imageId id of the image
+     * @returns Promise with empty result or error
+     */
     async imageIsOwnedByUser(userId: string, imageId: string) {
         let client = await this.get();
 
@@ -108,6 +126,16 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Returns all images or their count for a given query.
+     *
+     * @param query used for searching the images
+     * @param page current page of content
+     * @param limit number of items per page
+     * @param countOnly if true, function returns just count. Default is false.
+     * @param userId used for checking if the current user has liked the image
+     * @returns Promise with either image array or count
+     */
     async getAllImages(query: Object, page: number, limit: number,
         countOnly: boolean = false, userId?: string) {
         let client = await this.get();
@@ -135,6 +163,12 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Creates an image in the database for a given Image object
+     *
+     * @param user the image to be inserted in the database
+     * @returns Promise with the write operation result
+     */
     async createOneImage(image: Image) {
         let client = await this.get();
 
@@ -156,6 +190,13 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Returns a Promise with image object with a given id
+     *
+     * @param imageId id of the image
+     * @param userId used for checking if the current user has liked the image
+     * @returns Promise with Image Object
+     */
     async getOneImage(imageId: string, userId?: string) {
         let client = await this.get();
 
@@ -178,6 +219,13 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Updates an image with a given id
+     *
+     * @param imageId id of the image
+     * @param imageUpdates JS Object with the updated values
+     * @returns Promise with empty object or error
+     */
     async updateOneImage(imageId: string, imageUpdates: Object) {
         let client = await this.get();
 
@@ -191,6 +239,13 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Deletes an image with a given id
+     *
+     * @param userId id of the owner
+     * @param imageId id of the image
+     * @returns Promise with empty object or error
+     */
     async deleteOneImage(userId: string, imageId: string) {
         let client = await this.get();
 
@@ -217,6 +272,15 @@ export class DBWorker extends DBClient {
 
     // User methods
 
+    /**
+     * Returns all users or their count for a given query
+     *
+     * @param query used for searching the users
+     * @param page current page of content
+     * @param limit number of items per page
+     * @param countOnly if true, function returns just count. Default is false.
+     * @returns Promise with either image array or count
+     */
     async getAllUsers(query: Object, page: number, limit: number, countOnly: boolean = false) {
         let client = await this.get();
 
@@ -262,6 +326,12 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Creates a user in the database for a given User object
+     *
+     * @param user the user to be inserted in the database
+     * @returns Promise with the write operation result
+     */
     async createOneUser(user: User) {
         let client = await this.get();
 
@@ -279,6 +349,15 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Returns a Promise with user object with a given identifier. Identifiers work in the
+     * following priority: userId > email > username.
+     *
+     * @param field field by which to search. Possible values defined in UserSearchField enum
+     * @param value value of the field
+     * @param raw if true, the raw User object is returned. Default is false.
+     * @returns Promise with User JS Object
+     */
     async getOneUser(field: UserSearchField, value: string, raw: boolean = false) {
         let client = await this.get();
 
@@ -319,6 +398,13 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Updates a user with a given id
+     *
+     * @param userId id of the user
+     * @param userUpdates JS Object with the updated values
+     * @returns Promise with empty object or error
+     */
     async updateOneUser(userId: string, userUpdates: Object) {
         let client = await this.get();
 
@@ -332,6 +418,12 @@ export class DBWorker extends DBClient {
         });
     }
 
+    /**
+     * Deletes a user with a given id
+     *
+     * @param userId id of the user
+     * @returns Promise with empty object or error
+     */
     async deleteOneUser(userId: string) {
         let client = await this.get();
 

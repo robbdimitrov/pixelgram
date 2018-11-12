@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { DBClient } from '../data/db-client';
 import { BodyParser } from '../services/body-parser';
+import { DBClient } from '../services/db-client';
 import { ImageService } from '../services/image-service';
 import { APIRouter } from './api-router';
 import { ImageLikesRouter } from './image-likes-router';

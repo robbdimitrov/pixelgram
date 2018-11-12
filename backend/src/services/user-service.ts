@@ -1,7 +1,7 @@
-import { DBClient, UserSearchField } from '../data/db-client';
-import { UserFactory } from '../services/user-factory';
 import { AuthService } from './auth-service';
 import { BodyParser } from './body-parser';
+import { DBClient, UserSearchField } from './db-client';
+import { UserFactory } from './user-factory';
 import { ValidatorService } from './validator-service';
 
 export class UserService {
@@ -65,7 +65,7 @@ export class UserService {
                 }
 
                 this.dbClient.getOneUser(UserSearchField.Identifier, userId, true).then((user) => {
-                    AuthService.getInstance().validatePassword(oldPassword, user.password).then((value) => {
+                    AuthService.getInstance().validatePassword(oldPassword, user['password']).then((value) => {
                         if (value) {
                             AuthService.getInstance().generateHash(password).then((result) => {
                                 updatedUser['password'] = result;

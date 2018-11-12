@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 
-import { DBClient, UserSearchField } from '../data/db-client';
-import { User } from '../models/user';
+import { DBClient, UserSearchField } from '../services/db-client';
 import { ImageService } from '../services/image-service';
 import { UserService } from '../services/user-service';
 import { APIRouter } from './api-router';

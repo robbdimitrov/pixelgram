@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { UserSearchField } from '../data/db-client';
 import { AuthService } from '../services/auth-service';
-import { UserFactory } from '../services/user-factory';
+import { UserSearchField } from '../services/db-client';
 import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
@@ -34,7 +33,7 @@ export class SessionRouter extends APIRouter {
                 return authFailedBlock();
             }
 
-            AuthService.getInstance().validatePassword(password, user.password).then((result) => {
+            AuthService.getInstance().validatePassword(password, user['password']).then((result) => {
                 if (result === true) {
                     delete user['password'];
                     let token = AuthService.getInstance().generateToken(user);

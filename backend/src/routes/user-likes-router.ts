@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 
-import { DBClient } from '../data/db-client';
+import { DBClient } from '../services/db-client';
 import { ImageService } from '../services/image-service';
 import { APIRouter } from './api-router';
 
