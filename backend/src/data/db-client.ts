@@ -1,5 +1,5 @@
-import { User } from '../models/user';
 import { Image } from '../models/image';
+import { User } from '../models/user';
 
 /**
  * An enum with types of user fields to search by.

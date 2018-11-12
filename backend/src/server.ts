@@ -1,14 +1,14 @@
-import * as express from 'express';
 import * as bodyParser from 'body-parser';
-import { Router, Request, Response, NextFunction } from 'express';
+import * as express from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import * as helmet from 'helmet';
 
 import * as config from '../config/server.config';
 import { DBClient } from './data/db-client';
 import { ImageRouter } from './routes/image-router';
 import { SessionRouter } from './routes/session-router';
-import { UserRouter } from './routes/user-router';
 import { UploadRouter } from './routes/upload-router';
+import { UserRouter } from './routes/user-router';
 import { AuthService } from './services/auth-service';
 import { ImageService } from './services/image-service';
 import { UserService } from './services/user-service';
@@ -34,7 +34,7 @@ export class Server {
     // Configure Express middleware
     private configure() {
         this.app.use(bodyParser.urlencoded({
-            extended: true
+            extended: true,
         }));
         this.app.use(helmet());
         this.configureRoutes();
@@ -66,14 +66,14 @@ export class Server {
                 next();
             }).catch((error) => {
                 return res.status(401).send({
-                    error: 'Failed to authenticate token.'
+                    error: 'Failed to authenticate token.',
                 });
             });
         } else {
             // if there is no token
             // return an error
             return res.status(401).send({
-                error: 'No token provided.'
+                error: 'No token provided.',
             });
         }
     }

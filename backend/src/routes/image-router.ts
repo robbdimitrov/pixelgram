@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
+import { DBClient } from '../data/db-client';
+import { BodyParser } from '../services/body-parser';
+import { ImageService } from '../services/image-service';
 import { APIRouter } from './api-router';
 import { ImageLikesRouter } from './image-likes-router';
-import { ImageService } from '../services/image-service';
-import { BodyParser } from '../services/body-parser';
-import { DBClient } from '../data/db-client';
 
 export class ImageRouter extends APIRouter {
 
@@ -29,11 +29,11 @@ export class ImageRouter extends APIRouter {
         console.log('get all images called');
         this.imageService.getAllImages(page, limit, userId).then((result) => {
             res.send({
-                'images': result
+                'images': result,
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -45,7 +45,7 @@ export class ImageRouter extends APIRouter {
             let error = new Error('Missing argument(s). Image filename is expected.');
 
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
             return next(error);
         }
@@ -56,11 +56,11 @@ export class ImageRouter extends APIRouter {
 
         this.imageService.createImage(userId, filename, description).then((result) => {
             res.send({
-                'message': 'Image created successfully.'
+                'message': 'Image created successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -72,12 +72,12 @@ export class ImageRouter extends APIRouter {
         this.dbClient.getOneImage(id, userId).then((result) => {
             if (result) {
                 res.send({
-                    'image': result
+                    'image': result,
                 });
             }
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -92,12 +92,12 @@ export class ImageRouter extends APIRouter {
         this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
             this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then((result) => {
                 res.send({
-                    'message': 'Image updated successfully.'
+                    'message': 'Image updated successfully.',
                 });
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
 
@@ -109,11 +109,11 @@ export class ImageRouter extends APIRouter {
 
         this.imageService.deleteImage(imageId, userId).then((result) => {
             res.send({
-                'message': 'Image deleted successfully.'
+                'message': 'Image deleted successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }

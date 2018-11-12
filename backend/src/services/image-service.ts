@@ -22,10 +22,10 @@ export class ImageService {
     likeImage(imageId: string, userId: string) {
         return new Promise((resolve, reject) => {
             this.dbClient.updateOneUser(userId,
-                { $addToSet: { likedImages: new ObjectID(imageId) } }
+                { $addToSet: { likedImages: new ObjectID(imageId) } },
             ).then((result) => {
                 this.dbClient.updateOneImage(imageId,
-                    { $addToSet: { likedUsers: new ObjectID(userId) } }
+                    { $addToSet: { likedUsers: new ObjectID(userId) } },
                 ).then((result) => {
                     resolve();
                 });
@@ -38,10 +38,10 @@ export class ImageService {
     unlikeImage(imageId: string, userId: string) {
         return new Promise((resolve, reject) => {
             this.dbClient.updateOneUser(userId,
-                { $pull: { likedImages: new ObjectID(imageId) } }
+                { $pull: { likedImages: new ObjectID(imageId) } },
             ).then((result) => {
                 this.dbClient.updateOneImage(imageId,
-                    { $pull: { likedUsers: new ObjectID(userId) } }
+                    { $pull: { likedUsers: new ObjectID(userId) } },
                 ).then((result) => {
                     resolve();
                 });
@@ -71,7 +71,8 @@ export class ImageService {
         });
     }
 
-    getAllImagesForUser(ownerId: string, page: number, limit: number, countOnly: boolean = false, userId?: string): Promise<any> {
+    getAllImagesForUser(ownerId: string, page: number, limit: number,
+        countOnly: boolean = false, userId?: string): Promise<any> {
         return new Promise((resolve, reject) => {
             let query = { ownerId: new ObjectID(ownerId) };
 

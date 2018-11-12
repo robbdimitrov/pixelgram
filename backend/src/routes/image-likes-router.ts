@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
 import { DBClient } from '../data/db-client';
-import { APIRouter } from './api-router';
 import { ImageService } from '../services/image-service';
+import { APIRouter } from './api-router';
 
 export class ImageLikesRouter extends APIRouter {
 
@@ -19,11 +19,11 @@ export class ImageLikesRouter extends APIRouter {
 
         this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
             res.send({
-                'users': result
+                'users': result,
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -34,11 +34,11 @@ export class ImageLikesRouter extends APIRouter {
 
         this.imageService.likeImage(imageId, userId).then((result) => {
             res.send({
-                'message': 'Image liked successfully.'
+                'message': 'Image liked successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -49,17 +49,17 @@ export class ImageLikesRouter extends APIRouter {
 
         if (userId !== req['user'].id) {
             return res.status(403).send({
-                'error': 'Can\'t unlike other people\'s likes.'
+                'error': 'Can\'t unlike other people\'s likes.',
             });
         }
 
         this.imageService.unlikeImage(imageId, userId).then((result) => {
             res.send({
-                'message': 'Image unliked successfully.'
+                'message': 'Image unliked successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }

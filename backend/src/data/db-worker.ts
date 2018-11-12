@@ -1,12 +1,12 @@
-import { ObjectID, Db, MongoClient } from 'mongodb';
+import { Db, MongoClient, ObjectID } from 'mongodb';
 
-import { DBClient, UserSearchField } from './db-client';
-import { User } from '../models/user';
-import { Image } from '../models/image';
-import { UserFactory } from '../services/user-factory';
-import { ImageFactory } from '../services/image-factory';
-import * as config from '../../config/server.config';
 import { error } from 'util';
+import * as config from '../../config/server.config';
+import { Image } from '../models/image';
+import { User } from '../models/user';
+import { ImageFactory } from '../services/image-factory';
+import { UserFactory } from '../services/user-factory';
+import { DBClient, UserSearchField } from './db-client';
 
 export type DatabaseCallback = (database: Db) => void;
 
@@ -64,7 +64,7 @@ export class DBWorker extends DBClient {
             avatar: 1,
             registrationDate: 1,
             likes: { $size: '$likedImages' },
-            images: { $size: '$postedImages' }
+            images: { $size: '$postedImages' },
         };
 
         if (raw) {
@@ -80,7 +80,7 @@ export class DBWorker extends DBClient {
             filename: 1,
             dateCreated: 1,
             description: 1,
-            likes: { $size: '$likedUsers' }
+            likes: { $size: '$likedUsers' },
         };
 
         if (userId !== undefined) {
@@ -98,7 +98,7 @@ export class DBWorker extends DBClient {
         return new Promise((resolve, reject) => {
             client.db().collection('images').find({
                 _id: new ObjectID(imageId),
-                ownerId: new ObjectID(userId)
+                ownerId: new ObjectID(userId),
             }, { ownerId: 1 } as Object ).count((error, result) => {
                 if (result > 0) {
                     return resolve();
@@ -124,7 +124,7 @@ export class DBWorker extends DBClient {
 
                 client.db().collection('images').aggregate([
                     { $match: query },
-                    { $project: this.imageAggregationProperties(userId) }
+                    { $project: this.imageAggregationProperties(userId) },
                 ]).sort(sortQuery).skip(page * limit).limit(limit).toArray((err, result) => {
                     if (err) {
                         return reject(err);
@@ -146,7 +146,7 @@ export class DBWorker extends DBClient {
 
                 client.db().collection('users').updateOne(
                     { _id: image.ownerId },
-                    { $push: { postedImages: result.insertedId } }
+                    { $push: { postedImages: result.insertedId } },
                 ).then((result) => {
                     resolve(result);
                 }).catch((error) => {
@@ -164,14 +164,14 @@ export class DBWorker extends DBClient {
 
             client.db().collection('images').aggregate([
                 { $match: query },
-                { $project: this.imageAggregationProperties(userId) }
+                { $project: this.imageAggregationProperties(userId) },
             ], (error, result) => {
                 if (error) {
                     return reject(error);
                 }
-                result.toArray().then(res => {
+                result.toArray().then((res) => {
                     resolve(res[0]);
-                }).catch(err => {
+                }).catch(() => {
                     reject('Something went wrong.');
                 });
             });
@@ -200,7 +200,7 @@ export class DBWorker extends DBClient {
 
                 client.db().collection('users').update({},
                     { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
-                    { multi: true }
+                    { multi: true },
                 ).then((result) => {
                     client.db().collection('images').deleteOne({ _id: new ObjectID(imageId) }, (error, result) => {
                         if (error) {
@@ -230,7 +230,7 @@ export class DBWorker extends DBClient {
             } else {
                 client.db().collection('users').aggregate([
                     { $match: query },
-                    { $project: this.userAggregationProperties() }
+                    { $project: this.userAggregationProperties() },
                 ]).skip(page * limit).limit(limit).toArray((err, result) => {
                     if (err) {
                         return reject(err);
@@ -246,8 +246,8 @@ export class DBWorker extends DBClient {
 
         return new Promise((resolve, reject) => {
             client.db().collection('users').aggregate([
-                { $match: { $or: [{ email: email }, { username: username }] } },
-                { $project: { _id: 1 } }
+                { $match: { $or: [{ email }, { username }] } },
+                { $project: { _id: 1 } },
             ]).toArray((err, result) => {
                 if (result.length > 0) {
                     let firstUser = result[0];
@@ -304,9 +304,9 @@ export class DBWorker extends DBClient {
                     let error = new Error('User not found.');
                     reject(error);
                 } else {
-                    result.toArray().then(res => {
+                    result.toArray().then((res) => {
                         resolve(res[0]);
-                    }).catch(err => {
+                    }).catch(() => {
                         reject('Something went wrong.');
                     });
                 }
@@ -314,7 +314,7 @@ export class DBWorker extends DBClient {
 
             client.db().collection('users').aggregate([
                 { $match: query },
-                { $project: this.userAggregationProperties(raw) }
+                { $project: this.userAggregationProperties(raw) },
             ], completion);
         });
     }

@@ -44,11 +44,11 @@ export class AuthService {
 
     generateToken(user: Object): string {
         let payload = {
-            id: user['_id'].toString()
+            id: user['_id'].toString(),
         };
 
         let token = jwt.sign(payload, config.secret, {
-            expiresIn: '12h'
+            expiresIn: '12h',
         });
 
         return token;
