@@ -30,10 +30,13 @@ export class SessionRouter extends APIRouter {
 
         this.dbClient.getOneUser(UserSearchField.Email, email, true).then((user) => {
             if (user === undefined) {
+                console.log("getOneUser, user undefined");
                 return authFailedBlock();
             }
 
+            console.log("getOneUser AuthService");
             AuthService.getInstance().validatePassword(password, user['password']).then((result) => {
+                console.log("getOneUser AuthService validated " + result);
                 if (result === true) {
                     delete user['password'];
                     let token = AuthService.getInstance().generateToken(user);
@@ -46,6 +49,7 @@ export class SessionRouter extends APIRouter {
                 }
             });
         }).catch((error) => {
+            console.log("getOneUser, error = " + error);
             res.status(401).send({
                 'error': error.message,
             });

@@ -32,27 +32,32 @@ export class Server {
 
     // Configure Express middleware
     private configure() {
-        this.app.use(bodyParser.urlencoded({
-            extended: true,
-        }));
+        this.configureBodyParser();
+        this.configureCORS();
         this.app.use(helmet());
         this.configureRoutes();
         this.connectRoutes();
+        this.configureStatic();
+    }
 
-        // TODO: Remove before merging
-        let allowCrossDomain = (req, res, next) => {
-            res.header('Access-Control-Allow-Origin', 'localhost:3000');
-            res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-            res.header('Access-Control-Allow-Headers', 'Content-Type');
-            next();
-        };
-        this.app.use(allowCrossDomain);
-
-        this.app.use(`/${this.apiRoot()}/uploads`, express.static(config.imageDir));
+    private configureBodyParser() {
+        this.app.use(bodyParser.urlencoded({extended: true}));
     }
 
     private apiRoot(): string {
         return `${this.apiRootPath}/v${this.apiVersion.toFixed(1)}`;
+    }
+
+    private configureCORS() {
+        this.app.use((req, res, next) => {
+            res.header('Access-Control-Allow-Origin', '*');
+            res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+            next();
+        });
+    }
+
+    private configureStatic() {
+        this.app.use(`/${this.apiRoot()}/uploads`, express.static(config.imageDir));
     }
 
     private authChecker(req, res, next) {
