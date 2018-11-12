@@ -4,6 +4,22 @@
         "tslint:recommended"
     ],
     "jsRules": {},
-    "rules": {},
+    "rules": {
+      "member-access": false,
+      "member-ordering": false,
+      "quotemark": false,
+      "ban-types": false,
+      "prefer-const": false,
+      "align": false,
+      "object-literal-key-quotes": false,
+      "variable-name": [
+        true, "ban-keywords", "check-format", "allow-leading-underscore"
+      ],
+      "no-console": false,
+      "no-shadowed-variable": false,
+      "no-string-literal": false,
+      "object-literal-sort-keys": false,
+      "interface-name": false
+    },
     "rulesDirectory": []
 }

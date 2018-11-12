@@ -1,8 +1,8 @@
 import { DBClient, UserSearchField } from '../data/db-client';
-import { ValidatorService } from './validator-service';
 import { UserFactory } from '../services/user-factory';
-import { BodyParser } from './body-parser';
 import { AuthService } from './auth-service';
+import { BodyParser } from './body-parser';
+import { ValidatorService } from './validator-service';
 
 export class UserService {
 

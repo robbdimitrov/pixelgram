@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
 import { DBClient } from '../data/db-client';
-import { APIRouter } from './api-router';
 import { ImageService } from '../services/image-service';
+import { APIRouter } from './api-router';
 
 export class UserLikesRouter extends APIRouter {
 
@@ -20,11 +20,11 @@ export class UserLikesRouter extends APIRouter {
 
         this.imageService.getAllImagesLikedByUser(userId, page, limit, count, currentUserId).then((result) => {
             res.send({
-                'images': result
+                'images': result,
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }

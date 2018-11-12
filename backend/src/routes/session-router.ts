@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
-import { APIRouter } from './api-router';
+import { UserSearchField } from '../data/db-client';
 import { AuthService } from '../services/auth-service';
 import { UserFactory } from '../services/user-factory';
-import { UserSearchField } from '../data/db-client';
+import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
 
@@ -13,7 +13,7 @@ export class SessionRouter extends APIRouter {
         if (body.email === undefined || body.password === undefined) {
             let error = new Error('Missing argument(s). Email and password are required.');
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
             return next(error);
         }
@@ -23,7 +23,7 @@ export class SessionRouter extends APIRouter {
 
         let authFailedBlock = () => {
             res.status(401).send({
-                'error': 'Authentication failed. Incorrect email or password.'
+                'error': 'Authentication failed. Incorrect email or password.',
             });
         };
 
@@ -40,7 +40,7 @@ export class SessionRouter extends APIRouter {
                     let token = AuthService.getInstance().generateToken(user);
                     res.send({
                         'user': user,
-                        'token': token
+                        'token': token,
                     });
                 } else {
                     authFailedBlock();
@@ -48,7 +48,7 @@ export class SessionRouter extends APIRouter {
             });
         }).catch((error) => {
             res.status(401).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }

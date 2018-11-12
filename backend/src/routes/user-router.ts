@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
-import { APIRouter } from './api-router';
-import { User } from '../models/user';
 import { DBClient, UserSearchField } from '../data/db-client';
-import { UserImagesRouter } from './user-images-router';
-import { UserLikesRouter } from './user-likes-router';
+import { User } from '../models/user';
 import { ImageService } from '../services/image-service';
 import { UserService } from '../services/user-service';
+import { APIRouter } from './api-router';
+import { UserImagesRouter } from './user-images-router';
+import { UserLikesRouter } from './user-likes-router';
 
 export class UserRouter extends APIRouter {
 
@@ -35,11 +35,11 @@ export class UserRouter extends APIRouter {
 
         this.dbClient.getAllUsers({}, page, limit).then((result) => {
             res.send({
-                'users': result
+                'users': result,
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -52,7 +52,7 @@ export class UserRouter extends APIRouter {
 
             let error = new Error('Missing argument(s). Name, username, email and password are expected.');
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
             return next(error);
         }
@@ -64,11 +64,11 @@ export class UserRouter extends APIRouter {
 
         this.userService.createUser(name, username, email, password).then((result) => {
             res.send({
-                'message': 'User with email ' + email + ' created successfully.'
+                'message': 'User with email ' + email + ' created successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -79,12 +79,12 @@ export class UserRouter extends APIRouter {
         this.dbClient.getOneUser(UserSearchField.Identifier, id).then((result) => {
             if (result) {
                 res.send({
-                    'user': result
+                    'user': result,
                 });
             }
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -95,23 +95,23 @@ export class UserRouter extends APIRouter {
 
         if (userId !== req['user'].id) {
             return res.status(403).send({
-                'error': 'Can\'t update other people\'s accounts.'
+                'error': 'Can\'t update other people\'s accounts.',
             });
         }
 
         if (Object.keys(body).length < 1) {
             res.send({
-                'message': 'Nothing to update.'
+                'message': 'Nothing to update.',
             });
         }
 
         this.userService.updateUser(userId, body).then((result) => {
             res.send({
-                'message': 'User updated successfully.'
+                'message': 'User updated successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }
@@ -121,17 +121,17 @@ export class UserRouter extends APIRouter {
 
         if (id !== req['user'].id) {
             return res.status(403).send({
-                'error': 'Can\'t delete other people\'s accounts.'
+                'error': 'Can\'t delete other people\'s accounts.',
             });
         }
 
         this.dbClient.deleteOneUser(id).then((result) => {
             res.send({
-                'message': 'User deleted successfully.'
+                'message': 'User deleted successfully.',
             });
         }).catch((error) => {
             res.status(400).send({
-                'error': error.message
+                'error': error.message,
             });
         });
     }

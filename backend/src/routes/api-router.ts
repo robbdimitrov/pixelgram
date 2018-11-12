@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
 import { DBClient } from '../data/db-client';
 import { Routable } from './routable';
@@ -62,7 +62,7 @@ export abstract class APIRouter implements Routable {
     sendNotFound(req: Request, res: Response, next: NextFunction,
         message: string = 'Invalid request.') {
         res.status(404).send({
-            'error': message
+            'error': message,
         });
         next();
     }
