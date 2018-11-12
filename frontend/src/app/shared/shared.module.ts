@@ -8,7 +8,6 @@ import { HeaderComponent } from './components/header/header.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { ImagePipe } from './pipes/image.pipe';
-import { MomentPipe } from './pipes/moment.pipe';
 import { UserPipe } from './pipes/user.pipe';
 import { AuthGuard } from './services/auth-guard.service';
 import { NotAuthGuard } from './services/not-auth-guard.service';
@@ -20,7 +19,6 @@ import { NotAuthGuard } from './services/not-auth-guard.service';
         NotFoundComponent,
         ToastComponent,
         ImagePipe,
-        MomentPipe,
         UserPipe
     ],
     providers: [
@@ -41,7 +39,6 @@ import { NotAuthGuard } from './services/not-auth-guard.service';
         NotFoundComponent,
         ToastComponent,
         ImagePipe,
-        MomentPipe,
         UserPipe
     ]
 })
