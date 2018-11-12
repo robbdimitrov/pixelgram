@@ -1,5 +1,3 @@
-import * as moment from 'moment';
-
 import { User } from '../models/user';
 import { AuthService } from './auth-service';
 
@@ -17,7 +15,7 @@ export class UserFactory {
             user.bio = '';
             user.likedImages = [];
             user.postedImages = [];
-            user.registrationDate = moment().format();
+            user.registrationDate = Date();
 
             AuthService.getInstance().generateHash(password).then((res) => {
                 user.password = res;
