@@ -21,6 +21,10 @@ export class ImageUploadComponent {
     }
 
     getImagePreview(file: File) {
+        if (file === undefined) {
+            this.imagePreview = '';
+            return;
+        }
         const reader: FileReader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => {

@@ -311,7 +311,7 @@ export class DBClient {
         return new Promise((resolve, reject) => {
             client.db().collection('users').aggregate([
                 { $match: { $or: [{ email }, { username }] } },
-                { $project: { _id: 1 } },
+                { $project: { _id: 1, username: 1, email: 1 } },
             ]).toArray((err, result) => {
                 if (result.length > 0) {
                     let firstUser = result[0];

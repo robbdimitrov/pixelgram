@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
-import { User } from '../../models/user.model';
 import { UserCache } from '../../services/user-cache.service';
 import { Session } from '../../services/session.service';
 
@@ -75,7 +74,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
                 this.page += 1;
             }
         }).catch((error) => {
-            console.log('Error loading images: ' + error);
+            console.log('Error loading images.');
         });
     }
 
@@ -128,7 +127,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
                 self.location.back();
             }
         }).catch((error) => {
-
+            console.log('Deleting image failed.');
         });
     }
 

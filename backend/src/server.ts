@@ -32,6 +32,7 @@ export class Server {
 
     // Configure Express middleware
     private configure() {
+        this.configureLogger();
         this.configureBodyParser();
         this.configureCORS();
         this.app.use(helmet());
@@ -44,16 +45,28 @@ export class Server {
         this.app.use(bodyParser.urlencoded({extended: true}));
     }
 
+    private configureLogger() {
+        this.app.use((req, res, next) => {
+            console.log(`[${process.env.NODE_ENV}] REQUST ${req.method} ${req.url}`);
+            next();
+        });
+    }
+
     private apiRoot(): string {
         return `${this.apiRootPath}/v${this.apiVersion.toFixed(1)}`;
     }
 
     private configureCORS() {
-        this.app.use((req, res, next) => {
-            res.header('Access-Control-Allow-Origin', '*');
-            res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-            next();
-        });
+        if (process.env.NODE_ENV === 'development') {
+            this.app.use((req, res, next) => {
+                res.header('Access-Control-Allow-Origin', '*');
+                res.header('Access-Control-Allow-Headers', 'Origin,X-PINGOTHER,X-Requested-With,\
+                Content-Type,Accept,x-access-token');
+                res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+                res.header('Access-Control-Max-Age', '86400');
+                next();
+            });
+        }
     }
 
     private configureStatic() {
@@ -63,9 +76,10 @@ export class Server {
     private authChecker(req, res, next) {
         // If this is a login request, create a user request or
         // get an image request, don't check for token
-        if ((req.method === 'POST' &&
+        if (req.method === 'OPTIONS' || (req.method === 'POST' &&
         (req.path.indexOf('/sessions') !== -1 || req.path.indexOf('/users') !== -1)) ||
         (req.method === 'GET' && req.path.indexOf('/uploads') !== -1)) {
+            console.log('authChecker request without validation');
             return next();
         }
 
@@ -75,14 +89,17 @@ export class Server {
         if (token) {
             // verifies secret and checks exp
             AuthService.getInstance().validateToken(token).then((result) => {
+                console.log('authChecker token valid');
                 req.user = result;
                 next();
             }).catch((error) => {
+                console.log('authChecker token invalid');
                 return res.status(401).send({
                     error: 'Failed to authenticate token.',
                 });
             });
         } else {
+            console.log('authChecker token undefined');
             // if there is no token
             // return an error
             return res.status(401).send({
