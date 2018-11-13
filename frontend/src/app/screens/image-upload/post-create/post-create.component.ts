@@ -13,7 +13,7 @@ import { ErrorService } from '../../../services/error.service';
 })
 export class PostCreateComponent implements OnDestroy {
 
-    captionValue: string;
+    imageDescription: string;
     imagePreview: string;
     fileChangeSubscription: Subscription;
 
@@ -52,9 +52,9 @@ export class PostCreateComponent implements OnDestroy {
 
     onSubmitClick() {
         let self = this;
-
         this.apiClient.uploadImage(this.uploadService.selectedFile()).then((result) => {
-            self.apiClient.createImage(result['filename'], self.captionValue).then((result) => {
+            let imageDescription = self.imageDescription || '';
+            self.apiClient.createImage(result['filename'], imageDescription).then((result) => {
                 this.uploadService.setSelectedFile(undefined);
                 this.router.navigate(['/']);
             });

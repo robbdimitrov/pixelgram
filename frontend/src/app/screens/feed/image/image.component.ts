@@ -34,6 +34,10 @@ export class ImageComponent {
         return this.session.userId() === this.image.owner;
     }
 
+    isDescriptionPresent() {
+        return this.image.description.length > 0;
+    }
+
     onProfileClick() {
         this.showProfile.emit(this.image.owner);
     }
