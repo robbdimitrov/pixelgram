@@ -15,7 +15,7 @@ export class UserFactory {
             user.bio = '';
             user.likedImages = [];
             user.postedImages = [];
-            user.registrationDate = Date();
+            user.registrationDate = new Date().toISOString();
 
             AuthService.getInstance().generateHash(password).then((res) => {
                 user.password = res;

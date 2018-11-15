@@ -10,7 +10,7 @@ export class ImageFactory {
         image.ownerId = new ObjectID(ownerId);
         image.filename = filename;
         image.description = description;
-        image.dateCreated = Date();
+        image.dateCreated = new Date().toISOString();
         image.likedUsers = [];
 
         return image;
