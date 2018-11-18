@@ -11,6 +11,7 @@ import { ImagePipe } from './pipes/image.pipe';
 import { UserPipe } from './pipes/user.pipe';
 import { AuthGuard } from './services/auth-guard.service';
 import { NotAuthGuard } from './services/not-auth-guard.service';
+import { RelativeDatePipe } from './pipes/relative-date.pipe';
 
 @NgModule({
     declarations: [
@@ -19,7 +20,8 @@ import { NotAuthGuard } from './services/not-auth-guard.service';
         NotFoundComponent,
         ToastComponent,
         ImagePipe,
-        UserPipe
+        UserPipe,
+        RelativeDatePipe
     ],
     providers: [
         AuthGuard,
@@ -39,7 +41,8 @@ import { NotAuthGuard } from './services/not-auth-guard.service';
         NotFoundComponent,
         ToastComponent,
         ImagePipe,
-        UserPipe
+        UserPipe,
+        RelativeDatePipe
     ]
 })
 export class SharedModule {}

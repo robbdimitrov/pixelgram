@@ -33,7 +33,7 @@
   <div class="content">
     <span class="bold" *ngIf="isDescriptionPresent()">{{'name' | user:image.owner | async}}</span>
     <p>{{image.description}}</p>
-    <span class="small date">{{image.dateCreated | date:'medium'}}</span>
+    <span class="small date">{{image.dateCreated | relativedate}}</span>
   </div> <!-- End of content -->
 
 </div> <!-- End of container -->
