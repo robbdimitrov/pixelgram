@@ -4,16 +4,14 @@ Pixelgram is an image sharing service.
 
 ## Table of contents
 
-- [Pixelgram](#pixelgram)
-  - [Table of contents](#table-of-contents)
-  - [Stack](#stack)
-  - [Screenshots](#screenshots)
-  - [Setup](#setup)
-    - [Clone the repository](#clone-the-repository)
-    - [Build and run](#build-and-run)
-  - [API](#api)
-  - [Contact](#contact)
-  - [License](#license)
+- [Stack](#stack)
+- [Screenshots](#screenshots)
+- [Setup](#setup)
+  - [Clone the repository](#clone-the-repository)
+  - [Build and run](#build-and-run)
+- [API](#api)
+- [Contact](#contact)
+- [License](#license)
 
 ## Stack
 
@@ -57,6 +55,8 @@ Stop containers
 ```
 $ docker-compose down
 ```
+
+Open the front-end [here](http://localhost:4000/) and access the API [here](http://localhost:4000/api/v1/).
 
 ## API
 
