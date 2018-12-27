@@ -31,7 +31,7 @@ Screenshots are available in the [`screenshots`](screenshots) directory.
 
 Clone the repository to your filesystem
 
-```
+```sh
 $ git clone git@github.com:robbdimitrov/pixelgram.git
 $ cd pixelgram
 ```
@@ -40,19 +40,19 @@ $ cd pixelgram
 
 Build images
 
-```
+```sh
 $ docker-compose build
 ```
 
 Run containers
 
-```
+```sh
 $ docker-compose up
 ```
 
 Stop containers
 
-```
+```sh
 $ docker-compose down
 ```
 
@@ -62,14 +62,6 @@ Open the front-end [here](http://localhost:4000/) and access the API [here](http
 
 The API documentation is available [here](API.md).
 
-## Contact
-
-[Robert Dimitrov](http://robbdimitrov.com)   
-
-[@robbdimitrov](https://twitter.com/robbdimitrov)
-
 ## License
-
-Copyright (c) Robert Dimitrov.
 
 Licensed under the [MIT](LICENSE) License.

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { relativeDate } from '../helpers/relative-date';
+import * as quartzite from 'quartzite';
 
 @Pipe({
     name: 'relativedate'
@@ -7,7 +7,7 @@ import { relativeDate } from '../helpers/relative-date';
 export class RelativeDatePipe implements PipeTransform {
 
     transform(value: Date): string {
-        return relativeDate(value);
+        return quartzite.formatDate(value);
     }
 
 }

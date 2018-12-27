@@ -21,6 +21,7 @@
     "@angular/platform-browser-dynamic": "^7.0.1",
     "@angular/router": "^7.0.1",
     "core-js": "^2.4.1",
+    "quartzite": "^1.0.2",
     "rxjs": "^6.3.3",
     "rxjs-compat": "^6.3.3",
     "zone.js": "^0.8.14"
