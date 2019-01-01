@@ -37,18 +37,6 @@
   border-radius: $button-border-radius;
 }
 
-button.like {
-  background: url(../assets/images/like.svg);
-  background-repeat: no-repeat;
-  width: 26px;
-  height: 26px;
-}
-
-button.like.active {
-  background: url(../assets/images/like_active.svg);
-  background-repeat: no-repeat;
-}
-
 @include breakpoint($break-extra-small) {
   .full-width {
     width: $big-component-width;

@@ -1,6 +1,6 @@
-@import '~stylesheets/form';
-@import '~stylesheets/variables';
-@import '~stylesheets/flexbox';
+@import '~styles/form';
+@import '~styles/variables';
+@import '~styles/flexbox';
 
 .post-section {
   @include flexbox;

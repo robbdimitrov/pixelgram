@@ -1,8 +1,8 @@
-@import '~stylesheets/mixins';
-@import '~stylesheets/variables';
-@import '~stylesheets/functions';
-@import '~stylesheets/fonts';
-@import '~stylesheets/flexbox';
+@import '~styles/mixins';
+@import '~styles/variables';
+@import '~styles/functions';
+@import '~styles/fonts';
+@import '~styles/flexbox';
 
 .container {
   border: 1px solid $component-border-color;
@@ -97,6 +97,18 @@
     opacity: 0.6;
     transition: all 0.3s ease;
   }
+}
+
+button.like {
+  background: url(/assets/images/like.svg);
+  background-repeat: no-repeat;
+  width: 26px;
+  height: 26px;
+}
+
+button.like.active {
+  background: url(/assets/images/like_active.svg);
+  background-repeat: no-repeat;
 }
 
 .header {
