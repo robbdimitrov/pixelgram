@@ -1,13 +1,38 @@
 @import 'colors';
-@import 'mixins';
+@import 'helpers';
 @import 'variables';
 
 .button {
-  @include button-background($button-background-color);
+  background: $button-background-color;
+  text-decoration: none;
+  &:not(:disabled) {
+    &:hover, &:focus {
+      background: darken($button-background-color,8%);
+      transition: all 0.3s ease;
+    }
+    &:active {
+      background: darken($button-background-color, 25%);
+    }
+  }
 }
 
 .outline-button {
-  @include button-outline($button-background-color, $primary-text-color, $button-border-width);
+  border-style: solid;
+  border-width: $button-border-width;
+  border-color: $button-background-color;
+  text-decoration: none;
+  color: $primary-text-color;
+  &:not(:disabled) {
+    &:hover, &:focus {
+      border-color: darken($button-background-color,8%);
+      color: darken($primary-text-color, 8%);
+      transition: all 0.3s ease;
+    }
+    &:active {
+      border-color: darken($button-background-color, 25%);
+      color: darken($primary-text-color, 25%);
+    }
+  }
 }
 
 .centered {
@@ -37,9 +62,64 @@
   border-radius: $button-border-radius;
 }
 
-@include breakpoint($break-extra-small) {
+@media only screen and (min-width: $break-extra-small) {
   .full-width {
     width: $big-component-width;
     @include center-block;
+  }
+}
+
+.description {
+  width: 75%;
+}
+
+.title, .description, .reference {
+  text-align: center;
+}
+
+.title, .description, form, button[type=submit] {
+  margin-top: $vertical-spacing-medium;
+}
+
+.reference {
+  margin-top: $vertical-spacing-large;
+  margin-bottom: $vertical-spacing-medium;
+
+  span {
+    margin-right: $spacing;
+  }
+}
+
+.title, .fieldset, button[type=submit], .reference, .alert {
+  margin-left: $spacing;
+  margin-right: $spacing;
+}
+
+button[type=submit] {
+  width: 40%;
+  @include center-block;
+}
+
+.fieldset {
+  margin-top: $vertical-spacing-internal;
+  height: $fieldset-height;
+}
+
+.fieldset {
+  display: flex;
+  border-bottom: $button-border-width solid $button-border-color;
+
+  label {
+    width: 30%;
+  }
+
+  input {
+    flex: 1;
+    border: none;
+  }
+
+  button, label {
+    margin-top: auto;
+    margin-bottom: auto;
   }
 }

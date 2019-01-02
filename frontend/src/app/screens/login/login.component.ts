@@ -6,8 +6,7 @@ import { ErrorService } from '../../services/error.service';
 
 @Component({
     selector: 'pg-login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.scss']
+    templateUrl: './login.component.html'
 })
 export class LoginComponent extends FormComponent {
 

@@ -1,11 +1,11 @@
 @import '~styles/variables';
-@import '~styles/flexbox';
-@import '~styles/mixins';
+@import '~styles/helpers';
+@import '~styles/colors';
 
 .container {
   height: $navigation-bar-height;
-  @include flexbox;
-  @include justify-content(space-between);
+  display: flex;
+  justify-content: space-between;
   background-color: $component-background;
 }
 
@@ -29,21 +29,21 @@
 }
 
 .nav-home {
-  background-image: url('/assets/images/home.svg');
+  background-image: url('/assets/home.svg');
 }
 
 .nav-new {
-  background-image: url('/assets/images/add_new.svg');
+  background-image: url('/assets/add_new.svg');
 }
 
 .nav-profile {
-  background-image: url('/assets/images/profile.svg');
+  background-image: url('/assets/profile.svg');
 }
 
 ul {
   list-style-type: none;
   padding: 0;
-  @include flexbox;
+  display: flex;
   margin: 0;
   height: 100%;
   margin-right: $vertical-spacing-internal;

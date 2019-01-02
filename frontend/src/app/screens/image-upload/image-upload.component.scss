@@ -1,11 +1,10 @@
-@import '~styles/form';
 @import '~styles/variables';
-@import '~styles/flexbox';
+@import '~styles/colors';
 
 .image-section {
-  @include flexbox;
-  @include align-items(center);
-  @include flex-direction(column);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 }
 
 .image-container {

@@ -1,5 +1,4 @@
 @import '~styles/variables';
-@import '~styles/flexbox';
 
 .container {
   margin: $vertical-spacing-medium;
@@ -13,24 +12,24 @@
 }
 
 .user-content, .counters-buttons, .control-buttons, .counter-container {
-  @include flexbox;
-  @include justify-content(space-between);
+  display: flex;
+  justify-content: space-between;
 }
 
 .counters-buttons {
-  @include flex-direction(column);
+  flex-direction: column;
 }
 
 #settings-button {
   margin-left: $vertical-spacing-internal;
-  background-image: url('/assets/images/settings.svg');
+  background-image: url('/assets/settings.svg');
   background-repeat: no-repeat;
   width: $icon-button-width;
   background-position: center;
 }
 
 .counter-container {
-  @include justify-content(flex-end);
+  justify-content: flex-end;
 }
 
 .counter {

@@ -8,8 +8,7 @@ import { Session } from '../../../services/session.service';
 
 @Component({
     selector: 'pg-change-password',
-    templateUrl: './change-password.component.html',
-    styleUrls: ['./change-password.component.scss']
+    templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent {
 

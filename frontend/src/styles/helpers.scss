@@ -1,0 +1,11 @@
+@function rem($pixels, $browser-context: 16) {
+  @return ($pixels / $browser-context) * 1rem;
+}
+
+// Quickly center any element within its parent.
+// Requires width or max-width to be set.
+@mixin center-block {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}

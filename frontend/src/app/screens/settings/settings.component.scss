@@ -1,13 +1,12 @@
 @import '~styles/variables';
-@import '~styles/flexbox';
 
 li {
   list-style: none;
   border-bottom: 1px black solid;
   height: $icon-button-width;
   vertical-align: middle;
-  @include flexbox;
-  @include justify-content(space-between);
+  display: flex;
+  justify-content: space-between;
 
   span {
     margin-top: auto;
@@ -15,7 +14,7 @@ li {
   }
 
   .disclosure {
-    background-image: url('/assets/images/forward.svg');
+    background-image: url('/assets/forward.svg');
     background-repeat: no-repeat;
     width: 10px;
     height: 16px;

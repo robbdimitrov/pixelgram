@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --no-optional
 COPY . .
-RUN $(npm bin)/ng build --prod
+RUN npm run build
 
 ### Create server and deploy ###
 

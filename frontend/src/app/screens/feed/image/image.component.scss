@@ -1,8 +1,7 @@
-@import '~styles/mixins';
+@import '~styles/helpers';
 @import '~styles/variables';
-@import '~styles/functions';
 @import '~styles/fonts';
-@import '~styles/flexbox';
+@import '~styles/colors';
 
 .container {
   border: 1px solid $component-border-color;
@@ -45,8 +44,8 @@
 }
 
 .header, .likes, .user-content {
-  @include flexbox;
-  @include align-items(center);
+  display: flex;
+  align-items: center;
 
   span {
     margin-left: $spacing;
@@ -55,7 +54,7 @@
 
 .header {
   position: relative;
-  @include justify-content(space-between);
+  justify-content: space-between;
 }
 
 .header, .content {
@@ -79,8 +78,6 @@
 
 .image {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
 
 .small {
@@ -88,7 +85,7 @@
 }
 
 .dropdown-button {
-  background-image: url('/assets/images/dropdown.svg');
+  background-image: url('/assets/dropdown.svg');
   background-repeat: no-repeat;
   width: 24px;
   height: 12px;
@@ -100,14 +97,14 @@
 }
 
 button.like {
-  background: url(/assets/images/like.svg);
+  background: url(/assets/like.svg);
   background-repeat: no-repeat;
   width: 26px;
   height: 26px;
 }
 
 button.like.active {
-  background: url(/assets/images/like_active.svg);
+  background: url(/assets/like_active.svg);
   background-repeat: no-repeat;
 }
 

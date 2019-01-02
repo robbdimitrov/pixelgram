@@ -1,13 +1,12 @@
-@import '~styles/form';
-@import '~styles/flexbox';
 @import '~styles/variables';
+@import '~styles/colors';
 
 $avatar-side: $avatar-side-large * 0.75;
 
 .avatar-secton {
-  @include flexbox;
-  @include align-items(center);
-  @include flex-direction(column);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 
   label {
     margin-top: $vertical-spacing-medium;

@@ -1,13 +1,12 @@
 {
   "name": "pixelgram",
-  "version": "1.0.0",
   "author": "Robert Dimitrov",
   "license": "MIT",
   "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --prod",
     "lint": "ng lint"
   },
   "dependencies": {
