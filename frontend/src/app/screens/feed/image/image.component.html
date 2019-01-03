@@ -22,7 +22,9 @@
     </div>
   </div>
 
-  <img class="image" [src]="image.filename | image">
+  <div class="image-container">
+    <img class="image" [src]="image.filename | image">
+  </div>
 
   <div class="likes">
     <button class="like" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()"></button>
