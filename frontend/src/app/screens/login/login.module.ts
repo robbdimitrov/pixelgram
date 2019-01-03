@@ -5,7 +5,6 @@ import { SharedModule } from '../../shared/shared.module';
 import { LoginComponent } from './login.component';
 import { NotAuthGuard } from '../../shared/services/not-auth-guard.service';
 
-
 export const routes: Routes = [
     {
         path: 'login',

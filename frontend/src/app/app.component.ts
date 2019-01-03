@@ -4,8 +4,7 @@ import { ErrorService } from './services/error.service';
 
 @Component({
   selector: 'pg-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  templateUrl: './app.component.html'
 })
 export class AppComponent {
 

@@ -1,6 +1,7 @@
 <div class="container">
-
-    <a class="logo" routerLink="/"><img src="/assets/logo.svg" alt="PixelGram Logo"></a>
+    <a class="logo" routerLink="/">
+      <img src="/assets/logo.svg" alt="PixelGram Logo">
+    </a>
 
     <div class="navigation">
       <ul *ngIf="isAuthed()">
@@ -24,9 +25,12 @@
       </ul>
 
       <ul *ngIf="!isAuthed()">
-        <li><a class="outline-button round-corners" routerLink="/login">Log In</a></li>
-        <li><a class="outline-button round-corners" routerLink="/signup">Sign Up</a></li>
+        <li>
+          <a class="outline-button round-corners" routerLink="/login">Log In</a>
+        </li>
+        <li>
+          <a class="outline-button round-corners" routerLink="/signup">Sign Up</a>
+        </li>
       </ul>
     </div>
-
 </div>

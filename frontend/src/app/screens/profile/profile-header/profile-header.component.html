@@ -1,5 +1,4 @@
 <div class="container">
-
   <div class="user-content">
     <img class="avatar"
       [src]="user.avatar | image:'/assets/avatar_placeholder.png'">
@@ -14,7 +13,7 @@
           <span class="label">
             Likes
           </span>
-        </div> <!-- End of counter -->
+        </div>
 
         <div class="counter">
           <span class="value bold">
@@ -24,8 +23,8 @@
           <span class="label">
             Images
           </span>
-        </div> <!-- End of counter -->
-      </div> <!-- End of counter-container -->
+        </div>
+      </div>
 
       <div *ngIf="isCurrentUser()" class="control-buttons">
         <button
@@ -38,9 +37,9 @@
           class="round-corners outline-button"
           (click)="onSettingsClick()">
         </button>
-      </div> <!-- End of control-buttons -->
-    </div> <!-- End of counters-buttons -->
-  </div> <!-- End of user-content -->
+      </div>
+    </div>
+  </div>
 
   <div class="user-info">
     <span class="bold">
@@ -50,6 +49,5 @@
     <span>
       {{user.bio}}
     </span>
-  </div> <!-- End of user-info -->
-
-</div> <!-- End of container -->
+  </div>
+</div>
