@@ -1,13 +1,19 @@
-@import '~styles/variables';
+@import "~styles/variables";
 
-$image-side: (($big-component-width - $vertical-spacing-internal) / 2);
+$image-side: 50% - 16px / $big-component-width;
 
 .container {
   display: inline-block;
+  width: $image-side;
+  padding-top: $image-side;
+  position: relative;
 }
 
-.container img {
-  width: $image-side;
-  height: $image-side;
+.image {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: green;
   object-fit: cover;
 }

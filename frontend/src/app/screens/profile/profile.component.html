@@ -1,5 +1,4 @@
 <div class="container full-width">
-
   <pg-profile-header *ngIf="user"
     [user]="user"
     (openSettings)="onOpenSettings()"
@@ -13,9 +12,9 @@
     </pg-thumbnail>
   </div>
 
-  <button id="next" *ngIf="images.length > 5" class="button outline-button round-corners"
+  <button id="next" *ngIf="images.length > 5"
+    class="button outline-button round-corners"
     (click)="onNextClick()">
     Next
   </button>
-
 </div>

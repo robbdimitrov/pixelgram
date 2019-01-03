@@ -1,5 +1,5 @@
-@import '~styles/helpers';
-@import '~styles/variables';
+@import "~styles/helpers";
+@import "~styles/variables";
 
 .container {
   padding-bottom: $vertical-spacing-medium;
@@ -9,8 +9,4 @@ button#next {
   @include center-block;
   min-width: $min-button-width;
   margin-top: $vertical-spacing-medium;
-}
-
-.image-container {
-  font-size: $vertical-spacing-internal;
 }
