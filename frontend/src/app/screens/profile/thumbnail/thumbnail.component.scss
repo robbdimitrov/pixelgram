@@ -1,12 +1,14 @@
 @import "~styles/variables";
 
-$image-side: 50% - 16px / $big-component-width;
+$margin: ($vertical-spacing-internal / $big-component-width) * 100%;
+$image-side: 50% - $margin;
 
 .container {
   display: inline-block;
   width: $image-side;
   padding-top: $image-side;
   position: relative;
+  margin: $margin / 2;
 }
 
 .image {

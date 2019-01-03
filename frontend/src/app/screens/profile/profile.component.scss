@@ -5,6 +5,10 @@
   padding-bottom: $vertical-spacing-medium;
 }
 
+.image-container {
+  font-size: 0;
+}
+
 button#next {
   @include center-block;
   min-width: $min-button-width;
