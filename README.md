@@ -64,7 +64,7 @@ Stop containers
 $ docker-compose down
 ```
 
-Open the front-end [here](http://localhost:4000/) and access the API [here](http://localhost:4000/api/v1/).
+Open the front-end [here](http://localhost:4000/) and access the API [here](http://localhost:4000/api/).
 
 ## API
 
