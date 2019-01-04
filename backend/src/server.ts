@@ -2,7 +2,6 @@ import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as helmet from 'helmet';
 
-import * as config from '../config/server.config';
 import { ImageRouter } from './routes/image-router';
 import { SessionRouter } from './routes/session-router';
 import { UploadRouter } from './routes/upload-router';
@@ -20,9 +19,8 @@ export class Server {
     private imageService: ImageService;
     private userService: UserService;
 
-    constructor(private port: number, private apiRootPath: string,
-        private apiVersion: number, private dbClient: DBClient) {
-
+    constructor(private port: number, private apiRoot: string,
+        private imageDir: string, private dbClient: DBClient) {
         this.app = express();
         this.imageService = new ImageService(dbClient);
         this.userService = new UserService(dbClient);
@@ -34,7 +32,6 @@ export class Server {
     private configure() {
         this.configureLogger();
         this.configureBodyParser();
-        this.configureCORS();
         this.app.use(helmet());
         this.configureRoutes();
         this.connectRoutes();
@@ -52,25 +49,8 @@ export class Server {
         });
     }
 
-    private apiRoot(): string {
-        return `${this.apiRootPath}/v${this.apiVersion.toFixed(1)}`;
-    }
-
-    private configureCORS() {
-        if (process.env.NODE_ENV === 'development') {
-            this.app.use((req, res, next) => {
-                res.header('Access-Control-Allow-Origin', '*');
-                res.header('Access-Control-Allow-Headers', 'Origin,X-PINGOTHER,X-Requested-With,\
-                Content-Type,Accept,x-access-token');
-                res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-                res.header('Access-Control-Max-Age', '86400');
-                next();
-            });
-        }
-    }
-
     private configureStatic() {
-        this.app.use(`/${this.apiRoot()}/uploads`, express.static(config.imageDir));
+        this.app.use(`/${this.apiRoot}/uploads`, express.static(this.imageDir));
     }
 
     private authChecker(req, res, next) {
@@ -119,13 +99,13 @@ export class Server {
         let imageRouter = new ImageRouter(this.dbClient, this.imageService);
         this.routers['images'] = imageRouter;
 
-        let uploadRouter = new UploadRouter();
+        let uploadRouter = new UploadRouter(this.imageDir);
         this.routers['upload'] = uploadRouter;
     }
 
     // Configure API endpoints
     private connectRoutes() {
-        let apiRoot = this.apiRoot();
+        let apiRoot = this.apiRoot;
 
         this.app.use(this.authChecker);
 

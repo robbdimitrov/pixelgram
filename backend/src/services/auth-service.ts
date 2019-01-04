@@ -1,11 +1,10 @@
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 
-import * as config from '../../config/server.config';
-
 export class AuthService {
 
     private static instance: AuthService;
+    private secret = process.env.JWT_SECRET || 'secret';
 
     private constructor() {}
 
@@ -47,7 +46,7 @@ export class AuthService {
             id: user['_id'].toString(),
         };
 
-        let token = jwt.sign(payload, config.secret, {
+        let token = jwt.sign(payload, this.secret, {
             expiresIn: '12h',
         });
 
@@ -56,7 +55,7 @@ export class AuthService {
 
     validateToken(token: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            jwt.verify(token, config.secret, (err, decoded) => {
+            jwt.verify(token, this.secret, (err, decoded) => {
                 if (err) {
                     reject(err);
                 } else {

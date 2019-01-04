@@ -36,6 +36,14 @@ $ git clone git@github.com:robbdimitrov/pixelgram.git
 $ cd pixelgram
 ```
 
+### Create .env
+
+Copy the `.env.example` file to `.env`
+
+```sh
+$ cp .env.example .env
+```
+
 ### Build and run
 
 Build images

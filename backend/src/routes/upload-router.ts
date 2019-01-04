@@ -1,22 +1,18 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as multer from 'multer';
 
-import * as config from '../../config/server.config';
-
 export class UploadRouter {
 
     router: Router;
 
-    constructor() {
+    constructor(private imageDir: string) {
         this.router = Router();
-
         this.connectRouter(this.router);
     }
 
     protected connectRouter(router: Router) {
-
         let uploader = multer({
-            dest: config.imageDir,
+            dest: this.imageDir,
             limits: { fileSize: 1000000, files: 1 },
         });
 

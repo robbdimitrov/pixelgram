@@ -17,13 +17,16 @@ export enum UserSearchField {
 export class DBClient {
 
     private client?: MongoClient;
+    private url: string;
 
     /**
      * Default constructor
      *
      * @param url url of the database
      */
-    constructor(protected url: string) {}
+    constructor(dbHost: string, dbPort: number, dbName: string) {
+        this.url = `mongodb://${dbHost}:${dbPort}/${dbName}`;
+    }
 
     // Database connection methods
 
