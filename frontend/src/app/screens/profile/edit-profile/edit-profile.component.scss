@@ -3,6 +3,10 @@
 
 $avatar-side: $avatar-side-large * 0.75;
 
+.container {
+  padding-bottom: $vertical-spacing-medium;
+}
+
 .avatar-secton {
   display: flex;
   align-items: center;
