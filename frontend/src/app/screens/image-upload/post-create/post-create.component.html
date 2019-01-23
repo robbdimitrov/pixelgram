@@ -6,15 +6,19 @@
       <img *ngIf="imagePreview" class="image" [src]="imagePreview">
     </div>
 
-    <textarea placeholder="Write a description..."
+    <textarea
+      placeholder="Write a description..."
       maxlength="160"
-      [(ngModel)]="imageDescription">
+      [(ngModel)]="imageDescription"
+    >
     </textarea>
   </div>
 
-  <button class="round-corners centered outline-button"
+  <button
+    class="round-corners centered outline-button"
     (click)="onSubmitClick()"
-    [disabled]="!hasSelectedFile()">
+    [disabled]="!hasSelectedFile()"
+  >
     Share
   </button>
 </div>

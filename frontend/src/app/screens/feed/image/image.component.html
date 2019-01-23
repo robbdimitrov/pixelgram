@@ -3,17 +3,19 @@
     <div class="user-content">
       <img
         [src]="'avatar' | user:image.owner | async | image:'/assets/avatar_placeholder.png'"
-        (click)="onProfileClick()">
+        (click)="onProfileClick()"
+      >
 
-      <span class="bold"
-        (click)="onProfileClick()">
+      <span class="bold" (click)="onProfileClick()">
         {{'username' | user:image.owner | async}}
       </span>
     </div>
 
-    <button *ngIf="isOwnedByCurrentUser()"
+    <button
+      *ngIf="isOwnedByCurrentUser()"
       class="dropdown-button"
-      (click)="optionsOpened = !optionsOpened">
+      (click)="optionsOpened = !optionsOpened"
+    >
     </button>
     <div *ngIf="optionsOpened" class="dropdown-options">
       <ul>
@@ -27,13 +29,19 @@
   </div>
 
   <div class="likes">
-    <button class="like" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()"></button>
+    <button class="like" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()">
+    </button>
+
     <span class="bold">{{image.likes}} {{image.likes == 1 ? "like" : "likes"}}</span>
   </div>
 
   <div class="content">
-    <span class="bold" *ngIf="isDescriptionPresent()">{{'name' | user:image.owner | async}}</span>
+    <span class="bold" *ngIf="isDescriptionPresent()">
+      {{'name' | user:image.owner | async}}
+    </span>
+
     <p>{{image.description}}</p>
+
     <span class="small date">{{image.dateCreated | relativedate}}</span>
   </div>
 </div>

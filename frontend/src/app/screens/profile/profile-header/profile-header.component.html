@@ -1,7 +1,8 @@
 <div class="container">
   <div class="user-content">
     <img class="avatar"
-      [src]="user.avatar | image:'/assets/avatar_placeholder.png'">
+      [src]="user.avatar | image:'/assets/avatar_placeholder.png'"
+    >
 
     <div class="counters-buttons">
       <div class="counter-container">
@@ -29,13 +30,15 @@
       <div *ngIf="isCurrentUser()" class="control-buttons">
         <button
           class="round-corners outline-button"
-          (click)="onEditProfileClick()">
+          (click)="onEditProfileClick()"
+        >
           Edit Profile
         </button>
 
         <button id="settings-button"
           class="round-corners outline-button"
-          (click)="onSettingsClick()">
+          (click)="onSettingsClick()"
+        >
         </button>
       </div>
     </div>

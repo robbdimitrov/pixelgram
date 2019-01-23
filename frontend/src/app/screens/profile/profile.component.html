@@ -1,20 +1,27 @@
 <div class="container full-width">
-  <pg-profile-header *ngIf="user"
+  <pg-profile-header
+    *ngIf="user"
     [user]="user"
     (openSettings)="onOpenSettings()"
-    (openEditProfile)="onOpenEditProfile()">
+    (openEditProfile)="onOpenEditProfile()"
+  >
   </pg-profile-header>
 
   <div class="image-container">
-    <pg-thumbnail *ngFor="let image of images"
+    <pg-thumbnail
+      *ngFor="let image of images"
       [image]="image"
-      (openImage)="onOpenImage($event)">
+      (openImage)="onOpenImage($event)"
+    >
     </pg-thumbnail>
   </div>
 
-  <button id="next" *ngIf="images.length > 5"
+  <button
+    id="next"
+    *ngIf="images.length > 5"
     class="button outline-button round-corners"
-    (click)="onNextClick()">
+    (click)="onNextClick()"
+  >
     Next
   </button>
 </div>

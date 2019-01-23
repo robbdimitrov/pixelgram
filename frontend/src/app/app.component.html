@@ -1,9 +1,7 @@
 <div class="container">
   <pg-header></pg-header>
 
-  <pg-toast *ngIf="error()"
-    content="{{error()}}"
-    (onClose)="onCloseToast()">
+  <pg-toast *ngIf="error()" content="{{error()}}" (onClose)="onCloseToast()">
   </pg-toast>
 
   <router-outlet></router-outlet>

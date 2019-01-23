@@ -1,15 +1,20 @@
 <div class="container full-width">
-  <pg-image *ngFor="let image of images"
+  <pg-image
+    *ngFor="let image of images"
     [image]="image"
     (like)="onLike($event)"
     (unlike)="onUnlike($event)"
     (showProfile)="onShowProfile($event)"
-    (deleteAction)="onDeleteAction($event)">
+    (deleteAction)="onDeleteAction($event)"
+  >
   </pg-image>
 
-  <button id="next" *ngIf="images.length > 5"
+  <button
+    id="next"
+    *ngIf="images.length > 5"
     class="button outline-button round-corners"
-    (click)="onNextClick()">
+    (click)="onNextClick()"
+  >
     Next
   </button>
 </div>

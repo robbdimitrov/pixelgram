@@ -10,12 +10,19 @@
       <label for="file" class="round-corners outline-button">
         Select a Photo
       </label>
-      <input type="file" id="file" #file
-        accept="image/*" (change)="onChange(file.files)"/>
+      <input
+        type="file"
+        id="file"
+        #file
+        accept="image/*"
+        (change)="onChange(file.files)"
+      >
 
-      <button class="round-corners outline-button"
+      <button
+        class="round-corners outline-button"
         (click)="onNextClick()"
-        [disabled]="!imagePreview">
+        [disabled]="!imagePreview"
+      >
         Next
       </button>
     </div>

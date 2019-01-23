@@ -4,6 +4,4 @@ import { Component } from '@angular/core';
     selector: 'pg-not-found',
     templateUrl: './not-found.component.html'
 })
-export class NotFoundComponent {
-
-}
+export class NotFoundComponent {}

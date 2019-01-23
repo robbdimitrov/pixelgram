@@ -5,7 +5,6 @@ import { SharedModule } from '../../shared/shared.module';
 import { SignupComponent } from './signup.component';
 import { NotAuthGuard } from '../../shared/services/not-auth-guard.service';
 
-
 export const routes: Routes = [
     {
         path: 'signup',
