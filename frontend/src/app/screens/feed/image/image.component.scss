@@ -100,10 +100,9 @@
 }
 
 .dropdown-button {
-  background-image: url('/assets/dropdown.svg');
-  background-repeat: no-repeat;
-  width: 24px;
-  height: 12px;
+  min-width: 24px;
+  font-size: rem(16);
+  color: $primary-text-color;
 
   &:hover, &:focus {
     opacity: 0.6;

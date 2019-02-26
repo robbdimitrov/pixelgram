@@ -20,12 +20,12 @@
   flex-direction: column;
 }
 
-#settings-button {
-  margin-left: $vertical-spacing-internal;
-  background-image: url('/assets/settings.svg');
-  background-repeat: no-repeat;
-  width: $icon-button-width;
-  background-position: center;
+.outline-button {
+  min-width: $icon-button-width;
+
+  &:last-child {
+    margin-left: $vertical-spacing-internal;
+  }
 }
 
 .counter-container {
