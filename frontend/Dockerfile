@@ -1,6 +1,6 @@
 ### Create builder ###
 
-FROM node:8.12-alpine as builder
+FROM node:8.15-alpine as builder
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
