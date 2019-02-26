@@ -30,6 +30,12 @@
 
   <div class="likes">
     <button class="like" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()">
+        <div *ngIf="image.isLiked; else elseBlock">
+          <i class="fas fa-heart"></i>
+        </div>
+        <ng-template #elseBlock>
+          <i class="far fa-heart"></i>
+        </ng-template>
     </button>
 
     <span class="bold">{{image.likes}} {{image.likes == 1 ? "like" : "likes"}}</span>

@@ -112,15 +112,12 @@
 }
 
 button.like {
-  background: url('/assets/like.svg');
-  background-repeat: no-repeat;
-  width: 26px;
-  height: 26px;
+  font-size: rem(26);
+  color: $primary-text-color;
 }
 
 button.like.active {
-  background: url('/assets/like_active.svg');
-  background-repeat: no-repeat;
+  color: red;
 }
 
 .header {
