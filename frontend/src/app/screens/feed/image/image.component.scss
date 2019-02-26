@@ -114,8 +114,8 @@
 button.like {
   background: url('/assets/like.svg');
   background-repeat: no-repeat;
-  width: 26px;
-  height: 26px;
+  width: $icon-button-font-size;
+  height: $icon-button-font-size;
 }
 
 button.like.active {

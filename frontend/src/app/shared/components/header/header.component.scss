@@ -23,21 +23,7 @@
 }
 
 .nav-button {
-  width: 26px;
-  height: 26px;
-  background-repeat: no-repeat;
-}
-
-.nav-home {
-  background-image: url('/assets/home.svg');
-}
-
-.nav-new {
-  background-image: url('/assets/add_new.svg');
-}
-
-.nav-profile {
-  background-image: url('/assets/profile.svg');
+  font-size: $icon-button-font-size;
 }
 
 ul {
