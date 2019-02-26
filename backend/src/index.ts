@@ -10,7 +10,6 @@ const dbName = process.env.DB_NAME || '';
 
 // Create a server instance
 const dbClient = new DBClient(dbHost, dbPort, dbName);
-
 const server = new Server(port, apiRootPath, imageDir, dbClient);
 
 // Export Express Application instance

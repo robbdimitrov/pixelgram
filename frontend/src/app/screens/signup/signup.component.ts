@@ -1,4 +1,4 @@
-import { Component } from '@angular/core/';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { APIClient } from '../../services/api-client.service';
