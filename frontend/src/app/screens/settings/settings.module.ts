@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { SettingsComponent } from './settings.component';
 import { ChangePasswordComponent } from './change-password/change-password.component';
-import { AuthGuard } from '../../shared/services/auth-guard.service';
+import { AuthGuard } from '../../shared/guards/auth-guard.service';
 import { SharedModule } from '../../shared/shared.module';
 
 export const routes: Routes = [

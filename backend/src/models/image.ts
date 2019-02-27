@@ -1,7 +1,5 @@
 import { ObjectID } from 'mongodb';
 
-import { User } from './user';
-
 export class Image {
 
     _id: ObjectID;

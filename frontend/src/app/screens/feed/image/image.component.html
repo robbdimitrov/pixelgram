@@ -2,7 +2,7 @@
   <div class="header">
     <div class="user-content">
       <img
-        [src]="'avatar' | user:image.owner | async | image:'/assets/avatar_placeholder.png'"
+        [src]="'avatar' | user:image.owner | async | image:avatarPlaceholder()"
         (click)="onProfileClick()"
       >
 

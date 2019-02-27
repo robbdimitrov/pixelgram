@@ -12,7 +12,6 @@
   "dependencies": {
     "@angular/animations": "^7.0.1",
     "@angular/common": "^7.0.1",
-    "@angular/compiler": "^7.0.1",
     "@angular/core": "^7.0.1",
     "@angular/forms": "^7.0.1",
     "@angular/http": "^7.0.1",
@@ -30,6 +29,7 @@
     "@angular-devkit/core": "^7.0.3",
     "@angular-devkit/schematics": "^7.0.3",
     "@angular/cli": "^7.2.6",
+    "@angular/compiler": "^7.2.7",
     "@angular/compiler-cli": "^7.2.6",
     "@angular/language-service": "^7.0.1",
     "@types/jasmine": "~2.8.9",

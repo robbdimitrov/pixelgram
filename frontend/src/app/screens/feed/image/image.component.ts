@@ -3,6 +3,7 @@ import { EventEmitter } from '@angular/core';
 
 import { Image } from '../../../models/image.model';
 import { Session } from '../../../services/session.service';
+import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
     selector: 'pg-image',
@@ -18,7 +19,7 @@ export class ImageComponent {
     @Input() image: Image;
     optionsOpened = false;
 
-    constructor(private session: Session) {}
+    constructor(private session: Session, private placeholderService: PlaceholderService) {}
 
     onLikeClick() {
         this.image.isLiked = !this.image.isLiked;
@@ -44,6 +45,10 @@ export class ImageComponent {
 
     onDeleteClick() {
         this.deleteAction.emit(this.image);
+    }
+
+    avatarPlaceholder() {
+        return this.placeholderService.getAvatar(this.image.owner);
     }
 
 }

@@ -5,6 +5,7 @@ import { APIClient } from './api-client.service';
 import { ErrorService } from './error.service';
 import { Session } from './session.service';
 import { UserCache } from './user-cache.service';
+import { PlaceholderService } from './placeholder.service';
 
 @NgModule({
     imports: [
@@ -14,7 +15,8 @@ import { UserCache } from './user-cache.service';
         APIClient,
         ErrorService,
         Session,
-        UserCache
+        UserCache,
+        PlaceholderService
     ]
 })
 export class ServicesModule {}
