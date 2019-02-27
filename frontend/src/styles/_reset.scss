@@ -11,6 +11,7 @@ textarea, input:not([type='checkbox']),
   button, select {
   font-family: inherit;
   font-size: inherit;
+  background-color: none;
 }
 
 button, input:not([type='checkbox']) {
