@@ -2,12 +2,12 @@
   <div class="header">
     <div class="user-content">
       <img
-        [src]="'avatar' | user:image.owner | async | image:avatarPlaceholder()"
+        [src]="avatar() | image:avatarPlaceholder()"
         (click)="onProfileClick()"
       >
 
       <span class="bold" (click)="onProfileClick()">
-        {{'username' | user:image.owner | async}}
+        {{user.username}}
       </span>
     </div>
 
@@ -44,7 +44,7 @@
 
   <div class="content">
     <span class="bold" *ngIf="isDescriptionPresent()">
-      {{'name' | user:image.owner | async}}
+      {{user.name}}
     </span>
 
     <p>{{image.description}}</p>

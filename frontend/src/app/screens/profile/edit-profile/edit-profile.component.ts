@@ -6,6 +6,7 @@ import { APIClient } from '../../../services/api-client.service';
 import { ErrorService } from '../../../services/error.service';
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
+import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
     selector: 'pg-edit-profile',
@@ -24,7 +25,7 @@ export class EditProfileComponent implements AfterViewInit {
 
     constructor(private apiClient: APIClient, private router: Router,
         private errorService: ErrorService, private location: Location,
-        private session: Session) {}
+        private session: Session, private placeholderService: PlaceholderService) {}
 
     ngAfterViewInit(): void {
         let userId = this.session.userId();
@@ -56,7 +57,7 @@ export class EditProfileComponent implements AfterViewInit {
         }
     }
 
-    onChange(files) {
+    onChange(files: any[]) {
         this.selectedFile = files[0];
         this.getImagePreview(this.selectedFile);
     }
@@ -84,6 +85,10 @@ export class EditProfileComponent implements AfterViewInit {
         }).catch((error) => {
             console.log('Loading user failed: ' + error);
         });
+    }
+
+    avatarPlaceholder() {
+        return this.placeholderService.getAvatar(this.nameValue);
     }
 
 }

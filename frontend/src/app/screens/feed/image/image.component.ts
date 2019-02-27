@@ -2,6 +2,7 @@ import { Component, Input, Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 
 import { Image } from '../../../models/image.model';
+import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
 
@@ -17,9 +18,11 @@ export class ImageComponent {
     @Output() showProfile = new EventEmitter<string>();
     @Output() deleteAction = new EventEmitter<Image>();
     @Input() image: Image;
+    @Input() user: User;
     optionsOpened = false;
 
-    constructor(private session: Session, private placeholderService: PlaceholderService) {}
+    constructor(private session: Session,
+        private placeholderService: PlaceholderService) {}
 
     onLikeClick() {
         this.image.isLiked = !this.image.isLiked;
@@ -47,8 +50,12 @@ export class ImageComponent {
         this.deleteAction.emit(this.image);
     }
 
+    avatar() {
+        return this.user.avatar;
+    }
+
     avatarPlaceholder() {
-        return this.placeholderService.getAvatar(this.image.owner);
+        return this.placeholderService.getAvatar(this.user.name);
     }
 
 }

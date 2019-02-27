@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
+import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
     selector: 'pg-profile-header',
@@ -14,7 +15,8 @@ export class ProfileHeaderComponent {
     @Output() openSettings = new EventEmitter<any>();
     @Output() openEditProfile = new EventEmitter<any>();
 
-    constructor(private session: Session) {}
+    constructor(private session: Session,
+        private placeholderService: PlaceholderService) {}
 
     isCurrentUser() {
         if (this.user === undefined) {
@@ -29,6 +31,10 @@ export class ProfileHeaderComponent {
 
     onEditProfileClick() {
         this.openEditProfile.emit();
+    }
+
+    avatarPlaceholder() {
+        return this.placeholderService.getAvatar(this.user.name);
     }
 
 }
