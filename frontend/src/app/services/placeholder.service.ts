@@ -32,13 +32,13 @@ export class PlaceholderService {
         if (names.length > 0) {
             text = names[0][0];
             if (names.length > 1) {
-                text = text + names[names.length - 1][0];
+                text += names[names.length - 1][0];
             }
         } else {
             text = '?';
         }
 
-        context.fillText(text, size / 2, size / 2);
+        context.fillText(text.toUpperCase(), size / 2, size / 2);
 
         let imageData = canvas.toDataURL('image/png');
         return imageData;

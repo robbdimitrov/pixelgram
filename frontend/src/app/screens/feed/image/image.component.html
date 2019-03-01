@@ -2,12 +2,12 @@
   <div class="header">
     <div class="user-content">
       <img
-        [src]="user.avatar | image:avatarPlaceholder()"
+        [src]="avatar() | image:avatarPlaceholder()"
         (click)="onProfileClick()"
       >
 
       <span class="bold" (click)="onProfileClick()">
-        {{user.username}}
+        {{user ? user.username : ''}}
       </span>
     </div>
 
@@ -44,7 +44,7 @@
 
   <div class="content">
     <span class="bold" *ngIf="isDescriptionPresent()">
-      {{user.name}}
+      {{user ? user.name : ''}}
     </span>
 
     <p>{{image.description}}</p>

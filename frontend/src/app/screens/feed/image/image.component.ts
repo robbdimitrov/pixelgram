@@ -50,8 +50,13 @@ export class ImageComponent {
         this.deleteAction.emit(this.image);
     }
 
+    avatar() {
+        return this.user ? this.user.avatar : '';
+    }
+
     avatarPlaceholder() {
-        return this.placeholderService.getAvatar(this.user.name);
+        let name = this.user ? this.user.name : '';
+        return this.placeholderService.getAvatar(name);
     }
 
 }

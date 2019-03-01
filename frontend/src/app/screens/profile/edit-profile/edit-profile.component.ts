@@ -87,8 +87,16 @@ export class EditProfileComponent implements AfterViewInit {
         });
     }
 
+    avatar() {
+        if (this.imagePreview) {
+            return this.imagePreview;
+        }
+        return this.user ? this.user.avatar : '';
+    }
+
     avatarPlaceholder() {
-        return this.placeholderService.getAvatar(this.nameValue);
+        let name = this.user ? this.user.name : '';
+        return this.placeholderService.getAvatar(name);
     }
 
 }
