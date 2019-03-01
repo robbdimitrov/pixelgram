@@ -26,12 +26,19 @@ export class PlaceholderService {
         context.textAlign = 'center';
         context.textBaseline = 'middle';
 
-        if (name.length > 0) {
-            let string = name.split(' ').reduce((previousValue, currentValue) => {
-                return previousValue + currentValue[0].toUpperCase();
-            }, '');
-            context.fillText(string, size / 2, size / 2);
+        let text = '';
+        let names = name.split(' ').filter((item) => item.length !== 0);
+
+        if (names.length > 0) {
+            text = names[0][0];
+            if (names.length > 1) {
+                text = text + names[names.length - 1][0];
+            }
+        } else {
+            text = '?';
         }
+
+        context.fillText(text, size / 2, size / 2);
 
         let imageData = canvas.toDataURL('image/png');
         return imageData;
