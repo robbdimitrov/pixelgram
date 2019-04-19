@@ -21,7 +21,7 @@ export class UserService {
       }
 
       UserFactory.createUser(name, username, email, password).then((user) => {
-        this.dbClient.createOneUser(user).then((result) => {
+        this.dbClient.createOneUser(user).then(() => {
           resolve();
         }).catch((error) => {
           reject(error);
@@ -36,7 +36,7 @@ export class UserService {
       let updatedUser = BodyParser.parseBodyParametersToObject(updates, allowedKeys);
 
       let updateClosure = (dbClient, id, updatedUser) => {
-        dbClient.updateOneUser(id, { $set: updatedUser }).then((result) => {
+        dbClient.updateOneUser(id, { $set: updatedUser }).then(() => {
           resolve();
         }).catch((error) => {
           reject(error);

@@ -41,7 +41,7 @@ export class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      console.log(`[${process.env.NODE_ENV}] REQUST ${req.method} ${req.url}`);
+      process.stdout.write(`[${process.env.NODE_ENV}] REQUST ${req.method} ${req.url}`);
       next();
     });
   }
@@ -56,7 +56,6 @@ export class Server {
     if (req.method === 'OPTIONS' || (req.method === 'POST' &&
         (req.path.indexOf('/sessions') !== -1 || req.path.indexOf('/users') !== -1)) ||
         (req.method === 'GET' && req.path.indexOf('/uploads') !== -1)) {
-      console.log('authChecker request without validation');
       return next();
     }
 
@@ -66,17 +65,14 @@ export class Server {
     if (token) {
       // verifies secret and checks exp
       AuthService.getInstance().validateToken(token).then((result) => {
-        console.log('authChecker token valid');
         req.user = result;
         next();
-      }).catch((error) => {
-        console.log('authChecker token invalid');
+      }).catch(() => {
         return res.status(401).send({
           error: 'Failed to authenticate token.',
         });
       });
     } else {
-      console.log('authChecker token undefined');
       // if there is no token
       // return an error
       return res.status(401).send({
@@ -118,7 +114,7 @@ export class Server {
   // Connect to database and start listening to port
   start() {
     this.app.listen(this.port, () => {
-      console.log('We are live on ' + this.port);
+      process.stdout.write('We are live on ' + this.port);
     });
   }
 }

@@ -6,7 +6,7 @@ export class ImageLikesRouter extends APIRouter {
     this.imageService = imageService;
   }
 
-  getAll(req, res, next) {
+  getAll(req, res) {
     let imageId = req.params.parentId;
     let query = req.query || {};
     let count = Boolean(parseInt(query.count, 10) || 0);
@@ -24,11 +24,11 @@ export class ImageLikesRouter extends APIRouter {
     });
   }
 
-  createOne(req, res, next) {
+  createOne(req, res) {
     let imageId = req.params.parentId;
     let userId = req['user'].id;
 
-    this.imageService.likeImage(imageId, userId).then((result) => {
+    this.imageService.likeImage(imageId, userId).then(() => {
       res.send({
         'message': 'Image liked successfully.',
       });
@@ -39,7 +39,7 @@ export class ImageLikesRouter extends APIRouter {
     });
   }
 
-  deleteOne(req, res, next) {
+  deleteOne(req, res) {
     let imageId = req.params.parentId;
     let userId = req.params.id;
 
@@ -49,7 +49,7 @@ export class ImageLikesRouter extends APIRouter {
       });
     }
 
-    this.imageService.unlikeImage(imageId, userId).then((result) => {
+    this.imageService.unlikeImage(imageId, userId).then(() => {
       res.send({
         'message': 'Image unliked successfully.',
       });

@@ -11,7 +11,7 @@ export class ImageService {
     let image = ImageFactory.createImage(userId, filename, description);
 
     return new Promise((resolve, reject) => {
-      this.dbClient.createOneImage(image).then((result) => {
+      this.dbClient.createOneImage(image).then(() => {
         resolve();
       }).catch((error) => {
         reject(error);
@@ -23,10 +23,10 @@ export class ImageService {
     return new Promise((resolve, reject) => {
       this.dbClient.updateOneUser(userId,
         { $addToSet: { likedImages: new ObjectID(imageId) } },
-      ).then((result) => {
+      ).then(() => {
         this.dbClient.updateOneImage(imageId,
           { $addToSet: { likedUsers: new ObjectID(userId) } },
-        ).then((result) => {
+        ).then(() => {
           resolve();
         });
       }).catch((error) => {
@@ -39,10 +39,10 @@ export class ImageService {
     return new Promise((resolve, reject) => {
       this.dbClient.updateOneUser(userId,
         { $pull: { likedImages: new ObjectID(imageId) } },
-      ).then((result) => {
+      ).then(() => {
         this.dbClient.updateOneImage(imageId,
           { $pull: { likedUsers: new ObjectID(userId) } },
-        ).then((result) => {
+        ).then(() => {
           resolve();
         });
       }).catch((error) => {
@@ -53,7 +53,7 @@ export class ImageService {
 
   deleteImage(imageId, userId) {
     return new Promise((resolve, reject) => {
-      this.dbClient.deleteOneImage(userId, imageId).then((result) => {
+      this.dbClient.deleteOneImage(userId, imageId).then(() => {
         resolve();
       }).catch((error) => {
         reject(error);
