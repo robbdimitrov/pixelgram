@@ -92,7 +92,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error.error);
@@ -157,7 +157,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Put, url, body);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 if (error.status === StatusCode.Unauthorized) {
@@ -177,7 +177,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Put, url, body);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 if (error.status === StatusCode.Unauthorized) {
@@ -198,7 +198,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error.error);
@@ -263,12 +263,10 @@ export class APIClient {
 
     updateImage(imageId: string, description: string) {
         let url = `/images/${imageId}`;
-        let body = new HttpParams()
-            .set('description', description);
         let request = this.request(HTTPMethod.Put, url);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 if (error.status === StatusCode.Unauthorized) {
@@ -284,7 +282,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Delete, url);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 if (error.status === StatusCode.Unauthorized) {
@@ -325,7 +323,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Post, url);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 if (error.status === StatusCode.Unauthorized) {
@@ -341,7 +339,7 @@ export class APIClient {
         let request = this.request(HTTPMethod.Delete, url);
 
         return new Promise((resolve, reject) => {
-            request.toPromise().then((response) => {
+            request.toPromise().then(() => {
                 resolve();
             }).catch((error) => {
                 if (error.status === StatusCode.Unauthorized) {

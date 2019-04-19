@@ -41,7 +41,7 @@ export class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      process.stdout.write(`[${process.env.NODE_ENV}] REQUST ${req.method} ${req.url}`);
+      process.stdout.write(`[${process.env.NODE_ENV}] REQUEST ${req.method} ${req.url}\n`);
       next();
     });
   }
@@ -114,7 +114,7 @@ export class Server {
   // Connect to database and start listening to port
   start() {
     this.app.listen(this.port, () => {
-      process.stdout.write('We are live on ' + this.port);
+      process.stdout.write(`We are live on ${this.port}\n`);
     });
   }
 }
