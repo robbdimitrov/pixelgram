@@ -1,6 +1,5 @@
 import { AuthService } from './auth-service';
 import { BodyParser } from './body-parser';
-import { UserSearchField } from './db-client';
 import { UserFactory } from './user-factory';
 import { ValidatorService } from './validator-service';
 
@@ -65,7 +64,7 @@ export class UserService {
           return reject(error);
         }
 
-        this.dbClient.getOneUser(UserSearchField.Identifier, userId, true).then((user) => {
+        this.dbClient.getOneUser('id', userId, true).then((user) => {
           AuthService.getInstance().validatePassword(oldPassword, user['password']).then((value) => {
             if (value) {
               AuthService.getInstance().generateHash(password).then((result) => {
@@ -75,7 +74,7 @@ export class UserService {
             } else {
               throw new Error('Authentication failed.');
             }
-          }).catch((err) => {
+          }).catch(() => {
             let error = new Error('Wrong password. Enter the correct current password.');
             reject(error);
           });

@@ -1,9 +1,6 @@
 export class ValidatorService {
-
-    static emailRegexp = /^[^@]+@[^@]+.[^@]+/;
-
-    static isValidEmail(email) {
-        return ValidatorService.emailRegexp.test(email);
-    }
-
+  static isValidEmail(email) {
+    let emailRegex = /^[^@]+@[^@]+.[^@]+/;
+    return emailRegex.test(email);
+  }
 }

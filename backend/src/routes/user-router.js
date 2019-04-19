@@ -1,8 +1,3 @@
-import { NextFunction, Request, Response, Router } from 'express';
-
-import { DBClient, UserSearchField } from '../services/db-client';
-import { ImageService } from '../services/image-service';
-import { UserService } from '../services/user-service';
 import { APIRouter } from './api-router';
 import { UserImagesRouter } from './user-images-router';
 import { UserLikesRouter } from './user-likes-router';
@@ -76,7 +71,7 @@ export class UserRouter extends APIRouter {
   getOne(req, res, next) {
     let id = req.params.id;
 
-    this.dbClient.getOneUser(UserSearchField.Identifier, id).then((result) => {
+    this.dbClient.getOneUser('id', id).then((result) => {
       if (result) {
         res.send({
           'user': result,

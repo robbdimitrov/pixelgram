@@ -1,6 +1,5 @@
 import { ObjectID } from 'mongodb';
 
-import { DBClient, UserSearchField } from './db-client';
 import { ImageFactory } from './image-factory';
 
 export class ImageService {

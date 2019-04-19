@@ -7,7 +7,6 @@ import { SessionRouter } from './routes/session-router';
 import { UploadRouter } from './routes/upload-router';
 import { UserRouter } from './routes/user-router';
 import { AuthService } from './services/auth-service';
-import { DBClient } from './services/db-client';
 import { ImageService } from './services/image-service';
 import { UserService } from './services/user-service';
 

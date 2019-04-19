@@ -1,5 +1,4 @@
 import { AuthService } from '../services/auth-service';
-import { UserSearchField } from '../services/db-client';
 import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
@@ -25,7 +24,7 @@ export class SessionRouter extends APIRouter {
 
     console.log(`Login for user ${email}`);
 
-    this.dbClient.getOneUser(UserSearchField.Email, email, true).then((user) => {
+    this.dbClient.getOneUser('email', email, true).then((user) => {
       if (user === undefined) {
         console.log("getOneUser, user undefined");
         return authFailedBlock();
