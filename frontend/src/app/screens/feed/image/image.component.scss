@@ -99,6 +99,7 @@
   min-width: 24px;
   font-size: rem(16);
   color: $primary-text-color;
+  background-color: white;
 
   &:hover, &:focus {
     opacity: 0.6;
@@ -109,6 +110,7 @@
 button.like {
   font-size: rem(26);
   color: $primary-text-color;
+  background-color: white;
 }
 
 button.like.active {
