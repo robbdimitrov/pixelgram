@@ -22,6 +22,8 @@
   border-color: $button-background-color;
   text-decoration: none;
   color: $primary-text-color;
+  background-color: white;
+
   &:not(:disabled) {
     &:hover, &:focus {
       border-color: darken($button-background-color,8%);
