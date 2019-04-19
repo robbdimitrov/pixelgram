@@ -1,12 +1,10 @@
-import { ObjectID } from 'mongodb';
-
 export class Image {
-
-    _id: ObjectID;
-    ownerId: ObjectID;
-    filename: string;
-    dateCreated: string;
-    description: string;
-    likedUsers: ObjectID[];
-
+  constructor(id, ownerId, filename, dateCreated, description, likedUsers) {
+    this.id = id;
+    this.ownerId = ownerId;
+    this.filename = filename;
+    this.dateCreated = dateCreated;
+    this.description = description;
+    this.likedUsers = likedUsers;
+  }
 }

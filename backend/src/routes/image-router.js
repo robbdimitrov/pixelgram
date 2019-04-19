@@ -21,7 +21,7 @@ export class ImageRouter extends APIRouter {
         this.subrouters['likes'] = usersRouter;
     }
 
-    getAll(req: Request, res: Response, next: NextFunction) {
+    getAll(req, res, next) {
         let query = req.query || {};
         let limit = parseInt(query.limit, 10) || 25;
         let page = parseInt(query.page, 10) || 0;
@@ -38,7 +38,7 @@ export class ImageRouter extends APIRouter {
         });
     }
 
-    createOne(req: Request, res: Response, next: NextFunction) {
+    createOne(req, res, next) {
         let body = req.body || {};
 
         if (body.filename === undefined) {
@@ -65,7 +65,7 @@ export class ImageRouter extends APIRouter {
         });
     }
 
-    getOne(req: Request, res: Response, next: NextFunction) {
+    getOne(req, res, next) {
         let id = req.params.id;
         let userId = req['user'].id;
 
@@ -103,7 +103,7 @@ export class ImageRouter extends APIRouter {
 
     }
 
-    deleteOne(req: Request, res: Response, next: NextFunction) {
+    deleteOne(req, res, next) {
         let userId = req['user'].id;
         let imageId = req.params.id;
 
