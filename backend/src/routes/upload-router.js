@@ -14,14 +14,16 @@ export class UploadRouter {
       limits: { fileSize: 1000000, files: 1 },
     });
 
-    router.post('/', uploader.single('image'), (req, res, next) => {
+    router.post('/', uploader.single('image'), (req, res) => {
       if (req.file) {
         res.send({
           'filename': req.file.filename,
         });
       } else {
         res.status(400).send({
-          'error': 'File missing from request. Should be sent as a multipart/form-data.',
+          'code': 400,
+          'error': 'BAD_REQUEST',
+          'message': 'File missing from request. Should be sent as a multipart/form-data.',
         });
       }
     });

@@ -41,7 +41,7 @@ export class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      process.stdout.write(`[${process.env.NODE_ENV}] REQUST ${req.method} ${req.url}`);
+      process.stdout.write(`[${process.env.NODE_ENV}] REQUEST ${req.method} ${req.url}\n`);
       next();
     });
   }
@@ -68,15 +68,19 @@ export class Server {
         req.user = result;
         next();
       }).catch(() => {
-        return res.status(401).send({
-          error: 'Failed to authenticate token.',
+        res.status(401).send({
+          'code': 401,
+          'error': 'INVALID_TOKEN',
+          'message': 'Failed to authenticate token.',
         });
       });
     } else {
       // if there is no token
       // return an error
-      return res.status(401).send({
-        error: 'No token provided.',
+      res.status(401).send({
+        'code': 401,
+        'error': 'INVALID_TOKEN',
+        'message': 'No token provided.',
       });
     }
   }
@@ -114,7 +118,7 @@ export class Server {
   // Connect to database and start listening to port
   start() {
     this.app.listen(this.port, () => {
-      process.stdout.write('We are live on ' + this.port);
+      process.stdout.write(`We are live on ${this.port}\n`);
     });
   }
 }

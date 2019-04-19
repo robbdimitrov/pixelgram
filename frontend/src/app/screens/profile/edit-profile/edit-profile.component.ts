@@ -42,7 +42,7 @@ export class EditProfileComponent implements AfterViewInit {
                 self.emailValue, self.bioValue, avatar).then((result) => {
                 self.location.back();
             }).catch((error) => {
-                self.errorService.error = error.error;
+                self.errorService.error = error.message;
             });
         };
 
@@ -50,7 +50,7 @@ export class EditProfileComponent implements AfterViewInit {
             self.apiClient.uploadImage(self.selectedFile).then((result) => {
                 updateClosure(result['filename']);
             }).catch((error) => {
-                self.errorService.error = error.error;
+                self.errorService.error = error.message;
             });
         } else {
             updateClosure();
@@ -85,13 +85,6 @@ export class EditProfileComponent implements AfterViewInit {
         }).catch((error) => {
             console.log('Loading user failed: ' + error);
         });
-    }
-
-    avatar() {
-        if (this.imagePreview) {
-            return this.imagePreview;
-        }
-        return this.user ? this.user.avatar : '';
     }
 
     avatarPlaceholder() {

@@ -15,7 +15,7 @@ export class ImageUploadComponent {
     constructor(private router: Router,
         public uploadService: ImageUploadService) {}
 
-    onChange(files) {
+    onChange(files: File[]) {
         this.uploadService.setSelectedFile(files[0]);
         this.getImagePreview(this.uploadService.selectedFile());
     }

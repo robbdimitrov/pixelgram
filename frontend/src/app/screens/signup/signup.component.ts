@@ -28,7 +28,7 @@ export class SignupComponent extends FormComponent {
                 this.router.navigate(['/']);
             });
         }).catch((error) => {
-            this.errorService.error = error.error;
+            this.errorService.error = error.message;
         });
     }
 

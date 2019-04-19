@@ -28,21 +28,24 @@ export class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
 
-  createOne(req, res, next) {
+  createOne(req, res) {
     let body = req.body || {};
 
     if (body.filename === undefined) {
       let error = new Error('Missing argument(s). Image filename is expected.');
 
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
-      return next(error);
     }
 
     let userId = req['user'].id;
@@ -55,7 +58,9 @@ export class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -72,7 +77,9 @@ export class ImageRouter extends APIRouter {
       }
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -92,7 +99,9 @@ export class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -107,7 +116,9 @@ export class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }

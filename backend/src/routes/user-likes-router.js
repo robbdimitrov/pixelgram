@@ -1,7 +1,3 @@
-import { NextFunction, Request, Response, Router } from 'express';
-
-import { DBClient } from '../services/db-client';
-import { ImageService } from '../services/image-service';
 import { APIRouter } from './api-router';
 
 export class UserLikesRouter extends APIRouter {
@@ -10,7 +6,7 @@ export class UserLikesRouter extends APIRouter {
     this.imageService = imageService;
   }
 
-  getAll(req, res, next) {
+  getAll(req, res) {
     let userId = req.params.parentId;
     let query = req.query || {};
     let count = Boolean(parseInt(query.count, 10) || 0);
@@ -24,7 +20,9 @@ export class UserLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }

@@ -1,8 +1,8 @@
 import { MongoClient, ObjectID } from 'mongodb';
 
 export class DBClient {
-  constructor(dbHost, dbPort, dbName) {
-    this.url = `mongodb://${dbHost}:${dbPort}/${dbName}`;
+  constructor(dbUrl) {
+    this.url = dbUrl;
   }
 
   // Database connection methods

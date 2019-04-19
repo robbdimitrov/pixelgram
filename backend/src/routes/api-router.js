@@ -25,64 +25,65 @@ export class APIRouter {
 
   connectRouter(router) {
     // Get all objects
-    router.get('/', (req, res, next) => {
-      this.getAll(req, res, next);
+    router.get('/', (req, res) => {
+      this.getAll(req, res);
     });
 
     // Post new object
-    router.post('/', (req, res, next) => {
-      this.createOne(req, res, next);
+    router.post('/', (req, res) => {
+      this.createOne(req, res);
     });
 
     // Get specific object
-    router.get(`/:id(${this.validationRegex})`, (req, res, next) => {
-      this.getOne(req, res, next);
+    router.get(`/:id(${this.validationRegex})`, (req, res) => {
+      this.getOne(req, res);
     });
 
     // Edit specific object
-    router.put(`/:id(${this.validationRegex})`, (req, res, next) => {
-      this.updateOne(req, res, next);
+    router.put(`/:id(${this.validationRegex})`, (req, res) => {
+      this.updateOne(req, res);
     });
 
     // Delete specific object
-    router.delete(`/:id(${this.validationRegex})`, (req, res, next) => {
-      this.deleteOne(req, res, next);
+    router.delete(`/:id(${this.validationRegex})`, (req, res) => {
+      this.deleteOne(req, res);
     });
   }
 
   // Helpers
 
-  sendNotFound(req, res, next, message = 'Invalid request.') {
+  sendNotFound(req, res) {
     res.status(404).send({
-      'error': message,
+      'code': 404,
+      'error': 'NOT_FOUND',
+      'message': 'The resource was not found.',
     });
-    next();
   }
 
   // Router functions
 
   // Get all objects
-  getAll(req, res, next) {
-    this.sendNotFound(req, res, next);
+  getAll(req, res) {
+    this.sendNotFound(req, res);
   }
 
   // Create a new object
-  createOne(req, res, next) {
-    this.sendNotFound(req, res, next);
+  createOne(req, res) {
+    this.sendNotFound(req, res);
   }
 
   // Get an object
-  getOne(req, res, next) {
-    this.sendNotFound(req, res, next);
+  getOne(req, res) {
+    this.sendNotFound(req, res);
   }
 
   // Update existing object
-  updateOne(req, res, next) {
-    this.sendNotFound(req, res, next);
+  updateOne(req, res) {
+    this.sendNotFound(req, res);
   }
 
   // Delete existing object
-  deleteOne(req, res, next) {
-    this.sendNotFound(req, res, next);
+  deleteOne(req, res) {
+    this.sendNotFound(req, res);
   }
 }

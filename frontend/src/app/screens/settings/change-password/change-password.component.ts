@@ -30,7 +30,7 @@ export class ChangePasswordComponent {
             this.passwordValue).then((result) => {
             this.location.back();
         }).catch((error) => {
-            this.errorService.error = error.error;
+            this.errorService.error = error.message;
         });
     }
 

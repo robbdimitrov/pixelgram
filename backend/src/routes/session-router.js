@@ -2,15 +2,16 @@ import { AuthService } from '../services/auth-service';
 import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
-  createOne(req, res, next) {
+  createOne(req, res) {
     let body = req.body || {};
 
     if (body.email === undefined || body.password === undefined) {
       let error = new Error('Missing argument(s). Email and password are required.');
-      res.status(400).send({
-        'error': error.message,
+      return res.status(400).send({
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
-      return next(error);
     }
 
     let email = body.email || '';
@@ -18,21 +19,18 @@ export class SessionRouter extends APIRouter {
 
     let authFailedBlock = () => {
       res.status(401).send({
-        'error': 'Authentication failed. Incorrect email or password.',
+        'code': 401,
+        'error': 'UNAUTHORIZED',
+        'message': 'Authentication failed. Incorrect email or password.',
       });
     };
 
-    console.log(`Login for user ${email}`);
-
     this.dbClient.getOneUser('email', email, true).then((user) => {
       if (user === undefined) {
-        console.log("getOneUser, user undefined");
         return authFailedBlock();
       }
 
-      console.log("getOneUser AuthService");
       AuthService.getInstance().validatePassword(password, user['password']).then((result) => {
-        console.log("getOneUser AuthService validated " + result);
         if (result === true) {
           delete user['password'];
           let token = AuthService.getInstance().generateToken(user);
@@ -45,9 +43,10 @@ export class SessionRouter extends APIRouter {
         }
       });
     }).catch((error) => {
-      console.log("getOneUser, error = " + error);
       res.status(401).send({
-        'error': error.message,
+        'code': 401,
+        'error': 'UNAUTHORIZED',
+        'message': error.message,
       });
     });
   }
