@@ -69,14 +69,18 @@ export class Server {
         next();
       }).catch(() => {
         res.status(401).send({
-          error: 'Failed to authenticate token.',
+          'code': 401,
+          'error': 'INVALID_TOKEN',
+          'message': 'Failed to authenticate token.',
         });
       });
     } else {
       // if there is no token
       // return an error
       res.status(401).send({
-        error: 'No token provided.',
+        'code': 401,
+        'error': 'INVALID_TOKEN',
+        'message': 'No token provided.',
       });
     }
   }

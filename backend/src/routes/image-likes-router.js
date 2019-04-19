@@ -19,7 +19,9 @@ export class ImageLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -34,7 +36,9 @@ export class ImageLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -45,7 +49,9 @@ export class ImageLikesRouter extends APIRouter {
 
     if (userId !== req['user'].id) {
       return res.status(403).send({
-        'error': 'Can\'t unlike other people\'s likes.',
+        'code': 403,
+        'error': 'FORBIDDEN',
+        'message': 'Can\'t unlike other people\'s likes.',
       });
     }
 
@@ -55,7 +61,9 @@ export class ImageLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }

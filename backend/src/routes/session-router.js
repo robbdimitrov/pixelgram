@@ -8,7 +8,9 @@ export class SessionRouter extends APIRouter {
     if (body.email === undefined || body.password === undefined) {
       let error = new Error('Missing argument(s). Email and password are required.');
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     }
 
@@ -17,7 +19,9 @@ export class SessionRouter extends APIRouter {
 
     let authFailedBlock = () => {
       res.status(401).send({
-        'error': 'Authentication failed. Incorrect email or password.',
+        'code': 401,
+        'error': 'UNAUTHORIZED',
+        'message': 'Authentication failed. Incorrect email or password.',
       });
     };
 
@@ -40,7 +44,9 @@ export class SessionRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(401).send({
-        'error': error.message,
+        'code': 401,
+        'error': 'UNAUTHORIZED',
+        'message': error.message,
       });
     });
   }

@@ -42,7 +42,7 @@ export class EditProfileComponent implements AfterViewInit {
                 self.emailValue, self.bioValue, avatar).then((result) => {
                 self.location.back();
             }).catch((error) => {
-                self.errorService.error = error.error;
+                self.errorService.error = error.message;
             });
         };
 
@@ -50,7 +50,7 @@ export class EditProfileComponent implements AfterViewInit {
             self.apiClient.uploadImage(self.selectedFile).then((result) => {
                 updateClosure(result['filename']);
             }).catch((error) => {
-                self.errorService.error = error.error;
+                self.errorService.error = error.message;
             });
         } else {
             updateClosure();

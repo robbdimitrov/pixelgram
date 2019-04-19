@@ -20,7 +20,9 @@ export class UserLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }

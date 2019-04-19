@@ -23,7 +23,7 @@ export class LoginComponent extends FormComponent {
             this.router.navigate(['/']);
         }).catch((error) => {
             console.log('Error logging in.');
-            this.errorService.error = error.error;
+            this.errorService.error = error.message;
         });
     }
 

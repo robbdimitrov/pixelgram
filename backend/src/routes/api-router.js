@@ -52,9 +52,11 @@ export class APIRouter {
 
   // Helpers
 
-  sendNotFound(req, res, message = 'Invalid request.') {
+  sendNotFound(req, res) {
     res.status(404).send({
-      'error': message,
+      'code': 404,
+      'error': 'NOT_FOUND',
+      'message': 'The resource was not found.',
     });
   }
 

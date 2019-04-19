@@ -34,7 +34,9 @@ export class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -47,7 +49,9 @@ export class UserRouter extends APIRouter {
 
       let error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     }
 
@@ -62,7 +66,9 @@ export class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -78,7 +84,9 @@ export class UserRouter extends APIRouter {
       }
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -89,7 +97,9 @@ export class UserRouter extends APIRouter {
 
     if (userId !== req['user'].id) {
       return res.status(403).send({
-        'error': 'Can\'t update other people\'s accounts.',
+        'code': 403,
+        'error': 'FORBIDDEN',
+        'message': 'Can\'t update other people\'s accounts.',
       });
     }
 
@@ -105,7 +115,9 @@ export class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
@@ -115,7 +127,9 @@ export class UserRouter extends APIRouter {
 
     if (id !== req['user'].id) {
       return res.status(403).send({
-        'error': 'Can\'t delete other people\'s accounts.',
+        'code': 403,
+        'error': 'FORBIDDEN',
+        'message': 'Can\'t delete other people\'s accounts.',
       });
     }
 
@@ -125,7 +139,9 @@ export class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        'error': error.message,
+        'code': 400,
+        'error': 'BAD_REQUEST',
+        'message': error.message,
       });
     });
   }
