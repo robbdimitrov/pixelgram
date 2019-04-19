@@ -33,7 +33,7 @@ export class ImageRouter extends APIRouter {
     });
   }
 
-  createOne(req, res, next) {
+  createOne(req, res) {
     let body = req.body || {};
 
     if (body.filename === undefined) {
@@ -42,7 +42,6 @@ export class ImageRouter extends APIRouter {
       res.status(400).send({
         'error': error.message,
       });
-      return next(error);
     }
 
     let userId = req['user'].id;

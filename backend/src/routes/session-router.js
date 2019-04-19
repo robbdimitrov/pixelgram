@@ -2,7 +2,7 @@ import { AuthService } from '../services/auth-service';
 import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
-  createOne(req, res, next) {
+  createOne(req, res) {
     let body = req.body || {};
 
     if (body.email === undefined || body.password === undefined) {
@@ -10,7 +10,6 @@ export class SessionRouter extends APIRouter {
       res.status(400).send({
         'error': error.message,
       });
-      return next(error);
     }
 
     let email = body.email || '';
@@ -22,17 +21,12 @@ export class SessionRouter extends APIRouter {
       });
     };
 
-    console.log(`Login for user ${email}`);
-
     this.dbClient.getOneUser('email', email, true).then((user) => {
       if (user === undefined) {
-        console.log("getOneUser, user undefined");
         return authFailedBlock();
       }
 
-      console.log("getOneUser AuthService");
       AuthService.getInstance().validatePassword(password, user['password']).then((result) => {
-        console.log("getOneUser AuthService validated " + result);
         if (result === true) {
           delete user['password'];
           let token = AuthService.getInstance().generateToken(user);
@@ -45,7 +39,6 @@ export class SessionRouter extends APIRouter {
         }
       });
     }).catch((error) => {
-      console.log("getOneUser, error = " + error);
       res.status(401).send({
         'error': error.message,
       });

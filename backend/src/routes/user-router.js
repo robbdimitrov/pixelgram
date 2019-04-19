@@ -23,7 +23,7 @@ export class UserRouter extends APIRouter {
     this.subrouters['likes'] = likedRouter;
   }
 
-  getAll(req, res, next) {
+  getAll(req, res) {
     let query = req.query || {};
     let limit = parseInt(query.limit, 10) || 25;
     let page = parseInt(query.page, 10) || 0;
@@ -39,17 +39,16 @@ export class UserRouter extends APIRouter {
     });
   }
 
-  createOne(req, res, next) {
+  createOne(req, res) {
     let body = req.body || {};
 
     if (body.name === undefined || body.username === undefined ||
             body.email === undefined || body.password === undefined) {
 
       let error = new Error('Missing argument(s). Name, username, email and password are expected.');
-      res.status(400).send({
+      return res.status(400).send({
         'error': error.message,
       });
-      return next(error);
     }
 
     let name = body.name || '';
@@ -57,7 +56,7 @@ export class UserRouter extends APIRouter {
     let email = body.email || '';
     let password = body.password || '';
 
-    this.userService.createUser(name, username, email, password).then((result) => {
+    this.userService.createUser(name, username, email, password).then(() => {
       res.send({
         'message': 'User with email ' + email + ' created successfully.',
       });
@@ -68,7 +67,7 @@ export class UserRouter extends APIRouter {
     });
   }
 
-  getOne(req, res, next) {
+  getOne(req, res) {
     let id = req.params.id;
 
     this.dbClient.getOneUser('id', id).then((result) => {
@@ -84,7 +83,7 @@ export class UserRouter extends APIRouter {
     });
   }
 
-  updateOne(req, res, next) {
+  updateOne(req, res) {
     let userId = req.params.id;
     let body = req.body;
 
@@ -100,7 +99,7 @@ export class UserRouter extends APIRouter {
       });
     }
 
-    this.userService.updateUser(userId, body).then((result) => {
+    this.userService.updateUser(userId, body).then(() => {
       res.send({
         'message': 'User updated successfully.',
       });
@@ -111,7 +110,7 @@ export class UserRouter extends APIRouter {
     });
   }
 
-  deleteOne(req, res, next) {
+  deleteOne(req, res) {
     let id = req.params.id;
 
     if (id !== req['user'].id) {
@@ -120,7 +119,7 @@ export class UserRouter extends APIRouter {
       });
     }
 
-    this.dbClient.deleteOneUser(id).then((result) => {
+    this.dbClient.deleteOneUser(id).then(() => {
       res.send({
         'message': 'User deleted successfully.',
       });

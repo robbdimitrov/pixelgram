@@ -6,7 +6,7 @@ export class UserImagesRouter extends APIRouter {
     this.imageService = imageService;
   }
 
-  getAll(req, res, next) {
+  getAll(req, res) {
     let userId = req.params.parentId;
     let query = req.query || {};
     let count = Boolean(parseInt(query.count, 10) || 0);

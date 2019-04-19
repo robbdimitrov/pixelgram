@@ -14,7 +14,7 @@ export class UploadRouter {
       limits: { fileSize: 1000000, files: 1 },
     });
 
-    router.post('/', uploader.single('image'), (req, res, next) => {
+    router.post('/', uploader.single('image'), (req, res) => {
       if (req.file) {
         res.send({
           'filename': req.file.filename,
