@@ -7,7 +7,7 @@ export class SessionRouter extends APIRouter {
 
     if (body.email === undefined || body.password === undefined) {
       let error = new Error('Missing argument(s). Email and password are required.');
-      res.status(400).send({
+      return res.status(400).send({
         'code': 400,
         'error': 'BAD_REQUEST',
         'message': error.message,
