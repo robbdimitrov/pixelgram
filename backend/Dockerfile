@@ -1,5 +1,3 @@
-### Create node instance, build and deploy ###
-
 FROM node:8.15-alpine
 
 RUN mkdir -p /usr/src/app
