@@ -22,7 +22,6 @@ export class Server {
     this.imageService = new ImageService(dbClient);
     this.userService = new UserService(dbClient);
     this.configure();
-    this.start();
   }
 
   // Configure Express middleware
