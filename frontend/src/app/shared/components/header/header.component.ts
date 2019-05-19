@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
-import { Session } from '../../../services/session.service';
+import { Session } from "../../../services/session.service";
 
 @Component({
-    selector: 'pg-header',
-    templateUrl: './header.component.html',
-    styleUrls: ['./header.component.scss']
+    selector: "pg-header",
+    templateUrl: "./header.component.html",
+    styleUrls: ["./header.component.scss"]
 })
 export class HeaderComponent {
 

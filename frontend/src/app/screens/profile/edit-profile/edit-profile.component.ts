@@ -1,24 +1,24 @@
-import { Component, AfterViewInit } from '@angular/core';
-import { Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { Component, AfterViewInit } from "@angular/core";
+import { Location } from "@angular/common";
+import { Router } from "@angular/router";
 
-import { APIClient } from '../../../services/api-client.service';
-import { ErrorService } from '../../../services/error.service';
-import { User } from '../../../models/user.model';
-import { Session } from '../../../services/session.service';
-import { PlaceholderService } from '../../../services/placeholder.service';
+import { APIClient } from "../../../services/api-client.service";
+import { ErrorService } from "../../../services/error.service";
+import { User } from "../../../models/user.model";
+import { Session } from "../../../services/session.service";
+import { PlaceholderService } from "../../../services/placeholder.service";
 
 @Component({
-    selector: 'pg-edit-profile',
-    templateUrl: './edit-profile.component.html',
-    styleUrls: ['./edit-profile.component.scss']
+    selector: "pg-edit-profile",
+    templateUrl: "./edit-profile.component.html",
+    styleUrls: ["./edit-profile.component.scss"]
 })
 export class EditProfileComponent implements AfterViewInit {
 
-    nameValue = '';
-    usernameValue = '';
-    emailValue = '';
-    bioValue = '';
+    nameValue = "";
+    usernameValue = "";
+    emailValue = "";
+    bioValue = "";
     selectedFile: any;
     imagePreview: string;
     user: User;
@@ -48,7 +48,7 @@ export class EditProfileComponent implements AfterViewInit {
 
         if (this.selectedFile) {
             self.apiClient.uploadImage(self.selectedFile).then((result) => {
-                updateClosure(result['filename']);
+                updateClosure(result["filename"]);
             }).catch((error) => {
                 self.errorService.error = error.message;
             });
@@ -64,7 +64,7 @@ export class EditProfileComponent implements AfterViewInit {
 
     getImagePreview(file: File) {
         if (file === undefined) {
-            this.imagePreview = '';
+            this.imagePreview = "";
             return;
         }
         const reader: FileReader = new FileReader();
@@ -83,12 +83,12 @@ export class EditProfileComponent implements AfterViewInit {
             self.emailValue = result.email;
             self.bioValue = result.bio;
         }).catch((error) => {
-            console.log('Loading user failed: ' + error);
+            console.log("Loading user failed: " + error);
         });
     }
 
     avatarPlaceholder() {
-        let name = this.user ? this.user.name : '';
+        let name = this.user ? this.user.name : "";
         return this.placeholderService.getAvatar(name);
     }
 

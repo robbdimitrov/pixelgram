@@ -1,5 +1,5 @@
-import { User } from '../models/user';
-import { AuthService } from './auth-service';
+import { User } from "../models/user";
+import { AuthService } from "./auth-service";
 
 export class UserFactory {
   static createUser(name, username, email, password) {
@@ -8,8 +8,8 @@ export class UserFactory {
       user.name = name;
       user.username = username;
       user.email = email;
-      user.avatar = '';
-      user.bio = '';
+      user.avatar = "";
+      user.bio = "";
       user.likedImages = [];
       user.postedImages = [];
       user.registrationDate = new Date().toISOString();

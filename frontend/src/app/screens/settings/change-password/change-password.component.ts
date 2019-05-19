@@ -1,24 +1,24 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { Component } from "@angular/core";
+import { Router } from "@angular/router";
+import { Location } from "@angular/common";
 
-import { APIClient } from '../../../services/api-client.service';
-import { ErrorService } from '../../../services/error.service';
-import { Session } from '../../../services/session.service';
+import { APIClient } from "../../../services/api-client.service";
+import { ErrorService } from "../../../services/error.service";
+import { Session } from "../../../services/session.service";
 
 @Component({
-    selector: 'pg-change-password',
-    templateUrl: './change-password.component.html'
+    selector: "pg-change-password",
+    templateUrl: "./change-password.component.html"
 })
 export class ChangePasswordComponent {
 
-    oldPasswordValue = '';
-    oldPasswordFieldType = 'password';
-    oldPasswordShowButtonTitle = 'Show';
+    oldPasswordValue = "";
+    oldPasswordFieldType = "password";
+    oldPasswordShowButtonTitle = "Show";
 
-    passwordValue = '';
-    passwordFieldType = 'password';
-    passwordShowButtonTitle = 'Show';
+    passwordValue = "";
+    passwordFieldType = "password";
+    passwordShowButtonTitle = "Show";
 
     constructor(private apiClient: APIClient, private router: Router,
         private errorService: ErrorService, private session: Session,
@@ -35,30 +35,30 @@ export class ChangePasswordComponent {
     }
 
     onVisibilityToggle(event, element) {
-        if (element.name === 'old-password') {
+        if (element.name === "old-password") {
             this.toggleOldPasswordVisibility();
-        } else if (element.name === 'password') {
+        } else if (element.name === "password") {
             this.toggleNewPasswordVisibility();
         }
     }
 
     toggleOldPasswordVisibility() {
-        if (this.oldPasswordFieldType === 'password') {
-            this.oldPasswordFieldType = 'text';
-            this.oldPasswordShowButtonTitle = 'Hide';
+        if (this.oldPasswordFieldType === "password") {
+            this.oldPasswordFieldType = "text";
+            this.oldPasswordShowButtonTitle = "Hide";
         } else {
-            this.oldPasswordFieldType = 'password';
-            this.oldPasswordShowButtonTitle = 'Show';
+            this.oldPasswordFieldType = "password";
+            this.oldPasswordShowButtonTitle = "Show";
         }
     }
 
     toggleNewPasswordVisibility() {
-        if (this.passwordFieldType === 'password') {
-            this.passwordFieldType = 'text';
-            this.passwordShowButtonTitle = 'Hide';
+        if (this.passwordFieldType === "password") {
+            this.passwordFieldType = "text";
+            this.passwordShowButtonTitle = "Hide";
         } else {
-            this.passwordFieldType = 'password';
-            this.passwordShowButtonTitle = 'Show';
+            this.passwordFieldType = "password";
+            this.passwordShowButtonTitle = "Show";
         }
     }
 

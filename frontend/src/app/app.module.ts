@@ -1,26 +1,26 @@
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { RouterModule, Routes } from '@angular/router';
+import { NgModule } from "@angular/core";
+import { BrowserModule } from "@angular/platform-browser";
+import { RouterModule, Routes } from "@angular/router";
 
-import { AppComponent } from './app.component';
-import { FeedModule } from './screens/feed/feed.module';
-import { SharedModule } from './shared/shared.module';
-import { ServicesModule } from './services/services.module';
-import { LoginModule } from './screens/login/login.module';
-import { SignupModule } from './screens/signup/signup.module';
-import { SettingsModule } from './screens/settings/settings.module';
-import { ImageUploadModule } from './screens/image-upload/image-upload.module';
-import { ProfileModule } from './screens/profile/profile.module';
-import { NotFoundComponent } from './shared/components/not-found/not-found.component';
+import { AppComponent } from "./app.component";
+import { FeedModule } from "./screens/feed/feed.module";
+import { SharedModule } from "./shared/shared.module";
+import { ServicesModule } from "./services/services.module";
+import { LoginModule } from "./screens/login/login.module";
+import { SignupModule } from "./screens/signup/signup.module";
+import { SettingsModule } from "./screens/settings/settings.module";
+import { ImageUploadModule } from "./screens/image-upload/image-upload.module";
+import { ProfileModule } from "./screens/profile/profile.module";
+import { NotFoundComponent } from "./shared/components/not-found/not-found.component";
 
 export const routes: Routes = [
     {
-        path: '',
-        redirectTo: '/feed',
-        pathMatch: 'full'
+        path: "",
+        redirectTo: "/feed",
+        pathMatch: "full"
     },
     {
-        path: '**',
+        path: "**",
         component: NotFoundComponent
     }
 ];
