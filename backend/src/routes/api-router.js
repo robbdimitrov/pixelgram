@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router } from "express";
 
 export class APIRouter {
   constructor(dbClient, options) {
@@ -7,7 +7,7 @@ export class APIRouter {
     this.subrouters = {};
 
     // Regex used for single object requests
-    this.validationRegex = '[0-9a-zA-Z]+';
+    this.validationRegex = "[0-9a-zA-Z]+";
 
     this.connectRouter(this.router);
   }
@@ -25,12 +25,12 @@ export class APIRouter {
 
   connectRouter(router) {
     // Get all objects
-    router.get('/', (req, res) => {
+    router.get("/", (req, res) => {
       this.getAll(req, res);
     });
 
     // Post new object
-    router.post('/', (req, res) => {
+    router.post("/", (req, res) => {
       this.createOne(req, res);
     });
 
@@ -54,9 +54,9 @@ export class APIRouter {
 
   sendNotFound(req, res) {
     res.status(404).send({
-      'code': 404,
-      'error': 'NOT_FOUND',
-      'message': 'The resource was not found.',
+      "code": 404,
+      "error": "NOT_FOUND",
+      "message": "The resource was not found.",
     });
   }
 
