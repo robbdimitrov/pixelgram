@@ -1,19 +1,19 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Subject } from 'rxjs/Subject';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/share';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/delay';
-import 'rxjs/add/operator/finally';
+import { Injectable } from "@angular/core";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { Subject } from "rxjs/Subject";
+import { Observable } from "rxjs/Observable";
+import "rxjs/add/operator/map";
+import "rxjs/add/operator/share";
+import "rxjs/add/operator/catch";
+import "rxjs/add/operator/delay";
+import "rxjs/add/operator/finally";
 
-import { Session } from './session.service';
-import { Image } from '../models/image.model';
-import { ImageFactory } from './image-factory.service';
-import { User } from '../models/user.model';
-import { UserFactory } from './user-factory.service';
-import * as config from '../../../config/client.config';
+import { Session } from "./session.service";
+import { Image } from "../models/image.model";
+import { ImageFactory } from "./image-factory.service";
+import { User } from "../models/user.model";
+import { UserFactory } from "./user-factory.service";
+import * as config from "../../../config/client.config";
 
 enum StatusCode {
     Ok = 200,
@@ -24,14 +24,14 @@ enum StatusCode {
 }
 
 enum HTTPMethod {
-    Get = 'GET',
-    Post = 'POST',
-    Put = 'PUT',
-    Delete = 'DELETE'
+    Get = "GET",
+    Post = "POST",
+    Put = "PUT",
+    Delete = "DELETE"
 }
 
-export const UserDidLogoutNotification = 'UserDidLogoutNotification';
-export const UserDidLoginNotification = 'UserDidLoginNotification';
+export const UserDidLogoutNotification = "UserDidLogoutNotification";
+export const UserDidLoginNotification = "UserDidLoginNotification";
 
 @Injectable()
 export class APIClient {
@@ -46,11 +46,11 @@ export class APIClient {
 
     headers(): HttpHeaders {
         let headers = new HttpHeaders({
-            'Content-Type': 'application/x-www-form-urlencoded'
+            "Content-Type": "application/x-www-form-urlencoded"
         });
         let token = this.session.token();
         if (token !== null) {
-            headers = headers.set('X-Access-Token', token);
+            headers = headers.set("X-Access-Token", token);
         }
         return headers;
     }
@@ -83,12 +83,12 @@ export class APIClient {
     // User
 
     createUser(name: string, username: string, email: string, password: string) {
-        let url = '/users';
+        let url = "/users";
         let body = new HttpParams()
-                    .set('name', name)
-                    .set('username', username)
-                    .set('email', email)
-                    .set('password', password);
+                    .set("name", name)
+                    .set("username", username)
+                    .set("email", email)
+                    .set("password", password);
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
@@ -101,16 +101,16 @@ export class APIClient {
     }
 
     loginUser(email: string, password: string) {
-        let url = '/sessions';
+        let url = "/sessions";
         let body = new HttpParams()
-                    .set('email', email)
-                    .set('password', password);
+                    .set("email", email)
+                    .set("password", password);
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
             request.toPromise().then((response) => {
-                this.session.setToken(response['token']);
-                this.session.setUserId(response['user']['_id']);
+                this.session.setToken(response["token"]);
+                this.session.setUserId(response["user"]["_id"]);
                 this.loginSubject.next(UserDidLoginNotification);
                 resolve();
             }).catch((error) => {
@@ -130,7 +130,7 @@ export class APIClient {
 
         return new Promise((resolve, reject) => {
             request.toPromise().then((response) => {
-                let responseUser = response['user'];
+                let responseUser = response["user"];
                 let user = UserFactory.userFromObject(responseUser);
                 resolve(user);
             }).catch((error) => {
@@ -145,13 +145,13 @@ export class APIClient {
     updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
         let url = `/users/${userId}`;
         let body = new HttpParams()
-            .set('name', name)
-            .set('username', username)
-            .set('email', email)
-            .set('bio', bio);
+            .set("name", name)
+            .set("username", username)
+            .set("email", email)
+            .set("bio", bio);
 
         if (avatar) {
-            body = body.set('avatar', avatar);
+            body = body.set("avatar", avatar);
         }
 
         let request = this.request(HTTPMethod.Put, url, body);
@@ -172,8 +172,8 @@ export class APIClient {
         let url = `/users/${userId}`;
 
         let body = new HttpParams()
-            .set('password', password)
-            .set('oldPassword', oldPassword);
+            .set("password", password)
+            .set("oldPassword", oldPassword);
         let request = this.request(HTTPMethod.Put, url, body);
 
         return new Promise((resolve, reject) => {
@@ -191,10 +191,10 @@ export class APIClient {
     // Image
 
     createImage(filename: string, description: string) {
-        let url = '/images';
+        let url = "/images";
         let body = new HttpParams()
-                    .set('filename', filename)
-                    .set('description', description);
+                    .set("filename", filename)
+                    .set("description", description);
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
@@ -212,7 +212,7 @@ export class APIClient {
         return new Promise((resolve, reject) => {
             request.toPromise().then((response) => {
                 let images: Image[] = [];
-                let responseImages = response['images'];
+                let responseImages = response["images"];
                 for (let i = 0; i < responseImages.length; i++) {
                     let imageObject = responseImages[i];
                     let image = ImageFactory.imageFromObject(imageObject);
@@ -249,7 +249,7 @@ export class APIClient {
 
         return new Promise((resolve, reject) => {
             request.toPromise().then((response) => {
-                let responseImage = response['image'];
+                let responseImage = response["image"];
                 let image = ImageFactory.imageFromObject(responseImage);
                 resolve(image);
             }).catch((error) => {
@@ -298,11 +298,11 @@ export class APIClient {
         let headers = new HttpHeaders();
         let token = this.session.token();
         if (token !== null) {
-            headers = headers.set('X-Access-Token', token);
+            headers = headers.set("X-Access-Token", token);
         }
 
         let formData = new FormData();
-        formData.append('image', file, file.name);
+        formData.append("image", file, file.name);
 
         let request = this.request(HTTPMethod.Post, url, formData, headers);
 
