@@ -1,14 +1,14 @@
-import * as bodyParser from 'body-parser';
-import * as express from 'express';
-import * as helmet from 'helmet';
+import * as bodyParser from "body-parser";
+import * as express from "express";
+import * as helmet from "helmet";
 
-import { ImageRouter } from './routes/image-router';
-import { SessionRouter } from './routes/session-router';
-import { UploadRouter } from './routes/upload-router';
-import { UserRouter } from './routes/user-router';
-import { AuthService } from './services/auth-service';
-import { ImageService } from './services/image-service';
-import { UserService } from './services/user-service';
+import { ImageRouter } from "./routes/image-router";
+import { SessionRouter } from "./routes/session-router";
+import { UploadRouter } from "./routes/upload-router";
+import { UserRouter } from "./routes/user-router";
+import { AuthService } from "./services/auth-service";
+import { ImageService } from "./services/image-service";
+import { UserService } from "./services/user-service";
 
 export class Server {
   constructor(port, apiRoot, imageDir, dbClient) {
@@ -52,13 +52,13 @@ export class Server {
   authChecker(req, res, next) {
     // If this is a login request, create a user request or
     // get an image request, don't check for token
-    if (req.method === 'OPTIONS' || (req.method === 'POST' &&
-        (req.path.indexOf('/sessions') !== -1 || req.path.indexOf('/users') !== -1)) ||
-        (req.method === 'GET' && req.path.indexOf('/uploads') !== -1)) {
+    if (req.method === "OPTIONS" || (req.method === "POST" &&
+        (req.path.indexOf("/sessions") !== -1 || req.path.indexOf("/users") !== -1)) ||
+        (req.method === "GET" && req.path.indexOf("/uploads") !== -1)) {
       return next();
     }
 
-    let token = req.body.token || req.query.token || req.headers['x-access-token'];
+    let token = req.body.token || req.query.token || req.headers["x-access-token"];
 
     // decode token
     if (token) {
@@ -68,18 +68,18 @@ export class Server {
         next();
       }).catch(() => {
         res.status(401).send({
-          'code': 401,
-          'error': 'INVALID_TOKEN',
-          'message': 'Failed to authenticate token.',
+          "code": 401,
+          "error": "INVALID_TOKEN",
+          "message": "Failed to authenticate token.",
         });
       });
     } else {
       // if there is no token
       // return an error
       res.status(401).send({
-        'code': 401,
-        'error': 'INVALID_TOKEN',
-        'message': 'No token provided.',
+        "code": 401,
+        "error": "INVALID_TOKEN",
+        "message": "No token provided.",
       });
     }
   }
@@ -87,16 +87,16 @@ export class Server {
   // Create API routers
   configureRoutes() {
     let sessionRouter = new SessionRouter(this.dbClient);
-    this.routers['sessions'] = sessionRouter;
+    this.routers["sessions"] = sessionRouter;
 
     let userRouter = new UserRouter(this.dbClient, this.userService, this.imageService);
-    this.routers['users'] = userRouter;
+    this.routers["users"] = userRouter;
 
     let imageRouter = new ImageRouter(this.dbClient, this.imageService);
-    this.routers['images'] = imageRouter;
+    this.routers["images"] = imageRouter;
 
     let uploadRouter = new UploadRouter(this.imageDir);
-    this.routers['upload'] = uploadRouter;
+    this.routers["upload"] = uploadRouter;
   }
 
   // Configure API endpoints

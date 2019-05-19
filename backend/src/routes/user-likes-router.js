@@ -1,4 +1,4 @@
-import { APIRouter } from './api-router';
+import { APIRouter } from "./api-router";
 
 export class UserLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -12,17 +12,17 @@ export class UserLikesRouter extends APIRouter {
     let count = Boolean(parseInt(query.count, 10) || 0);
     let limit = parseInt(query.limit, 10) || 25;
     let page = parseInt(query.page, 10) || 0;
-    let currentUserId = req['user'].id;
+    let currentUserId = req["user"].id;
 
     this.imageService.getAllImagesLikedByUser(userId, page, limit, count, currentUserId).then((result) => {
       res.send({
-        'images': result,
+        "images": result,
       });
     }).catch((error) => {
       res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        "code": 400,
+        "error": "BAD_REQUEST",
+        "message": error.message,
       });
     });
   }
