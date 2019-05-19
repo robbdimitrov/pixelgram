@@ -1,16 +1,16 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
-import { Subscription } from 'rxjs/Subscription';
+import { Component, AfterViewInit, OnDestroy } from "@angular/core";
+import { Router, ActivatedRoute } from "@angular/router";
+import { Location } from "@angular/common";
+import { Subscription } from "rxjs/Subscription";
 
-import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
-import { Image } from '../../models/image.model';
-import { UserCache } from '../../services/user-cache.service';
-import { Session } from '../../services/session.service';
+import { APIClient, UserDidLogoutNotification } from "../../services/api-client.service";
+import { Image } from "../../models/image.model";
+import { UserCache } from "../../services/user-cache.service";
+import { Session } from "../../services/session.service";
 
 @Component({
-    templateUrl: './feed.component.html',
-    styleUrls: ['feed.component.scss']
+    templateUrl: "./feed.component.html",
+    styleUrls: ["feed.component.scss"]
 })
 export class FeedComponent implements AfterViewInit, OnDestroy {
 
@@ -27,12 +27,12 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
         this.subscribeToLogout();
 
         this.route.params.subscribe(params => {
-            if (params['id'] !== undefined) {
-                let id = params['id'];
+            if (params["id"] !== undefined) {
+                let id = params["id"];
                 this.isSingleImageMode = true;
                 this.loadImage(id);
-            } else if (params['userId'] !== undefined) {
-                this.userId = params['userId'];
+            } else if (params["userId"] !== undefined) {
+                this.userId = params["userId"];
             }
         });
     }
@@ -44,7 +44,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
             if (value === UserDidLogoutNotification) {
                 this.page = 0;
                 this.images = [];
-                this.router.navigate(['/login']);
+                this.router.navigate(["/login"]);
             }
         });
     }
@@ -74,7 +74,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
                 this.page += 1;
             }
         }).catch((error) => {
-            console.log('Error loading images.');
+            console.log("Error loading images.");
         });
     }
 
@@ -83,7 +83,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
         this.apiClient.getImage(imageId).then((result) => {
             self.images.push(result);
         }).catch((error) => {
-            console.log('Loading user failed: ' + error);
+            console.log("Loading user failed: " + error);
         });
     }
 
@@ -106,7 +106,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     }
 
     onShowProfile(userId: string) {
-        this.router.navigate(['/user', userId]);
+        this.router.navigate(["/user", userId]);
     }
 
     onNextClick() {
@@ -127,7 +127,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
                 self.location.back();
             }
         }).catch((error) => {
-            console.log('Deleting image failed.');
+            console.log("Deleting image failed.");
         });
     }
 
