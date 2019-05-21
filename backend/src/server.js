@@ -2,10 +2,10 @@ import * as bodyParser from "body-parser";
 import * as express from "express";
 import * as helmet from "helmet";
 
-import { ImageRouter } from "./routes/image-router";
-import { SessionRouter } from "./routes/session-router";
-import { UploadRouter } from "./routes/upload-router";
-import { UserRouter } from "./routes/user-router";
+import { ImageRouter } from "./routers/image-router";
+import { SessionRouter } from "./routers/session-router";
+import { UploadRouter } from "./routers/upload-router";
+import { UserRouter } from "./routers/user-router";
 import { AuthService } from "./services/auth-service";
 import { ImageService } from "./services/image-service";
 import { UserService } from "./services/user-service";
@@ -58,7 +58,7 @@ export class Server {
       return next();
     }
 
-    let token = req.body.token || req.query.token || req.headers["x-access-token"];
+    let token = req.headers["x-access-token"];
 
     // decode token
     if (token) {
