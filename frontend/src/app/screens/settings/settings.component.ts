@@ -11,7 +11,6 @@ import { Session } from '../../services/session.service';
     styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent {
-
     loginSubscription: Subscription;
 
     constructor(private apiClient: APIClient, private session: Session,
@@ -41,5 +40,4 @@ export class SettingsComponent {
     onLogoutClick() {
         this.apiClient.logoutUser();
     }
-
 }

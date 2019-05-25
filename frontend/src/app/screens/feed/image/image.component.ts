@@ -12,7 +12,6 @@ import { PlaceholderService } from '../../../services/placeholder.service';
     styleUrls: ['./image.component.scss']
 })
 export class ImageComponent {
-
     @Output() like = new EventEmitter<string>();
     @Output() unlike = new EventEmitter<string>();
     @Output() showProfile = new EventEmitter<string>();
@@ -58,5 +57,4 @@ export class ImageComponent {
         let name = this.user ? this.user.name : '';
         return this.placeholderService.getAvatar(name);
     }
-
 }

@@ -4,7 +4,6 @@ import { APIClient } from './api-client.service';
 
 @Injectable()
 export class UserCache {
-
     private users = {};
 
     constructor(private apiClient: APIClient) {}
@@ -28,5 +27,4 @@ export class UserCache {
     deleteCache() {
         this.users = {};
     }
-
 }

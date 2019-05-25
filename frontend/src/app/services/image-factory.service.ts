@@ -1,7 +1,6 @@
 import { Image } from '../models/image.model';
 
 export class ImageFactory {
-
     static imageFromObject(object: Object): Image {
         let image = new Image(
             object['_id'],
@@ -14,5 +13,4 @@ export class ImageFactory {
         );
         return image;
     }
-
 }

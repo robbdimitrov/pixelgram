@@ -7,7 +7,6 @@ import { APIClient } from '../../services/api-client.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-
     constructor(private router: Router, private session: Session, private apiClient: APIClient) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot):
@@ -19,5 +18,4 @@ export class AuthGuard implements CanActivate {
         }
         return true;
     }
-
 }

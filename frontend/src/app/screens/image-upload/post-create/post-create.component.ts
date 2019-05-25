@@ -12,7 +12,6 @@ import { ErrorService } from '../../../services/error.service';
     styleUrls: ['./post-create.component.scss']
 })
 export class PostCreateComponent implements OnDestroy {
-
     imageDescription: string;
     imagePreview: string;
     fileChangeSubscription: Subscription;
@@ -62,5 +61,4 @@ export class PostCreateComponent implements OnDestroy {
             console.log('Error creating image: ' + error);
         });
     }
-
 }

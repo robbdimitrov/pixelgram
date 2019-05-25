@@ -1,5 +1,4 @@
 export class User {
-
     constructor(
         public id: string,
         public name: string,
@@ -10,5 +9,4 @@ export class User {
         public images: number,
         public likes: number
     ) {}
-
 }

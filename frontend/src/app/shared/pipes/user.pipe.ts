@@ -6,7 +6,6 @@ import { UserCache } from '../../services/user-cache.service';
     name: 'user'
 })
 export class UserPipe implements PipeTransform {
-
     constructor(private userCache: UserCache) {}
 
     transform(value: string) {
@@ -18,5 +17,4 @@ export class UserPipe implements PipeTransform {
             });
         });
     }
-
 }

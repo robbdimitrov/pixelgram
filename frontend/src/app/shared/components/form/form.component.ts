@@ -6,7 +6,6 @@ import { APIClient } from '../../../services/api-client.service';
     template: ''
 })
 export class FormComponent {
-
     passwordFieldType = 'password';
     showButtonTitle = 'Show';
 
@@ -25,5 +24,4 @@ export class FormComponent {
             this.showButtonTitle = 'Show';
         }
     }
-
 }

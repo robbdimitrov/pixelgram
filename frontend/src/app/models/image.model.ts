@@ -1,5 +1,4 @@
 export class Image {
-
     constructor(
         public id: string,
         public owner: string,
@@ -9,5 +8,4 @@ export class Image {
         public likes: number,
         public isLiked: boolean
     ) {}
-
 }

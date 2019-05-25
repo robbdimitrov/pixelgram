@@ -35,7 +35,6 @@ export const UserDidLoginNotification = 'UserDidLoginNotification';
 
 @Injectable()
 export class APIClient {
-
     private apiRoot = config.apiRoot;
     private activeRequests = {};
     loginSubject = new Subject<string>();
@@ -349,5 +348,4 @@ export class APIClient {
             });
         });
     }
-
 }

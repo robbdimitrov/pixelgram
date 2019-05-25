@@ -14,7 +14,6 @@ import { User } from '../../models/user.model';
     styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnDestroy {
-
     images: Image[] = [];
     page = 0;
     loginSubscription: Subscription;
@@ -93,5 +92,4 @@ export class ProfileComponent implements OnDestroy {
     onOpenImage(imageId: string) {
         this.router.navigate(['/image', imageId]);
     }
-
 }
