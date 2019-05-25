@@ -10,7 +10,6 @@ import { ErrorService } from '../../services/error.service';
     templateUrl: './signup.component.html'
 })
 export class SignupComponent extends FormComponent {
-
     nameValue = '';
     usernameValue = '';
     emailValue = '';
@@ -31,5 +30,4 @@ export class SignupComponent extends FormComponent {
             this.errorService.error = error.message;
         });
     }
-
 }

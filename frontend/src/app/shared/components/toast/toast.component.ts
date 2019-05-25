@@ -6,7 +6,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
     styleUrls: ['./toast.component.scss']
 })
 export class ToastComponent {
-
     @Input() content = '';
 
     @Output() onClose = new EventEmitter();
@@ -14,5 +13,4 @@ export class ToastComponent {
     onClick() {
         this.onClose.emit();
     }
-
 }

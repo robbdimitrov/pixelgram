@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 
 @Injectable()
 export class PlaceholderService {
-
     private images: Object;
 
     constructor() {
@@ -54,5 +53,4 @@ export class PlaceholderService {
 
         return imageData;
     }
-
 }

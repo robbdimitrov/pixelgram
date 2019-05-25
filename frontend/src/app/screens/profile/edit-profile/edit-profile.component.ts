@@ -14,7 +14,6 @@ import { PlaceholderService } from '../../../services/placeholder.service';
     styleUrls: ['./edit-profile.component.scss']
 })
 export class EditProfileComponent implements AfterViewInit {
-
     nameValue = '';
     usernameValue = '';
     emailValue = '';
@@ -91,5 +90,4 @@ export class EditProfileComponent implements AfterViewInit {
         let name = this.user ? this.user.name : '';
         return this.placeholderService.getAvatar(name);
     }
-
 }

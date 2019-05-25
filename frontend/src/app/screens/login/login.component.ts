@@ -9,7 +9,6 @@ import { ErrorService } from '../../services/error.service';
     templateUrl: './login.component.html'
 })
 export class LoginComponent extends FormComponent {
-
     emailValue = '';
     passwordValue = '';
 
@@ -26,5 +25,4 @@ export class LoginComponent extends FormComponent {
             this.errorService.error = error.message;
         });
     }
-
 }

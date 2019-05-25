@@ -8,7 +8,6 @@ import { Session } from '../../../services/session.service';
     styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent {
-
     constructor(private session: Session) {}
 
     isAuthed() {
@@ -18,5 +17,4 @@ export class HeaderComponent {
     userId() {
         return this.session.userId();
     }
-
 }

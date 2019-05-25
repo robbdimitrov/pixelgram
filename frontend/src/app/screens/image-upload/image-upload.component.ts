@@ -9,7 +9,6 @@ import { ImageUploadService } from './image-upload.service';
     styleUrls: ['./image-upload.component.scss']
 })
 export class ImageUploadComponent {
-
     imagePreview: string;
 
     constructor(private router: Router,
@@ -35,5 +34,4 @@ export class ImageUploadComponent {
     onNextClick() {
         this.router.navigate(['/upload/post']);
     }
-
 }

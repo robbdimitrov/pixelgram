@@ -10,7 +10,6 @@ import { PlaceholderService } from '../../../services/placeholder.service';
     styleUrls: ['./profile-header.component.scss']
 })
 export class ProfileHeaderComponent {
-
     @Input() user: User;
     @Output() openSettings = new EventEmitter<any>();
     @Output() openEditProfile = new EventEmitter<any>();
@@ -41,5 +40,4 @@ export class ProfileHeaderComponent {
         let name = this.user ? this.user.name : '';
         return this.placeholderService.getAvatar(name);
     }
-
 }

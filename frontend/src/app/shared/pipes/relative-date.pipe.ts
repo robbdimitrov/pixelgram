@@ -5,9 +5,7 @@ import * as quartzite from 'quartzite';
     name: 'relativedate'
 })
 export class RelativeDatePipe implements PipeTransform {
-
     transform(value: Date): string {
         return quartzite.formatDate(value);
     }
-
 }

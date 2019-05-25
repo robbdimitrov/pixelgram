@@ -13,7 +13,6 @@ import { Session } from '../../services/session.service';
     styleUrls: ['feed.component.scss']
 })
 export class FeedComponent implements AfterViewInit, OnDestroy {
-
     images: Image[] = [];
     page = 0;
     isSingleImageMode = false;
@@ -130,5 +129,4 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
             console.log('Deleting image failed.');
         });
     }
-
 }

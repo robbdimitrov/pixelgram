@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 
 @Injectable()
 export class Session {
-
     // Getters and setters
 
     token() {
@@ -40,5 +39,4 @@ export class Session {
             localStorage.setItem(key, value);
         }
     }
-
 }

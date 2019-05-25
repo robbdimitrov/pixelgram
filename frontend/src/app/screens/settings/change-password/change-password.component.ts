@@ -11,7 +11,6 @@ import { Session } from '../../../services/session.service';
     templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent {
-
     oldPasswordValue = '';
     oldPasswordFieldType = 'password';
     oldPasswordShowButtonTitle = 'Show';
@@ -61,5 +60,4 @@ export class ChangePasswordComponent {
             this.passwordShowButtonTitle = 'Show';
         }
     }
-
 }
