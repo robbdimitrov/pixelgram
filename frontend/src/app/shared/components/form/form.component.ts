@@ -1,14 +1,14 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
-import { APIClient } from "../../../services/api-client.service";
+import { APIClient } from '../../../services/api-client.service';
 
 @Component({
-    template: ""
+    template: ''
 })
 export class FormComponent {
 
-    passwordFieldType = "password";
-    showButtonTitle = "Show";
+    passwordFieldType = 'password';
+    showButtonTitle = 'Show';
 
     constructor(protected apiClient: APIClient) {}
 
@@ -17,12 +17,12 @@ export class FormComponent {
     }
 
     onVisibilityToggle() {
-        if (this.passwordFieldType === "password") {
-            this.passwordFieldType = "text";
-            this.showButtonTitle = "Hide";
+        if (this.passwordFieldType === 'password') {
+            this.passwordFieldType = 'text';
+            this.showButtonTitle = 'Hide';
         } else {
-            this.passwordFieldType = "password";
-            this.showButtonTitle = "Show";
+            this.passwordFieldType = 'password';
+            this.showButtonTitle = 'Show';
         }
     }
 

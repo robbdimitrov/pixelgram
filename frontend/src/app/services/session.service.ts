@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 @Injectable()
 export class Session {
@@ -6,19 +6,19 @@ export class Session {
     // Getters and setters
 
     token() {
-        return this.value("token");
+        return this.value('token');
     }
 
     setToken(token: string | null) {
-        this.setValue("token", token);
+        this.setValue('token', token);
     }
 
     userId() {
-        return this.value("userId");
+        return this.value('userId');
     }
 
     setUserId(userId: string | null) {
-        this.setValue("userId", userId);
+        this.setValue('userId', userId);
     }
 
     // Reset

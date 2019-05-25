@@ -1,15 +1,15 @@
-import { Component, OnDestroy } from "@angular/core";
-import { Router } from "@angular/router";
-import { Subscription } from "rxjs/Subscription";
+import { Component, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs/Subscription';
 
-import { ImageUploadService } from "../image-upload.service";
-import { APIClient } from "../../../services/api-client.service";
-import { ErrorService } from "../../../services/error.service";
+import { ImageUploadService } from '../image-upload.service';
+import { APIClient } from '../../../services/api-client.service';
+import { ErrorService } from '../../../services/error.service';
 
 @Component({
-    selector: "pg-post-create",
-    templateUrl: "./post-create.component.html",
-    styleUrls: ["./post-create.component.scss"]
+    selector: 'pg-post-create',
+    templateUrl: './post-create.component.html',
+    styleUrls: ['./post-create.component.scss']
 })
 export class PostCreateComponent implements OnDestroy {
 
@@ -53,13 +53,13 @@ export class PostCreateComponent implements OnDestroy {
     onSubmitClick() {
         let self = this;
         this.apiClient.uploadImage(this.uploadService.selectedFile()).then((result) => {
-            let imageDescription = self.imageDescription || "";
-            self.apiClient.createImage(result["filename"], imageDescription).then((result) => {
+            let imageDescription = self.imageDescription || '';
+            self.apiClient.createImage(result['filename'], imageDescription).then((result) => {
                 this.uploadService.setSelectedFile(undefined);
-                this.router.navigate(["/"]);
+                this.router.navigate(['/']);
             });
         }).catch((error) => {
-            console.log("Error creating image: " + error);
+            console.log('Error creating image: ' + error);
         });
     }
 

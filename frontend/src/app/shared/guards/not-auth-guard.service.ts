@@ -1,9 +1,9 @@
-import { Injectable } from "@angular/core";
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from "@angular/router";
-import { Observable } from "rxjs/Observable";
+import { Injectable } from '@angular/core';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { Observable } from 'rxjs/Observable';
 
-import { Session } from "../../services/session.service";
-import { APIClient } from "../../services/api-client.service";
+import { Session } from '../../services/session.service';
+import { APIClient } from '../../services/api-client.service';
 
 @Injectable()
 export class NotAuthGuard implements CanActivate {
@@ -14,7 +14,7 @@ export class NotAuthGuard implements CanActivate {
     Observable<boolean>|Promise<boolean>|boolean {
         let token = this.session.token();
         if (token !== null) {
-            this.router.navigate(["/"]);
+            this.router.navigate(['/']);
             return false;
         }
         return true;

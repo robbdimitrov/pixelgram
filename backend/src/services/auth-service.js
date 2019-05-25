@@ -1,9 +1,9 @@
-import * as bcrypt from "bcryptjs";
-import * as jwt from "jsonwebtoken";
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
 export class AuthService {
   constructor() {
-    this.secret = process.env.JWT_SECRET || "secret";
+    this.secret = process.env.JWT_SECRET || 'secret';
   }
 
   static getInstance() {
@@ -18,7 +18,7 @@ export class AuthService {
       bcrypt.compare(password, passwordHash).then((res) => {
         return resolve(res);
       }).catch((err) => {
-        return reject(new Error("Authentication failed. " + err));
+        return reject(new Error('Authentication failed. ' + err));
       });
     });
   }
@@ -41,11 +41,11 @@ export class AuthService {
 
   generateToken(user) {
     let payload = {
-      id: user["_id"].toString(),
+      id: user['_id'].toString(),
     };
 
     let token = jwt.sign(payload, this.secret, {
-      expiresIn: "12h",
+      expiresIn: '12h',
     });
 
     return token;

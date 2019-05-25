@@ -1,10 +1,10 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
-import { ErrorService } from "./services/error.service";
+import { ErrorService } from './services/error.service';
 
 @Component({
-  selector: "pg-root",
-  templateUrl: "./app.component.html"
+  selector: 'pg-root',
+  templateUrl: './app.component.html'
 })
 export class AppComponent {
 
