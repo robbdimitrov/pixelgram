@@ -1,15 +1,15 @@
-import { Component, Input, Output } from "@angular/core";
-import { EventEmitter } from "@angular/core";
+import { Component, Input, Output } from '@angular/core';
+import { EventEmitter } from '@angular/core';
 
-import { Image } from "../../../models/image.model";
-import { User } from "../../../models/user.model";
-import { Session } from "../../../services/session.service";
-import { PlaceholderService } from "../../../services/placeholder.service";
+import { Image } from '../../../models/image.model';
+import { User } from '../../../models/user.model';
+import { Session } from '../../../services/session.service';
+import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-    selector: "pg-image",
-    templateUrl: "./image.component.html",
-    styleUrls: ["./image.component.scss"]
+    selector: 'pg-image',
+    templateUrl: './image.component.html',
+    styleUrls: ['./image.component.scss']
 })
 export class ImageComponent {
 
@@ -51,11 +51,11 @@ export class ImageComponent {
     }
 
     avatar() {
-        return this.user ? this.user.avatar : "";
+        return this.user ? this.user.avatar : '';
     }
 
     avatarPlaceholder() {
-        let name = this.user ? this.user.name : "";
+        let name = this.user ? this.user.name : '';
         return this.placeholderService.getAvatar(name);
     }
 

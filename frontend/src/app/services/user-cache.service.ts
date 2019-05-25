@@ -1,6 +1,6 @@
-import { Injectable } from "@angular/core";
-import { User } from "../models/user.model";
-import { APIClient } from "./api-client.service";
+import { Injectable } from '@angular/core';
+import { User } from '../models/user.model';
+import { APIClient } from './api-client.service';
 
 @Injectable()
 export class UserCache {
@@ -11,7 +11,7 @@ export class UserCache {
 
     userWithId(userId: string): Promise<User> {
         return new Promise((resolve, reject) => {
-            let user = this.users["user"];
+            let user = this.users['user'];
             if (user) {
                 return resolve(user);
             }
@@ -19,7 +19,7 @@ export class UserCache {
                 this.users[userId] = result;
                 return resolve(result);
             }).catch((error) => {
-                console.log("Error getting user");
+                console.log('Error getting user');
                 reject(error);
             });
         });

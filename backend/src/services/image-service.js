@@ -1,6 +1,6 @@
-import { ObjectID } from "mongodb";
+import { ObjectID } from 'mongodb';
 
-import { ImageFactory } from "./image-factory";
+import { ImageFactory } from './image-factory';
 
 export class ImageService {
   constructor(dbClient) {

@@ -1,13 +1,13 @@
-import { Component, Input, Output, EventEmitter } from "@angular/core";
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 
-import { User } from "../../../models/user.model";
-import { Session } from "../../../services/session.service";
-import { PlaceholderService } from "../../../services/placeholder.service";
+import { User } from '../../../models/user.model';
+import { Session } from '../../../services/session.service';
+import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-    selector: "pg-profile-header",
-    templateUrl: "./profile-header.component.html",
-    styleUrls: ["./profile-header.component.scss"]
+    selector: 'pg-profile-header',
+    templateUrl: './profile-header.component.html',
+    styleUrls: ['./profile-header.component.scss']
 })
 export class ProfileHeaderComponent {
 
@@ -34,11 +34,11 @@ export class ProfileHeaderComponent {
     }
 
     avatar() {
-        return this.user ? this.user.avatar : "";
+        return this.user ? this.user.avatar : '';
     }
 
     avatarPlaceholder() {
-        let name = this.user ? this.user.name : "";
+        let name = this.user ? this.user.name : '';
         return this.placeholderService.getAvatar(name);
     }
 

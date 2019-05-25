@@ -1,9 +1,9 @@
-import { Pipe, PipeTransform } from "@angular/core";
+import { Pipe, PipeTransform } from '@angular/core';
 
-import { UserCache } from "../../services/user-cache.service";
+import { UserCache } from '../../services/user-cache.service';
 
 @Pipe({
-    name: "user"
+    name: 'user'
 })
 export class UserPipe implements PipeTransform {
 

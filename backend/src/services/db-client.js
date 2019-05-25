@@ -1,4 +1,4 @@
-import { MongoClient, ObjectID } from "mongodb";
+import { MongoClient, ObjectID } from 'mongodb';
 
 export class DBClient {
   constructor(dbUrl) {
@@ -14,7 +14,7 @@ export class DBClient {
       }
 
       MongoClient.connect(url, { useNewUrlParser: true }).then((result) => {
-        process.stdout.write("Connected to database");
+        process.stdout.write('Connected to database');
         this.client = result;
         resolve(this.client);
       }).catch((error) => {
@@ -54,12 +54,12 @@ export class DBClient {
       bio: 1,
       avatar: 1,
       registrationDate: 1,
-      likes: { $size: "$likedImages" },
-      images: { $size: "$postedImages" },
+      likes: { $size: '$likedImages' },
+      images: { $size: '$postedImages' },
     };
 
     if (raw) {
-      properties["password"] = 1;
+      properties['password'] = 1;
     }
 
     return properties;
@@ -71,11 +71,11 @@ export class DBClient {
       filename: 1,
       dateCreated: 1,
       description: 1,
-      likes: { $size: "$likedUsers" },
+      likes: { $size: '$likedUsers' },
     };
 
     if (userId !== undefined) {
-      properties["isLiked"] = { $in: [ new ObjectID(userId), "$likedUsers" ] };
+      properties['isLiked'] = { $in: [ new ObjectID(userId), '$likedUsers' ] };
     }
 
     return properties;
@@ -94,14 +94,14 @@ export class DBClient {
     let client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection("images").find({
+      client.db().collection('images').find({
         _id: new ObjectID(imageId),
         ownerId: new ObjectID(userId),
       }, { ownerId: 1 }).count((error, result) => {
         if (result > 0) {
           return resolve();
         }
-        return reject(new Error("Image not existing or owned by other user."));
+        return reject(new Error('Image not existing or owned by other user.'));
       });
     });
   }
@@ -121,7 +121,7 @@ export class DBClient {
 
     return new Promise((resolve, reject) => {
       if (countOnly) {
-        client.db().collection("images").find(query, { _id: 1 }).count().then((res) => {
+        client.db().collection('images').find(query, { _id: 1 }).count().then((res) => {
           return resolve(res);
         }).catch((error) => {
           reject(error);
@@ -129,7 +129,7 @@ export class DBClient {
       } else {
         let sortQuery = { dateCreated: -1 };
 
-        client.db().collection("images").aggregate([
+        client.db().collection('images').aggregate([
           { $match: query },
           { $project: this.imageAggregationProperties(userId) },
         ]).sort(sortQuery).skip(page * limit).limit(limit).toArray((err, result) => {
@@ -152,12 +152,12 @@ export class DBClient {
     let client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection("images").insertOne(image, (err, result) => {
+      client.db().collection('images').insertOne(image, (err, result) => {
         if (err) {
           return reject(err);
         }
 
-        client.db().collection("users").updateOne(
+        client.db().collection('users').updateOne(
           { _id: image.ownerId },
           { $push: { postedImages: result.insertedId } },
         ).then((result) => {
@@ -182,7 +182,7 @@ export class DBClient {
     return new Promise((resolve, reject) => {
       let query = { _id: new ObjectID(imageId) };
 
-      client.db().collection("images").aggregate([
+      client.db().collection('images').aggregate([
         { $match: query },
         { $project: this.imageAggregationProperties(userId) },
       ], (error, result) => {
@@ -192,7 +192,7 @@ export class DBClient {
         result.toArray().then((res) => {
           resolve(res[0]);
         }).catch(() => {
-          reject("Something went wrong.");
+          reject('Something went wrong.');
         });
       });
     });
@@ -209,7 +209,7 @@ export class DBClient {
     let client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection("images").updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err) => {
+      client.db().collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err) => {
         if (err) {
           return reject(err);
         }
@@ -232,11 +232,11 @@ export class DBClient {
       this.imageIsOwnedByUser(userId, imageId).then(() => {
         let imageObjectId = new ObjectID(imageId);
 
-        client.db().collection("users").update({},
+        client.db().collection('users').update({},
           { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
           { multi: true },
         ).then(() => {
-          client.db().collection("images").deleteOne({ _id: new ObjectID(imageId) }, (error) => {
+          client.db().collection('images').deleteOne({ _id: new ObjectID(imageId) }, (error) => {
             if (error) {
               return reject(error);
             }
@@ -265,13 +265,13 @@ export class DBClient {
 
     return new Promise((resolve, reject) => {
       if (countOnly) {
-        client.db().collection("users").find(query, { _id: 1 }).count().then((res) => {
+        client.db().collection('users').find(query, { _id: 1 }).count().then((res) => {
           return resolve(res);
         }).catch((error) => {
           reject(error);
         });
       } else {
-        client.db().collection("users").aggregate([
+        client.db().collection('users').aggregate([
           { $match: query },
           { $project: this.userAggregationProperties() },
         ]).skip(page * limit).limit(limit).toArray((err, result) => {
@@ -288,16 +288,16 @@ export class DBClient {
     let client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection("users").aggregate([
+      client.db().collection('users').aggregate([
         { $match: { $or: [{ email }, { username }] } },
         { $project: { _id: 1, username: 1, email: 1 } },
       ]).toArray((err, result) => {
         if (result.length > 0) {
           let firstUser = result[0];
           if (firstUser.email === email) {
-            return reject(new Error("User with this email already exists"));
+            return reject(new Error('User with this email already exists'));
           } else if (firstUser.username === username) {
-            return reject(new Error("User with this username already exists"));
+            return reject(new Error('User with this username already exists'));
           }
         }
         resolve();
@@ -316,7 +316,7 @@ export class DBClient {
 
     return new Promise((resolve, reject) => {
       this.userNotExists(user.username, user.email).then(() => {
-        client.db().collection("users").insertOne(user, (error, result) => {
+        client.db().collection('users').insertOne(user, (error, result) => {
           if (error) {
             return reject(error);
           }
@@ -344,13 +344,13 @@ export class DBClient {
       let query = {};
 
       switch (field) {
-      case "id":
-        query = { "_id": new ObjectID(value) };
+      case 'id':
+        query = { '_id': new ObjectID(value) };
         break;
-      case "username":
+      case 'username':
         query = { username: value };
         break;
-      case "email":
+      case 'email':
         query = { email: value };
         break;
       }
@@ -359,18 +359,18 @@ export class DBClient {
         if (error) {
           reject(error);
         } else if (!result) {
-          let error = new Error("User not found.");
+          let error = new Error('User not found.');
           reject(error);
         } else {
           result.toArray().then((res) => {
             resolve(res[0]);
           }).catch(() => {
-            reject("Something went wrong.");
+            reject('Something went wrong.');
           });
         }
       };
 
-      client.db().collection("users").aggregate([
+      client.db().collection('users').aggregate([
         { $match: query },
         { $project: this.userAggregationProperties(raw) },
       ], completion);
@@ -388,7 +388,7 @@ export class DBClient {
     let client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection("users").updateOne({ _id: new ObjectID(userId) }, userUpdates, (err) => {
+      client.db().collection('users').updateOne({ _id: new ObjectID(userId) }, userUpdates, (err) => {
         if (err) {
           return reject(err);
         }
@@ -407,7 +407,7 @@ export class DBClient {
     let client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection("users").deleteOne({ _id: new ObjectID(userId) }, (err) => {
+      client.db().collection('users').deleteOne({ _id: new ObjectID(userId) }, (err) => {
         if (err) {
           return reject(err);
         }

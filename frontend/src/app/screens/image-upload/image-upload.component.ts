@@ -1,12 +1,12 @@
-import { Component } from "@angular/core";
-import { Router } from "@angular/router";
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
-import { ImageUploadService } from "./image-upload.service";
+import { ImageUploadService } from './image-upload.service';
 
 @Component({
-    selector: "pg-upload",
-    templateUrl: "./image-upload.component.html",
-    styleUrls: ["./image-upload.component.scss"]
+    selector: 'pg-upload',
+    templateUrl: './image-upload.component.html',
+    styleUrls: ['./image-upload.component.scss']
 })
 export class ImageUploadComponent {
 
@@ -22,7 +22,7 @@ export class ImageUploadComponent {
 
     getImagePreview(file: File) {
         if (file === undefined) {
-            this.imagePreview = "";
+            this.imagePreview = '';
             return;
         }
         const reader: FileReader = new FileReader();
@@ -33,7 +33,7 @@ export class ImageUploadComponent {
     }
 
     onNextClick() {
-        this.router.navigate(["/upload/post"]);
+        this.router.navigate(['/upload/post']);
     }
 
 }

@@ -1,8 +1,8 @@
-import { Pipe, PipeTransform } from "@angular/core";
-import * as quartzite from "quartzite";
+import { Pipe, PipeTransform } from '@angular/core';
+import * as quartzite from 'quartzite';
 
 @Pipe({
-    name: "relativedate"
+    name: 'relativedate'
 })
 export class RelativeDatePipe implements PipeTransform {
 

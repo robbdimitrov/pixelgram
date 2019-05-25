@@ -1,17 +1,17 @@
-import { Component, AfterViewInit, OnDestroy } from "@angular/core";
-import { Subscription } from "rxjs/Subscription";
-import { Router, ActivatedRoute } from "@angular/router";
+import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs/Subscription';
+import { Router, ActivatedRoute } from '@angular/router';
 
-import { Image } from "../../models/image.model";
-import { APIClient, UserDidLogoutNotification } from "../../services/api-client.service";
-import { Session } from "../../services/session.service";
-import { UserCache } from "../../services/user-cache.service";
-import { User } from "../../models/user.model";
+import { Image } from '../../models/image.model';
+import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
+import { Session } from '../../services/session.service';
+import { UserCache } from '../../services/user-cache.service';
+import { User } from '../../models/user.model';
 
 @Component({
-    selector: "pg-profile",
-    templateUrl: "./profile.component.html",
-    styleUrls: ["./profile.component.scss"]
+    selector: 'pg-profile',
+    templateUrl: './profile.component.html',
+    styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnDestroy {
 
@@ -26,7 +26,7 @@ export class ProfileComponent implements OnDestroy {
         this.subscribeToLogout();
 
         this.route.params.subscribe(params => {
-            let id = params["id"];
+            let id = params['id'];
             if (!this.user || id !== this.user.id) {
                 this.page = 0;
                 this.images = [];
@@ -42,7 +42,7 @@ export class ProfileComponent implements OnDestroy {
             if (value === UserDidLogoutNotification) {
                 this.page = 0;
                 this.images = [];
-                this.router.navigate(["/login"]);
+                this.router.navigate(['/login']);
             }
         });
     }
@@ -61,7 +61,7 @@ export class ProfileComponent implements OnDestroy {
             self.user = result;
             self.loadNextPage();
         }).catch((error) => {
-            console.log("Loading user failed: " + error);
+            console.log('Loading user failed: ' + error);
         });
     }
 
@@ -72,18 +72,18 @@ export class ProfileComponent implements OnDestroy {
                 this.page += 1;
             }
         }).catch((error) => {
-            console.log("Error loading images: " + error);
+            console.log('Error loading images: ' + error);
         });
     }
 
     // Actions
 
     onOpenSettings() {
-        this.router.navigate(["/account/settings"]);
+        this.router.navigate(['/account/settings']);
     }
 
     onOpenEditProfile() {
-        this.router.navigate(["/account/edit"]);
+        this.router.navigate(['/account/edit']);
     }
 
     onNextClick() {
@@ -91,7 +91,7 @@ export class ProfileComponent implements OnDestroy {
     }
 
     onOpenImage(imageId: string) {
-        this.router.navigate(["/image", imageId]);
+        this.router.navigate(['/image', imageId]);
     }
 
 }
