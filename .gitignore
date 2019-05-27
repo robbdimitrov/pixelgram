@@ -1,9 +1,6 @@
 #Build
 dist
 
-# Development
-uploads
-
 # API keys and secrets
 .env
 
