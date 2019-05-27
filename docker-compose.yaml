@@ -5,25 +5,25 @@ services:
     build: ./backend
     restart: always
     ports:
-      - "${PORT}"
+    - ${PORT}
     volumes:
-      - image_data:/usr/src/app/${IMAGE_DIR}
+    - image_data:/usr/src/app/${IMAGE_DIR}
     env_file:
-      - .env
+    - .env
 
   frontend:
     build: ./frontend
     restart: always
     ports:
-      - "4000:80"
+    - 4000:80
 
   db:
     image: mongo:3.4
     restart: always
     ports:
-      - "${DB_PORT}"
+    - ${DB_PORT}
     volumes:
-      - db_data:/data/db
+    - db_data:/data/db
 
 volumes:
   db_data:
