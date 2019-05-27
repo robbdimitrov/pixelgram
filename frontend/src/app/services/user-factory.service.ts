@@ -2,7 +2,7 @@ import { User } from '../models/user.model';
 
 export class UserFactory {
     static userFromObject(object: Object): User {
-        let image = new User(
+        let user = new User(
             object['_id'],
             object['name'],
             object['username'],
@@ -12,6 +12,6 @@ export class UserFactory {
             object['images'],
             object['likes']
         );
-        return image;
+        return user;
     }
 }

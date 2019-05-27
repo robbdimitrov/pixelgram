@@ -1,11 +1,6 @@
 .DS_Store
 
-.gitignore
-.git
-.editorconfig
-
 node_modules
 npm-debug.log
 
-uploads
 dist

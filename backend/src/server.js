@@ -11,13 +11,11 @@ import { ImageService } from './services/image-service';
 import { UserService } from './services/user-service';
 
 export class Server {
-  constructor(port, apiRoot, imageDir, dbClient) {
-    this.port = port;
-    this.apiRoot = apiRoot;
-    this.imageDir = imageDir;
+  constructor(dbClient) {
     this.dbClient = dbClient;
 
     this.app = express();
+    this.imageDir = '/data/images';
     this.routers = {};
     this.imageService = new ImageService(dbClient);
     this.userService = new UserService(dbClient);
@@ -46,7 +44,7 @@ export class Server {
   }
 
   configureStatic() {
-    this.app.use(`/${this.apiRoot}/uploads`, express.static(this.imageDir));
+    this.app.use('/api/uploads', express.static(this.imageDir));
   }
 
   authChecker(req, res, next) {
@@ -101,23 +99,21 @@ export class Server {
 
   // Configure API endpoints
   connectRoutes() {
-    let apiRoot = this.apiRoot;
-
     this.app.use(this.authChecker);
 
     // Create and map express routers
     for (let key in this.routers) {
       if (this.routers.hasOwnProperty(key)) {
         let value = this.routers[key];
-        this.app.use(`/${apiRoot}/${key}`, value.router);
+        this.app.use(`/api/${key}`, value.router);
       }
     }
   }
 
   // Connect to database and start listening to port
   start() {
-    this.app.listen(this.port, () => {
-      process.stdout.write(`We are live on ${this.port}\n`);
+    this.app.listen(3000, () => {
+      process.stdout.write('We are live on 3000\n');
     });
   }
 }
