@@ -1,4 +1,3 @@
-<!-- ![Pixelgram Logo](logo/horizontal.png) -->
 <img src="logo/horizontal.png" alt="Pixelgram Logo" width="400"/>
 
 Pixelgram is an image sharing service.
