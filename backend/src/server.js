@@ -110,7 +110,7 @@ export class Server {
     }
   }
 
-  // Setup state and start listening to port
+  // Setup state and start server
   start() {
     this.configure();
 
