@@ -9,7 +9,8 @@ services:
     volumes:
     - image_data:/data/images
     environment:
-    - DB_URI=mongodb://db:27017/pixelgram-db
+    - DATABASE_URI=mongodb://db:27017/pixelgram-db
+    - PORT=3000
 
   frontend:
     build: ./frontend
