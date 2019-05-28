@@ -11,7 +11,8 @@ import { ImageService } from './services/image-service';
 import { UserService } from './services/user-service';
 
 export class Server {
-  constructor(dbClient) {
+  constructor(port, dbClient) {
+    this.port = port;
     this.dbClient = dbClient;
 
     this.app = express();
@@ -112,8 +113,8 @@ export class Server {
 
   // Connect to database and start listening to port
   start() {
-    this.app.listen(3000, () => {
-      process.stdout.write('We are live on 3000\n');
+    this.app.listen(this.port, () => {
+      process.stdout.write(`We are live on ${this.port}\n`);
     });
   }
 }
