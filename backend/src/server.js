@@ -114,7 +114,7 @@ export class Server {
   // Connect to database and start listening to port
   start() {
     this.app.listen(this.port, () => {
-      process.stdout.write(`We are live on ${this.port}\n`);
+      process.stdout.write(`Starting server on port ${this.port}\n`);
     });
   }
 }
