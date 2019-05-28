@@ -20,7 +20,6 @@ export class Server {
     this.routers = {};
     this.imageService = new ImageService(dbClient);
     this.userService = new UserService(dbClient);
-    this.configure();
   }
 
   // Configure Express middleware
@@ -111,8 +110,10 @@ export class Server {
     }
   }
 
-  // Connect to database and start listening to port
+  // Setup state and start listening to port
   start() {
+    this.configure();
+
     this.app.listen(this.port, () => {
       process.stdout.write(`Starting server on port ${this.port}\n`);
     });
