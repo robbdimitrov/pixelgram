@@ -24,15 +24,7 @@ Pixelgram is an image sharing service.
 
 | Feed | Profile |
 | --- | --- |
-| [![Screenshot of feed screen](/docs/img/01_Feed.png)](/docs/img/01_Feed.png) | [![Screenshot of profile screen](/docs/img/02_Profile.png)](/docs/img/02_Profile.png) |
-
-| Edit Profile | New Post |
-| --- | --- |
-| [![Screenshot of edit profile screen](/docs/img/03_Edit_Profile.png)](/docs/img/03_Edit_Profile.png) | [![Screenshot of new post screen](/docs/img/04_New_Post.png)](/docs/img/04_New_Post.png) |
-
-| Login | Register |
-| --- | --- |
-| [![Screenshot of login screen](/docs/img/05_Login.png)](/docs/img/05_Login.png) | [![Screenshot of register screen](/docs/img/06_Register.png)](/docs/img/06_Register.png) |
+| [![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png) |
 
 ## Setup
 
