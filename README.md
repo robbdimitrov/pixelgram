@@ -1,4 +1,4 @@
-<img src="logo/horizontal.png" alt="Pixelgram Logo" width="400"/>
+<img src="docs/img/logo.png" alt="Pixelgram Logo" width="400"/>
 
 Pixelgram is an image sharing service.
 
@@ -10,7 +10,6 @@ Pixelgram is an image sharing service.
   - [Clone the repository](#clone-the-repository)
   - [Build and run](#build-and-run)
 - [API](#api)
-- [Contact](#contact)
 - [License](#license)
 
 ## Stack
@@ -23,7 +22,9 @@ Pixelgram is an image sharing service.
 
 ## Screenshots
 
-Screenshots are available in the [`screenshots`](screenshots) directory.
+| Feed | Profile |
+| --- | --- |
+| [![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png) |
 
 ## Setup
 
@@ -60,7 +61,7 @@ Open the front-end [here](http://localhost:4000/) and access the API [here](http
 
 ## API
 
-The API documentation is available [here](API.md).
+The API documentation is available [here](docs/API.md).
 
 ## License
 
