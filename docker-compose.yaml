@@ -11,6 +11,7 @@ services:
     environment:
     - DATABASE_URI=mongodb://db:27017/pixelgram
     - PORT=3000
+    - SECRET=7f40a8c2c68f47ef7b896586b012ae34
 
   frontend:
     build: ./frontend

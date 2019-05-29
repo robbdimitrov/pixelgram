@@ -3,7 +3,7 @@ import * as jwt from 'jsonwebtoken';
 
 export class AuthService {
   constructor() {
-    this.secret = 'jwt-secret';
+    this.secret = process.env.SECRET;
   }
 
   static getInstance() {
