@@ -10,7 +10,6 @@ Pixelgram is an image sharing service.
   - [Clone the repository](#clone-the-repository)
   - [Build and run](#build-and-run)
 - [API](#api)
-- [Contact](#contact)
 - [License](#license)
 
 ## Stack
@@ -23,7 +22,17 @@ Pixelgram is an image sharing service.
 
 ## Screenshots
 
-Screenshots are available in the [`screenshots`](screenshots) directory.
+| Feed | Profile |
+| --- | --- |
+| [![Screenshot of feed screen](/docs/img/01_Feed.png)](/docs/img/01_Feed.png) | [![Screenshot of profile screen](/docs/img/02_Profile.png)](/docs/img/02_Profile.png) |
+
+| Edit Profile | New Post |
+| --- | --- |
+| [![Screenshot of edit profile screen](/docs/img/03_Edit_Profile.png)](/docs/img/03_Edit_Profile.png) | [![Screenshot of new post screen](/docs/img/04_New_Post.png)](/docs/img/04_New_Post.png) |
+
+| Login | Register |
+| --- | --- |
+| [![Screenshot of login screen](/docs/img/05_Login.png)](/docs/img/05_Login.png) | [![Screenshot of register screen](/docs/img/06_Register.png)](/docs/img/06_Register.png) |
 
 ## Setup
 
@@ -60,7 +69,7 @@ Open the front-end [here](http://localhost:4000/) and access the API [here](http
 
 ## API
 
-The API documentation is available [here](API.md).
+The API documentation is available [here](docs/API.md).
 
 ## License
 
