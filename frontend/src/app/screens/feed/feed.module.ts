@@ -7,31 +7,31 @@ import { ImageComponent } from './image/image.component';
 import { SharedModule } from '../../shared/shared.module';
 
 export const routes: Routes = [
-    {
-        path: 'feed',
-        component: FeedComponent,
-        canActivate: [AuthGuard]
-    },
-    {
-        path: 'image/:id',
-        component: FeedComponent,
-        canActivate: [AuthGuard]
-    },
-    {
-        path: 'user/:userId/likes',
-        component: FeedComponent,
-        canActivate: [AuthGuard]
-    }
+  {
+    path: 'feed',
+    component: FeedComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'image/:id',
+    component: FeedComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'user/:userId/likes',
+    component: FeedComponent,
+    canActivate: [AuthGuard]
+  }
 ];
 
 @NgModule({
-    declarations: [
-        FeedComponent,
-        ImageComponent
-    ],
-    imports: [
-        SharedModule,
-        RouterModule.forChild(routes)
-    ]
+  declarations: [
+    FeedComponent,
+    ImageComponent
+  ],
+  imports: [
+    SharedModule,
+    RouterModule.forChild(routes)
+  ]
 })
 export class FeedModule {}

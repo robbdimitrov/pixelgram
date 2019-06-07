@@ -5,24 +5,24 @@ import { Router } from '@angular/router';
 import { ErrorService } from '../../services/error.service';
 
 @Component({
-    selector: 'pg-login',
-    templateUrl: './login.component.html'
+  selector: 'pg-login',
+  templateUrl: './login.component.html'
 })
 export class LoginComponent extends FormComponent {
-    emailValue = '';
-    passwordValue = '';
+  emailValue = '';
+  passwordValue = '';
 
-    constructor(apiClient: APIClient, private router: Router,
-        private errorService: ErrorService) {
-        super(apiClient);
-    }
+  constructor(apiClient: APIClient, private router: Router,
+    private errorService: ErrorService) {
+    super(apiClient);
+  }
 
-    onSubmit() {
-        this.apiClient.loginUser(this.emailValue, this.passwordValue).then((result) => {
-            this.router.navigate(['/']);
-        }).catch((error) => {
-            console.log('Error logging in.');
-            this.errorService.error = error.message;
-        });
-    }
+  onSubmit() {
+    this.apiClient.loginUser(this.emailValue, this.passwordValue).then((result) => {
+      this.router.navigate(['/']);
+    }).catch((error) => {
+      console.log('Error logging in.');
+      this.errorService.error = error.message;
+    });
+  }
 }

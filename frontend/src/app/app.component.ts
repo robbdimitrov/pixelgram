@@ -7,13 +7,13 @@ import { ErrorService } from './services/error.service';
   templateUrl: './app.component.html'
 })
 export class AppComponent {
-    constructor(private errorService: ErrorService) {}
+  constructor(private errorService: ErrorService) {}
 
-    error() {
-        return this.errorService.error;
-    }
+  error() {
+    return this.errorService.error;
+  }
 
-    onCloseToast() {
-        this.errorService.error = undefined;
-    }
+  onCloseToast() {
+    this.errorService.error = undefined;
+  }
 }
