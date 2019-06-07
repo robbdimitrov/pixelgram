@@ -50,7 +50,7 @@ password: string
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 ```
 
 Response:
@@ -92,7 +92,7 @@ password: string
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 ```
 
 Response:
@@ -112,7 +112,7 @@ GET /users
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -162,7 +162,7 @@ userId - id of the user
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -211,7 +211,7 @@ bio: string (optional)
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -238,7 +238,7 @@ userId - id of the user
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -266,7 +266,7 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -313,7 +313,7 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -353,7 +353,7 @@ description: string
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -374,7 +374,7 @@ GET /images
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -426,7 +426,7 @@ description: string
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -467,7 +467,7 @@ description: string
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -494,7 +494,7 @@ imageId - id of the image
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -515,7 +515,7 @@ POST /images/<imageId>/likes
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -543,7 +543,7 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -583,7 +583,7 @@ userId - id of the user
 Headers:
 
 ```
-content-type: application/x-www-form-urlencoded
+content-type: application/json
 authorization: <valid-session-token>
 ```
 
@@ -614,7 +614,6 @@ image: file sent as multipart/form-data
 ```
 
 ```
-content-type: application/x-www-form-urlencoded
 authorization: <valid-session-token>
 ```
 
