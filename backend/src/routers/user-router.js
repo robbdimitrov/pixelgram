@@ -104,7 +104,7 @@ export class UserRouter extends APIRouter {
     }
 
     if (Object.keys(body).length < 1) {
-      res.send({
+      return res.send({
         'message': 'Nothing to update.',
       });
     }

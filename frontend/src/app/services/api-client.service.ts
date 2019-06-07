@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
@@ -45,7 +45,7 @@ export class APIClient {
 
     headers(): HttpHeaders {
         let headers = new HttpHeaders({
-            'content-type': 'application/x-www-form-urlencoded'
+            'content-type': 'application/json'
         });
         let token = this.session.token();
         if (token !== null) {
@@ -65,14 +65,18 @@ export class APIClient {
 
         let headers = otherHeaders || this.headers();
 
+        // Stringify only when using the default headers
+        let options = {
+            body: (otherHeaders ? body : JSON.stringify(body)), headers
+        };
+
         let url = this.apiRoot + urlPath;
 
         let self = this;
-        let observable = this.http.request(method, url, {
-            body: body, headers: headers
-        }).finally(() => {
-            delete self.activeRequests[key];
-        }).share();
+        let observable = this.http.request(method, url, options)
+            .finally(() => {
+                delete self.activeRequests[key];
+            }).share();
 
         this.activeRequests[key] = observable;
 
@@ -83,11 +87,7 @@ export class APIClient {
 
     createUser(name: string, username: string, email: string, password: string) {
         let url = '/users';
-        let body = new HttpParams()
-                    .set('name', name)
-                    .set('username', username)
-                    .set('email', email)
-                    .set('password', password);
+        let body = {name, username, email, password};
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
@@ -101,9 +101,7 @@ export class APIClient {
 
     loginUser(email: string, password: string) {
         let url = '/sessions';
-        let body = new HttpParams()
-                    .set('email', email)
-                    .set('password', password);
+        let body = {email, password};
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {
@@ -143,14 +141,10 @@ export class APIClient {
 
     updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
         let url = `/users/${userId}`;
-        let body = new HttpParams()
-            .set('name', name)
-            .set('username', username)
-            .set('email', email)
-            .set('bio', bio);
+        let body = {name, username, email, bio};
 
         if (avatar) {
-            body = body.set('avatar', avatar);
+            body['avatar'] = avatar;
         }
 
         let request = this.request(HTTPMethod.Put, url, body);
@@ -170,9 +164,7 @@ export class APIClient {
     changePassword(userId: string, oldPassword: string, password: string) {
         let url = `/users/${userId}`;
 
-        let body = new HttpParams()
-            .set('password', password)
-            .set('oldPassword', oldPassword);
+        let body = {password, oldPassword};
         let request = this.request(HTTPMethod.Put, url, body);
 
         return new Promise((resolve, reject) => {
@@ -191,9 +183,7 @@ export class APIClient {
 
     createImage(filename: string, description: string) {
         let url = '/images';
-        let body = new HttpParams()
-                    .set('filename', filename)
-                    .set('description', description);
+        let body = {filename, description};
         let request = this.request(HTTPMethod.Post, url, body);
 
         return new Promise((resolve, reject) => {

@@ -76,10 +76,10 @@ export class UserService {
             }
           }).catch(() => {
             let error = new Error('Wrong password. Enter the correct current password.');
-            reject(error);
+            return reject(error);
           });
         }).catch((error) => {
-          reject(error);
+          return reject(error);
         });
       } else {
         updateClosure(this.dbClient, userId, updatedUser);
