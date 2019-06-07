@@ -1,8 +1,8 @@
 # API
 
-The following are all of the supported API calls. Almost all of them require JSON Web Token 
-in the headers. The only exclusions are `POST /sessions`, `POST /users` and `GET /uploads`. 
-Everything else won't work unless valid token is supplied. Token duration is `12 hours`. 
+The following are all of the supported API calls. Almost all of them require JSON Web Token
+in the headers. The only exclusions are `POST /sessions`, `POST /users` and `GET /uploads`.
+Everything else won't work unless valid token is supplied. Token duration is `12 hours`.
 All request have the prefix `/api` or whatever is set in the `.env` file.
 
 ## Table of contents
@@ -50,7 +50,7 @@ password: string
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
+content-type: application/x-www-form-urlencoded
 ```
 
 Response:
@@ -92,7 +92,7 @@ password: string
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
+content-type: application/x-www-form-urlencoded
 ```
 
 Response:
@@ -112,8 +112,8 @@ GET /users
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -162,8 +162,8 @@ userId - id of the user
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -211,8 +211,8 @@ bio: string (optional)
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -238,8 +238,8 @@ userId - id of the user
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -266,8 +266,8 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -313,8 +313,8 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -353,8 +353,8 @@ description: string
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -374,8 +374,8 @@ GET /images
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -426,8 +426,8 @@ description: string
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -467,8 +467,8 @@ description: string
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -494,8 +494,8 @@ imageId - id of the image
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -515,8 +515,8 @@ POST /images/<imageId>/likes
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -543,8 +543,8 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -583,8 +583,8 @@ userId - id of the user
 Headers:
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
@@ -600,7 +600,7 @@ Response:
 ### Upload an image
 
 An image asset has to be uploaded before creating an Image object. The returned image name
-is used for the `filename` parameter. File size should be less than 1MB. 
+is used for the `filename` parameter. File size should be less than 1MB.
 This is used for uploading user's avatars as well.
 
 ```
@@ -614,8 +614,8 @@ image: file sent as multipart/form-data
 ```
 
 ```
-Content-Type: application/x-www-form-urlencoded
-X-Access-Token: <valid-session-token>
+content-type: application/x-www-form-urlencoded
+authorization: <valid-session-token>
 ```
 
 Response:
