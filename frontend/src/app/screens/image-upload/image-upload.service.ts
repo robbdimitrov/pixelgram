@@ -3,15 +3,15 @@ import { Subject } from 'rxjs/Subject';
 
 @Injectable()
 export class ImageUploadService {
-    private file: File;
-    fileChangeSubject = new Subject();
+  private file: File;
+  fileChangeSubject = new Subject();
 
-    setSelectedFile(file: File) {
-        this.file = file;
-        this.fileChangeSubject.next();
-    }
+  setSelectedFile(file: File) {
+    this.file = file;
+    this.fileChangeSubject.next();
+  }
 
-    selectedFile() {
-        return this.file;
-    }
+  selectedFile() {
+    return this.file;
+  }
 }

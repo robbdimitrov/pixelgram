@@ -6,20 +6,20 @@ import { SignupComponent } from './signup.component';
 import { NotAuthGuard } from '../../shared/guards/not-auth-guard.service';
 
 export const routes: Routes = [
-    {
-        path: 'signup',
-        component: SignupComponent,
-        canActivate: [NotAuthGuard]
-    },
+  {
+    path: 'signup',
+    component: SignupComponent,
+    canActivate: [NotAuthGuard]
+  },
 ];
 
 @NgModule({
-    declarations: [
-        SignupComponent
-    ],
-    imports: [
-        SharedModule,
-        RouterModule.forChild(routes)
-    ]
+  declarations: [
+    SignupComponent
+  ],
+  imports: [
+    SharedModule,
+    RouterModule.forChild(routes)
+  ]
 })
 export class SignupModule {}

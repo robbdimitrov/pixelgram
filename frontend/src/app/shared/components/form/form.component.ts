@@ -3,25 +3,25 @@ import { Component } from '@angular/core';
 import { APIClient } from '../../../services/api-client.service';
 
 @Component({
-    template: ''
+  template: ''
 })
 export class FormComponent {
-    passwordFieldType = 'password';
-    showButtonTitle = 'Show';
+  passwordFieldType = 'password';
+  showButtonTitle = 'Show';
 
-    constructor(protected apiClient: APIClient) {}
+  constructor(protected apiClient: APIClient) {}
 
-    onSubmit() {
-        // Implemented in subclasses
+  onSubmit() {
+    // Implemented in subclasses
+  }
+
+  onVisibilityToggle() {
+    if (this.passwordFieldType === 'password') {
+      this.passwordFieldType = 'text';
+      this.showButtonTitle = 'Hide';
+    } else {
+      this.passwordFieldType = 'password';
+      this.showButtonTitle = 'Show';
     }
-
-    onVisibilityToggle() {
-        if (this.passwordFieldType === 'password') {
-            this.passwordFieldType = 'text';
-            this.showButtonTitle = 'Hide';
-        } else {
-            this.passwordFieldType = 'password';
-            this.showButtonTitle = 'Show';
-        }
-    }
+  }
 }

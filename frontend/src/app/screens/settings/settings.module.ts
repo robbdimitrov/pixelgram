@@ -7,26 +7,26 @@ import { AuthGuard } from '../../shared/guards/auth-guard.service';
 import { SharedModule } from '../../shared/shared.module';
 
 export const routes: Routes = [
-    {
-        path: 'account/settings',
-        component: SettingsComponent,
-        canActivate: [AuthGuard]
-    },
-    {
-        path: 'account/change_password',
-        component: ChangePasswordComponent,
-        canActivate: [AuthGuard]
-    }
+  {
+    path: 'account/settings',
+    component: SettingsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'account/change_password',
+    component: ChangePasswordComponent,
+    canActivate: [AuthGuard]
+  }
 ];
 
 @NgModule({
-    declarations: [
-        SettingsComponent,
-        ChangePasswordComponent
-    ],
-    imports: [
-        SharedModule,
-        RouterModule.forChild(routes)
-    ]
+  declarations: [
+    SettingsComponent,
+    ChangePasswordComponent
+  ],
+  imports: [
+    SharedModule,
+    RouterModule.forChild(routes)
+  ]
 })
 export class SettingsModule {}

@@ -4,27 +4,27 @@ import { APIClient } from './api-client.service';
 
 @Injectable()
 export class UserCache {
-    private users = {};
+  private users = {};
 
-    constructor(private apiClient: APIClient) {}
+  constructor(private apiClient: APIClient) {}
 
-    userWithId(userId: string): Promise<User> {
-        return new Promise((resolve, reject) => {
-            let user = this.users['user'];
-            if (user) {
-                return resolve(user);
-            }
-            this.apiClient.getUser(userId).then((result) => {
-                this.users[userId] = result;
-                return resolve(result);
-            }).catch((error) => {
-                console.log('Error getting user');
-                reject(error);
-            });
-        });
-    }
+  userWithId(userId: string): Promise<User> {
+    return new Promise((resolve, reject) => {
+      let user = this.users['user'];
+      if (user) {
+        return resolve(user);
+      }
+      this.apiClient.getUser(userId).then((result) => {
+        this.users[userId] = result;
+        return resolve(result);
+      }).catch((error) => {
+        console.log('Error getting user');
+        reject(error);
+      });
+    });
+  }
 
-    deleteCache() {
-        this.users = {};
-    }
+  deleteCache() {
+    this.users = {};
+  }
 }

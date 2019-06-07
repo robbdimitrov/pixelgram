@@ -7,15 +7,15 @@ import { APIClient } from '../../services/api-client.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-    constructor(private router: Router, private session: Session, private apiClient: APIClient) {}
+  constructor(private router: Router, private session: Session, private apiClient: APIClient) {}
 
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot):
-    Observable<boolean>|Promise<boolean>|boolean {
-        let token = this.session.token();
-        if (token === null) {
-            this.router.navigate(['/login']);
-            return false;
-        }
-        return true;
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot):
+    Observable<boolean> | Promise<boolean> | boolean {
+    let token = this.session.token();
+    if (token === null) {
+      this.router.navigate(['/login']);
+      return false;
     }
+    return true;
+  }
 }

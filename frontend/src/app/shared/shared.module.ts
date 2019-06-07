@@ -14,35 +14,35 @@ import { NotAuthGuard } from './guards/not-auth-guard.service';
 import { RelativeDatePipe } from './pipes/relative-date.pipe';
 
 @NgModule({
-    declarations: [
-        FormComponent,
-        HeaderComponent,
-        NotFoundComponent,
-        ToastComponent,
-        ImagePipe,
-        UserPipe,
-        RelativeDatePipe
-    ],
-    providers: [
-        AuthGuard,
-        NotAuthGuard
-    ],
-    imports: [
-        CommonModule,
-        FormsModule,
-        RouterModule
-    ],
-    exports: [
-        CommonModule,
-        FormsModule,
-        RouterModule,
-        FormComponent,
-        HeaderComponent,
-        NotFoundComponent,
-        ToastComponent,
-        ImagePipe,
-        UserPipe,
-        RelativeDatePipe
-    ]
+  declarations: [
+    FormComponent,
+    HeaderComponent,
+    NotFoundComponent,
+    ToastComponent,
+    ImagePipe,
+    UserPipe,
+    RelativeDatePipe
+  ],
+  providers: [
+    AuthGuard,
+    NotAuthGuard
+  ],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule
+  ],
+  exports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    FormComponent,
+    HeaderComponent,
+    NotFoundComponent,
+    ToastComponent,
+    ImagePipe,
+    UserPipe,
+    RelativeDatePipe
+  ]
 })
 export class SharedModule {}
