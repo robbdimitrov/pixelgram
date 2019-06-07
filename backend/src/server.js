@@ -56,7 +56,7 @@ export class Server {
       return next();
     }
 
-    let token = req.headers['x-access-token'];
+    let token = req.headers['authorization'];
 
     // decode token
     if (token) {

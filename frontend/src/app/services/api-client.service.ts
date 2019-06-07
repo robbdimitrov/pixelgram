@@ -45,11 +45,11 @@ export class APIClient {
 
     headers(): HttpHeaders {
         let headers = new HttpHeaders({
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'content-type': 'application/x-www-form-urlencoded'
         });
         let token = this.session.token();
         if (token !== null) {
-            headers = headers.set('X-Access-Token', token);
+            headers = headers.set('authorization', token);
         }
         return headers;
     }
@@ -297,7 +297,7 @@ export class APIClient {
         let headers = new HttpHeaders();
         let token = this.session.token();
         if (token !== null) {
-            headers = headers.set('X-Access-Token', token);
+            headers = headers.set('authorization', token);
         }
 
         let formData = new FormData();
