@@ -284,11 +284,7 @@ export class APIClient {
 
   uploadImage(file: File) {
     let url = `/upload`;
-    let headers = new HttpHeaders();
-    let token = this.session.token();
-    if (token !== null) {
-      headers = headers.set('authorization', token);
-    }
+    let headers = this.headers().delete('content-type');
 
     let formData = new FormData();
     formData.append('image', file, file.name);
