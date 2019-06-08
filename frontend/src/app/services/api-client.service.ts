@@ -87,7 +87,7 @@ export class APIClient {
 
   createUser(name: string, username: string, email: string, password: string) {
     const url = '/users';
-    const body = { name, username, email, password };
+    const body = {name, username, email, password};
     const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
@@ -101,7 +101,7 @@ export class APIClient {
 
   loginUser(email: string, password: string) {
     const url = '/sessions';
-    const body = { email, password };
+    const body = {email, password};
     const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
@@ -141,7 +141,7 @@ export class APIClient {
 
   updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
     const url = `/users/${userId}`;
-    const body = { name, username, email, bio };
+    const body = {name, username, email, bio};
 
     if (avatar) {
       body['avatar'] = avatar;
@@ -164,7 +164,7 @@ export class APIClient {
   changePassword(userId: string, oldPassword: string, password: string) {
     const url = `/users/${userId}`;
 
-    const body = { password, oldPassword };
+    const body = {password, oldPassword};
     const request = this.request(HTTPMethod.Put, url, body);
 
     return new Promise((resolve, reject) => {
@@ -183,7 +183,7 @@ export class APIClient {
 
   createImage(filename: string, description: string) {
     const url = '/images';
-    const body = { filename, description };
+    const body = {filename, description};
     const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
