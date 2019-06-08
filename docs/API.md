@@ -33,7 +33,7 @@
 POST /sessions
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 email: string
@@ -73,7 +73,7 @@ Response:
 POST /users
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 name: string
@@ -146,7 +146,7 @@ Response:
 GET /users/<userId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 userId - id of the user
@@ -183,13 +183,13 @@ Response:
 PUT /users/<userId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 userId - id of the user
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 name: string (optional)
@@ -222,7 +222,7 @@ Response:
 DELETE /users/<userId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 userId - id of the user
@@ -249,7 +249,7 @@ Response:
 GET /users/<userId>/images
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 userId - id of the user
@@ -296,7 +296,7 @@ Response:
 GET /users/<userId>/likes
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 userId - id of the user
@@ -336,7 +336,7 @@ Response:
 POST /images
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 filename: string
@@ -404,13 +404,13 @@ Response:
 GET /images/<imageId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 imageId - id of the image
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 description: string
@@ -445,13 +445,13 @@ Response:
 PUT /images/<imageId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 imageId - id of the image
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 description: string
@@ -478,7 +478,7 @@ Response:
 DELETE /images/<imageId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 imageId - id of the image
@@ -526,7 +526,7 @@ Response:
 GET /images/<imageId>/likes
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 imageId - id of the image
@@ -566,7 +566,7 @@ Response:
 DELETE /images/<imageId>/likes/<userId>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 imageId - id of the image
@@ -600,7 +600,7 @@ This is used for uploading user's avatars as well.
 POST /upload
 ```
 
-Parameters in the request body:
+Body parameters:
 
 ```
 image: file sent as multipart/form-data
@@ -624,7 +624,7 @@ Response:
 GET /uploads/<filename>
 ```
 
-Parameters in the URL:
+URL parameters:
 
 ```
 filename - filename returned from the upload function
