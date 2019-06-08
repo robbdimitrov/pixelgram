@@ -106,7 +106,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -156,7 +156,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -205,7 +205,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -232,7 +232,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -260,7 +260,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -307,7 +307,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -347,7 +347,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -368,7 +368,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -420,7 +420,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -461,7 +461,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -488,7 +488,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -509,7 +509,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -537,7 +537,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -577,7 +577,7 @@ Headers:
 
 ```
 content-type: application/json
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
@@ -607,7 +607,7 @@ image: file sent as multipart/form-data
 ```
 
 ```
-authorization: <valid-session-token>
+authorization: <access-token>
 ```
 
 Response:
