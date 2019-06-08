@@ -25,7 +25,7 @@ export class ProfileComponent implements OnDestroy {
     this.subscribeToLogout();
 
     this.route.params.subscribe(params => {
-      let id = params['id'];
+      const id = params['id'];
       if (!this.user || id !== this.user.id) {
         this.page = 0;
         this.images = [];
@@ -55,7 +55,7 @@ export class ProfileComponent implements OnDestroy {
   // Data
 
   loadUser(userId: string) {
-    let self = this;
+    const self = this;
     this.apiClient.getUser(userId).then((result) => {
       self.user = result;
       self.loadNextPage();

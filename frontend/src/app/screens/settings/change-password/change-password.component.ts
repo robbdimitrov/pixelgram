@@ -24,7 +24,7 @@ export class ChangePasswordComponent {
     private location: Location) {}
 
   onSubmit() {
-    let userId = this.session.userId();
+    const userId = this.session.userId();
     this.apiClient.changePassword(userId, this.oldPasswordValue,
       this.passwordValue).then((result) => {
         this.location.back();

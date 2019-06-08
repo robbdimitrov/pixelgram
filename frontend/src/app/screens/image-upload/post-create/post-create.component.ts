@@ -50,9 +50,9 @@ export class PostCreateComponent implements OnDestroy {
   }
 
   onSubmitClick() {
-    let self = this;
+    const self = this;
     this.apiClient.uploadImage(this.uploadService.selectedFile()).then((result) => {
-      let imageDescription = self.imageDescription || '';
+      const imageDescription = self.imageDescription || '';
       self.apiClient.createImage(result['filename'], imageDescription).then((result) => {
         this.uploadService.setSelectedFile(undefined);
         this.router.navigate(['/']);

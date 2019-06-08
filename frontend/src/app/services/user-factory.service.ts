@@ -2,7 +2,7 @@ import { User } from '../models/user.model';
 
 export class UserFactory {
   static userFromObject(object: Object): User {
-    let user = new User(
+    const user = new User(
       object['_id'],
       object['name'],
       object['username'],

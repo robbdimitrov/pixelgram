@@ -40,11 +40,11 @@ export class AuthService {
   }
 
   generateToken(user) {
-    let payload = {
+    const payload = {
       id: user['_id'].toString(),
     };
 
-    let token = jwt.sign(payload, this.secret, {
+    const token = jwt.sign(payload, this.secret, {
       expiresIn: '12h',
     });
 

@@ -52,7 +52,7 @@ export class Server {
       return next();
     }
 
-    let token = req.headers['authorization'];
+    const token = req.headers['authorization'];
 
     // decode token
     if (token) {
@@ -80,16 +80,16 @@ export class Server {
 
   // Create API routers
   configureRoutes() {
-    let sessionRouter = new SessionRouter(this.dbClient);
+    const sessionRouter = new SessionRouter(this.dbClient);
     this.routers['sessions'] = sessionRouter;
 
-    let userRouter = new UserRouter(this.dbClient, this.userService, this.imageService);
+    const userRouter = new UserRouter(this.dbClient, this.userService, this.imageService);
     this.routers['users'] = userRouter;
 
-    let imageRouter = new ImageRouter(this.dbClient, this.imageService);
+    const imageRouter = new ImageRouter(this.dbClient, this.imageService);
     this.routers['images'] = imageRouter;
 
-    let uploadRouter = new UploadRouter(this.imageDir);
+    const uploadRouter = new UploadRouter(this.imageDir);
     this.routers['upload'] = uploadRouter;
   }
 
@@ -98,9 +98,9 @@ export class Server {
     this.app.use(this.authChecker);
 
     // Create and map express routers
-    for (let key in this.routers) {
+    for (const key in this.routers) {
       if (this.routers.hasOwnProperty(key)) {
-        let value = this.routers[key];
+        const value = this.routers[key];
         this.app.use(`/api/${key}`, value.router);
       }
     }

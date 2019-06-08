@@ -3,7 +3,7 @@ import { Image } from '../models/image';
 
 export class ImageFactory {
   static createImage(ownerId, filename, description) {
-    let image = new Image(
+    const image = new Image(
       undefined,
       new ObjectID(ownerId),
       filename,

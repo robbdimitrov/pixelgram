@@ -33,7 +33,7 @@ export class SettingsComponent {
   }
 
   onLikedPostsClick() {
-    let userId = this.session.userId();
+    const userId = this.session.userId();
     this.router.navigate([`/user/${userId}/likes`]);
   }
 

@@ -37,7 +37,7 @@ export class ProfileHeaderComponent {
   }
 
   avatarPlaceholder() {
-    let name = this.user ? this.user.name : '';
+    const name = this.user ? this.user.name : '';
     return this.placeholderService.getAvatar(name);
   }
 }

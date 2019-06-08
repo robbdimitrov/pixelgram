@@ -47,7 +47,7 @@ export class DBClient {
   // Aggregation
 
   userAggregationProperties(raw = false) {
-    let properties = {
+    const properties = {
       name: 1,
       username: 1,
       email: 1,
@@ -66,7 +66,7 @@ export class DBClient {
   }
 
   imageAggregationProperties(userId) {
-    let properties = {
+    const properties = {
       ownerId: 1,
       filename: 1,
       dateCreated: 1,
@@ -91,7 +91,7 @@ export class DBClient {
    * @returns Promise with empty result or error
    */
   async imageIsOwnedByUser(userId, imageId) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       client.db().collection('images').find({
@@ -117,7 +117,7 @@ export class DBClient {
    * @returns Promise with either image array or count
    */
   async getAllImages(query, page, limit, countOnly = false, userId) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       if (countOnly) {
@@ -127,7 +127,7 @@ export class DBClient {
           reject(error);
         });
       } else {
-        let sortQuery = { dateCreated: -1 };
+        const sortQuery = { dateCreated: -1 };
 
         client.db().collection('images').aggregate([
           { $match: query },
@@ -149,7 +149,7 @@ export class DBClient {
    * @returns Promise with the write operation result
    */
   async createOneImage(image) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       client.db().collection('images').insertOne(image, (err, result) => {
@@ -177,10 +177,10 @@ export class DBClient {
    * @returns Promise with Image Object
    */
   async getOneImage(imageId, userId) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      let query = { _id: new ObjectID(imageId) };
+      const query = { _id: new ObjectID(imageId) };
 
       client.db().collection('images').aggregate([
         { $match: query },
@@ -206,7 +206,7 @@ export class DBClient {
    * @returns Promise with empty object or error
    */
   async updateOneImage(imageId, imageUpdates) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       client.db().collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err) => {
@@ -226,11 +226,11 @@ export class DBClient {
    * @returns Promise with empty object or error
    */
   async deleteOneImage(userId, imageId) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       this.imageIsOwnedByUser(userId, imageId).then(() => {
-        let imageObjectId = new ObjectID(imageId);
+        const imageObjectId = new ObjectID(imageId);
 
         client.db().collection('users').update({},
           { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
@@ -261,7 +261,7 @@ export class DBClient {
    * @returns Promise with either image array or count
    */
   async getAllUsers(query, page, limit, countOnly = false) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       if (countOnly) {
@@ -285,7 +285,7 @@ export class DBClient {
   }
 
   async userNotExists(username, email) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       client.db().collection('users').aggregate([
@@ -293,7 +293,7 @@ export class DBClient {
         { $project: { _id: 1, username: 1, email: 1 } },
       ]).toArray((err, result) => {
         if (result.length > 0) {
-          let firstUser = result[0];
+          const firstUser = result[0];
           if (firstUser.email === email) {
             return reject(new Error('User with this email already exists'));
           } else if (firstUser.username === username) {
@@ -312,7 +312,7 @@ export class DBClient {
    * @returns Promise with the write operation result
    */
   async createOneUser(user) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       this.userNotExists(user.username, user.email).then(() => {
@@ -338,7 +338,7 @@ export class DBClient {
    * @returns Promise with User JS Object
    */
   async getOneUser(field, value, raw = false) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       let query = {};
@@ -355,11 +355,11 @@ export class DBClient {
         break;
       }
 
-      let completion = (error, result) => {
+      const completion = (error, result) => {
         if (error) {
           reject(error);
         } else if (!result) {
-          let error = new Error('User not found.');
+          const error = new Error('User not found.');
           reject(error);
         } else {
           result.toArray().then((res) => {
@@ -385,7 +385,7 @@ export class DBClient {
    * @returns Promise with empty object or error
    */
   async updateOneUser(userId, userUpdates) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       client.db().collection('users').updateOne({ _id: new ObjectID(userId) }, userUpdates, (err) => {
@@ -404,7 +404,7 @@ export class DBClient {
    * @returns Promise with empty object or error
    */
   async deleteOneUser(userId) {
-    let client = await this.get();
+    const client = await this.get();
 
     return new Promise((resolve, reject) => {
       client.db().collection('users').deleteOne({ _id: new ObjectID(userId) }, (err) => {
