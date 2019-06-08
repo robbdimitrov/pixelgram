@@ -62,7 +62,7 @@ export class UserRouter extends APIRouter {
 
     this.userService.createUser(name, username, email, password).then(() => {
       res.send({
-        'message': 'User with email ' + email + ' created successfully.',
+        'message': 'User created.',
       });
     }).catch((error) => {
       res.status(400).send({
@@ -111,7 +111,7 @@ export class UserRouter extends APIRouter {
 
     this.userService.updateUser(userId, body).then(() => {
       res.send({
-        'message': 'User updated successfully.',
+        'message': 'User updated.',
       });
     }).catch((error) => {
       res.status(400).send({
@@ -135,7 +135,7 @@ export class UserRouter extends APIRouter {
 
     this.dbClient.deleteOneUser(id).then(() => {
       res.send({
-        'message': 'User deleted successfully.',
+        'message': 'User deleted.',
       });
     }).catch((error) => {
       res.status(400).send({

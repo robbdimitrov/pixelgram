@@ -54,7 +54,7 @@ export class ImageRouter extends APIRouter {
 
     this.imageService.createImage(userId, filename, description).then(() => {
       res.send({
-        'message': 'Image created successfully.',
+        'message': 'Image created.',
       });
     }).catch((error) => {
       res.status(400).send({
@@ -94,7 +94,7 @@ export class ImageRouter extends APIRouter {
     this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
       this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then(() => {
         res.send({
-          'message': 'Image updated successfully.',
+          'message': 'Image updated.',
         });
       });
     }).catch((error) => {
@@ -112,7 +112,7 @@ export class ImageRouter extends APIRouter {
 
     this.imageService.deleteImage(imageId, userId).then(() => {
       res.send({
-        'message': 'Image deleted successfully.',
+        'message': 'Image deleted.',
       });
     }).catch((error) => {
       res.status(400).send({

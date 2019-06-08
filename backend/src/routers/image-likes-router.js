@@ -32,7 +32,7 @@ export class ImageLikesRouter extends APIRouter {
 
     this.imageService.likeImage(imageId, userId).then(() => {
       res.send({
-        'message': 'Image liked successfully.',
+        'message': 'Image liked.',
       });
     }).catch((error) => {
       res.status(400).send({
@@ -57,7 +57,7 @@ export class ImageLikesRouter extends APIRouter {
 
     this.imageService.unlikeImage(imageId, userId).then(() => {
       res.send({
-        'message': 'Image unliked successfully.',
+        'message': 'Image unliked.',
       });
     }).catch((error) => {
       res.status(400).send({
