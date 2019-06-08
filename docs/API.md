@@ -1,14 +1,7 @@
 # API
 
-The following are all of the supported API calls. Almost all of them require JSON Web Token
-in the headers. The only exclusions are `POST /sessions`, `POST /users` and `GET /uploads`.
-Everything else won't work unless valid token is supplied. Token duration is `12 hours`.
-All request have the prefix `/api` or whatever is set in the `.env` file.
-
 ## Table of contents
 
-* [API](#api)
-* [Table of contents](#table-of-contents)
 * [Sessions](#sessions)
   * [Login](#login)
 * [Users](#users)
@@ -55,20 +48,20 @@ content-type: application/json
 
 Response:
 
-```
+```json
 {
-    "user": {
-        "_id": "5a0c11682ce7e1000f2a1f5a",
-        "name": "Clark Kent",
-        "username": "superman",
-        "email": "clark.kent@dailyplanet.com",
-        "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-        "bio": "Kriptonian hero",
-        "likes": 0,
-        "images": 1,
-        "registrationDate": "2017-11-15T10:05:28+00:00"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN1cGVybWFuIiwiaWQiOiI1YTBjMTE2ODJjZTdlMTAwMGYyYTFmNWEiLCJpYXQiOjE1MTA3NDg4ODksImV4cCI6MTUxMDc1MjQ4OX0.ZDmxdzis314r1VNSXWKjqHDCVrilfdeJO9d5Rviids0"
+  "user": {
+    "_id": "5a0c11682ce7e1000f2a1f5a",
+    "name": "Clark Kent",
+    "username": "superman",
+    "email": "clark.kent@dailyplanet.com",
+    "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+    "bio": "Kryptonian hero",
+    "likes": 0,
+    "images": 1,
+    "registrationDate": "2017-11-15T10:05:28+00:00"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN1cGVybWFuIiwiaWQiOiI1YTBjMTE2ODJjZTdlMTAwMGYyYTFmNWEiLCJpYXQiOjE1MTA3NDg4ODksImV4cCI6MTUxMDc1MjQ4OX0.ZDmxdzis314r1VNSXWKjqHDCVrilfdeJO9d5Rviids0"
 }
 ```
 
@@ -97,9 +90,9 @@ content-type: application/json
 
 Response:
 
-```
+```json
 {
-    "message": "User with email superman@dccomics.com created successfully."
+  "message": "User created."
 }
 ```
 
@@ -118,32 +111,32 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "users": [
-        {
-            "_id": "5a0c11682ce7e1000f2a1f5a",
-            "name": "Clark Kent",
-            "username": "superman",
-            "email": "clark.kent@dailyplanet.com",
-            "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-            "bio": "Kriptonian hero",
-            "likes": 0,
-            "images": 2,
-            "registrationDate": "2017-11-15T10:05:28+00:00"
-        },
-        {
-            "_id": "5a0c361b7ceeae000ffc8bdd",
-            "name": "Bruce Wayne",
-            "username": "batman",
-            "email": "bruce@wayneindustries.com",
-            "avatar": "",
-            "bio": "The dark knight",
-            "likes": 1,
-            "images": 1,
-            "registrationDate": "2017-11-15T12:42:03+00:00"
-        }
-    ]
+  "users": [
+    {
+      "_id": "5a0c11682ce7e1000f2a1f5a",
+      "name": "Clark Kent",
+      "username": "superman",
+      "email": "clark.kent@dailyplanet.com",
+      "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+      "bio": "Kriptonian hero",
+      "likes": 0,
+      "images": 2,
+      "registrationDate": "2017-11-15T10:05:28+00:00"
+    },
+    {
+      "_id": "5a0c361b7ceeae000ffc8bdd",
+      "name": "Bruce Wayne",
+      "username": "batman",
+      "email": "bruce@wayneindustries.com",
+      "avatar": "",
+      "bio": "The dark knight",
+      "likes": 1,
+      "images": 1,
+      "registrationDate": "2017-11-15T12:42:03+00:00"
+    }
+  ]
 }
 ```
 
@@ -168,19 +161,19 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "user": {
-        "_id": "5a0c11682ce7e1000f2a1f5a",
-        "name": "Clark Kent",
-        "username": "superman",
-        "email": "clark.kent@dailyplanet.com",
-        "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-        "bio": "",
-        "likes": 1,
-        "images": 1,
-        "registrationDate": "2017-11-15T10:05:28+00:00"
-    }
+  "user": {
+    "_id": "5a0c11682ce7e1000f2a1f5a",
+    "name": "Clark Kent",
+    "username": "superman",
+    "email": "clark.kent@dailyplanet.com",
+    "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+    "bio": "",
+    "likes": 1,
+    "images": 1,
+    "registrationDate": "2017-11-15T10:05:28+00:00"
+  }
 }
 ```
 
@@ -217,9 +210,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "User updated successfully."
+  "message": "User updated."
 }
 ```
 
@@ -244,9 +237,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "User deleted successfully."
+  "message": "User deleted."
 }
 ```
 
@@ -272,28 +265,28 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "images": [
-        {
-            "_id": "5a0c5629ca682d61abcd5786",
-            "ownerId": "5a09b5acc3d0655f6f6225cb",
-            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Image description",
-            "dateCreated": "2017-11-15T16:58:49+02:00",
-            "likes": 2,
-            "isLiked": true
-        },
-        {
-            "_id": "5a0c5630ca682d61abcd5787",
-            "ownerId": "5a09b5acc3d0655f6f6225cb",
-            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Other description #awesome",
-            "dateCreated": "2017-11-15T16:58:56+02:00",
-            "likes": 1,
-            "isLiked": false
-        }
-    ]
+  "images": [
+    {
+      "_id": "5a0c5629ca682d61abcd5786",
+      "ownerId": "5a09b5acc3d0655f6f6225cb",
+      "filename": "d1d99db3ac32052b9dd66cb5914508dd",
+      "description": "Image description",
+      "dateCreated": "2017-11-15T16:58:49+02:00",
+      "likes": 2,
+      "isLiked": true
+    },
+    {
+      "_id": "5a0c5630ca682d61abcd5787",
+      "ownerId": "5a09b5acc3d0655f6f6225cb",
+      "filename": "d1d99db3ac32052b9dd66cb5914508dd",
+      "description": "Other description #awesome",
+      "dateCreated": "2017-11-15T16:58:56+02:00",
+      "likes": 1,
+      "isLiked": false
+    }
+  ]
 }
 ```
 
@@ -319,19 +312,19 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "images": [
-        {
-            "_id": "5a0c5629ca682d61abcd5786",
-            "ownerId": "5a09b5acc3d0655f6f6225cb",
-            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Image description",
-            "dateCreated": "2017-11-15T16:58:49+02:00",
-            "likes": 2,
-            "isLiked": true
-        }
-    ]
+  "images": [
+    {
+      "_id": "5a0c5629ca682d61abcd5786",
+      "ownerId": "5a09b5acc3d0655f6f6225cb",
+      "filename": "d1d99db3ac32052b9dd66cb5914508dd",
+      "description": "Image description",
+      "dateCreated": "2017-11-15T16:58:49+02:00",
+      "likes": 2,
+      "isLiked": true
+    }
+  ]
 }
 ```
 
@@ -359,9 +352,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "Image created successfully."
+  "message": "Image created."
 }
 ```
 
@@ -380,28 +373,28 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "images": [
-        {
-            "_id": "5a0996ba2775b637bd49b0ab",
-            "ownerId": "5a069fd03bd9992ce9520ec5",
-            "filename": "6710497b36573655ed145f1bc1e01052",
-            "description": "Some image description",
-            "dateCreated": "2017-11-13T14:57:19+02:00",
-            "likes": 0,
-            "isLiked": false
-        },
-        {
-            "_id": "5a0c5629ca682d61abcd5786",
-            "ownerId": "5a09b5acc3d0655f6f6225cb",
-            "filename": "d1d99db3ac32052b9dd66cb5914508dd",
-            "description": "Image description 2",
-            "dateCreated": "2017-11-15T16:58:49+02:00",
-            "likes": 1,
-            "isLiked": true
-        }
-    ]
+  "images": [
+    {
+      "_id": "5a0996ba2775b637bd49b0ab",
+      "ownerId": "5a069fd03bd9992ce9520ec5",
+      "filename": "6710497b36573655ed145f1bc1e01052",
+      "description": "Some image description",
+      "dateCreated": "2017-11-13T14:57:19+02:00",
+      "likes": 0,
+      "isLiked": false
+    },
+    {
+      "_id": "5a0c5629ca682d61abcd5786",
+      "ownerId": "5a09b5acc3d0655f6f6225cb",
+      "filename": "d1d99db3ac32052b9dd66cb5914508dd",
+      "description": "Image description 2",
+      "dateCreated": "2017-11-15T16:58:49+02:00",
+      "likes": 1,
+      "isLiked": true
+    }
+  ]
 }
 ```
 
@@ -432,17 +425,17 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "image": {
-        "_id": "5a0996ba2775b637bd49b0ab",
-        "ownerId": "5a069fd03bd9992ce9520ec5",
-        "filename": "6710497b36573655ed145f1bc1e01052",
-        "description": "Image description",
-        "dateCreated": "2017-11-13T14:57:19+02:00",
-        "likes": 2,
-        "isLiked": true
-    }
+  "image": {
+    "_id": "5a0996ba2775b637bd49b0ab",
+    "ownerId": "5a069fd03bd9992ce9520ec5",
+    "filename": "6710497b36573655ed145f1bc1e01052",
+    "description": "Image description",
+    "dateCreated": "2017-11-13T14:57:19+02:00",
+    "likes": 2,
+    "isLiked": true
+  }
 }
 ```
 
@@ -473,9 +466,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "Image updated successfully."
+  "message": "Image updated."
 }
 ```
 
@@ -500,9 +493,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "Image deleted successfully."
+  "message": "Image deleted."
 }
 ```
 
@@ -521,9 +514,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "Image liked successfully."
+  "message": "Image liked."
 }
 ```
 
@@ -549,21 +542,21 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "users": [
-        {
-            "_id": "5a09b5acc3d0655f6f6225cb",
-            "name": "Bruce Wayne",
-            "username": "batman",
-            "email": "bruce@wayneindustries.com",
-            "avatar": "",
-            "bio": "The dark knight",
-            "likes": 1,
-            "images": 2,
-            "registrationDate": "2017-11-13T17:09:19+02:00"
-        }
-    ]
+  "users": [
+    {
+      "_id": "5a09b5acc3d0655f6f6225cb",
+      "name": "Bruce Wayne",
+      "username": "batman",
+      "email": "bruce@wayneindustries.com",
+      "avatar": "",
+      "bio": "The dark knight",
+      "likes": 1,
+      "images": 2,
+      "registrationDate": "2017-11-13T17:09:19+02:00"
+    }
+  ]
 }
 ```
 
@@ -589,9 +582,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "message": "Image unliked successfully."
+  "message": "Image unliked."
 }
 ```
 
@@ -619,9 +612,9 @@ authorization: <valid-session-token>
 
 Response:
 
-```
+```json
 {
-    "filename": "d4aab3fd72517522479c08520bc150a3"
+  "filename": "d4aab3fd72517522479c08520bc150a3"
 }
 ```
 

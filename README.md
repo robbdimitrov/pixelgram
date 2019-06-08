@@ -22,9 +22,9 @@ Pixelgram is an image sharing service.
 
 ## Screenshots
 
-| Feed | Profile |
-| --- | --- |
-| [![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png) |
+Feed | Profile
+--- | ---
+[![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png)
 
 ## Setup
 
@@ -61,7 +61,7 @@ Open the front-end [here](http://localhost:4000/) and access the API [here](http
 
 ## API
 
-The API documentation is available [here](docs/API.md).
+The API documentation is available [here](/docs/API.md).
 
 ## License
 
