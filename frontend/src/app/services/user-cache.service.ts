@@ -10,7 +10,7 @@ export class UserCache {
 
   userWithId(userId: string): Promise<User> {
     return new Promise((resolve, reject) => {
-      let user = this.users['user'];
+      const user = this.users['user'];
       if (user) {
         return resolve(user);
       }

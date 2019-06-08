@@ -2,7 +2,7 @@ const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const fs = require('fs');
 
-let nodeModules = {};
+const nodeModules = {};
 fs.readdirSync('node_modules')
   .filter(function(x) {
     return ['.bin'].indexOf(x) === -1;

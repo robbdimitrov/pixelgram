@@ -4,7 +4,7 @@ import { AuthService } from './auth-service';
 export class UserFactory {
   static createUser(name, username, email, password) {
     return new Promise((resolve, reject) => {
-      let user = new User();
+      const user = new User();
       user.name = name;
       user.username = username;
       user.email = email;

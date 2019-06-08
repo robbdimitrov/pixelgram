@@ -8,7 +8,7 @@ export class ImageService {
   }
 
   createImage(userId, filename, description) {
-    let image = ImageFactory.createImage(userId, filename, description);
+    const image = ImageFactory.createImage(userId, filename, description);
 
     return new Promise((resolve, reject) => {
       this.dbClient.createOneImage(image).then(() => {
@@ -73,7 +73,7 @@ export class ImageService {
 
   getAllImagesForUser(ownerId, page, limit, countOnly = false, userId) {
     return new Promise((resolve, reject) => {
-      let query = { ownerId: new ObjectID(ownerId) };
+      const query = { ownerId: new ObjectID(ownerId) };
 
       this.dbClient.getAllImages(query, page, limit, countOnly, userId).then((result) => {
         resolve(result);
@@ -85,7 +85,7 @@ export class ImageService {
 
   getAllImagesLikedByUser(userId, page, limit, countOnly = false, currentUserId) {
     return new Promise((resolve, reject) => {
-      let query = { likedUsers: new ObjectID(userId) };
+      const query = { likedUsers: new ObjectID(userId) };
 
       this.dbClient.getAllImages(query, page, limit, countOnly, currentUserId).then((result) => {
         resolve(result);
@@ -97,7 +97,7 @@ export class ImageService {
 
   getUsersLikedImage(imageId, page, limit, countOnly = false) {
     return new Promise((resolve, reject) => {
-      let query = { likedImages: new ObjectID(imageId) };
+      const query = { likedImages: new ObjectID(imageId) };
 
       this.dbClient.getAllUsers(query, page, limit, countOnly).then((result) => {
         resolve(result);

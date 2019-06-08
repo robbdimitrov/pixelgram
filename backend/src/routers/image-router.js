@@ -12,16 +12,16 @@ export class ImageRouter extends APIRouter {
   }
 
   createSubrouters() {
-    let usersRouter = new ImageLikesRouter(this.dbClient,
+    const usersRouter = new ImageLikesRouter(this.dbClient,
       this.imageService, { mergeParams: true });
     this.subrouters['likes'] = usersRouter;
   }
 
   getAll(req, res) {
-    let query = req.query || {};
-    let limit = parseInt(query.limit, 10) || 25;
-    let page = parseInt(query.page, 10) || 0;
-    let userId = req['user'].id;
+    const query = req.query || {};
+    const limit = parseInt(query.limit, 10) || 25;
+    const page = parseInt(query.page, 10) || 0;
+    const userId = req['user'].id;
     this.imageService.getAllImages(page, limit, userId).then((result) => {
       res.send({
         'images': result,
@@ -36,10 +36,10 @@ export class ImageRouter extends APIRouter {
   }
 
   createOne(req, res) {
-    let body = req.body || {};
+    const body = req.body || {};
 
     if (body.filename === undefined) {
-      let error = new Error('Missing argument(s). Image filename is expected.');
+      const error = new Error('Missing argument(s). Image filename is expected.');
 
       res.status(400).send({
         'code': 400,
@@ -48,9 +48,9 @@ export class ImageRouter extends APIRouter {
       });
     }
 
-    let userId = req['user'].id;
-    let filename = body.filename || '';
-    let description = body.description || '';
+    const userId = req['user'].id;
+    const filename = body.filename || '';
+    const description = body.description || '';
 
     this.imageService.createImage(userId, filename, description).then(() => {
       res.send({
@@ -66,8 +66,8 @@ export class ImageRouter extends APIRouter {
   }
 
   getOne(req, res) {
-    let id = req.params.id;
-    let userId = req['user'].id;
+    const id = req.params.id;
+    const userId = req['user'].id;
 
     this.dbClient.getOneImage(id, userId).then((result) => {
       if (result) {
@@ -85,11 +85,11 @@ export class ImageRouter extends APIRouter {
   }
 
   updateOne(req, res) {
-    let userId = req['user'].id;
-    let imageId = req.params.id;
-    let body = req.body;
+    const userId = req['user'].id;
+    const imageId = req.params.id;
+    const body = req.body;
 
-    let updatedImage = BodyParser.parseBodyParametersToObject(body, ['description']);
+    const updatedImage = BodyParser.parseBodyParametersToObject(body, ['description']);
 
     this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
       this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then(() => {
@@ -107,8 +107,8 @@ export class ImageRouter extends APIRouter {
   }
 
   deleteOne(req, res) {
-    let userId = req['user'].id;
-    let imageId = req.params.id;
+    const userId = req['user'].id;
+    const imageId = req.params.id;
 
     this.imageService.deleteImage(imageId, userId).then(() => {
       res.send({

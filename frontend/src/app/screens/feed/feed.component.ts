@@ -27,7 +27,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
 
     this.route.params.subscribe(params => {
       if (params['id'] !== undefined) {
-        let id = params['id'];
+        const id = params['id'];
         this.isSingleImageMode = true;
         this.loadImage(id);
       } else if (params['userId'] !== undefined) {
@@ -63,7 +63,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   // Data
 
   loadNextPage() {
-    let promise = (this.userId ?
+    const promise = (this.userId ?
       this.apiClient.getUsersLikedImages(this.userId, this.page) :
       this.apiClient.getAllImages(this.page));
 
@@ -78,7 +78,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   }
 
   loadImage(imageId: string) {
-    let self = this;
+    const self = this;
     this.apiClient.getImage(imageId).then((result) => {
       self.images.push(result);
     }).catch((error) => {
@@ -113,13 +113,13 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   }
 
   onDeleteAction(image: Image) {
-    let index = this.images.indexOf(image);
+    const index = this.images.indexOf(image);
 
     if (index > -1) {
       this.images.splice(index, 1);
     }
 
-    let self = this;
+    const self = this;
 
     this.apiClient.deleteImage(image.id).then((result) => {
       if (self.isSingleImageMode && self.images.length === 0) {

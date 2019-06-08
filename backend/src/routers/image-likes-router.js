@@ -7,11 +7,11 @@ export class ImageLikesRouter extends APIRouter {
   }
 
   getAll(req, res) {
-    let imageId = req.params.parentId;
-    let query = req.query || {};
-    let count = Boolean(parseInt(query.count, 10) || 0);
-    let limit = parseInt(query.limit, 10) || 25;
-    let page = parseInt(query.page, 10) || 0;
+    const imageId = req.params.parentId;
+    const query = req.query || {};
+    const count = Boolean(parseInt(query.count, 10) || 0);
+    const limit = parseInt(query.limit, 10) || 25;
+    const page = parseInt(query.page, 10) || 0;
 
     this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
       res.send({
@@ -27,8 +27,8 @@ export class ImageLikesRouter extends APIRouter {
   }
 
   createOne(req, res) {
-    let imageId = req.params.parentId;
-    let userId = req['user'].id;
+    const imageId = req.params.parentId;
+    const userId = req['user'].id;
 
     this.imageService.likeImage(imageId, userId).then(() => {
       res.send({
@@ -44,8 +44,8 @@ export class ImageLikesRouter extends APIRouter {
   }
 
   deleteOne(req, res) {
-    let imageId = req.params.parentId;
-    let userId = req.params.id;
+    const imageId = req.params.parentId;
+    const userId = req.params.id;
 
     if (userId !== req['user'].id) {
       return res.status(403).send({

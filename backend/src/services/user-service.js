@@ -11,12 +11,12 @@ export class UserService {
   createUser(name, username, email, password) {
     return new Promise((resolve, reject) => {
       if (password === '') {
-        let error = new Error('Password can\'t be empty.');
+        const error = new Error('Password can\'t be empty.');
         return reject(error);
       }
 
       if (!ValidatorService.isValidEmail(email)) {
-        let error = new Error('Invalid email address.');
+        const error = new Error('Invalid email address.');
         return reject(error);
       }
 
@@ -32,10 +32,10 @@ export class UserService {
 
   updateUser(userId, updates) {
     return new Promise((resolve, reject) => {
-      let allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
-      let updatedUser = BodyParser.parseBodyParametersToObject(updates, allowedKeys);
+      const allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
+      const updatedUser = BodyParser.parseBodyParametersToObject(updates, allowedKeys);
 
-      let updateClosure = (dbClient, id, updatedUser) => {
+      const updateClosure = (dbClient, id, updatedUser) => {
         dbClient.updateOneUser(id, { $set: updatedUser }).then(() => {
           resolve();
         }).catch((error) => {
@@ -45,22 +45,22 @@ export class UserService {
 
       if (updates.email !== undefined) {
         if (!ValidatorService.isValidEmail(updates.email)) {
-          let error = new Error('Invalid email address.');
+          const error = new Error('Invalid email address.');
           return reject(error);
         }
       }
 
       if (updates.password !== undefined) {
-        let password = updates.password;
-        let oldPassword = updates.oldPassword;
+        const password = updates.password;
+        const oldPassword = updates.oldPassword;
 
         if (oldPassword === undefined) {
-          let error = new Error('Both password and the current password are required.');
+          const error = new Error('Both password and the current password are required.');
           return reject(error);
         }
 
         if (password === '') {
-          let error = new Error('Password can\'t be empty.');
+          const error = new Error('Password can\'t be empty.');
           return reject(error);
         }
 
@@ -75,7 +75,7 @@ export class UserService {
               throw new Error('Authentication failed.');
             }
           }).catch(() => {
-            let error = new Error('Wrong password. Enter the correct current password.');
+            const error = new Error('Wrong password. Enter the correct current password.');
             return reject(error);
           });
         }).catch((error) => {

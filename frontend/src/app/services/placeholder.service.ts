@@ -9,11 +9,11 @@ export class PlaceholderService {
   }
 
   drawAvatar(name: string, size: number): string {
-    let canvas = document.createElement('canvas');
+    const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
 
-    let context = canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     context.fillStyle = '#F8F9F8';
 
@@ -26,7 +26,7 @@ export class PlaceholderService {
     context.textBaseline = 'middle';
 
     let text = '';
-    let names = name.split(' ').filter((item) => item.length !== 0);
+    const names = name.split(' ').filter((item) => item.length !== 0);
 
     if (names.length > 0) {
       text = names[0][0];
@@ -39,7 +39,7 @@ export class PlaceholderService {
 
     context.fillText(text.toUpperCase(), size / 2, size / 2);
 
-    let imageData = canvas.toDataURL('image/png');
+    const imageData = canvas.toDataURL('image/png');
     return imageData;
   }
 
@@ -48,7 +48,7 @@ export class PlaceholderService {
       return this.images[name];
     }
 
-    let imageData = this.drawAvatar(name, 200);
+    const imageData = this.drawAvatar(name, 200);
     this.images[name] = imageData;
 
     return imageData;

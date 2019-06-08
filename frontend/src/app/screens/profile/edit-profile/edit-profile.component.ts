@@ -27,16 +27,16 @@ export class EditProfileComponent implements AfterViewInit {
     private session: Session, private placeholderService: PlaceholderService) {}
 
   ngAfterViewInit(): void {
-    let userId = this.session.userId();
+    const userId = this.session.userId();
     this.loadUser(userId);
   }
 
   onSubmit() {
-    let userId = this.session.userId();
+    const userId = this.session.userId();
 
-    let self = this;
+    const self = this;
 
-    let updateClosure = (avatar?: string) => {
+    const updateClosure = (avatar?: string) => {
       self.apiClient.updateUser(userId, self.nameValue, self.usernameValue,
         self.emailValue, self.bioValue, avatar).then((result) => {
           self.location.back();
@@ -74,7 +74,7 @@ export class EditProfileComponent implements AfterViewInit {
   }
 
   loadUser(userId: string) {
-    let self = this;
+    const self = this;
     this.apiClient.getUser(userId).then((result) => {
       self.user = result;
       self.nameValue = result.name;
@@ -87,7 +87,7 @@ export class EditProfileComponent implements AfterViewInit {
   }
 
   avatarPlaceholder() {
-    let name = this.user ? this.user.name : '';
+    const name = this.user ? this.user.name : '';
     return this.placeholderService.getAvatar(name);
   }
 }

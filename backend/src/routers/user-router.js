@@ -14,19 +14,19 @@ export class UserRouter extends APIRouter {
   }
 
   createSubrouters() {
-    let imagesRouter = new UserImagesRouter(this.dbClient,
+    const imagesRouter = new UserImagesRouter(this.dbClient,
       this.imageService, { mergeParams: true });
     this.subrouters['images'] = imagesRouter;
 
-    let likedRouter = new UserLikesRouter(this.dbClient,
+    const likedRouter = new UserLikesRouter(this.dbClient,
       this.imageService, { mergeParams: true });
     this.subrouters['likes'] = likedRouter;
   }
 
   getAll(req, res) {
-    let query = req.query || {};
-    let limit = parseInt(query.limit, 10) || 25;
-    let page = parseInt(query.page, 10) || 0;
+    const query = req.query || {};
+    const limit = parseInt(query.limit, 10) || 25;
+    const page = parseInt(query.page, 10) || 0;
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
       res.send({
@@ -42,12 +42,12 @@ export class UserRouter extends APIRouter {
   }
 
   createOne(req, res) {
-    let body = req.body || {};
+    const body = req.body || {};
 
     if (body.name === undefined || body.username === undefined ||
             body.email === undefined || body.password === undefined) {
 
-      let error = new Error('Missing argument(s). Name, username, email and password are expected.');
+      const error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(400).send({
         'code': 400,
         'error': 'BAD_REQUEST',
@@ -55,10 +55,10 @@ export class UserRouter extends APIRouter {
       });
     }
 
-    let name = body.name || '';
-    let username = body.username || '';
-    let email = body.email || '';
-    let password = body.password || '';
+    const name = body.name || '';
+    const username = body.username || '';
+    const email = body.email || '';
+    const password = body.password || '';
 
     this.userService.createUser(name, username, email, password).then(() => {
       res.send({
@@ -74,7 +74,7 @@ export class UserRouter extends APIRouter {
   }
 
   getOne(req, res) {
-    let id = req.params.id;
+    const id = req.params.id;
 
     this.dbClient.getOneUser('id', id).then((result) => {
       if (result) {
@@ -92,8 +92,8 @@ export class UserRouter extends APIRouter {
   }
 
   updateOne(req, res) {
-    let userId = req.params.id;
-    let body = req.body;
+    const userId = req.params.id;
+    const body = req.body;
 
     if (userId !== req['user'].id) {
       return res.status(403).send({
@@ -123,7 +123,7 @@ export class UserRouter extends APIRouter {
   }
 
   deleteOne(req, res) {
-    let id = req.params.id;
+    const id = req.params.id;
 
     if (id !== req['user'].id) {
       return res.status(403).send({

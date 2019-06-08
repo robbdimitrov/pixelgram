@@ -13,9 +13,9 @@ export class APIRouter {
   }
 
   setupSubrouters() {
-    for (let key in this.subrouters) {
+    for (const key in this.subrouters) {
       if (this.subrouters.hasOwnProperty(key)) {
-        let value = this.subrouters[key];
+        const value = this.subrouters[key];
         this.router.use(`/:parentId(${this.validationRegex})/${key}`, value.router);
       }
     }

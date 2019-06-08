@@ -7,12 +7,12 @@ export class UserImagesRouter extends APIRouter {
   }
 
   getAll(req, res) {
-    let userId = req.params.parentId;
-    let query = req.query || {};
-    let count = Boolean(parseInt(query.count, 10) || 0);
-    let limit = parseInt(query.limit, 10) || 25;
-    let page = parseInt(query.page, 10) || 0;
-    let currentUserId = req['user'].id;
+    const userId = req.params.parentId;
+    const query = req.query || {};
+    const count = Boolean(parseInt(query.count, 10) || 0);
+    const limit = parseInt(query.limit, 10) || 25;
+    const page = parseInt(query.page, 10) || 0;
+    const currentUserId = req['user'].id;
 
     this.imageService.getAllImagesForUser(userId, page, limit, count, currentUserId).then((result) => {
       res.send({

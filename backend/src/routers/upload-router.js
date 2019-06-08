@@ -9,7 +9,7 @@ export class UploadRouter {
   }
 
   connectRouter(router) {
-    let uploader = multer({
+    const uploader = multer({
       dest: this.imageDir,
       limits: { fileSize: 1000000, files: 1 },
     });

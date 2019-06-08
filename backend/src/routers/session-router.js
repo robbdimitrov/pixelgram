@@ -3,10 +3,10 @@ import { APIRouter } from './api-router';
 
 export class SessionRouter extends APIRouter {
   createOne(req, res) {
-    let body = req.body || {};
+    const body = req.body || {};
 
     if (body.email === undefined || body.password === undefined) {
-      let error = new Error('Missing argument(s). Email and password are required.');
+      const error = new Error('Missing argument(s). Email and password are required.');
       return res.status(400).send({
         'code': 400,
         'error': 'BAD_REQUEST',
@@ -14,10 +14,10 @@ export class SessionRouter extends APIRouter {
       });
     }
 
-    let email = body.email || '';
-    let password = body.password || '';
+    const email = body.email || '';
+    const password = body.password || '';
 
-    let authFailedBlock = () => {
+    const authFailedBlock = () => {
       res.status(401).send({
         'code': 401,
         'error': 'UNAUTHORIZED',
@@ -33,7 +33,7 @@ export class SessionRouter extends APIRouter {
       AuthService.getInstance().validatePassword(password, user['password']).then((result) => {
         if (result === true) {
           delete user['password'];
-          let token = AuthService.getInstance().generateToken(user);
+          const token = AuthService.getInstance().generateToken(user);
           res.send({
             'user': user,
             'token': token,

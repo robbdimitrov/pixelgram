@@ -2,7 +2,7 @@ import { Image } from '../models/image.model';
 
 export class ImageFactory {
   static imageFromObject(object: Object): Image {
-    let image = new Image(
+    const image = new Image(
       object['_id'],
       object['ownerId'],
       object['filename'],

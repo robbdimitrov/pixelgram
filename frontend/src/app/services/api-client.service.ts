@@ -47,7 +47,7 @@ export class APIClient {
     let headers = new HttpHeaders({
       'content-type': 'application/json'
     });
-    let token = this.session.token();
+    const token = this.session.token();
     if (token !== null) {
       headers = headers.set('authorization', token);
     }
@@ -57,23 +57,23 @@ export class APIClient {
   // Use this method for all requests
   private request(method: HTTPMethod, urlPath: string, body?: Object,
     otherHeaders?: HttpHeaders): Observable<Object> {
-    let key = `${method}:${urlPath}`;
+    const key = `${method}:${urlPath}`;
 
     if (this.activeRequests[key]) {
       return this.activeRequests[key];
     }
 
-    let headers = otherHeaders || this.headers();
+    const headers = otherHeaders || this.headers();
 
     // Stringify only when using the default headers
-    let options = {
+    const options = {
       body: (otherHeaders ? body : JSON.stringify(body)), headers
     };
 
-    let url = this.apiRoot + urlPath;
+    const url = this.apiRoot + urlPath;
 
-    let self = this;
-    let observable = this.http.request(method, url, options)
+    const self = this;
+    const observable = this.http.request(method, url, options)
       .finally(() => {
         delete self.activeRequests[key];
       }).share();
@@ -86,9 +86,9 @@ export class APIClient {
   // User
 
   createUser(name: string, username: string, email: string, password: string) {
-    let url = '/users';
-    let body = { name, username, email, password };
-    let request = this.request(HTTPMethod.Post, url, body);
+    const url = '/users';
+    const body = { name, username, email, password };
+    const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -100,9 +100,9 @@ export class APIClient {
   }
 
   loginUser(email: string, password: string) {
-    let url = '/sessions';
-    let body = { email, password };
-    let request = this.request(HTTPMethod.Post, url, body);
+    const url = '/sessions';
+    const body = { email, password };
+    const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
@@ -122,13 +122,13 @@ export class APIClient {
   }
 
   getUser(userId: string): Promise<User> {
-    let url = `/users/${userId}`;
-    let request = this.request(HTTPMethod.Get, url);
+    const url = `/users/${userId}`;
+    const request = this.request(HTTPMethod.Get, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        let responseUser = response['user'];
-        let user = UserFactory.userFromObject(responseUser);
+        const responseUser = response['user'];
+        const user = UserFactory.userFromObject(responseUser);
         resolve(user);
       }).catch((error) => {
         if (error.status === StatusCode.Unauthorized) {
@@ -140,14 +140,14 @@ export class APIClient {
   }
 
   updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
-    let url = `/users/${userId}`;
-    let body = { name, username, email, bio };
+    const url = `/users/${userId}`;
+    const body = { name, username, email, bio };
 
     if (avatar) {
       body['avatar'] = avatar;
     }
 
-    let request = this.request(HTTPMethod.Put, url, body);
+    const request = this.request(HTTPMethod.Put, url, body);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -162,10 +162,10 @@ export class APIClient {
   }
 
   changePassword(userId: string, oldPassword: string, password: string) {
-    let url = `/users/${userId}`;
+    const url = `/users/${userId}`;
 
-    let body = { password, oldPassword };
-    let request = this.request(HTTPMethod.Put, url, body);
+    const body = { password, oldPassword };
+    const request = this.request(HTTPMethod.Put, url, body);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -182,9 +182,9 @@ export class APIClient {
   // Image
 
   createImage(filename: string, description: string) {
-    let url = '/images';
-    let body = { filename, description };
-    let request = this.request(HTTPMethod.Post, url, body);
+    const url = '/images';
+    const body = { filename, description };
+    const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -196,15 +196,15 @@ export class APIClient {
   }
 
   getImages(url: string): Promise<Image[]> {
-    let request = this.request(HTTPMethod.Get, url);
+    const request = this.request(HTTPMethod.Get, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        let images: Image[] = [];
-        let responseImages = response['images'];
+        const images: Image[] = [];
+        const responseImages = response['images'];
         for (let i = 0; i < responseImages.length; i++) {
-          let imageObject = responseImages[i];
-          let image = ImageFactory.imageFromObject(imageObject);
+          const imageObject = responseImages[i];
+          const image = ImageFactory.imageFromObject(imageObject);
           images.push(image);
         }
         resolve(images);
@@ -218,28 +218,28 @@ export class APIClient {
   }
 
   getUsersImages(userId: string, page: number, limit: number = 10) {
-    let url = `/users/${userId}/images?page=${page}&limit=${limit}`;
+    const url = `/users/${userId}/images?page=${page}&limit=${limit}`;
     return this.getImages(url);
   }
 
   getAllImages(page: number, limit: number = 10) {
-    let url = `/images?page=${page}&limit=${limit}`;
+    const url = `/images?page=${page}&limit=${limit}`;
     return this.getImages(url);
   }
 
   getUsersLikedImages(userId: string, page: number, limit: number = 10) {
-    let url = `/users/${userId}/likes?page=${page}&limit=${limit}`;
+    const url = `/users/${userId}/likes?page=${page}&limit=${limit}`;
     return this.getImages(url);
   }
 
   getImage(imageId: string): Promise<Image> {
-    let url = `/images/${imageId}`;
-    let request = this.request(HTTPMethod.Get, url);
+    const url = `/images/${imageId}`;
+    const request = this.request(HTTPMethod.Get, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        let responseImage = response['image'];
-        let image = ImageFactory.imageFromObject(responseImage);
+        const responseImage = response['image'];
+        const image = ImageFactory.imageFromObject(responseImage);
         resolve(image);
       }).catch((error) => {
         if (error.status === StatusCode.Unauthorized) {
@@ -251,8 +251,8 @@ export class APIClient {
   }
 
   updateImage(imageId: string, description: string) {
-    let url = `/images/${imageId}`;
-    let request = this.request(HTTPMethod.Put, url);
+    const url = `/images/${imageId}`;
+    const request = this.request(HTTPMethod.Put, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -267,8 +267,8 @@ export class APIClient {
   }
 
   deleteImage(imageId: string) {
-    let url = `/images/${imageId}`;
-    let request = this.request(HTTPMethod.Delete, url);
+    const url = `/images/${imageId}`;
+    const request = this.request(HTTPMethod.Delete, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -283,13 +283,13 @@ export class APIClient {
   }
 
   uploadImage(file: File) {
-    let url = `/upload`;
-    let headers = this.headers().delete('content-type');
+    const url = `/upload`;
+    const headers = this.headers().delete('content-type');
 
-    let formData = new FormData();
+    const formData = new FormData();
     formData.append('image', file, file.name);
 
-    let request = this.request(HTTPMethod.Post, url, formData, headers);
+    const request = this.request(HTTPMethod.Post, url, formData, headers);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
@@ -304,8 +304,8 @@ export class APIClient {
   }
 
   likeImage(imageId: string) {
-    let url = `/images/${imageId}/likes`;
-    let request = this.request(HTTPMethod.Post, url);
+    const url = `/images/${imageId}/likes`;
+    const request = this.request(HTTPMethod.Post, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
@@ -320,8 +320,8 @@ export class APIClient {
   }
 
   unlikeImage(userId: string, imageId: string) {
-    let url = `/images/${imageId}/likes/${userId}`;
-    let request = this.request(HTTPMethod.Delete, url);
+    const url = `/images/${imageId}/likes/${userId}`;
+    const request = this.request(HTTPMethod.Delete, url);
 
     return new Promise((resolve, reject) => {
       request.toPromise().then(() => {
