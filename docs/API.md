@@ -43,7 +43,7 @@ password: string
 Headers:
 
 ```
-content-type: application/json
+Content-Type: application/json
 ```
 
 Response:
@@ -85,7 +85,7 @@ password: string
 Headers:
 
 ```
-content-type: application/json
+Content-Type: application/json
 ```
 
 Response:
@@ -105,8 +105,8 @@ GET /users
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -155,8 +155,8 @@ userId - id of the user
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -204,8 +204,8 @@ bio: string (optional)
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -231,8 +231,8 @@ userId - id of the user
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -259,8 +259,8 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -306,8 +306,8 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -346,8 +346,8 @@ description: string
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -367,8 +367,8 @@ GET /images
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -419,8 +419,8 @@ description: string
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -460,8 +460,8 @@ description: string
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -487,8 +487,8 @@ imageId - id of the image
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -508,8 +508,8 @@ POST /images/<imageId>/likes
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -536,8 +536,8 @@ count - if count=1, the request returns only the count (optional)
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -576,8 +576,8 @@ userId - id of the user
 Headers:
 
 ```
-content-type: application/json
-authorization: <access-token>
+Content-Type: application/json
+Authorization: <access-token>
 ```
 
 Response:
@@ -607,7 +607,7 @@ image: file sent as multipart/form-data
 ```
 
 ```
-authorization: <access-token>
+Authorization: <access-token>
 ```
 
 Response:

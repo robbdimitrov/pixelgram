@@ -52,7 +52,7 @@ export class Server {
       return next();
     }
 
-    const token = req.headers['authorization'];
+    const token = req.get('Authorization');
 
     // decode token
     if (token) {

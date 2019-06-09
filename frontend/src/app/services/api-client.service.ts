@@ -45,11 +45,11 @@ export class APIClient {
 
   headers(): HttpHeaders {
     let headers = new HttpHeaders({
-      'content-type': 'application/json'
+      'Content-Type': 'application/json'
     });
     const token = this.session.token();
     if (token !== null) {
-      headers = headers.set('authorization', token);
+      headers = headers.set('Authorization', token);
     }
     return headers;
   }
@@ -268,7 +268,7 @@ export class APIClient {
 
   uploadImage(file: File) {
     const url = `/upload`;
-    const headers = this.headers().delete('content-type');
+    const headers = this.headers().delete('Content-Type');
 
     const formData = new FormData();
     formData.append('image', file, file.name);
