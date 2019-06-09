@@ -8,7 +8,7 @@
   * [User registration](#user-registration)
   * [Get all users](#get-all-users)
   * [Get user](#get-user)
-  * [Edit user](#edit-user)
+  * [Update user](#update-user)
   * [Delete user](#delete-user)
   * [Get user's images](#get-users-images)
   * [Get user's liked images](#get-users-liked-images)
@@ -16,7 +16,7 @@
   * [Create an image](#create-an-image)
   * [Get all images](#get-all-images)
   * [Get image](#get-image)
-  * [Edit image](#edit-image)
+  * [Update image](#update-image)
   * [Delete image](#delete-image)
   * [Add image to the current user's likes](#add-image-to-the-current-users-likes)
   * [Get all users liked an image](#get-all-users-liked-an-image)
@@ -177,7 +177,7 @@ Response:
 }
 ```
 
-### Edit user
+### Update user
 
 ```
 PUT /users/<userId>
@@ -439,7 +439,7 @@ Response:
 }
 ```
 
-### Edit image
+### Update image
 
 ```
 PUT /images/<imageId>
