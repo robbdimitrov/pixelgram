@@ -345,7 +345,7 @@ export class DBClient {
 
       switch (field) {
       case 'id':
-        query = {'_id': new ObjectID(value)};
+        query = {_id: new ObjectID(value)};
         break;
       case 'username':
         query = {username: value};

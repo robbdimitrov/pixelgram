@@ -62,18 +62,18 @@ export class Server {
         next();
       }).catch(() => {
         res.status(401).send({
-          'code': 401,
-          'error': 'INVALID_TOKEN',
-          'message': 'Failed to authenticate token.',
+          code: 401,
+          error: 'INVALID_TOKEN',
+          message: 'Failed to authenticate token.',
         });
       });
     } else {
       // if there is no token
       // return an error
       res.status(401).send({
-        'code': 401,
-        'error': 'INVALID_TOKEN',
-        'message': 'No token provided.',
+        code: 401,
+        error: 'INVALID_TOKEN',
+        message: 'No token provided.',
       });
     }
   }
@@ -81,16 +81,16 @@ export class Server {
   // Create API routers
   configureRoutes() {
     const sessionRouter = new SessionRouter(this.dbClient);
-    this.routers['sessions'] = sessionRouter;
+    this.routers.sessions = sessionRouter;
 
     const userRouter = new UserRouter(this.dbClient, this.userService, this.imageService);
-    this.routers['users'] = userRouter;
+    this.routers.users = userRouter;
 
     const imageRouter = new ImageRouter(this.dbClient, this.imageService);
-    this.routers['images'] = imageRouter;
+    this.routers.images = imageRouter;
 
     const uploadRouter = new UploadRouter(this.imageDir);
-    this.routers['upload'] = uploadRouter;
+    this.routers.upload = uploadRouter;
   }
 
   // Configure API endpoints
