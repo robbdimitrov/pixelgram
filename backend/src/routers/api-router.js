@@ -6,9 +6,6 @@ export class APIRouter {
     this.dbClient = dbClient;
     this.subrouters = {};
 
-    // Regex used for single object requests
-    this.validationRegex = '[0-9a-zA-Z]+';
-
     this.connectRouter(this.router);
   }
 
@@ -16,7 +13,7 @@ export class APIRouter {
     for (const key in this.subrouters) {
       if (this.subrouters.hasOwnProperty(key)) {
         const value = this.subrouters[key];
-        this.router.use(`/:parentId(${this.validationRegex})/${key}`, value.router);
+        this.router.use(`/:parentId/${key}`, value.router);
       }
     }
   }
@@ -35,28 +32,28 @@ export class APIRouter {
     });
 
     // Get specific object
-    router.get(`/:id(${this.validationRegex})`, (req, res) => {
+    router.get('/:id', (req, res) => {
       this.getOne(req, res);
     });
 
     // Edit specific object
-    router.put(`/:id(${this.validationRegex})`, (req, res) => {
+    router.put('/:id', (req, res) => {
       this.updateOne(req, res);
     });
 
     // Delete specific object
-    router.delete(`/:id(${this.validationRegex})`, (req, res) => {
+    router.delete('/:id', (req, res) => {
       this.deleteOne(req, res);
     });
   }
 
   // Helpers
 
-  sendNotFound(req, res) {
+  sendNotFound(res) {
     res.status(404).send({
-      'code': 404,
-      'error': 'NOT_FOUND',
-      'message': 'The resource was not found.',
+      code: 404,
+      error: 'NOT_FOUND',
+      message: 'The resource was not found.',
     });
   }
 
@@ -64,26 +61,26 @@ export class APIRouter {
 
   // Get all objects
   getAll(req, res) {
-    this.sendNotFound(req, res);
+    this.sendNotFound(res);
   }
 
   // Create a new object
   createOne(req, res) {
-    this.sendNotFound(req, res);
+    this.sendNotFound(res);
   }
 
   // Get an object
   getOne(req, res) {
-    this.sendNotFound(req, res);
+    this.sendNotFound(res);
   }
 
   // Update existing object
   updateOne(req, res) {
-    this.sendNotFound(req, res);
+    this.sendNotFound(res);
   }
 
   // Delete existing object
   deleteOne(req, res) {
-    this.sendNotFound(req, res);
+    this.sendNotFound(res);
   }
 }

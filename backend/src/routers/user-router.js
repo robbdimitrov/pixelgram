@@ -16,11 +16,11 @@ export class UserRouter extends APIRouter {
   createSubrouters() {
     const imagesRouter = new UserImagesRouter(this.dbClient,
       this.imageService, { mergeParams: true });
-    this.subrouters['images'] = imagesRouter;
+    this.subrouters.images = imagesRouter;
 
     const likedRouter = new UserLikesRouter(this.dbClient,
       this.imageService, { mergeParams: true });
-    this.subrouters['likes'] = likedRouter;
+    this.subrouters.likes = likedRouter;
   }
 
   getAll(req, res) {
@@ -30,13 +30,13 @@ export class UserRouter extends APIRouter {
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
       res.send({
-        'users': result,
+        users: result,
       });
     }).catch((error) => {
       res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        code: 400,
+        error: 'BAD_REQUEST',
+        message: error.message,
       });
     });
   }
@@ -49,9 +49,9 @@ export class UserRouter extends APIRouter {
 
       const error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        code: 400,
+        error: 'BAD_REQUEST',
+        message: error.message,
       });
     }
 
@@ -62,13 +62,13 @@ export class UserRouter extends APIRouter {
 
     this.userService.createUser(name, username, email, password).then(() => {
       res.send({
-        'message': 'User created.',
+        message: 'User created.',
       });
     }).catch((error) => {
       res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        code: 400,
+        error: 'BAD_REQUEST',
+        message: error.message,
       });
     });
   }
@@ -79,14 +79,14 @@ export class UserRouter extends APIRouter {
     this.dbClient.getOneUser('id', id).then((result) => {
       if (result) {
         res.send({
-          'user': result,
+          user: result,
         });
       }
     }).catch((error) => {
       res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        code: 400,
+        error: 'BAD_REQUEST',
+        message: error.message,
       });
     });
   }
@@ -95,29 +95,29 @@ export class UserRouter extends APIRouter {
     const userId = req.params.id;
     const body = req.body;
 
-    if (userId !== req['user'].id) {
+    if (userId !== req.user.id) {
       return res.status(403).send({
-        'code': 403,
-        'error': 'FORBIDDEN',
-        'message': 'Can\'t update other people\'s accounts.',
+        code: 403,
+        error: 'FORBIDDEN',
+        message: 'Can\'t update other people\'s accounts.',
       });
     }
 
     if (Object.keys(body).length < 1) {
       return res.send({
-        'message': 'Nothing to update.',
+        message: 'Nothing to update.',
       });
     }
 
     this.userService.updateUser(userId, body).then(() => {
       res.send({
-        'message': 'User updated.',
+        message: 'User updated.',
       });
     }).catch((error) => {
       res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        code: 400,
+        error: 'BAD_REQUEST',
+        message: error.message,
       });
     });
   }
@@ -125,23 +125,23 @@ export class UserRouter extends APIRouter {
   deleteOne(req, res) {
     const id = req.params.id;
 
-    if (id !== req['user'].id) {
+    if (id !== req.user.id) {
       return res.status(403).send({
-        'code': 403,
-        'error': 'FORBIDDEN',
-        'message': 'Can\'t delete other people\'s accounts.',
+        code: 403,
+        error: 'FORBIDDEN',
+        message: 'Can\'t delete other people\'s accounts.',
       });
     }
 
     this.dbClient.deleteOneUser(id).then(() => {
       res.send({
-        'message': 'User deleted.',
+        message: 'User deleted.',
       });
     }).catch((error) => {
       res.status(400).send({
-        'code': 400,
-        'error': 'BAD_REQUEST',
-        'message': error.message,
+        code: 400,
+        error: 'BAD_REQUEST',
+        message: error.message,
       });
     });
   }
