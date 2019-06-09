@@ -250,22 +250,6 @@ export class APIClient {
     });
   }
 
-  updateImage(imageId: string, description: string) {
-    const url = `/images/${imageId}`;
-    const request = this.request(HTTPMethod.Put, url);
-
-    return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
-        }
-        reject(error.error);
-      });
-    });
-  }
-
   deleteImage(imageId: string) {
     const url = `/images/${imageId}`;
     const request = this.request(HTTPMethod.Delete, url);
