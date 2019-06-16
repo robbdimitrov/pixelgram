@@ -75,7 +75,7 @@ export class DBClient {
     };
 
     if (userId !== undefined) {
-      properties['isLiked'] = {$in: [ new ObjectID(userId), '$likedUsers' ]};
+      properties['isLiked'] = { $in: [ new ObjectID(userId), '$likedUsers' ] };
     }
 
     return properties;
@@ -127,7 +127,7 @@ export class DBClient {
           reject(error);
         });
       } else {
-        const sortQuery = {dateCreated: -1};
+        const sortQuery = { dateCreated: -1 };
 
         client.db().collection('images').aggregate([
           { $match: query },
@@ -180,7 +180,7 @@ export class DBClient {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      const query = {_id: new ObjectID(imageId)};
+      const query = { _id: new ObjectID(imageId) };
 
       client.db().collection('images').aggregate([
         { $match: query },
@@ -345,13 +345,13 @@ export class DBClient {
 
       switch (field) {
       case 'id':
-        query = {_id: new ObjectID(value)};
+        query = { _id: new ObjectID(value) };
         break;
       case 'username':
-        query = {username: value};
+        query = { username: value };
         break;
       case 'email':
-        query = {email: value};
+        query = { email: value };
         break;
       }
 
