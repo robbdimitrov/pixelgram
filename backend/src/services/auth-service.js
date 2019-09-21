@@ -1,7 +1,7 @@
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-export class AuthService {
+class AuthService {
   constructor() {
     this.secret = process.env.SECRET;
   }
@@ -63,3 +63,5 @@ export class AuthService {
     });
   }
 }
+
+module.exports = AuthService;

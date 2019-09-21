@@ -1,7 +1,7 @@
-import { ObjectID } from 'mongodb';
-import { Image } from '../models/image';
+const ObjectID = require('mongodb');
+const Image = require('../models/image');
 
-export class ImageFactory {
+class ImageFactory {
   static createImage(ownerId, filename, description) {
     const image = new Image(
       undefined,
@@ -14,3 +14,5 @@ export class ImageFactory {
     return image;
   }
 }
+
+module.exports = ImageFactory;

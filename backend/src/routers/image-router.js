@@ -1,8 +1,8 @@
-import { BodyParser } from '../services/body-parser';
-import { APIRouter } from './api-router';
-import { ImageLikesRouter } from './image-likes-router';
+const BodyParser = require('../services/body-parser');
+const APIRouter = require('./api-router');
+const ImageLikesRouter = require('./image-likes-router');
 
-export class ImageRouter extends APIRouter {
+class ImageRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
     super(dbClient, options);
 
@@ -123,3 +123,5 @@ export class ImageRouter extends APIRouter {
     });
   }
 }
+
+module.exports = ImageRouter;

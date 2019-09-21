@@ -1,4 +1,4 @@
-export class Image {
+class Image {
   constructor(id, ownerId, filename, dateCreated, description, likedUsers) {
     this.id = id;
     this.ownerId = ownerId;
@@ -8,3 +8,5 @@ export class Image {
     this.likedUsers = likedUsers;
   }
 }
+
+module.exports = Image;

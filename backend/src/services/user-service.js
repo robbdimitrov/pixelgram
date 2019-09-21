@@ -1,9 +1,9 @@
-import { AuthService } from './auth-service';
-import { BodyParser } from './body-parser';
-import { UserFactory } from './user-factory';
-import { ValidatorService } from './validator-service';
+const AuthService = require('./auth-service');
+const BodyParser = require('./body-parser');
+const UserFactory = require('./user-factory');
+const ValidatorService = require('./validator-service');
 
-export class UserService {
+class UserService {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
@@ -87,3 +87,5 @@ export class UserService {
     });
   }
 }
+
+module.exports = UserService;

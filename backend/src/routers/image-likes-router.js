@@ -1,6 +1,6 @@
-import { APIRouter } from './api-router';
+const APIRouter = require('./api-router');
 
-export class ImageLikesRouter extends APIRouter {
+class ImageLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
     super(dbClient, options);
     this.imageService = imageService;
@@ -68,3 +68,5 @@ export class ImageLikesRouter extends APIRouter {
     });
   }
 }
+
+module.exports = ImageLikesRouter;
