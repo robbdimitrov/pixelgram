@@ -1,7 +1,7 @@
-import { User } from '../models/user';
-import { AuthService } from './auth-service';
+const User = require('../models/user');
+const AuthService = require('./auth-service');
 
-export class UserFactory {
+class UserFactory {
   static createUser(name, username, email, password) {
     return new Promise((resolve, reject) => {
       const user = new User();
@@ -23,3 +23,5 @@ export class UserFactory {
     });
   }
 }
+
+module.exports = UserFactory;

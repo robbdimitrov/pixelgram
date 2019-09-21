@@ -1,8 +1,8 @@
-import { ObjectID } from 'mongodb';
+const ObjectID = require('mongodb');
 
-import { ImageFactory } from './image-factory';
+const ImageFactory = require('./image-factory');
 
-export class ImageService {
+class ImageService {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
@@ -107,3 +107,5 @@ export class ImageService {
     });
   }
 }
+
+module.exports = ImageService;

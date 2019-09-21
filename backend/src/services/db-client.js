@@ -1,6 +1,7 @@
-import { MongoClient, ObjectID } from 'mongodb';
+const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
 
-export class DBClient {
+class DBClient {
   constructor(dbUrl) {
     this.url = dbUrl;
   }
@@ -416,3 +417,5 @@ export class DBClient {
     });
   }
 }
+
+module.exports = DBClient;

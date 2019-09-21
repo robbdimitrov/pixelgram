@@ -1,5 +1,5 @@
-import { Server } from './server';
-import { DBClient } from './services/db-client';
+const Server = require('./server');
+const DBClient = require('./services/db-client');
 
 const port = process.env.PORT;
 const dbUrl = process.env.DATABASE_URI;
