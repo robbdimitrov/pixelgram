@@ -34,7 +34,7 @@ class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      process.stdout.write(`[${process.env.NODE_ENV}] REQUEST ${req.method} ${req.url}\n`);
+      process.stdout.write(`Server REQUEST ${req.method} ${req.url}\n`);
       next();
     });
   }
