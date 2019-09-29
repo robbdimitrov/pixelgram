@@ -1,6 +1,7 @@
-import { MongoClient, ObjectID } from 'mongodb';
+const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
 
-export class DBClient {
+class DBClient {
   constructor(dbUrl) {
     this.url = dbUrl;
   }
@@ -13,8 +14,8 @@ export class DBClient {
         return resolve(this.client);
       }
 
-      MongoClient.connect(url, { useNewUrlParser: true }).then((result) => {
-        process.stdout.write('Connected to database');
+      const options = { useNewUrlParser: true, useUnifiedTopology: true };
+      MongoClient.connect(url, options).then((result) => {
         this.client = result;
         resolve(this.client);
       }).catch((error) => {
@@ -232,7 +233,7 @@ export class DBClient {
       this.imageIsOwnedByUser(userId, imageId).then(() => {
         const imageObjectId = new ObjectID(imageId);
 
-        client.db().collection('users').update({},
+        client.db().collection('users').updateMany({},
           { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
           { multi: true },
         ).then(() => {
@@ -416,3 +417,5 @@ export class DBClient {
     });
   }
 }
+
+module.exports = DBClient;

@@ -1,14 +1,15 @@
-import { ObjectID } from 'mongodb';
+const ObjectID = require('mongodb').ObjectID;
 
-import { ImageFactory } from './image-factory';
+const ImageFactory = require('./image-factory');
 
-export class ImageService {
+class ImageService {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
 
   createImage(userId, filename, description) {
-    const image = ImageFactory.createImage(userId, filename, description);
+    const image = ImageFactory.createImage(new ObjectID(userId),
+      filename, description);
 
     return new Promise((resolve, reject) => {
       this.dbClient.createOneImage(image).then(() => {
@@ -107,3 +108,5 @@ export class ImageService {
     });
   }
 }
+
+module.exports = ImageService;

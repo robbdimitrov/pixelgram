@@ -1,4 +1,4 @@
-export class BodyParser {
+class BodyParser {
   static parseBodyParametersToObject(body, allowedKeys) {
     const object = new Object();
 
@@ -11,3 +11,5 @@ export class BodyParser {
     return object;
   }
 }
+
+module.exports = BodyParser;

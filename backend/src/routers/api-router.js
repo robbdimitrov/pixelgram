@@ -1,6 +1,6 @@
-import { Router } from 'express';
+const Router = require('express').Router;
 
-export class APIRouter {
+class APIRouter {
   constructor(dbClient, options) {
     this.router = Router(options);
     this.dbClient = dbClient;
@@ -11,7 +11,7 @@ export class APIRouter {
 
   setupSubrouters() {
     for (const key in this.subrouters) {
-      if (this.subrouters.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(this.subrouters, key)) {
         const value = this.subrouters[key];
         this.router.use(`/:parentId/${key}`, value.router);
       }
@@ -84,3 +84,5 @@ export class APIRouter {
     this.sendNotFound(res);
   }
 }
+
+module.exports = APIRouter;

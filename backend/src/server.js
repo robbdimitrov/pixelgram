@@ -1,16 +1,16 @@
-import * as bodyParser from 'body-parser';
-import * as express from 'express';
-import * as helmet from 'helmet';
+const bodyParser = require('body-parser');
+const express = require('express');
+const helmet = require('helmet');
 
-import { ImageRouter } from './routers/image-router';
-import { SessionRouter } from './routers/session-router';
-import { UploadRouter } from './routers/upload-router';
-import { UserRouter } from './routers/user-router';
-import { AuthService } from './services/auth-service';
-import { ImageService } from './services/image-service';
-import { UserService } from './services/user-service';
+const ImageRouter = require('./routers/image-router');
+const SessionRouter = require('./routers/session-router');
+const UploadRouter = require('./routers/upload-router');
+const UserRouter = require('./routers/user-router');
+const AuthService = require('./services/auth-service');
+const ImageService = require('./services/image-service');
+const UserService = require('./services/user-service');
 
-export class Server {
+class Server {
   constructor(port, dbClient) {
     this.port = port;
     this.dbClient = dbClient;
@@ -34,7 +34,7 @@ export class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      process.stdout.write(`[${process.env.NODE_ENV}] REQUEST ${req.method} ${req.url}\n`);
+      process.stdout.write(`Server REQUEST ${req.method} ${req.url}\n`);
       next();
     });
   }
@@ -99,7 +99,7 @@ export class Server {
 
     // Create and map express routers
     for (const key in this.routers) {
-      if (this.routers.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(this.routers, key)) {
         const value = this.routers[key];
         this.app.use(`/api/${key}`, value.router);
       }
@@ -115,3 +115,5 @@ export class Server {
     });
   }
 }
+
+module.exports = Server;

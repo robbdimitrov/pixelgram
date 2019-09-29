@@ -1,16 +1,14 @@
-import { ObjectID } from 'mongodb';
-import { Image } from '../models/image';
-
-export class ImageFactory {
+class ImageFactory {
   static createImage(ownerId, filename, description) {
-    const image = new Image(
-      undefined,
-      new ObjectID(ownerId),
-      filename,
-      new Date().toISOString(),
-      description,
-      []
-    );
+    const image = {
+      ownerId: ownerId,
+      filename: filename,
+      dateCreated: new Date().toISOString(),
+      description: description,
+      likedUsers: []
+    };
     return image;
   }
 }
+
+module.exports = ImageFactory;

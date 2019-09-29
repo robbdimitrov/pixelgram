@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import * as multer from 'multer';
+const Router = require('express').Router;
+const multer = require('multer');
 
-export class UploadRouter {
+class UploadRouter {
   constructor(imageDir) {
     this.imageDir = imageDir;
     this.router = Router();
@@ -29,3 +29,5 @@ export class UploadRouter {
     });
   }
 }
+
+module.exports = UploadRouter;

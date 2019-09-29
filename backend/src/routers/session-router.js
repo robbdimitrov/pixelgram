@@ -1,7 +1,7 @@
-import { AuthService } from '../services/auth-service';
-import { APIRouter } from './api-router';
+const AuthService = require('../services/auth-service');
+const APIRouter = require('./api-router');
 
-export class SessionRouter extends APIRouter {
+class SessionRouter extends APIRouter {
   createOne(req, res) {
     const body = req.body || {};
 
@@ -50,3 +50,5 @@ export class SessionRouter extends APIRouter {
     });
   }
 }
+
+module.exports = SessionRouter;

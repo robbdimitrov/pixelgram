@@ -1,7 +1,7 @@
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-export class AuthService {
+class AuthService {
   constructor() {
     this.secret = process.env.SECRET;
   }
@@ -40,9 +40,7 @@ export class AuthService {
   }
 
   generateToken(user) {
-    const payload = {
-      id: user['_id'].toString(),
-    };
+    const payload = { id: user._id };
 
     const token = jwt.sign(payload, this.secret, {
       expiresIn: '12h',
@@ -63,3 +61,5 @@ export class AuthService {
     });
   }
 }
+
+module.exports = AuthService;
