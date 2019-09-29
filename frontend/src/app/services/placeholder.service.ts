@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable()
 export class PlaceholderService {
-  private images: Object;
+  private images: any;
 
   constructor() {
     this.images = {};

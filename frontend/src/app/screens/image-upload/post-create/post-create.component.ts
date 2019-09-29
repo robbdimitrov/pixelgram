@@ -1,13 +1,13 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 
 import { ImageUploadService } from '../image-upload.service';
 import { APIClient } from '../../../services/api-client.service';
 import { ErrorService } from '../../../services/error.service';
 
 @Component({
-  selector: 'pg-post-create',
+  selector: 'app-post-create',
   templateUrl: './post-create.component.html',
   styleUrls: ['./post-create.component.scss']
 })
@@ -17,7 +17,7 @@ export class PostCreateComponent implements OnDestroy {
   fileChangeSubscription: Subscription;
 
   constructor(private router: Router, private apiClient: APIClient,
-    private uploadService: ImageUploadService, private errorService: ErrorService) {
+              private uploadService: ImageUploadService, private errorService: ErrorService) {
     this.subscribeToFileChange();
     this.getImagePreview(uploadService.selectedFile());
   }
@@ -53,7 +53,7 @@ export class PostCreateComponent implements OnDestroy {
     const self = this;
     this.apiClient.uploadImage(this.uploadService.selectedFile()).then((result) => {
       const imageDescription = self.imageDescription || '';
-      self.apiClient.createImage(result['filename'], imageDescription).then((result) => {
+      self.apiClient.createImage((result as any).filename, imageDescription).then(() => {
         this.uploadService.setSelectedFile(undefined);
         this.router.navigate(['/']);
       });

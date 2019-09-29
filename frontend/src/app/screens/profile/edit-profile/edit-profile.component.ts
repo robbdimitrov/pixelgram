@@ -9,7 +9,7 @@ import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-  selector: 'pg-edit-profile',
+  selector: 'app-edit-profile',
   templateUrl: './edit-profile.component.html',
   styleUrls: ['./edit-profile.component.scss']
 })
@@ -23,8 +23,8 @@ export class EditProfileComponent implements AfterViewInit {
   user: User;
 
   constructor(private apiClient: APIClient, private router: Router,
-    private errorService: ErrorService, private location: Location,
-    private session: Session, private placeholderService: PlaceholderService) {}
+              private errorService: ErrorService, private location: Location,
+              private session: Session, private placeholderService: PlaceholderService) {}
 
   ngAfterViewInit(): void {
     const userId = this.session.userId();
@@ -47,7 +47,7 @@ export class EditProfileComponent implements AfterViewInit {
 
     if (this.selectedFile) {
       self.apiClient.uploadImage(self.selectedFile).then((result) => {
-        updateClosure(result['filename']);
+        updateClosure((result as any).filename);
       }).catch((error) => {
         self.errorService.error = error.message;
       });

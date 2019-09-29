@@ -3,7 +3,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Image } from '../../../models/image.model';
 
 @Component({
-  selector: 'pg-thumbnail',
+  selector: 'app-thumbnail',
   templateUrl: './thumbnail.component.html',
   styleUrls: ['./thumbnail.component.scss']
 })
