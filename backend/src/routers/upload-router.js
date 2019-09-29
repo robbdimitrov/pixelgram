@@ -1,4 +1,4 @@
-const Router = require('express');
+const Router = require('express').Router;
 const multer = require('multer');
 
 class UploadRouter {

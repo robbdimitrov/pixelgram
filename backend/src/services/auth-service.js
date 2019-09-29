@@ -40,9 +40,7 @@ class AuthService {
   }
 
   generateToken(user) {
-    const payload = {
-      id: user['_id'].toString(),
-    };
+    const payload = { id: user._id };
 
     const token = jwt.sign(payload, this.secret, {
       expiresIn: '12h',
