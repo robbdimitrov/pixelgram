@@ -4,7 +4,8 @@ class ImageFactory {
       ownerId: ownerId,
       filename: filename,
       dateCreated: new Date().toISOString(),
-      description: description
+      description: description,
+      likedUsers: []
     };
     return image;
   }
