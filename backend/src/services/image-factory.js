@@ -1,12 +1,11 @@
-const Image = require('../models/image');
-
 class ImageFactory {
   static createImage(ownerId, filename, description) {
-    const image = new Image();
-    image.ownerId = ownerId;
-    image.filename = filename;
-    image.dateCreated = new Date().toISOString();
-    image.description = description;
+    const image = {
+      ownerId: ownerId,
+      filename: filename,
+      dateCreated: new Date().toISOString(),
+      description: description
+    };
     return image;
   }
 }
