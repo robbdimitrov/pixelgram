@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 
 import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
 import { Session } from '../../services/session.service';
 
 @Component({
-  selector: 'pg-settings',
+  selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
@@ -14,7 +14,7 @@ export class SettingsComponent {
   loginSubscription: Subscription;
 
   constructor(private apiClient: APIClient, private session: Session,
-    private router: Router) {
+              private router: Router) {
     this.subscribeToLogout();
   }
 

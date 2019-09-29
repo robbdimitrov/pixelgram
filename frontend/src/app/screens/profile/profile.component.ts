@@ -1,5 +1,5 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { Image } from '../../models/image.model';
@@ -9,7 +9,7 @@ import { UserCache } from '../../services/user-cache.service';
 import { User } from '../../models/user.model';
 
 @Component({
-  selector: 'pg-profile',
+  selector: 'app-profile',
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -20,12 +20,12 @@ export class ProfileComponent implements OnDestroy {
   user: User;
 
   constructor(private apiClient: APIClient, private router: Router,
-    private userCache: UserCache, private session: Session,
-    private route: ActivatedRoute) {
+              private userCache: UserCache, private session: Session,
+              private route: ActivatedRoute) {
     this.subscribeToLogout();
 
     this.route.params.subscribe(params => {
-      const id = params['id'];
+      const id = params.id;
       if (!this.user || id !== this.user.id) {
         this.page = 0;
         this.images = [];

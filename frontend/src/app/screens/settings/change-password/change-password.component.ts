@@ -7,7 +7,7 @@ import { ErrorService } from '../../../services/error.service';
 import { Session } from '../../../services/session.service';
 
 @Component({
-  selector: 'pg-change-password',
+  selector: 'app-change-password',
   templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent {
@@ -20,8 +20,8 @@ export class ChangePasswordComponent {
   passwordShowButtonTitle = 'Show';
 
   constructor(private apiClient: APIClient, private router: Router,
-    private errorService: ErrorService, private session: Session,
-    private location: Location) {}
+              private errorService: ErrorService, private session: Session,
+              private location: Location) {}
 
   onSubmit() {
     const userId = this.session.userId();

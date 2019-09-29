@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { ErrorService } from '../../services/error.service';
 
 @Component({
-  selector: 'pg-login',
+  selector: 'app-login',
   templateUrl: './login.component.html'
 })
 export class LoginComponent extends FormComponent {
@@ -13,7 +13,7 @@ export class LoginComponent extends FormComponent {
   passwordValue = '';
 
   constructor(apiClient: APIClient, private router: Router,
-    private errorService: ErrorService) {
+              private errorService: ErrorService) {
     super(apiClient);
   }
 

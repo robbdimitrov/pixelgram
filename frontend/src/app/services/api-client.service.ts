@@ -1,12 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Subject } from 'rxjs/Subject';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/share';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/delay';
-import 'rxjs/add/operator/finally';
+import { Subject, Observable } from 'rxjs';
 
 import { Session } from './session.service';
 import { Image } from '../models/image.model';
@@ -55,8 +49,8 @@ export class APIClient {
   }
 
   // Use this method for all requests
-  private request(method: HTTPMethod, urlPath: string, body?: Object,
-    otherHeaders?: HttpHeaders): Observable<Object> {
+  private request(method: HTTPMethod, urlPath: string, body?: any,
+                  otherHeaders?: HttpHeaders): Observable<any> {
     const key = `${method}:${urlPath}`;
 
     if (this.activeRequests[key]) {
@@ -106,8 +100,8 @@ export class APIClient {
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        this.session.setToken(response['token']);
-        this.session.setUserId(response['user']['_id']);
+        this.session.setToken(response.token);
+        this.session.setUserId(response.user._id);
         this.loginSubject.next(UserDidLoginNotification);
         resolve();
       }).catch((error) => {
@@ -127,7 +121,7 @@ export class APIClient {
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        const responseUser = response['user'];
+        const responseUser = response.user;
         const user = UserFactory.userFromObject(responseUser);
         resolve(user);
       }).catch((error) => {
@@ -141,10 +135,10 @@ export class APIClient {
 
   updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
     const url = `/users/${userId}`;
-    const body = { name, username, email, bio };
+    const body: any = { name, username, email, bio };
 
     if (avatar) {
-      body['avatar'] = avatar;
+      body.avatar = avatar;
     }
 
     const request = this.request(HTTPMethod.Put, url, body);
@@ -200,13 +194,10 @@ export class APIClient {
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        const images: Image[] = [];
-        const responseImages = response['images'];
-        for (let i = 0; i < responseImages.length; i++) {
-          const imageObject = responseImages[i];
-          const image = ImageFactory.imageFromObject(imageObject);
-          images.push(image);
-        }
+        const images = response.images.map(
+          object => ImageFactory.imageFromObject(object)
+        );
+
         resolve(images);
       }).catch((error) => {
         if (error.status === StatusCode.Unauthorized) {
@@ -238,7 +229,7 @@ export class APIClient {
 
     return new Promise((resolve, reject) => {
       request.toPromise().then((response) => {
-        const responseImage = response['image'];
+        const responseImage = response.image;
         const image = ImageFactory.imageFromObject(responseImage);
         resolve(image);
       }).catch((error) => {

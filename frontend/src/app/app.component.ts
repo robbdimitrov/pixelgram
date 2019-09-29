@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { ErrorService } from './services/error.service';
 
 @Component({
-  selector: 'pg-root',
+  selector: 'app-root',
   templateUrl: './app.component.html'
 })
 export class AppComponent {
@@ -13,7 +13,7 @@ export class AppComponent {
     return this.errorService.error;
   }
 
-  onCloseToast() {
+  onToastClose() {
     this.errorService.error = undefined;
   }
 }
