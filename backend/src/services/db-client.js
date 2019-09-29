@@ -16,7 +16,6 @@ class DBClient {
 
       const options = { useNewUrlParser: true, useUnifiedTopology: true };
       MongoClient.connect(url, options).then((result) => {
-        process.stdout.write('Connected to database');
         this.client = result;
         resolve(this.client);
       }).catch((error) => {
