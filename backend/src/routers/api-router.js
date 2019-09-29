@@ -1,4 +1,4 @@
-const Router = require('express');
+const Router = require('express').Router;
 
 class APIRouter {
   constructor(dbClient, options) {
