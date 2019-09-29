@@ -1,4 +1,4 @@
-const ObjectID = require('mongodb');
+const ObjectID = require('mongodb').ObjectID;
 
 const ImageFactory = require('./image-factory');
 
@@ -8,7 +8,8 @@ class ImageService {
   }
 
   createImage(userId, filename, description) {
-    const image = ImageFactory.createImage(userId, filename, description);
+    const image = ImageFactory.createImage(new ObjectID(userId),
+      filename, description);
 
     return new Promise((resolve, reject) => {
       this.dbClient.createOneImage(image).then(() => {
