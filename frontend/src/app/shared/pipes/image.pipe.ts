@@ -6,7 +6,7 @@ import * as config from '../../../../config/client.config';
   name: 'image'
 })
 export class ImagePipe implements PipeTransform {
-  transform(value: string, placeholder: string) {
+  transform(value: string, placeholder: string = '') {
     if (value === null || value.length === 0) {
       return placeholder || '';
     }

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject, Observable } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import { Session } from './session.service';
 import { Image } from '../models/image.model';
@@ -67,10 +68,11 @@ export class APIClient {
     const url = this.apiRoot + urlPath;
 
     const self = this;
-    const observable = this.http.request(method, url, options)
-      .finally(() => {
+    const observable = this.http.request(method, url, options).pipe(
+      finalize(() => {
         delete self.activeRequests[key];
-      }).share();
+      })
+    );
 
     this.activeRequests[key] = observable;
 
