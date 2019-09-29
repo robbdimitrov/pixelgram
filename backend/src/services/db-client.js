@@ -233,7 +233,7 @@ class DBClient {
       this.imageIsOwnedByUser(userId, imageId).then(() => {
         const imageObjectId = new ObjectID(imageId);
 
-        client.db().collection('users').update({},
+        client.db().collection('users').updateMany({},
           { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
           { multi: true },
         ).then(() => {
