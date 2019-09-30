@@ -1,6 +1,5 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router } from '@angular/router';
 
 import { APIClient } from '../../../services/api-client.service';
 import { ErrorService } from '../../../services/error.service';
@@ -22,9 +21,11 @@ export class EditProfileComponent implements AfterViewInit {
   imagePreview: string;
   user: User;
 
-  constructor(private apiClient: APIClient, private router: Router,
-              private errorService: ErrorService, private location: Location,
-              private session: Session, private placeholderService: PlaceholderService) {}
+  constructor(private apiClient: APIClient,
+              private errorService: ErrorService,
+              private location: Location,
+              private session: Session,
+              private placeholderService: PlaceholderService) {}
 
   ngAfterViewInit(): void {
     const userId = this.session.userId();

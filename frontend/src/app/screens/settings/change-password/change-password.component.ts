@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../../services/api-client.service';
@@ -19,8 +18,9 @@ export class ChangePasswordComponent {
   passwordFieldType = 'password';
   passwordShowButtonTitle = 'Show';
 
-  constructor(private apiClient: APIClient, private router: Router,
-              private errorService: ErrorService, private session: Session,
+  constructor(private apiClient: APIClient,
+              private errorService: ErrorService,
+              private session: Session,
               private location: Location) {}
 
   onSubmit() {
