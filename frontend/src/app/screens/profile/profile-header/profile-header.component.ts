@@ -11,8 +11,8 @@ import { PlaceholderService } from '../../../services/placeholder.service';
 })
 export class ProfileHeaderComponent {
   @Input() user: User;
-  @Output() openSettings = new EventEmitter<any>();
-  @Output() openEditProfile = new EventEmitter<any>();
+  @Output() openSettings = new EventEmitter();
+  @Output() openEditProfile = new EventEmitter();
 
   constructor(private session: Session,
               private placeholderService: PlaceholderService) {}
