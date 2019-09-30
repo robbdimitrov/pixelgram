@@ -6,7 +6,7 @@ import { FormComponent } from '../../shared/components/form/form.component';
 import { ErrorService } from '../../services/error.service';
 
 @Component({
-  selector: 'pg-signup',
+  selector: 'app-signup',
   templateUrl: './signup.component.html'
 })
 export class SignupComponent extends FormComponent {
@@ -16,14 +16,14 @@ export class SignupComponent extends FormComponent {
   passwordValue = '';
 
   constructor(apiClient: APIClient, private router: Router,
-    private errorService: ErrorService) {
+              private errorService: ErrorService) {
     super(apiClient);
   }
 
   onSubmit() {
     this.apiClient.createUser(this.nameValue, this.usernameValue,
-      this.emailValue, this.passwordValue).then((result) => {
-        this.apiClient.loginUser(this.emailValue, this.passwordValue).then((result) => {
+      this.emailValue, this.passwordValue).then(() => {
+        this.apiClient.loginUser(this.emailValue, this.passwordValue).then(() => {
           this.router.navigate(['/']);
         });
       }).catch((error) => {

@@ -1,7 +1,7 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 
 import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
@@ -20,18 +20,18 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   loginSubscription: Subscription;
 
   constructor(private apiClient: APIClient, private router: Router,
-    private userCache: UserCache, private session: Session,
-    private route: ActivatedRoute, private location: Location) {
+              private userCache: UserCache, private session: Session,
+              private route: ActivatedRoute, private location: Location) {
 
     this.subscribeToLogout();
 
     this.route.params.subscribe(params => {
-      if (params['id'] !== undefined) {
-        const id = params['id'];
+      if (params.id !== undefined) {
+        const id = params.id;
         this.isSingleImageMode = true;
         this.loadImage(id);
-      } else if (params['userId'] !== undefined) {
-        this.userId = params['userId'];
+      } else if (params.userId !== undefined) {
+        this.userId = params.userId;
       }
     });
   }

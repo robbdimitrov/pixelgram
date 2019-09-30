@@ -5,17 +5,17 @@ import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-  selector: 'pg-profile-header',
+  selector: 'app-profile-header',
   templateUrl: './profile-header.component.html',
   styleUrls: ['./profile-header.component.scss']
 })
 export class ProfileHeaderComponent {
   @Input() user: User;
-  @Output() openSettings = new EventEmitter<any>();
-  @Output() openEditProfile = new EventEmitter<any>();
+  @Output() openSettings = new EventEmitter();
+  @Output() openEditProfile = new EventEmitter();
 
   constructor(private session: Session,
-    private placeholderService: PlaceholderService) {}
+              private placeholderService: PlaceholderService) {}
 
   isCurrentUser() {
     if (this.user === undefined) {

@@ -1,17 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs/Subject';
+import { ReplaySubject } from 'rxjs';
 
 @Injectable()
 export class ImageUploadService {
-  private file: File;
-  fileChangeSubject = new Subject();
+  file = new ReplaySubject<File>();
 
   setSelectedFile(file: File) {
-    this.file = file;
-    this.fileChangeSubject.next();
-  }
-
-  selectedFile() {
-    return this.file;
+    this.file.next(file);
   }
 }

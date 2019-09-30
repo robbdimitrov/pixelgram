@@ -1,13 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 
 import { ImageUploadService } from '../image-upload.service';
 import { APIClient } from '../../../services/api-client.service';
-import { ErrorService } from '../../../services/error.service';
 
 @Component({
-  selector: 'pg-post-create',
+  selector: 'app-post-create',
   templateUrl: './post-create.component.html',
   styleUrls: ['./post-create.component.scss']
 })
@@ -15,11 +14,12 @@ export class PostCreateComponent implements OnDestroy {
   imageDescription: string;
   imagePreview: string;
   fileChangeSubscription: Subscription;
+  selectedFile: File;
 
-  constructor(private router: Router, private apiClient: APIClient,
-    private uploadService: ImageUploadService, private errorService: ErrorService) {
+  constructor(private router: Router,
+              private apiClient: APIClient,
+              private uploadService: ImageUploadService) {
     this.subscribeToFileChange();
-    this.getImagePreview(uploadService.selectedFile());
   }
 
   ngOnDestroy() {
@@ -29,17 +29,21 @@ export class PostCreateComponent implements OnDestroy {
   // Subscriptions
 
   private subscribeToFileChange() {
-    this.fileChangeSubscription = this.uploadService.fileChangeSubject.subscribe((value) => {
-      this.getImagePreview(this.uploadService.selectedFile());
+    this.fileChangeSubscription = this.uploadService.file.subscribe((value) => {
+      if (value) {
+        this.selectedFile = value;
+        this.getImagePreview(value);
+      }
     });
   }
 
   hasSelectedFile(): boolean {
-    return this.uploadService.selectedFile() !== undefined;
+    return this.imagePreview !== undefined && this.imagePreview.length !== 0;
   }
 
   getImagePreview(file: File) {
     if (!file) {
+      this.imagePreview = '';
       return;
     }
     const reader: FileReader = new FileReader();
@@ -51,9 +55,9 @@ export class PostCreateComponent implements OnDestroy {
 
   onSubmitClick() {
     const self = this;
-    this.apiClient.uploadImage(this.uploadService.selectedFile()).then((result) => {
+    this.apiClient.uploadImage(this.selectedFile).then((result) => {
       const imageDescription = self.imageDescription || '';
-      self.apiClient.createImage(result['filename'], imageDescription).then((result) => {
+      self.apiClient.createImage((result as any).filename, imageDescription).then(() => {
         this.uploadService.setSelectedFile(undefined);
         this.router.navigate(['/']);
       });
