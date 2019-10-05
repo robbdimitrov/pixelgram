@@ -1,8 +1,8 @@
 <div class="container">
-  <app-header></app-header>
+  <pg-header></pg-header>
 
-  <app-toast *ngIf="error()" content="{{error()}}" (toastClose)="onToastClose()">
-  </app-toast>
+  <pg-toast *ngIf="error()" content="{{error()}}" (toastClose)="onToastClose()">
+  </pg-toast>
 
   <router-outlet></router-outlet>
 </div>

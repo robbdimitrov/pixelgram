@@ -6,7 +6,7 @@ import { ImageUploadService } from '../image-upload.service';
 import { APIClient } from '../../../services/api-client.service';
 
 @Component({
-  selector: 'app-post-create',
+  selector: 'pg-post-create',
   templateUrl: './post-create.component.html',
   styleUrls: ['./post-create.component.scss']
 })

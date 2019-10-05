@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
-  selector: 'app-toast',
+  selector: 'pg-toast',
   templateUrl: './toast.component.html',
   styleUrls: ['./toast.component.scss']
 })

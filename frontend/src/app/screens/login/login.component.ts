@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { ErrorService } from '../../services/error.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'pg-login',
   templateUrl: './login.component.html'
 })
 export class LoginComponent extends FormComponent {

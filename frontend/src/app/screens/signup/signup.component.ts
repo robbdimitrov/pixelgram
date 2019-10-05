@@ -6,7 +6,7 @@ import { FormComponent } from '../../shared/components/form/form.component';
 import { ErrorService } from '../../services/error.service';
 
 @Component({
-  selector: 'app-signup',
+  selector: 'pg-signup',
   templateUrl: './signup.component.html'
 })
 export class SignupComponent extends FormComponent {

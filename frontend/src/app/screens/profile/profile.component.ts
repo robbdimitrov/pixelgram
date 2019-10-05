@@ -9,7 +9,7 @@ import { UserCache } from '../../services/user-cache.service';
 import { User } from '../../models/user.model';
 
 @Component({
-  selector: 'app-profile',
+  selector: 'pg-profile',
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })

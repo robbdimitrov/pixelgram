@@ -1,5 +1,5 @@
 <div class="container full-width">
-  <app-image
+  <pg-image
     *ngFor="let image of images"
     [image]="image"
     [user]="image.owner | user | async"
@@ -8,7 +8,7 @@
     (showProfile)="onShowProfile($event)"
     (deleteAction)="onDeleteAction($event)"
   >
-  </app-image>
+  </pg-image>
 
   <button
     id="next"
