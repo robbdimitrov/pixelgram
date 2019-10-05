@@ -7,7 +7,7 @@ import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-  selector: 'app-image',
+  selector: 'pg-image',
   templateUrl: './image.component.html',
   styleUrls: ['./image.component.scss']
 })

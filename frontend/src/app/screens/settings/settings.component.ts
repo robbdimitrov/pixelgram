@@ -6,7 +6,7 @@ import { APIClient, UserDidLogoutNotification } from '../../services/api-client.
 import { Session } from '../../services/session.service';
 
 @Component({
-  selector: 'app-settings',
+  selector: 'pg-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })

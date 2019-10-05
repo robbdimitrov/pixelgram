@@ -1,19 +1,19 @@
 <div class="container full-width">
-  <app-profile-header
+  <pg-profile-header
     *ngIf="user"
     [user]="user"
     (openSettings)="onOpenSettings()"
     (openEditProfile)="onOpenEditProfile()"
   >
-  </app-profile-header>
+  </pg-profile-header>
 
   <div class="image-container">
-    <app-thumbnail
+    <pg-thumbnail
       *ngFor="let image of images"
       [image]="image"
       (openImage)="onOpenImage($event)"
     >
-    </app-thumbnail>
+    </pg-thumbnail>
   </div>
 
   <button

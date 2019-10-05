@@ -6,7 +6,7 @@ import { ErrorService } from '../../../services/error.service';
 import { Session } from '../../../services/session.service';
 
 @Component({
-  selector: 'app-change-password',
+  selector: 'pg-change-password',
   templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent {
