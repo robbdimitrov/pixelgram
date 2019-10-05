@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { Session } from '../../../services/session.service';
 
 @Component({
-  selector: 'app-header',
+  selector: 'pg-header',
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })

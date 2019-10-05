@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { ImageUploadService } from './image-upload.service';
 
 @Component({
-  selector: 'app-upload',
+  selector: 'pg-upload',
   templateUrl: './image-upload.component.html',
   styleUrls: ['./image-upload.component.scss']
 })
