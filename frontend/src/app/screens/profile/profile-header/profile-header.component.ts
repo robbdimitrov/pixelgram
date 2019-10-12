@@ -18,7 +18,7 @@ export class ProfileHeaderComponent {
               private placeholderService: PlaceholderService) {}
 
   isCurrentUser() {
-    if (this.user === undefined) {
+    if (!this.user) {
       return false;
     }
     return this.session.userId() === this.user.id;
