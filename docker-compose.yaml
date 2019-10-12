@@ -19,14 +19,16 @@ services:
     ports:
     - 4000:80
 
-  db:
-    image: mongo:4.2
+  database:
+    build: ./database
     restart: always
     ports:
     - 27017
     volumes:
-    - db_data:/data/db
+    - database_data:/data/db
+    environment:
+    - MONGO_INITDB_DATABASE=pixelgram
 
 volumes:
-  db_data:
+  database_data:
   image_data:
