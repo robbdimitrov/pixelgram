@@ -38,7 +38,7 @@ class ImageRouter extends APIRouter {
   createOne(req, res) {
     const body = req.body || {};
 
-    if (body.filename === undefined) {
+    if (!body.filename) {
       const error = new Error('Missing argument(s). Image filename is expected.');
 
       res.status(400).send({

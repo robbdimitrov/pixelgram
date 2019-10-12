@@ -54,7 +54,7 @@ class UserService {
         const password = updates.password;
         const oldPassword = updates.oldPassword;
 
-        if (oldPassword === undefined) {
+        if (!oldPassword) {
           const error = new Error('Both password and the current password are required.');
           return reject(error);
         }

@@ -82,7 +82,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     this.apiClient.getImage(imageId).then((result) => {
       self.images.push(result);
     }).catch((error) => {
-      console.log('Loading user failed: ' + error);
+      console.log(`Loading user failed: ${error}`);
     });
   }
 

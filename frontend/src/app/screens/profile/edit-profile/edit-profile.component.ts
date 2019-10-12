@@ -63,7 +63,7 @@ export class EditProfileComponent implements AfterViewInit {
   }
 
   getImagePreview(file: File) {
-    if (file === undefined) {
+    if (!file) {
       this.imagePreview = '';
       return;
     }
@@ -83,7 +83,7 @@ export class EditProfileComponent implements AfterViewInit {
       self.emailValue = result.email;
       self.bioValue = result.bio;
     }).catch((error) => {
-      console.log('Loading user failed: ' + error);
+      console.log(`Loading user failed: ${error}`);
     });
   }
 

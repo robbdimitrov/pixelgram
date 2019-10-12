@@ -62,7 +62,7 @@ export class PostCreateComponent implements OnDestroy {
         this.router.navigate(['/']);
       });
     }).catch((error) => {
-      console.log('Error creating image: ' + error);
+      console.log(`Error creating image: ${error}`);
     });
   }
 }
