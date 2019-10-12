@@ -285,27 +285,6 @@ class DBClient {
     });
   }
 
-  async userNotExists(username, email) {
-    const client = await this.get();
-
-    return new Promise((resolve, reject) => {
-      client.db().collection('users').aggregate([
-        { $match: { $or: [{ email }, { username }] } },
-        { $project: { _id: 1, username: 1, email: 1 } },
-      ]).toArray((err, result) => {
-        if (result.length > 0) {
-          const firstUser = result[0];
-          if (firstUser.email === email) {
-            return reject(new Error('User with this email already exists'));
-          } else if (firstUser.username === username) {
-            return reject(new Error('User with this username already exists'));
-          }
-        }
-        resolve();
-      });
-    });
-  }
-
   /**
    * Creates a user in the database for a given User object
    *
@@ -316,15 +295,15 @@ class DBClient {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      this.userNotExists(user.username, user.email).then(() => {
-        client.db().collection('users').insertOne(user, (error, result) => {
-          if (error) {
-            return reject(error);
+      client.db().collection('users').insertOne(user, (error, result) => {
+        if (error) {
+          if (error.message.includes('email')) {
+            return reject(new Error('User with this email already exists'));
+          } else {
+            return reject(new Error('User with this username already exists'));
           }
-          resolve(result);
-        });
-      }).catch((error) => {
-        return reject(error);
+        }
+        resolve(result);
       });
     });
   }
