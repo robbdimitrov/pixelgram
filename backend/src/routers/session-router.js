@@ -5,7 +5,7 @@ class SessionRouter extends APIRouter {
   createOne(req, res) {
     const body = req.body || {};
 
-    if (body.email === undefined || body.password === undefined) {
+    if (!body.email || !body.password) {
       const error = new Error('Missing argument(s). Email and password are required.');
       return res.status(400).send({
         code: 400,
@@ -26,7 +26,7 @@ class SessionRouter extends APIRouter {
     };
 
     this.dbClient.getOneUser('email', email, true).then((user) => {
-      if (user === undefined) {
+      if (!user) {
         return authFailedBlock();
       }
 

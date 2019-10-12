@@ -44,9 +44,7 @@ class UserRouter extends APIRouter {
   createOne(req, res) {
     const body = req.body || {};
 
-    if (body.name === undefined || body.username === undefined ||
-            body.email === undefined || body.password === undefined) {
-
+    if (!body.name || !body.username || !body.email || !body.password) {
       const error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(400).send({
         code: 400,

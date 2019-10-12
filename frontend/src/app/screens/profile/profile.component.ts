@@ -60,7 +60,7 @@ export class ProfileComponent implements OnDestroy {
       self.user = result;
       self.loadNextPage();
     }).catch((error) => {
-      console.log('Loading user failed: ' + error);
+      console.log(`Loading user failed: ${error}`);
     });
   }
 
@@ -71,7 +71,7 @@ export class ProfileComponent implements OnDestroy {
         this.page += 1;
       }
     }).catch((error) => {
-      console.log('Error loading images: ' + error);
+      console.log(`Error loading images: ${error}`);
     });
   }
 
