@@ -20,8 +20,6 @@ class UserImagesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });

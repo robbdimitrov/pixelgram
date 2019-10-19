@@ -28,8 +28,6 @@ class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -42,8 +40,6 @@ class ImageRouter extends APIRouter {
       const error = new Error('Missing argument(s). Image filename is expected.');
 
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     }
@@ -58,8 +54,6 @@ class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -77,8 +71,6 @@ class ImageRouter extends APIRouter {
       }
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -99,8 +91,6 @@ class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -116,8 +106,6 @@ class ImageRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });

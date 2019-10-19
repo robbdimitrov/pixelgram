@@ -51,8 +51,6 @@ class APIRouter {
 
   sendNotFound(res) {
     res.status(404).send({
-      code: 404,
-      error: 'NOT_FOUND',
       message: 'The resource was not found.',
     });
   }

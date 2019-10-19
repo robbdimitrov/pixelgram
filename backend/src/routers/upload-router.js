@@ -21,8 +21,6 @@ class UploadRouter {
         });
       } else {
         res.status(400).send({
-          code: 400,
-          error: 'BAD_REQUEST',
           message: 'File missing from request. Should be sent as a multipart/form-data.',
         });
       }
