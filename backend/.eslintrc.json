@@ -13,6 +13,10 @@
     "sourceType": "module"
   },
   "rules": {
+    "comma-dangle": [
+      "error",
+      "never"
+    ],
     "indent": [
       "error",
       2

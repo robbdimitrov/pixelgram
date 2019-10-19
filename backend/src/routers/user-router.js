@@ -30,11 +30,11 @@ class UserRouter extends APIRouter {
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
       res.send({
-        users: result,
+        users: result
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -45,7 +45,7 @@ class UserRouter extends APIRouter {
     if (!body.name || !body.username || !body.email || !body.password) {
       const error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     }
 
@@ -56,11 +56,11 @@ class UserRouter extends APIRouter {
 
     this.userService.createUser(name, username, email, password).then(() => {
       res.send({
-        message: 'User created.',
+        message: 'User created.'
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -71,12 +71,12 @@ class UserRouter extends APIRouter {
     this.dbClient.getOneUser('id', id).then((result) => {
       if (result) {
         res.send({
-          user: result,
+          user: result
         });
       }
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -87,23 +87,23 @@ class UserRouter extends APIRouter {
 
     if (userId !== req.user.id) {
       return res.status(403).send({
-        message: 'Can\'t update other people\'s accounts.',
+        message: 'Can\'t update other people\'s accounts.'
       });
     }
 
     if (Object.keys(body).length < 1) {
       return res.send({
-        message: 'Nothing to update.',
+        message: 'Nothing to update.'
       });
     }
 
     this.userService.updateUser(userId, body).then(() => {
       res.send({
-        message: 'User updated.',
+        message: 'User updated.'
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -113,17 +113,17 @@ class UserRouter extends APIRouter {
 
     if (id !== req.user.id) {
       return res.status(403).send({
-        message: 'Can\'t delete other people\'s accounts.',
+        message: 'Can\'t delete other people\'s accounts.'
       });
     }
 
     this.dbClient.deleteOneUser(id).then(() => {
       res.send({
-        message: 'User deleted.',
+        message: 'User deleted.'
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }

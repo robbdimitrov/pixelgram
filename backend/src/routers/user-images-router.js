@@ -16,11 +16,11 @@ class UserImagesRouter extends APIRouter {
 
     this.imageService.getAllImagesForUser(userId, page, limit, count, currentUserId).then((result) => {
       res.send({
-        images: result,
+        images: result
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }

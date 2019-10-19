@@ -43,7 +43,7 @@ class AuthService {
     const payload = { id: user._id };
 
     const token = jwt.sign(payload, this.secret, {
-      expiresIn: '12h',
+      expiresIn: '12h'
     });
 
     return token;
