@@ -1,4 +1,5 @@
 const APIRouter = require('./api-router');
+const StatusCode = require('./status-code');
 
 class UserLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -19,7 +20,7 @@ class UserLikesRouter extends APIRouter {
         images: result
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });

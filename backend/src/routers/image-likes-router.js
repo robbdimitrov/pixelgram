@@ -1,4 +1,5 @@
 const APIRouter = require('./api-router');
+const StatusCode = require('./status-code');
 
 class ImageLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -18,7 +19,7 @@ class ImageLikesRouter extends APIRouter {
         users: result
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -33,7 +34,7 @@ class ImageLikesRouter extends APIRouter {
         message: 'Image liked.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -44,7 +45,7 @@ class ImageLikesRouter extends APIRouter {
     const userId = req.params.id;
 
     if (userId !== req.user.id) {
-      return res.status(403).send({
+      return res.status(StatusCode.forbidden).send({
         message: 'Can\'t unlike other people\'s likes.'
       });
     }
@@ -54,7 +55,7 @@ class ImageLikesRouter extends APIRouter {
         message: 'Image unliked.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });

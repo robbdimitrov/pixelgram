@@ -1,5 +1,7 @@
 const Router = require('express').Router;
 
+const StatusCode = require('./status-code');
+
 class APIRouter {
   constructor(dbClient, options) {
     this.router = Router(options);
@@ -50,7 +52,7 @@ class APIRouter {
   // Helpers
 
   sendNotFound(res) {
-    res.status(404).send({
+    res.status(StatusCode.notFound).send({
       message: 'The resource was not found.'
     });
   }

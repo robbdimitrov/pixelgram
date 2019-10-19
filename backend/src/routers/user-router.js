@@ -1,6 +1,7 @@
 const APIRouter = require('./api-router');
 const UserImagesRouter = require('./user-images-router');
 const UserLikesRouter = require('./user-likes-router');
+const StatusCode = require('./status-code');
 
 class UserRouter extends APIRouter {
   constructor(dbClient, userService, imageService, options) {
@@ -33,7 +34,7 @@ class UserRouter extends APIRouter {
         users: result
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -44,7 +45,7 @@ class UserRouter extends APIRouter {
 
     if (!body.name || !body.username || !body.email || !body.password) {
       const error = new Error('Missing argument(s). Name, username, email and password are expected.');
-      return res.status(400).send({
+      return res.status(StatusCode.badRequest).send({
         message: error.message
       });
     }
@@ -59,7 +60,7 @@ class UserRouter extends APIRouter {
         message: 'User created.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -75,7 +76,7 @@ class UserRouter extends APIRouter {
         });
       }
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -86,7 +87,7 @@ class UserRouter extends APIRouter {
     const body = req.body;
 
     if (userId !== req.user.id) {
-      return res.status(403).send({
+      return res.status(StatusCode.forbidden).send({
         message: 'Can\'t update other people\'s accounts.'
       });
     }
@@ -102,7 +103,7 @@ class UserRouter extends APIRouter {
         message: 'User updated.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -112,7 +113,7 @@ class UserRouter extends APIRouter {
     const id = req.params.id;
 
     if (id !== req.user.id) {
-      return res.status(403).send({
+      return res.status(StatusCode.forbidden).send({
         message: 'Can\'t delete other people\'s accounts.'
       });
     }
@@ -122,7 +123,7 @@ class UserRouter extends APIRouter {
         message: 'User deleted.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
