@@ -158,11 +158,13 @@ class DBClient {
           return reject(err);
         }
 
+        const imageId = result.insertedId;
+
         client.db().collection('users').updateOne(
           { _id: image.ownerId },
-          { $push: { postedImages: result.insertedId } },
-        ).then((result) => {
-          resolve(result);
+          { $push: { postedImages: imageId } },
+        ).then(() => {
+          resolve(imageId);
         }).catch((error) => {
           return reject(error);
         });
@@ -303,7 +305,7 @@ class DBClient {
             return reject(new Error('User with this username already exists'));
           }
         }
-        resolve(result);
+        resolve(result.insertedId);
       });
     });
   }

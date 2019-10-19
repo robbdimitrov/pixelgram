@@ -57,7 +57,7 @@ class UserRouter extends APIRouter {
 
     this.userService.createUser(name, username, email, password).then((result) => {
       res.status(StatusCode.created).send({
-        _id: result.insertedId
+        _id: result
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({

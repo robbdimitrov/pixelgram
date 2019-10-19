@@ -50,8 +50,8 @@ class ImageRouter extends APIRouter {
     const description = body.description || '';
 
     this.imageService.createImage(userId, filename, description).then((result) => {
-      res.send(StatusCode.created).send({
-        _id: result.insertedId
+      res.status(StatusCode.created).send({
+        _id: result
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
