@@ -19,8 +19,6 @@ class ImageLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -36,8 +34,6 @@ class ImageLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -49,8 +45,6 @@ class ImageLikesRouter extends APIRouter {
 
     if (userId !== req.user.id) {
       return res.status(403).send({
-        code: 403,
-        error: 'FORBIDDEN',
         message: 'Can\'t unlike other people\'s likes.',
       });
     }
@@ -61,8 +55,6 @@ class ImageLikesRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });

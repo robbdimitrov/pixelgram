@@ -34,8 +34,6 @@ class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -47,8 +45,6 @@ class UserRouter extends APIRouter {
     if (!body.name || !body.username || !body.email || !body.password) {
       const error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     }
@@ -64,8 +60,6 @@ class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -82,8 +76,6 @@ class UserRouter extends APIRouter {
       }
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -95,8 +87,6 @@ class UserRouter extends APIRouter {
 
     if (userId !== req.user.id) {
       return res.status(403).send({
-        code: 403,
-        error: 'FORBIDDEN',
         message: 'Can\'t update other people\'s accounts.',
       });
     }
@@ -113,8 +103,6 @@ class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });
@@ -125,8 +113,6 @@ class UserRouter extends APIRouter {
 
     if (id !== req.user.id) {
       return res.status(403).send({
-        code: 403,
-        error: 'FORBIDDEN',
         message: 'Can\'t delete other people\'s accounts.',
       });
     }
@@ -137,8 +123,6 @@ class UserRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
         message: error.message,
       });
     });

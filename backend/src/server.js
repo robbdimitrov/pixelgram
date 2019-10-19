@@ -62,8 +62,6 @@ class Server {
         next();
       }).catch(() => {
         res.status(401).send({
-          code: 401,
-          error: 'INVALID_TOKEN',
           message: 'Failed to authenticate token.',
         });
       });
@@ -71,8 +69,6 @@ class Server {
       // if there is no token
       // return an error
       res.status(401).send({
-        code: 401,
-        error: 'INVALID_TOKEN',
         message: 'No token provided.',
       });
     }
