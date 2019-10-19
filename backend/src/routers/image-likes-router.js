@@ -15,7 +15,7 @@ class ImageLikesRouter extends APIRouter {
     const page = parseInt(query.page, 10) || 0;
 
     this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
-      res.send({
+      res.status(StatusCode.ok).send({
         users: result
       });
     }).catch((error) => {
@@ -30,9 +30,7 @@ class ImageLikesRouter extends APIRouter {
     const userId = req.user.id;
 
     this.imageService.likeImage(imageId, userId).then(() => {
-      res.send({
-        message: 'Image liked.'
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
         message: error.message
@@ -51,9 +49,7 @@ class ImageLikesRouter extends APIRouter {
     }
 
     this.imageService.unlikeImage(imageId, userId).then(() => {
-      res.send({
-        message: 'Image unliked.'
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
         message: error.message

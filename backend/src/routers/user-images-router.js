@@ -16,7 +16,7 @@ class UserImagesRouter extends APIRouter {
     const currentUserId = req.user.id;
 
     this.imageService.getAllImagesForUser(userId, page, limit, count, currentUserId).then((result) => {
-      res.send({
+      res.status(StatusCode.ok).send({
         images: result
       });
     }).catch((error) => {

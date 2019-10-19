@@ -18,7 +18,7 @@ class UploadRouter {
 
     router.post('/', uploader.single('image'), (req, res) => {
       if (req.file) {
-        res.send({
+        res.status(StatusCode.created).send({
           filename: req.file.filename
         });
       } else {
