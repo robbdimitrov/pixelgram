@@ -1,6 +1,7 @@
 const BodyParser = require('../services/body-parser');
 const APIRouter = require('./api-router');
 const ImageLikesRouter = require('./image-likes-router');
+const StatusCode = require('./status-code');
 
 class ImageRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -27,7 +28,7 @@ class ImageRouter extends APIRouter {
         images: result
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -39,7 +40,7 @@ class ImageRouter extends APIRouter {
     if (!body.filename) {
       const error = new Error('Missing argument(s). Image filename is expected.');
 
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     }
@@ -53,7 +54,7 @@ class ImageRouter extends APIRouter {
         message: 'Image created.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -70,7 +71,7 @@ class ImageRouter extends APIRouter {
         });
       }
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -90,7 +91,7 @@ class ImageRouter extends APIRouter {
         });
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });
@@ -105,7 +106,7 @@ class ImageRouter extends APIRouter {
         message: 'Image deleted.'
       });
     }).catch((error) => {
-      res.status(400).send({
+      res.status(StatusCode.badRequest).send({
         message: error.message
       });
     });

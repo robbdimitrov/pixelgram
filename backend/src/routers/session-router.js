@@ -1,5 +1,6 @@
 const AuthService = require('../services/auth-service');
 const APIRouter = require('./api-router');
+const StatusCode = require('./status-code');
 
 class SessionRouter extends APIRouter {
   createOne(req, res) {
@@ -7,7 +8,7 @@ class SessionRouter extends APIRouter {
 
     if (!body.email || !body.password) {
       const error = new Error('Missing argument(s). Email and password are required.');
-      return res.status(400).send({
+      return res.status(StatusCode.badRequest).send({
         message: error.message
       });
     }
@@ -16,7 +17,7 @@ class SessionRouter extends APIRouter {
     const password = body.password || '';
 
     const authFailedBlock = () => {
-      res.status(401).send({
+      res.status(StatusCode.unauthorized).send({
         message: 'Authentication failed. Incorrect email or password.'
       });
     };
@@ -38,7 +39,7 @@ class SessionRouter extends APIRouter {
         }
       });
     }).catch((error) => {
-      res.status(401).send({
+      res.status(StatusCode.unauthorized).send({
         message: error.message
       });
     });
