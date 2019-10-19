@@ -24,7 +24,7 @@ class ImageRouter extends APIRouter {
     const page = parseInt(query.page, 10) || 0;
     const userId = req.user.id;
     this.imageService.getAllImages(page, limit, userId).then((result) => {
-      res.send({
+      res.status(StatusCode.ok).send({
         images: result
       });
     }).catch((error) => {
@@ -49,9 +49,9 @@ class ImageRouter extends APIRouter {
     const filename = body.filename || '';
     const description = body.description || '';
 
-    this.imageService.createImage(userId, filename, description).then(() => {
-      res.send({
-        message: 'Image created.'
+    this.imageService.createImage(userId, filename, description).then((result) => {
+      res.send(StatusCode.created).send({
+        _id: result.insertedId
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
@@ -66,7 +66,7 @@ class ImageRouter extends APIRouter {
 
     this.dbClient.getOneImage(id, userId).then((result) => {
       if (result) {
-        res.send({
+        res.status(StatusCode.ok).send({
           image: result
         });
       }
@@ -86,9 +86,7 @@ class ImageRouter extends APIRouter {
 
     this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
       this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then(() => {
-        res.send({
-          message: 'Image updated.'
-        });
+        res.sendStatus(StatusCode.noContent);
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
@@ -102,9 +100,7 @@ class ImageRouter extends APIRouter {
     const imageId = req.params.id;
 
     this.imageService.deleteImage(imageId, userId).then(() => {
-      res.send({
-        message: 'Image deleted.'
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
         message: error.message

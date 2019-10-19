@@ -31,7 +31,7 @@ class SessionRouter extends APIRouter {
         if (result === true) {
           delete user['password'];
           const token = AuthService.getInstance().generateToken(user);
-          res.send({
+          res.status(StatusCode.ok).send({
             user, token
           });
         } else {
