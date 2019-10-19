@@ -8,7 +8,7 @@ class SessionRouter extends APIRouter {
     if (!body.email || !body.password) {
       const error = new Error('Missing argument(s). Email and password are required.');
       return res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     }
 
@@ -17,7 +17,7 @@ class SessionRouter extends APIRouter {
 
     const authFailedBlock = () => {
       res.status(401).send({
-        message: 'Authentication failed. Incorrect email or password.',
+        message: 'Authentication failed. Incorrect email or password.'
       });
     };
 
@@ -39,7 +39,7 @@ class SessionRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(401).send({
-        message: error.message,
+        message: error.message
       });
     });
   }

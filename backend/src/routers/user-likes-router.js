@@ -16,11 +16,11 @@ class UserLikesRouter extends APIRouter {
 
     this.imageService.getAllImagesLikedByUser(userId, page, limit, count, currentUserId).then((result) => {
       res.send({
-        images: result,
+        images: result
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }

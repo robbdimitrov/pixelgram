@@ -11,17 +11,17 @@ class UploadRouter {
   connectRouter(router) {
     const uploader = multer({
       dest: this.imageDir,
-      limits: { fileSize: 1000000, files: 1 },
+      limits: { fileSize: 1000000, files: 1 }
     });
 
     router.post('/', uploader.single('image'), (req, res) => {
       if (req.file) {
         res.send({
-          filename: req.file.filename,
+          filename: req.file.filename
         });
       } else {
         res.status(400).send({
-          message: 'File missing from request. Should be sent as a multipart/form-data.',
+          message: 'File missing from request. Should be sent as a multipart/form-data.'
         });
       }
     });

@@ -24,11 +24,11 @@ class ImageRouter extends APIRouter {
     const userId = req.user.id;
     this.imageService.getAllImages(page, limit, userId).then((result) => {
       res.send({
-        images: result,
+        images: result
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -40,7 +40,7 @@ class ImageRouter extends APIRouter {
       const error = new Error('Missing argument(s). Image filename is expected.');
 
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     }
 
@@ -50,11 +50,11 @@ class ImageRouter extends APIRouter {
 
     this.imageService.createImage(userId, filename, description).then(() => {
       res.send({
-        message: 'Image created.',
+        message: 'Image created.'
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -66,12 +66,12 @@ class ImageRouter extends APIRouter {
     this.dbClient.getOneImage(id, userId).then((result) => {
       if (result) {
         res.send({
-          image: result,
+          image: result
         });
       }
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -86,12 +86,12 @@ class ImageRouter extends APIRouter {
     this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
       this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then(() => {
         res.send({
-          message: 'Image updated.',
+          message: 'Image updated.'
         });
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
@@ -102,11 +102,11 @@ class ImageRouter extends APIRouter {
 
     this.imageService.deleteImage(imageId, userId).then(() => {
       res.send({
-        message: 'Image deleted.',
+        message: 'Image deleted.'
       });
     }).catch((error) => {
       res.status(400).send({
-        message: error.message,
+        message: error.message
       });
     });
   }
