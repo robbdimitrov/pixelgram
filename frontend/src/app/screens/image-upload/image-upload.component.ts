@@ -14,7 +14,7 @@ export class ImageUploadComponent implements OnDestroy {
   fileChangeSubscription: Subscription;
 
   constructor(private router: Router,
-              public uploadService: ImageUploadService) {
+              private uploadService: ImageUploadService) {
     this.subscribeToFileChange();
   }
 

@@ -24,6 +24,7 @@ export class PostCreateComponent implements OnDestroy {
 
   ngOnDestroy() {
     this.fileChangeSubscription.unsubscribe();
+    this.uploadService.deselectFile();
   }
 
   // Subscriptions
