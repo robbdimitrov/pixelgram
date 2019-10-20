@@ -37,13 +37,15 @@ export class ProfileComponent implements OnDestroy {
   // Subscriptions
 
   private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe((value) => {
-      if (value === UserDidLogoutNotification) {
-        this.page = 0;
-        this.images = [];
-        this.router.navigate(['/login']);
+    this.loginSubscription = this.apiClient.loginSubject.subscribe(
+      (value) => {
+        if (value === UserDidLogoutNotification) {
+          this.page = 0;
+          this.images = [];
+          this.router.navigate(['/login']);
+        }
       }
-    });
+    );
   }
 
   // Component lifecycle

@@ -21,11 +21,13 @@ export class SettingsComponent {
   // Subscriptions
 
   private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe((value) => {
-      if (value === UserDidLogoutNotification) {
-        this.router.navigate(['/login']);
+    this.loginSubscription = this.apiClient.loginSubject.subscribe(
+      (value) => {
+        if (value === UserDidLogoutNotification) {
+          this.router.navigate(['/login']);
+        }
       }
-    });
+    );
   }
 
   onChangePasswordClick() {
