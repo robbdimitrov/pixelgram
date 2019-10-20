@@ -1,3 +1,4 @@
 export const environment = {
-  production: false
+  production: false,
+  apiRoot: 'http://localhost:3000/api'
 };
