@@ -92,7 +92,7 @@ Response:
 
 ```json
 {
-  "message": "User created."
+  "_id": "5a0c11682ce7e1000f2a1f5a"
 }
 ```
 
@@ -208,14 +208,6 @@ Content-Type: application/json
 Authorization: <access-token>
 ```
 
-Response:
-
-```json
-{
-  "message": "User updated."
-}
-```
-
 ### Delete user
 
 ```
@@ -233,14 +225,6 @@ Headers:
 ```
 Content-Type: application/json
 Authorization: <access-token>
-```
-
-Response:
-
-```json
-{
-  "message": "User deleted."
-}
 ```
 
 ### Get user's images
@@ -354,7 +338,7 @@ Response:
 
 ```json
 {
-  "message": "Image created."
+  "_id": "5a0c5629ca682d61abcd5786"
 }
 ```
 
@@ -464,14 +448,6 @@ Content-Type: application/json
 Authorization: <access-token>
 ```
 
-Response:
-
-```json
-{
-  "message": "Image updated."
-}
-```
-
 ### Delete image
 
 ```
@@ -491,14 +467,6 @@ Content-Type: application/json
 Authorization: <access-token>
 ```
 
-Response:
-
-```json
-{
-  "message": "Image deleted."
-}
-```
-
 ### Add image to the current user's likes
 
 ```
@@ -510,14 +478,6 @@ Headers:
 ```
 Content-Type: application/json
 Authorization: <access-token>
-```
-
-Response:
-
-```json
-{
-  "message": "Image liked."
-}
 ```
 
 ### Get all users liked an image
@@ -578,14 +538,6 @@ Headers:
 ```
 Content-Type: application/json
 Authorization: <access-token>
-```
-
-Response:
-
-```json
-{
-  "message": "Image unliked."
-}
 ```
 
 ## Image assets
