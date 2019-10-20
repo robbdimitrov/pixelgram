@@ -38,13 +38,14 @@ export class ImageCreateComponent {
   onSubmitClick() {
     const selectedFile = this.uploadService.selectedFile();
 
-    this.apiClient.uploadImage(selectedFile).then((result) => {
-      const imageDescription = this.imageDescription || '';
-      this.apiClient.createImage((result as any).filename, imageDescription).then(() => {
-        this.router.navigate(['/']);
-      });
-    }).catch((error) => {
-      console.log(`Error creating image: ${error}`);
-    });
+    this.apiClient.uploadImage(selectedFile).subscribe(
+      (data: any) => {
+        const imageDescription = this.imageDescription || '';
+        this.apiClient.createImage(data.filename, imageDescription).subscribe(
+          () => this.router.navigate(['/'])
+        );
+      },
+      (error) => console.log(`Error creating image: ${error}`)
+    );
   }
 }
