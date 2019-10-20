@@ -78,9 +78,8 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   }
 
   loadImage(imageId: string) {
-    const self = this;
     this.apiClient.getImage(imageId).then((result) => {
-      self.images.push(result);
+      this.images.push(result);
     }).catch((error) => {
       console.log(`Loading user failed: ${error}`);
     });
@@ -119,11 +118,9 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
       this.images.splice(index, 1);
     }
 
-    const self = this;
-
     this.apiClient.deleteImage(image.id).then((result) => {
-      if (self.isSingleImageMode && self.images.length === 0) {
-        self.location.back();
+      if (this.isSingleImageMode && this.images.length === 0) {
+        this.location.back();
       }
     }).catch((error) => {
       console.log('Deleting image failed.');

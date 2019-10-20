@@ -1,6 +1,5 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 
 import { ImageUploadService } from './image-upload.service';
 
@@ -9,31 +8,19 @@ import { ImageUploadService } from './image-upload.service';
   templateUrl: './image-upload.component.html',
   styleUrls: ['./image-upload.component.scss']
 })
-export class ImageUploadComponent implements OnDestroy {
+export class ImageUploadComponent {
   imagePreview: string;
-  fileChangeSubscription: Subscription;
 
   constructor(private router: Router,
-              private uploadService: ImageUploadService) {
-    this.subscribeToFileChange();
-  }
-
-  ngOnDestroy() {
-    this.fileChangeSubscription.unsubscribe();
-  }
-
-  private subscribeToFileChange() {
-    this.fileChangeSubscription = this.uploadService.file.subscribe((value) => {
-      this.getImagePreview(value);
-    });
-  }
+              private uploadService: ImageUploadService) {}
 
   onChange(files: File[]) {
     const file = files[0];
     if (!file) {
       return;
     }
-    this.uploadService.setSelectedFile(files[0]);
+    this.uploadService.setSelectedFile(file);
+    this.getImagePreview(file);
   }
 
   getImagePreview(file: File) {
