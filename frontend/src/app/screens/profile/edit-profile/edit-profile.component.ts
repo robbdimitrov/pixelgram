@@ -35,22 +35,20 @@ export class EditProfileComponent implements AfterViewInit {
   onSubmit() {
     const userId = this.session.userId();
 
-    const self = this;
-
     const updateClosure = (avatar?: string) => {
-      self.apiClient.updateUser(userId, self.nameValue, self.usernameValue,
-        self.emailValue, self.bioValue, avatar).then((result) => {
-          self.location.back();
+      this.apiClient.updateUser(userId, this.nameValue, this.usernameValue,
+        this.emailValue, this.bioValue, avatar).then((result) => {
+          this.location.back();
         }).catch((error) => {
-          self.errorService.error = error.message;
+          this.errorService.error = error.message;
         });
     };
 
     if (this.selectedFile) {
-      self.apiClient.uploadImage(self.selectedFile).then((result) => {
+      this.apiClient.uploadImage(this.selectedFile).then((result) => {
         updateClosure((result as any).filename);
       }).catch((error) => {
-        self.errorService.error = error.message;
+        this.errorService.error = error.message;
       });
     } else {
       updateClosure();
@@ -75,13 +73,12 @@ export class EditProfileComponent implements AfterViewInit {
   }
 
   loadUser(userId: string) {
-    const self = this;
     this.apiClient.getUser(userId).then((result) => {
-      self.user = result;
-      self.nameValue = result.name;
-      self.usernameValue = result.username;
-      self.emailValue = result.email;
-      self.bioValue = result.bio;
+      this.user = result;
+      this.nameValue = result.name;
+      this.usernameValue = result.username;
+      this.emailValue = result.email;
+      this.bioValue = result.bio;
     }).catch((error) => {
       console.log(`Loading user failed: ${error}`);
     });

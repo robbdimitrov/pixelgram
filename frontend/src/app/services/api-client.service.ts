@@ -70,10 +70,9 @@ export class APIClient {
 
     const url = this.apiRoot + urlPath;
 
-    const self = this;
     const observable = this.http.request(method, url, options).pipe(
       finalize(() => {
-        delete self.activeRequests[key];
+        delete this.activeRequests[key];
       })
     );
 
