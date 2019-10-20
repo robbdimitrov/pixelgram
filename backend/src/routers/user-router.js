@@ -1,6 +1,7 @@
 const APIRouter = require('./api-router');
 const UserImagesRouter = require('./user-images-router');
 const UserLikesRouter = require('./user-likes-router');
+const StatusCode = require('./status-code');
 
 class UserRouter extends APIRouter {
   constructor(dbClient, userService, imageService, options) {
@@ -29,14 +30,12 @@ class UserRouter extends APIRouter {
     const page = parseInt(query.page, 10) || 0;
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
-      res.send({
-        users: result,
+      res.status(StatusCode.ok).send({
+        users: result
       });
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }
@@ -46,10 +45,8 @@ class UserRouter extends APIRouter {
 
     if (!body.name || !body.username || !body.email || !body.password) {
       const error = new Error('Missing argument(s). Name, username, email and password are expected.');
-      return res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      return res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     }
 
@@ -58,15 +55,13 @@ class UserRouter extends APIRouter {
     const email = body.email || '';
     const password = body.password || '';
 
-    this.userService.createUser(name, username, email, password).then(() => {
-      res.send({
-        message: 'User created.',
+    this.userService.createUser(name, username, email, password).then((result) => {
+      res.status(StatusCode.created).send({
+        _id: result
       });
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }
@@ -76,15 +71,13 @@ class UserRouter extends APIRouter {
 
     this.dbClient.getOneUser('id', id).then((result) => {
       if (result) {
-        res.send({
-          user: result,
+        res.status(StatusCode.ok).send({
+          user: result
         });
       }
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }
@@ -94,28 +87,22 @@ class UserRouter extends APIRouter {
     const body = req.body;
 
     if (userId !== req.user.id) {
-      return res.status(403).send({
-        code: 403,
-        error: 'FORBIDDEN',
-        message: 'Can\'t update other people\'s accounts.',
+      return res.status(StatusCode.forbidden).send({
+        message: 'Can\'t update other people\'s accounts.'
       });
     }
 
     if (Object.keys(body).length < 1) {
-      return res.send({
-        message: 'Nothing to update.',
+      return res.status(StatusCode.notModified).send({
+        message: 'Nothing to update.'
       });
     }
 
     this.userService.updateUser(userId, body).then(() => {
-      res.send({
-        message: 'User updated.',
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }
@@ -124,22 +111,16 @@ class UserRouter extends APIRouter {
     const id = req.params.id;
 
     if (id !== req.user.id) {
-      return res.status(403).send({
-        code: 403,
-        error: 'FORBIDDEN',
-        message: 'Can\'t delete other people\'s accounts.',
+      return res.status(StatusCode.forbidden).send({
+        message: 'Can\'t delete other people\'s accounts.'
       });
     }
 
     this.dbClient.deleteOneUser(id).then(() => {
-      res.send({
-        message: 'User deleted.',
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }

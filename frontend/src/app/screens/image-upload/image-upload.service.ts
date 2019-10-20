@@ -8,4 +8,8 @@ export class ImageUploadService {
   setSelectedFile(file: File) {
     this.file.next(file);
   }
+
+  deselectFile() {
+    this.file.next(undefined);
+  }
 }

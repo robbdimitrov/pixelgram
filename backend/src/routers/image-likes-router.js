@@ -1,4 +1,5 @@
 const APIRouter = require('./api-router');
+const StatusCode = require('./status-code');
 
 class ImageLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -14,14 +15,12 @@ class ImageLikesRouter extends APIRouter {
     const page = parseInt(query.page, 10) || 0;
 
     this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
-      res.send({
-        users: result,
+      res.status(StatusCode.ok).send({
+        users: result
       });
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }
@@ -31,14 +30,10 @@ class ImageLikesRouter extends APIRouter {
     const userId = req.user.id;
 
     this.imageService.likeImage(imageId, userId).then(() => {
-      res.send({
-        message: 'Image liked.',
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }
@@ -48,22 +43,16 @@ class ImageLikesRouter extends APIRouter {
     const userId = req.params.id;
 
     if (userId !== req.user.id) {
-      return res.status(403).send({
-        code: 403,
-        error: 'FORBIDDEN',
-        message: 'Can\'t unlike other people\'s likes.',
+      return res.status(StatusCode.forbidden).send({
+        message: 'Can\'t unlike other people\'s likes.'
       });
     }
 
     this.imageService.unlikeImage(imageId, userId).then(() => {
-      res.send({
-        message: 'Image unliked.',
-      });
+      res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }

@@ -56,7 +56,7 @@ class DBClient {
       avatar: 1,
       registrationDate: 1,
       likes: { $size: '$likedImages' },
-      images: { $size: '$postedImages' },
+      images: { $size: '$postedImages' }
     };
 
     if (raw) {
@@ -72,7 +72,7 @@ class DBClient {
       filename: 1,
       dateCreated: 1,
       description: 1,
-      likes: { $size: '$likedUsers' },
+      likes: { $size: '$likedUsers' }
     };
 
     if (userId !== undefined) {
@@ -97,7 +97,7 @@ class DBClient {
     return new Promise((resolve, reject) => {
       client.db().collection('images').find({
         _id: new ObjectID(imageId),
-        ownerId: new ObjectID(userId),
+        ownerId: new ObjectID(userId)
       }, { ownerId: 1 }).count((error, result) => {
         if (result > 0) {
           return resolve();
@@ -132,7 +132,7 @@ class DBClient {
 
         client.db().collection('images').aggregate([
           { $match: query },
-          { $project: this.imageAggregationProperties(userId) },
+          { $project: this.imageAggregationProperties(userId) }
         ]).sort(sortQuery).skip(page * limit).limit(limit).toArray((err, result) => {
           if (err) {
             return reject(err);
@@ -158,11 +158,13 @@ class DBClient {
           return reject(err);
         }
 
+        const imageId = result.insertedId;
+
         client.db().collection('users').updateOne(
           { _id: image.ownerId },
-          { $push: { postedImages: result.insertedId } },
-        ).then((result) => {
-          resolve(result);
+          { $push: { postedImages: imageId } },
+        ).then(() => {
+          resolve(imageId);
         }).catch((error) => {
           return reject(error);
         });
@@ -185,7 +187,7 @@ class DBClient {
 
       client.db().collection('images').aggregate([
         { $match: query },
-        { $project: this.imageAggregationProperties(userId) },
+        { $project: this.imageAggregationProperties(userId) }
       ], (error, result) => {
         if (error) {
           return reject(error);
@@ -274,7 +276,7 @@ class DBClient {
       } else {
         client.db().collection('users').aggregate([
           { $match: query },
-          { $project: this.userAggregationProperties() },
+          { $project: this.userAggregationProperties() }
         ]).skip(page * limit).limit(limit).toArray((err, result) => {
           if (err) {
             return reject(err);
@@ -303,7 +305,7 @@ class DBClient {
             return reject(new Error('User with this username already exists'));
           }
         }
-        resolve(result);
+        resolve(result.insertedId);
       });
     });
   }
@@ -352,7 +354,7 @@ class DBClient {
 
       client.db().collection('users').aggregate([
         { $match: query },
-        { $project: this.userAggregationProperties(raw) },
+        { $project: this.userAggregationProperties(raw) }
       ], completion);
     });
   }

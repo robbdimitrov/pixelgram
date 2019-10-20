@@ -21,8 +21,8 @@ class UserService {
       }
 
       UserFactory.createUser(name, username, email, password).then((user) => {
-        this.dbClient.createOneUser(user).then(() => {
-          resolve();
+        this.dbClient.createOneUser(user).then((result) => {
+          resolve(result);
         }).catch((error) => {
           reject(error);
         });

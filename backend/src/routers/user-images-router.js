@@ -1,4 +1,5 @@
 const APIRouter = require('./api-router');
+const StatusCode = require('./status-code');
 
 class UserImagesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -15,14 +16,12 @@ class UserImagesRouter extends APIRouter {
     const currentUserId = req.user.id;
 
     this.imageService.getAllImagesForUser(userId, page, limit, count, currentUserId).then((result) => {
-      res.send({
-        images: result,
+      res.status(StatusCode.ok).send({
+        images: result
       });
     }).catch((error) => {
-      res.status(400).send({
-        code: 400,
-        error: 'BAD_REQUEST',
-        message: error.message,
+      res.status(StatusCode.badRequest).send({
+        message: error.message
       });
     });
   }

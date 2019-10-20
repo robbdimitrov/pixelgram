@@ -9,6 +9,7 @@ const UserRouter = require('./routers/user-router');
 const AuthService = require('./services/auth-service');
 const ImageService = require('./services/image-service');
 const UserService = require('./services/user-service');
+const StatusCode = require('./routers/status-code');
 
 class Server {
   constructor(port, dbClient) {
@@ -61,18 +62,14 @@ class Server {
         req.user = result;
         next();
       }).catch(() => {
-        res.status(401).send({
-          code: 401,
-          error: 'INVALID_TOKEN',
+        res.status(StatusCode.unauthorized).send({
           message: 'Failed to authenticate token.',
         });
       });
     } else {
       // if there is no token
       // return an error
-      res.status(401).send({
-        code: 401,
-        error: 'INVALID_TOKEN',
+      res.status(StatusCode.unauthorized).send({
         message: 'No token provided.',
       });
     }

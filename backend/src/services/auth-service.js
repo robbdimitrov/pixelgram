@@ -17,8 +17,8 @@ class AuthService {
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, passwordHash).then((res) => {
         return resolve(res);
-      }).catch((err) => {
-        return reject(new Error('Authentication failed. ' + err));
+      }).catch(() => {
+        return reject(new Error('Authentication failed.'));
       });
     });
   }
@@ -43,7 +43,7 @@ class AuthService {
     const payload = { id: user._id };
 
     const token = jwt.sign(payload, this.secret, {
-      expiresIn: '12h',
+      expiresIn: '12h'
     });
 
     return token;

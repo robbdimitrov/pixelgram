@@ -12,8 +12,8 @@ class ImageService {
       filename, description);
 
     return new Promise((resolve, reject) => {
-      this.dbClient.createOneImage(image).then(() => {
-        resolve();
+      this.dbClient.createOneImage(image).then((result) => {
+        resolve(result);
       }).catch((error) => {
         reject(error);
       });
