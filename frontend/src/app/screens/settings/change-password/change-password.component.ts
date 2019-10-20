@@ -26,11 +26,10 @@ export class ChangePasswordComponent {
   onSubmit() {
     const userId = this.session.userId();
     this.apiClient.changePassword(userId, this.oldPasswordValue,
-      this.passwordValue).then((result) => {
-        this.location.back();
-      }).catch((error) => {
-        this.errorService.error = error.message;
-      });
+      this.passwordValue).subscribe(
+        () => this.location.back(),
+        (error) => this.errorService.error = error.message
+      );
   }
 
   onVisibilityToggle(event, element) {

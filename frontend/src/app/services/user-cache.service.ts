@@ -14,13 +14,16 @@ export class UserCache {
       if (user) {
         return resolve(user);
       }
-      this.apiClient.getUser(userId).then((result) => {
-        this.users[userId] = result;
-        return resolve(result);
-      }).catch((error) => {
-        console.log('Error getting user');
-        reject(error);
-      });
+      this.apiClient.getUser(userId).subscribe(
+        (data) => {
+          this.users[userId] = data;
+          return resolve(data);
+        },
+        (error) => {
+          console.log('Error getting user');
+          reject(error);
+        }
+      );
     });
   }
 

@@ -22,12 +22,13 @@ export class SignupComponent extends FormComponent {
 
   onSubmit() {
     this.apiClient.createUser(this.nameValue, this.usernameValue,
-      this.emailValue, this.passwordValue).then(() => {
-        this.apiClient.loginUser(this.emailValue, this.passwordValue).then(() => {
-          this.router.navigate(['/']);
-        });
-      }).catch((error) => {
-        this.errorService.error = error.message;
-      });
+      this.emailValue, this.passwordValue).subscribe(
+        () => {
+          this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
+            () => this.router.navigate(['/'])
+          );
+        },
+        (error) => this.errorService.error = error.message
+      );
   }
 }

@@ -57,7 +57,7 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.post(url, body, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -72,7 +72,7 @@ export class APIClient {
         this.session.setUserId(data.user._id);
         this.loginSubject.next(UserDidLoginNotification);
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -87,7 +87,7 @@ export class APIClient {
 
     return this.http.get(url, { headers }).pipe(
       map((data: any) => UserFactory.userFromObject(data.user)),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -101,7 +101,7 @@ export class APIClient {
     }
 
     return this.http.put(url, body, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -111,7 +111,7 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.put(url, body, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -123,7 +123,7 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.post(url, body, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -137,7 +137,7 @@ export class APIClient {
         );
         return images;
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -162,7 +162,7 @@ export class APIClient {
 
     return this.http.get(url, { headers }).pipe(
       map((data: any) => ImageFactory.imageFromObject(data.image)),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -171,7 +171,7 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.delete(url, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -183,7 +183,7 @@ export class APIClient {
     formData.append('image', file, file.name);
 
     return this.http.post(url, formData, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -192,7 +192,7 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.post(url, undefined, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -201,7 +201,7 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.delete(url, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 }

@@ -18,11 +18,12 @@ export class LoginComponent extends FormComponent {
   }
 
   onSubmit() {
-    this.apiClient.loginUser(this.emailValue, this.passwordValue).then((result) => {
-      this.router.navigate(['/']);
-    }).catch((error) => {
-      console.log('Error logging in.');
-      this.errorService.error = error.message;
-    });
+    this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
+      (data) => this.router.navigate(['/']),
+      (error) => {
+        console.log('Error logging in.');
+        this.errorService.error = error.message;
+      }
+    );
   }
 }
