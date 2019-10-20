@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Subject, Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { Subject, Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { Session } from './session.service';
 import { Image } from '../models/image.model';
@@ -34,14 +34,13 @@ export const UserDidLoginNotification = 'UserDidLoginNotification';
 @Injectable()
 export class APIClient {
   private apiRoot = environment.apiRoot;
-  private activeRequests = {};
   loginSubject = new Subject<string>();
 
   constructor(private http: HttpClient, private session: Session) {}
 
   // Internal
 
-  headers(): HttpHeaders {
+  private headers(): HttpHeaders {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -55,30 +54,27 @@ export class APIClient {
   // Use this method for all requests
   private request(method: HTTPMethod, urlPath: string, body?: any,
                   otherHeaders?: HttpHeaders): Observable<any> {
-    const key = `${method}:${urlPath}`;
-
-    if (this.activeRequests[key]) {
-      return this.activeRequests[key];
-    }
-
     const headers = otherHeaders || this.headers();
 
-    // Stringify only when using the default headers
-    const options = {
-      body: (otherHeaders ? body : JSON.stringify(body)), headers
-    };
-
+    const options = { body, headers };
     const url = this.apiRoot + urlPath;
-
     const observable = this.http.request(method, url, options).pipe(
-      finalize(() => {
-        delete this.activeRequests[key];
-      })
+      catchError(this.handleError)
     );
-
-    this.activeRequests[key] = observable;
-
     return observable;
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    console.log(`handle error ${JSON.stringify(error)}`);
+    if (error.error instanceof ErrorEvent) {
+      console.error(`An error occurred: ${error.error.message}`);
+    } else {
+      console.error(
+        `Backend returned code ${error.status}, ` +
+        `body was: ${error.error}`
+      );
+    }
+    return throwError(error.message);
   }
 
   // User
@@ -89,11 +85,10 @@ export class APIClient {
     const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        reject(error.error);
-      });
+      request.subscribe(
+        () => resolve(),
+        (error) => reject(error.error)
+      );
     });
   }
 
@@ -103,14 +98,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then((response) => {
-        this.session.setToken(response.token);
-        this.session.setUserId(response.user._id);
-        this.loginSubject.next(UserDidLoginNotification);
-        resolve();
-      }).catch((error) => {
-        reject(error.error);
-      });
+      request.subscribe(
+        (data) => {
+          this.session.setToken(data.token);
+          this.session.setUserId(data.user._id);
+          this.loginSubject.next(UserDidLoginNotification);
+          resolve();
+        },
+        (error) => reject(error.error)
+      );
     });
   }
 
@@ -124,16 +120,18 @@ export class APIClient {
     const request = this.request(HTTPMethod.Get, url);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then((response) => {
-        const responseUser = response.user;
-        const user = UserFactory.userFromObject(responseUser);
-        resolve(user);
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        (data) => {
+          const user = UserFactory.userFromObject(data.user);
+          resolve(user);
+        },
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -148,14 +146,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Put, url, body);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        () => resolve(),
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -166,14 +165,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Put, url, body);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        () => resolve(),
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -185,11 +185,10 @@ export class APIClient {
     const request = this.request(HTTPMethod.Post, url, body);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        reject(error.error);
-      });
+      request.subscribe(
+        () => resolve(),
+        (error) => reject(error.error)
+      );
     });
   }
 
@@ -197,18 +196,20 @@ export class APIClient {
     const request = this.request(HTTPMethod.Get, url);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then((response) => {
-        const images = response.images.map(
-          object => ImageFactory.imageFromObject(object)
-        );
-
-        resolve(images);
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        (data) => {
+          const images = data.images.map(
+            (object) => ImageFactory.imageFromObject(object)
+          );
+          resolve(images);
+        },
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -232,16 +233,18 @@ export class APIClient {
     const request = this.request(HTTPMethod.Get, url);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then((response) => {
-        const responseImage = response.image;
-        const image = ImageFactory.imageFromObject(responseImage);
-        resolve(image);
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        (data) => {
+          const image = ImageFactory.imageFromObject(data.image);
+          resolve(image);
+        },
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -250,14 +253,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Delete, url);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        () => resolve(),
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -271,14 +275,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Post, url, formData, headers);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then((response) => {
-        resolve(response);
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        (data) => resolve(data),
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -287,14 +292,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Post, url);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        () => resolve(),
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 
@@ -303,14 +309,15 @@ export class APIClient {
     const request = this.request(HTTPMethod.Delete, url);
 
     return new Promise((resolve, reject) => {
-      request.toPromise().then(() => {
-        resolve();
-      }).catch((error) => {
-        if (error.status === StatusCode.Unauthorized) {
-          this.logoutUser();
+      request.subscribe(
+        () => resolve(),
+        (error) => {
+          if (error.status === StatusCode.Unauthorized) {
+            this.logoutUser();
+          }
+          reject(error.error);
         }
-        reject(error.error);
-      });
+      );
     });
   }
 }
