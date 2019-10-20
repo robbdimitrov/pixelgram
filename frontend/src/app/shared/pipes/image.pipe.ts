@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import * as config from '../../../../config/client.config';
+import { environment } from '../../../environments/environment';
 
 @Pipe({
   name: 'image'
@@ -10,6 +10,6 @@ export class ImagePipe implements PipeTransform {
     if (value === null || value.length === 0) {
       return placeholder || '';
     }
-    return `${config.apiRoot}/uploads/${value}`;
+    return `${environment.apiRoot}/uploads/${value}`;
   }
 }
