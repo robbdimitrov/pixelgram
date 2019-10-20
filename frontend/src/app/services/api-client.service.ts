@@ -1,32 +1,14 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Subject, Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import {
+  HttpClient, HttpHeaders, HttpErrorResponse
+} from '@angular/common/http';
+import { Subject, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { Session } from './session.service';
-import { Image } from '../models/image.model';
 import { ImageFactory } from './image-factory.service';
-import { User } from '../models/user.model';
 import { UserFactory } from './user-factory.service';
 import { environment } from '../../environments/environment';
-
-enum StatusCode {
-  Ok = 200,
-  Created =  201,
-  NoContent = 204,
-  NotModified = 304,
-  BadRequest = 400,
-  Unauthorized = 401,
-  Forbidden = 403,
-  NotFound = 404
-}
-
-enum HTTPMethod {
-  Get = 'GET',
-  Post = 'POST',
-  Put = 'PUT',
-  Delete = 'DELETE'
-}
 
 export const UserDidLogoutNotification = 'UserDidLogoutNotification';
 export const UserDidLoginNotification = 'UserDidLoginNotification';
@@ -51,63 +33,47 @@ export class APIClient {
     return headers;
   }
 
-  // Use this method for all requests
-  private request(method: HTTPMethod, urlPath: string, body?: any,
-                  otherHeaders?: HttpHeaders): Observable<any> {
-    const headers = otherHeaders || this.headers();
-
-    const options = { body, headers };
-    const url = this.apiRoot + urlPath;
-    const observable = this.http.request(method, url, options).pipe(
-      catchError(this.handleError)
-    );
-    return observable;
+  private url(urlPath: string) {
+    return this.apiRoot + urlPath;
   }
 
   private handleError(error: HttpErrorResponse) {
-    console.log(`handle error ${JSON.stringify(error)}`);
+    const message = error.error.message || error.message;
     if (error.error instanceof ErrorEvent) {
       console.error(`An error occurred: ${error.error.message}`);
     } else {
-      console.error(
-        `Backend returned code ${error.status}, ` +
-        `body was: ${error.error}`
-      );
+      if (error.status === 401) { // Unauthorized
+        this.logoutUser();
+      }
     }
-    return throwError(error.message);
+    return throwError(message);
   }
 
   // User
 
   createUser(name: string, username: string, email: string, password: string) {
-    const url = '/users';
+    const url = this.url('/users');
     const body = { name, username, email, password };
-    const request = this.request(HTTPMethod.Post, url, body);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => reject(error.error)
-      );
-    });
+    return this.http.post(url, body, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   loginUser(email: string, password: string) {
-    const url = '/sessions';
+    const url = this.url('/sessions');
     const body = { email, password };
-    const request = this.request(HTTPMethod.Post, url, body);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        (data) => {
-          this.session.setToken(data.token);
-          this.session.setUserId(data.user._id);
-          this.loginSubject.next(UserDidLoginNotification);
-          resolve();
-        },
-        (error) => reject(error.error)
-      );
-    });
+    return this.http.post(url, body, { headers }).pipe(
+      map((data: any) => {
+        this.session.setToken(data.token);
+        this.session.setUserId(data.user._id);
+        this.loginSubject.next(UserDidLoginNotification);
+      }),
+      catchError(this.handleError)
+    );
   }
 
   logoutUser() {
@@ -115,209 +81,127 @@ export class APIClient {
     this.loginSubject.next(UserDidLogoutNotification);
   }
 
-  getUser(userId: string): Promise<User> {
-    const url = `/users/${userId}`;
-    const request = this.request(HTTPMethod.Get, url);
+  getUser(userId: string) {
+    const url = this.url(`/users/${userId}`);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        (data) => {
-          const user = UserFactory.userFromObject(data.user);
-          resolve(user);
-        },
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.get(url, { headers }).pipe(
+      map((data: any) => UserFactory.userFromObject(data.user)),
+      catchError(this.handleError)
+    );
   }
 
   updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
-    const url = `/users/${userId}`;
+    const url = this.url(`/users/${userId}`);
     const body: any = { name, username, email, bio };
+    const headers = this.headers();
 
     if (avatar) {
       body.avatar = avatar;
     }
 
-    const request = this.request(HTTPMethod.Put, url, body);
-
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.put(url, body, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   changePassword(userId: string, oldPassword: string, password: string) {
-    const url = `/users/${userId}`;
-
+    const url = this.url(`/users/${userId}`);
     const body = { password, oldPassword };
-    const request = this.request(HTTPMethod.Put, url, body);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.put(url, body, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Image
 
   createImage(filename: string, description: string) {
-    const url = '/images';
+    const url = this.url('/images');
     const body = { filename, description };
-    const request = this.request(HTTPMethod.Post, url, body);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => reject(error.error)
-      );
-    });
+    return this.http.post(url, body, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  getImages(url: string): Promise<Image[]> {
-    const request = this.request(HTTPMethod.Get, url);
+  getImages(url: string) {
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        (data) => {
-          const images = data.images.map(
-            (object) => ImageFactory.imageFromObject(object)
-          );
-          resolve(images);
-        },
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.get(url, { headers }).pipe(
+      map((data: any) => {
+        const images = data.images.map(
+          (object) => ImageFactory.imageFromObject(object)
+        );
+        return images;
+      }),
+      catchError(this.handleError)
+    );
   }
 
   getUsersImages(userId: string, page: number, limit: number = 10) {
-    const url = `/users/${userId}/images?page=${page}&limit=${limit}`;
+    const url = this.url(`/users/${userId}/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
   getAllImages(page: number, limit: number = 10) {
-    const url = `/images?page=${page}&limit=${limit}`;
+    const url = this.url(`/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
   getUsersLikedImages(userId: string, page: number, limit: number = 10) {
-    const url = `/users/${userId}/likes?page=${page}&limit=${limit}`;
+    const url = this.url(`/users/${userId}/likes?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getImage(imageId: string): Promise<Image> {
-    const url = `/images/${imageId}`;
-    const request = this.request(HTTPMethod.Get, url);
+  getImage(imageId: string) {
+    const url = this.url(`/images/${imageId}`);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        (data) => {
-          const image = ImageFactory.imageFromObject(data.image);
-          resolve(image);
-        },
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.get(url, { headers }).pipe(
+      map((data: any) => ImageFactory.imageFromObject(data.image)),
+      catchError(this.handleError)
+    );
   }
 
   deleteImage(imageId: string) {
-    const url = `/images/${imageId}`;
-    const request = this.request(HTTPMethod.Delete, url);
+    const url = this.url(`/images/${imageId}`);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.delete(url, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   uploadImage(file: File) {
-    const url = `/upload`;
+    const url = this.url(`/upload`);
     const headers = this.headers().delete('Content-Type');
 
     const formData = new FormData();
     formData.append('image', file, file.name);
 
-    const request = this.request(HTTPMethod.Post, url, formData, headers);
-
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        (data) => resolve(data),
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.post(url, formData, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   likeImage(imageId: string) {
-    const url = `/images/${imageId}/likes`;
-    const request = this.request(HTTPMethod.Post, url);
+    const url = this.url(`/images/${imageId}/likes`);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.post(url, undefined, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   unlikeImage(userId: string, imageId: string) {
-    const url = `/images/${imageId}/likes/${userId}`;
-    const request = this.request(HTTPMethod.Delete, url);
+    const url = this.url(`/images/${imageId}/likes/${userId}`);
+    const headers = this.headers();
 
-    return new Promise((resolve, reject) => {
-      request.subscribe(
-        () => resolve(),
-        (error) => {
-          if (error.status === StatusCode.Unauthorized) {
-            this.logoutUser();
-          }
-          reject(error.error);
-        }
-      );
-    });
+    return this.http.delete(url, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 }
