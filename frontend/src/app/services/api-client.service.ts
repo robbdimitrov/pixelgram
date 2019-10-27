@@ -3,7 +3,7 @@ import {
   HttpClient, HttpHeaders, HttpErrorResponse
 } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, share, finalize } from 'rxjs/operators';
 
 import { Session } from './session.service';
 import { ImageFactory } from './image-factory.service';
@@ -17,6 +17,7 @@ export const UserDidLoginNotification = 'UserDidLoginNotification';
 export class APIClient {
   private apiRoot = environment.apiRoot;
   loginSubject = new Subject<string>();
+  private activeRequests = {};
 
   constructor(private http: HttpClient, private session: Session) {}
 
@@ -82,12 +83,21 @@ export class APIClient {
 
   getUser(userId: string) {
     const url = this.url(`/users/${userId}`);
+
+    if (this.activeRequests[url]) {
+      return this.activeRequests[url];
+    }
+
     const headers = this.headers();
 
-    return this.http.get(url, { headers }).pipe(
+    const req = this.http.get(url, { headers }).pipe(
       map((data: any) => UserFactory.userFromObject(data.user)),
-      catchError(this.handleError.bind(this))
+      catchError(this.handleError.bind(this)),
+      finalize(() => delete this.activeRequests[url]),
+      share()
     );
+    this.activeRequests[url] = req;
+    return req;
   }
 
   updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
@@ -129,15 +139,23 @@ export class APIClient {
   getImages(url: string) {
     const headers = this.headers();
 
-    return this.http.get(url, { headers }).pipe(
+    if (this.activeRequests[url]) {
+      return this.activeRequests[url];
+    }
+
+    const req = this.http.get(url, { headers }).pipe(
       map((data: any) => {
         const images = data.images.map(
           (object) => ImageFactory.imageFromObject(object)
         );
         return images;
       }),
-      catchError(this.handleError.bind(this))
+      catchError(this.handleError.bind(this)),
+      finalize(() => delete this.activeRequests[url]),
+      share()
     );
+    this.activeRequests[url] = req;
+    return req;
   }
 
   getUsersImages(userId: string, page: number, limit: number = 10) {
@@ -157,12 +175,21 @@ export class APIClient {
 
   getImage(imageId: string) {
     const url = this.url(`/images/${imageId}`);
+
+    if (this.activeRequests[url]) {
+      return this.activeRequests[url];
+    }
+
     const headers = this.headers();
 
-    return this.http.get(url, { headers }).pipe(
+    const req = this.http.get(url, { headers }).pipe(
       map((data: any) => ImageFactory.imageFromObject(data.image)),
-      catchError(this.handleError.bind(this))
+      catchError(this.handleError.bind(this)),
+      finalize(() => delete this.activeRequests[url]),
+      share()
     );
+    this.activeRequests[url] = req;
+    return req;
   }
 
   deleteImage(imageId: string) {
