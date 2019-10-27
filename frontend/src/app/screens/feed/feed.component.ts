@@ -39,13 +39,15 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   // Subscriptions
 
   private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe((value) => {
-      if (value === UserDidLogoutNotification) {
-        this.page = 0;
-        this.images = [];
-        this.router.navigate(['/login']);
+    this.loginSubscription = this.apiClient.loginSubject.subscribe(
+      (value) => {
+        if (value === UserDidLogoutNotification) {
+          this.page = 0;
+          this.images = [];
+          this.router.navigate(['/login']);
+        }
       }
-    });
+    );
   }
 
   // Component lifecycle
@@ -63,44 +65,36 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   // Data
 
   loadNextPage() {
-    const promise = (this.userId ?
+    const req = (this.userId ?
       this.apiClient.getUsersLikedImages(this.userId, this.page) :
       this.apiClient.getAllImages(this.page));
 
-    promise.then((result) => {
-      if (result.length) {
-        this.images.push(...result);
-        this.page += 1;
-      }
-    }).catch((error) => {
-      console.log('Error loading images.');
-    });
+    req.subscribe(
+      (data) => {
+        if (data.length) {
+          this.images.push(...data);
+          this.page += 1;
+        }
+      },
+      (error) => console.error('Error loading images.')
+    );
   }
 
   loadImage(imageId: string) {
-    this.apiClient.getImage(imageId).then((result) => {
-      this.images.push(result);
-    }).catch((error) => {
-      console.log(`Loading user failed: ${error}`);
-    });
+    this.apiClient.getImage(imageId).subscribe(
+      (data) => this.images.push(data),
+      (error) => console.error(`Loading user failed: ${error}`)
+    );
   }
 
   // Actions
 
   onLike(imageId: string) {
-    this.apiClient.likeImage(imageId).then((result) => {
-
-    }).catch((error) => {
-
-    });
+    this.apiClient.likeImage(imageId).subscribe();
   }
 
   onUnlike(imageId: string) {
-    this.apiClient.unlikeImage(this.session.userId(), imageId).then((result) => {
-
-    }).catch((error) => {
-
-    });
+    this.apiClient.unlikeImage(this.session.userId(), imageId).subscribe();
   }
 
   onShowProfile(userId: string) {
@@ -118,12 +112,13 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
       this.images.splice(index, 1);
     }
 
-    this.apiClient.deleteImage(image.id).then((result) => {
-      if (this.isSingleImageMode && this.images.length === 0) {
-        this.location.back();
-      }
-    }).catch((error) => {
-      console.log('Deleting image failed.');
-    });
+    this.apiClient.deleteImage(image.id).subscribe(
+      (data) => {
+        if (this.isSingleImageMode && this.images.length === 0) {
+          this.location.back();
+        }
+      },
+      (error) => console.error('Deleting image failed.')
+    );
   }
 }

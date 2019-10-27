@@ -37,13 +37,15 @@ export class ProfileComponent implements OnDestroy {
   // Subscriptions
 
   private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe((value) => {
-      if (value === UserDidLogoutNotification) {
-        this.page = 0;
-        this.images = [];
-        this.router.navigate(['/login']);
+    this.loginSubscription = this.apiClient.loginSubject.subscribe(
+      (value) => {
+        if (value === UserDidLogoutNotification) {
+          this.page = 0;
+          this.images = [];
+          this.router.navigate(['/login']);
+        }
       }
-    });
+    );
   }
 
   // Component lifecycle
@@ -55,23 +57,25 @@ export class ProfileComponent implements OnDestroy {
   // Data
 
   loadUser(userId: string) {
-    this.apiClient.getUser(userId).then((result) => {
-      this.user = result;
-      this.loadNextPage();
-    }).catch((error) => {
-      console.log(`Loading user failed: ${error}`);
-    });
+    this.apiClient.getUser(userId).subscribe(
+      (data) => {
+        this.user = data;
+        this.loadNextPage();
+      },
+      (error) => console.error(`Loading user failed: ${error}`)
+    );
   }
 
   loadNextPage() {
-    this.apiClient.getUsersImages(this.user.id, this.page).then((result) => {
-      if (result.length) {
-        this.images.push(...result);
-        this.page += 1;
-      }
-    }).catch((error) => {
-      console.log(`Error loading images: ${error}`);
-    });
+    this.apiClient.getUsersImages(this.user.id, this.page).subscribe(
+      (data) => {
+        if (data.length) {
+          this.images.push(...data);
+          this.page += 1;
+        }
+      },
+      (error) => console.error(`Error loading images: ${error}`)
+    );
   }
 
   // Actions
