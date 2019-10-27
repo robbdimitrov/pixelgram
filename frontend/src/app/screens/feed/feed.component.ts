@@ -76,7 +76,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
           this.page += 1;
         }
       },
-      (error) => console.log('Error loading images.')
+      (error) => console.error('Error loading images.')
     );
   }
 

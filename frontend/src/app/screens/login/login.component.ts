@@ -19,9 +19,9 @@ export class LoginComponent extends FormComponent {
 
   onSubmit() {
     this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-      (data) => this.router.navigate(['/']),
+      () => this.router.navigate(['/']),
       (error) => {
-        console.log('Error logging in.');
+        console.error('Error logging in.');
         this.errorService.error = error.message;
       }
     );

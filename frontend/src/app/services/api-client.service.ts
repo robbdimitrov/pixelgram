@@ -38,7 +38,6 @@ export class APIClient {
   }
 
   private handleError(error: HttpErrorResponse) {
-    const message = error.error.message || error.message;
     if (error.error instanceof ErrorEvent) {
       console.error(`An error occurred: ${error.error.message}`);
     } else {
@@ -46,7 +45,7 @@ export class APIClient {
         this.logoutUser();
       }
     }
-    return throwError(message);
+    return throwError(error.error || error);
   }
 
   // User
