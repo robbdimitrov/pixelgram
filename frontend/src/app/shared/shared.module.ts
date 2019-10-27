@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { FormComponent } from './components/form/form.component';
 import { HeaderComponent } from './components/header/header.component';
@@ -12,6 +13,7 @@ import { UserPipe } from './pipes/user.pipe';
 import { AuthGuard } from './guards/auth-guard.service';
 import { NotAuthGuard } from './guards/not-auth-guard.service';
 import { RelativeDatePipe } from './pipes/relative-date.pipe';
+import { IconLibrary } from './icon-library.service';
 
 @NgModule({
   declarations: [
@@ -25,17 +27,20 @@ import { RelativeDatePipe } from './pipes/relative-date.pipe';
   ],
   providers: [
     AuthGuard,
-    NotAuthGuard
+    NotAuthGuard,
+    IconLibrary
   ],
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    FontAwesomeModule
   ],
   exports: [
     CommonModule,
     FormsModule,
     RouterModule,
+    FontAwesomeModule,
     FormComponent,
     HeaderComponent,
     NotFoundComponent,

@@ -1,6 +1,6 @@
 <div class="container">
     <a class="logo" routerLink="/">
-      <i class="fas fa-camera-retro icon"></i>
+      <fa-icon [icon]="['fas', 'camera-retro']"></fa-icon>
       <span class="text">PixelGram</span>
     </a>
 
@@ -13,7 +13,7 @@
             aria-label="Feed"
             routerLink="/feed"
           >
-            <i class="fas fa-home"></i>
+            <fa-icon [icon]="['fas', 'home']"></fa-icon>
           </a>
         </li>
 
@@ -24,7 +24,7 @@
             aria-label="New Image"
             routerLink="/upload"
           >
-            <i class="far fa-plus-square"></i>
+            <fa-icon [icon]="['far', 'plus-square']"></fa-icon>
           </a>
         </li>
 
@@ -35,7 +35,7 @@
             aria-label="My Profile"
             [routerLink]="['user', userId()]"
           >
-            <i class="fas fa-user"></i>
+            <fa-icon [icon]="['fas', 'user']"></fa-icon>
           </a>
         </li>
       </ul>
