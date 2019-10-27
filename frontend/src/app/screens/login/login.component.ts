@@ -20,10 +20,7 @@ export class LoginComponent extends FormComponent {
   onSubmit() {
     this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
       () => this.router.navigate(['/']),
-      (error) => {
-        console.error('Error logging in.');
-        this.errorService.error = error.message;
-      }
+      (error) => this.errorService.error = error.message
     );
   }
 }

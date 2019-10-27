@@ -83,7 +83,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   loadImage(imageId: string) {
     this.apiClient.getImage(imageId).subscribe(
       (data) => this.images.push(data),
-      (error) => console.log(`Loading user failed: ${error}`)
+      (error) => console.error(`Loading user failed: ${error}`)
     );
   }
 
@@ -118,7 +118,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
           this.location.back();
         }
       },
-      (error) => console.log('Deleting image failed.')
+      (error) => console.error('Deleting image failed.')
     );
   }
 }
