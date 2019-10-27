@@ -45,7 +45,7 @@ export class ImageCreateComponent {
           () => this.router.navigate(['/'])
         );
       },
-      (error) => console.log(`Error creating image: ${error}`)
+      (error) => console.error(`Error creating image: ${error}`)
     );
   }
 }
