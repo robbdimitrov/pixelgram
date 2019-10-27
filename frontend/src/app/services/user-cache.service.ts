@@ -20,7 +20,7 @@ export class UserCache {
           return resolve(data);
         },
         (error) => {
-          console.log('Error getting user');
+          console.error('Error getting user.');
           reject(error);
         }
       );
