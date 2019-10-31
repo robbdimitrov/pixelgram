@@ -16,9 +16,9 @@ class AuthService {
   validatePassword(password, passwordHash) {
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, passwordHash).then((res) => {
-        return resolve(res);
+        resolve(res);
       }).catch(() => {
-        return reject(new Error('Authentication failed.'));
+        reject(new Error('Authentication failed.'));
       });
     });
   }
