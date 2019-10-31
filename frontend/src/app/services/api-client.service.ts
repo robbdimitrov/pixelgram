@@ -13,6 +13,8 @@ import { environment } from '../../environments/environment';
 export const UserDidLogoutNotification = 'UserDidLogoutNotification';
 export const UserDidLoginNotification = 'UserDidLoginNotification';
 
+export const APIPageCountLimit = 10;
+
 @Injectable()
 export class APIClient {
   private apiRoot = environment.apiRoot;
@@ -100,7 +102,8 @@ export class APIClient {
     return req;
   }
 
-  updateUser(userId: string, name: string, username: string, email: string, bio: string, avatar?: string) {
+  updateUser(userId: string, name: string, username: string,
+             email: string, bio: string, avatar?: string) {
     const url = this.url(`/users/${userId}`);
     const body: any = { name, username, email, bio };
     const headers = this.headers();
@@ -158,17 +161,17 @@ export class APIClient {
     return req;
   }
 
-  getUsersImages(userId: string, page: number, limit: number = 10) {
+  getUsersImages(userId: string, page: number, limit: number = APIPageCountLimit) {
     const url = this.url(`/users/${userId}/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getAllImages(page: number, limit: number = 10) {
+  getAllImages(page: number, limit: number = APIPageCountLimit) {
     const url = this.url(`/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getUsersLikedImages(userId: string, page: number, limit: number = 10) {
+  getUsersLikedImages(userId: string, page: number, limit: number = APIPageCountLimit) {
     const url = this.url(`/users/${userId}/likes?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }

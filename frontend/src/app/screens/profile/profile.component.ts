@@ -3,7 +3,9 @@ import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { Image } from '../../models/image.model';
-import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
+import {
+  APIClient, APIPageCountLimit, UserDidLogoutNotification
+} from '../../services/api-client.service';
 import { Session } from '../../services/session.service';
 import { UserCache } from '../../services/user-cache.service';
 import { User } from '../../models/user.model';
@@ -69,8 +71,13 @@ export class ProfileComponent implements OnDestroy {
   loadNextPage() {
     this.apiClient.getUsersImages(this.user.id, this.page).subscribe(
       (data) => {
-        if (data.length) {
-          this.images.push(...data);
+        const images = data.filter((image) => {
+          return !(this.images.some((value) => image.id === value.id));
+        });
+
+        this.images.push(...images);
+
+        if (data.length === APIPageCountLimit) {
           this.page += 1;
         }
       },

@@ -3,7 +3,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { Subscription } from 'rxjs';
 
-import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
+import {
+  APIClient, APIPageCountLimit, UserDidLogoutNotification
+} from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
 import { UserCache } from '../../services/user-cache.service';
 import { Session } from '../../services/session.service';
@@ -69,10 +71,14 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
       this.apiClient.getUsersLikedImages(this.userId, this.page) :
       this.apiClient.getAllImages(this.page));
 
-    req.subscribe(
-      (data) => {
-        if (data.length) {
-          this.images.push(...data);
+    req.subscribe((data) => {
+        const images = data.filter((image) => {
+          return !(this.images.some((value) => image.id === value.id));
+        });
+
+        this.images.push(...images);
+
+        if (data.length === APIPageCountLimit) {
           this.page += 1;
         }
       },
