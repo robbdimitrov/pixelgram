@@ -11,7 +11,7 @@ class UserImagesRouter extends APIRouter {
     const userId = req.params.parentId;
     const query = req.query || {};
     const count = Boolean(parseInt(query.count, 10) || 0);
-    const limit = parseInt(query.limit, 10) || 25;
+    const limit = parseInt(query.limit, 10) || 20;
     const page = parseInt(query.page, 10) || 0;
     const currentUserId = req.user.id;
 

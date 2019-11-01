@@ -161,17 +161,17 @@ export class APIClient {
     return req;
   }
 
-  getUsersImages(userId: string, page: number, limit: number = APIPageCountLimit) {
+  getUsersImages(userId: string, page: number, limit: number = 10) {
     const url = this.url(`/users/${userId}/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getAllImages(page: number, limit: number = APIPageCountLimit) {
+  getAllImages(page: number, limit: number = 10) {
     const url = this.url(`/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getUsersLikedImages(userId: string, page: number, limit: number = APIPageCountLimit) {
+  getUsersLikedImages(userId: string, page: number, limit: number = 10) {
     const url = this.url(`/users/${userId}/likes?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }

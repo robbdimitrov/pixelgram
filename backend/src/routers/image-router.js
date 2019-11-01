@@ -20,7 +20,7 @@ class ImageRouter extends APIRouter {
 
   getAll(req, res) {
     const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 25;
+    const limit = parseInt(query.limit, 10) || 20;
     const page = parseInt(query.page, 10) || 0;
     const userId = req.user.id;
     this.imageService.getAllImages(page, limit, userId).then((result) => {

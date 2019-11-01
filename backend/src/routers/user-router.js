@@ -26,7 +26,7 @@ class UserRouter extends APIRouter {
 
   getAll(req, res) {
     const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 25;
+    const limit = parseInt(query.limit, 10) || 20;
     const page = parseInt(query.page, 10) || 0;
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
