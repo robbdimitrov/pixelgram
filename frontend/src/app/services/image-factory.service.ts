@@ -6,10 +6,10 @@ export class ImageFactory {
       object._id,
       object.ownerId,
       object.filename,
-      new Date(object.dateCreated),
       object.description,
       object.likes,
-      object.isLiked
+      object.isLiked,
+      new Date(object.createdAt)
     );
     return image;
   }

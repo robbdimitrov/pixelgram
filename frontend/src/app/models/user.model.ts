@@ -7,6 +7,7 @@ export class User {
     public avatar: string,
     public bio: string,
     public images: number,
-    public likes: number
+    public likes: number,
+    public createdAt: Date
   ) {}
 }

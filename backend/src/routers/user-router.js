@@ -69,7 +69,7 @@ class UserRouter extends APIRouter {
   getOne(req, res) {
     const id = req.params.id;
 
-    this.dbClient.getOneUser('id', id).then((result) => {
+    this.dbClient.getUser('id', id).then((result) => {
       if (result) {
         res.status(StatusCode.ok).send({
           user: result
@@ -116,7 +116,7 @@ class UserRouter extends APIRouter {
       });
     }
 
-    this.dbClient.deleteOneUser(id).then(() => {
+    this.dbClient.deleteUser(id).then(() => {
       res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({

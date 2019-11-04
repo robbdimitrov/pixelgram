@@ -3,7 +3,6 @@ class ImageFactory {
     const image = {
       ownerId: ownerId,
       filename: filename,
-      dateCreated: new Date().toISOString(),
       description: description,
       likedUsers: []
     };

@@ -59,7 +59,7 @@ Response:
     "bio": "Kryptonian hero",
     "likes": 0,
     "images": 1,
-    "registrationDate": "2017-11-15T10:05:28+00:00"
+    "createdAt": "2017-11-15T10:05:28Z"
   },
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN1cGVybWFuIiwiaWQiOiI1YTBjMTE2ODJjZTdlMTAwMGYyYTFmNWEiLCJpYXQiOjE1MTA3NDg4ODksImV4cCI6MTUxMDc1MjQ4OX0.ZDmxdzis314r1VNSXWKjqHDCVrilfdeJO9d5Rviids0"
 }
@@ -123,7 +123,7 @@ Response:
       "bio": "Kriptonian hero",
       "likes": 0,
       "images": 2,
-      "registrationDate": "2017-11-15T10:05:28+00:00"
+      "createdAt": "2017-11-15T10:05:28Z"
     },
     {
       "_id": "5a0c361b7ceeae000ffc8bdd",
@@ -134,7 +134,7 @@ Response:
       "bio": "The dark knight",
       "likes": 1,
       "images": 1,
-      "registrationDate": "2017-11-15T12:42:03+00:00"
+      "createdAt": "2017-11-15T12:42:03Z"
     }
   ]
 }
@@ -172,7 +172,7 @@ Response:
     "bio": "",
     "likes": 1,
     "images": 1,
-    "registrationDate": "2017-11-15T10:05:28+00:00"
+    "createdAt": "2017-11-15T10:05:28Z"
   }
 }
 ```
@@ -257,18 +257,18 @@ Response:
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
-      "dateCreated": "2017-11-15T16:58:49+02:00",
       "likes": 2,
-      "isLiked": true
+      "isLiked": true,
+      "createdAt": "2017-11-15T16:58:49Z"
     },
     {
       "_id": "5a0c5630ca682d61abcd5787",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Other description #awesome",
-      "dateCreated": "2017-11-15T16:58:56+02:00",
       "likes": 1,
-      "isLiked": false
+      "isLiked": false,
+      "createdAt": "2017-11-15T16:58:56Z"
     }
   ]
 }
@@ -304,9 +304,9 @@ Response:
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
-      "dateCreated": "2017-11-15T16:58:49+02:00",
       "likes": 2,
-      "isLiked": true
+      "isLiked": true,
+      "createdAt": "2017-11-15T16:58:49Z"
     }
   ]
 }
@@ -365,18 +365,18 @@ Response:
       "ownerId": "5a069fd03bd9992ce9520ec5",
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
-      "dateCreated": "2017-11-13T14:57:19+02:00",
       "likes": 0,
-      "isLiked": false
+      "isLiked": false,
+      "createdAt": "2017-11-13T14:57:19Z"
     },
     {
       "_id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description 2",
-      "dateCreated": "2017-11-15T16:58:49+02:00",
       "likes": 1,
-      "isLiked": true
+      "isLiked": true,
+      "createdAt": "2017-11-15T16:58:49Z"
     }
   ]
 }
@@ -416,36 +416,11 @@ Response:
     "ownerId": "5a069fd03bd9992ce9520ec5",
     "filename": "6710497b36573655ed145f1bc1e01052",
     "description": "Image description",
-    "dateCreated": "2017-11-13T14:57:19+02:00",
     "likes": 2,
-    "isLiked": true
+    "isLiked": true,
+    "createdAt": "2017-11-13T14:57:19Z"
   }
 }
-```
-
-### Update image
-
-```
-PUT /images/<imageId>
-```
-
-URL parameters:
-
-```
-imageId - id of the image
-```
-
-Body parameters:
-
-```
-description: string
-```
-
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
 ```
 
 ### Delete image
@@ -514,7 +489,7 @@ Response:
       "bio": "The dark knight",
       "likes": 1,
       "images": 2,
-      "registrationDate": "2017-11-13T17:09:19+02:00"
+      "createdAt": "2017-11-13T17:09:19Z"
     }
   ]
 }
