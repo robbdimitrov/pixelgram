@@ -1,4 +1,3 @@
-const BodyParser = require('../services/body-parser');
 const APIRouter = require('./api-router');
 const ImageLikesRouter = require('./image-likes-router');
 const StatusCode = require('./status-code');
@@ -64,30 +63,12 @@ class ImageRouter extends APIRouter {
     const id = req.params.id;
     const userId = req.user.id;
 
-    this.dbClient.getOneImage(id, userId).then((result) => {
+    this.dbClient.getImage(id, userId).then((result) => {
       if (result) {
         res.status(StatusCode.ok).send({
           image: result
         });
       }
-    }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        message: error.message
-      });
-    });
-  }
-
-  updateOne(req, res) {
-    const userId = req.user.id;
-    const imageId = req.params.id;
-    const body = req.body;
-
-    const updatedImage = BodyParser.parseBodyParametersToObject(body, ['description']);
-
-    this.dbClient.imageIsOwnedByUser(userId, imageId).then(() => {
-      this.dbClient.updateOneImage(imageId, { $set: updatedImage }).then(() => {
-        res.sendStatus(StatusCode.noContent);
-      });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
         message: error.message

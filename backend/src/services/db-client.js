@@ -19,7 +19,7 @@ class DBClient {
         this.client = result;
         resolve(this.client);
       }).catch((error) => {
-        return reject(error);
+        reject(error);
       });
     });
   }
@@ -30,17 +30,11 @@ class DBClient {
 
   closeConnection() {
     return new Promise((resolve, reject) => {
-      if (!this.client) {
-        return resolve(this.client);
-      }
-
-      this.client.close((err) => {
+      this.client.close().then(() => {
         this.client = undefined;
-
-        if (err) {
-          return reject(err);
-        }
-        resolve(this.client);
+        resolve();
+      }).catch((error) => {
+        reject(error);
       });
     });
   }
@@ -54,7 +48,6 @@ class DBClient {
       email: 1,
       bio: 1,
       avatar: 1,
-      registrationDate: 1,
       likes: { $size: '$likedImages' },
       images: { $size: '$postedImages' }
     };
@@ -70,7 +63,6 @@ class DBClient {
     const properties = {
       ownerId: 1,
       filename: 1,
-      dateCreated: 1,
       description: 1,
       likes: { $size: '$likedUsers' }
     };
@@ -84,27 +76,14 @@ class DBClient {
 
   // Image methods
 
-  /**
-   * Returns a promise if the image with imageId is owned by the user with userId.
-   *
-   * @param userId if of the user
-   * @param imageId id of the image
-   * @returns Promise with empty result or error
-   */
-  async imageIsOwnedByUser(userId, imageId) {
-    const client = await this.get();
+  addCreationTimestamp(value) {
+    const createdAt = value._id.getTimestamp();
+    const object = { ...value,  createdAt };
+    return object;
+  }
 
-    return new Promise((resolve, reject) => {
-      client.db().collection('images').find({
-        _id: new ObjectID(imageId),
-        ownerId: new ObjectID(userId)
-      }, { ownerId: 1 }).count((error, result) => {
-        if (result > 0) {
-          return resolve();
-        }
-        return reject(new Error('Image not existing or owned by other user.'));
-      });
-    });
+  addCreationTimestamps(values) {
+    return values.map((value) => this.addCreationTimestamp(value));
   }
 
   /**
@@ -128,16 +107,14 @@ class DBClient {
           reject(error);
         });
       } else {
-        const sortQuery = { dateCreated: -1 };
-
         client.db().collection('images').aggregate([
           { $match: query },
           { $project: this.imageAggregationProperties(userId) }
-        ]).sort(sortQuery).skip(page * limit).limit(limit).toArray((err, result) => {
+        ]).sort({ _id: -1 }).skip(page * limit).limit(limit).toArray((err, result) => {
           if (err) {
             return reject(err);
           }
-          resolve(result);
+          resolve(this.addCreationTimestamps(result));
         });
       }
     });
@@ -149,7 +126,7 @@ class DBClient {
    * @param user the image to be inserted in the database
    * @returns Promise with the write operation result
    */
-  async createOneImage(image) {
+  async createImage(image) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
@@ -160,14 +137,10 @@ class DBClient {
 
         const imageId = result.insertedId;
 
-        client.db().collection('users').updateOne(
-          { _id: image.ownerId },
-          { $push: { postedImages: imageId } },
-        ).then(() => {
-          resolve(imageId);
-        }).catch((error) => {
-          return reject(error);
-        });
+        client.db().collection('users').updateOne({ _id: image.ownerId },
+          { $push: { postedImages: imageId } })
+          .then(() => resolve(imageId))
+          .catch((error) => reject(error));
       });
     });
   }
@@ -179,23 +152,21 @@ class DBClient {
    * @param userId used for checking if the current user has liked the image
    * @returns Promise with Image Object
    */
-  async getOneImage(imageId, userId) {
+  async getImage(imageId, userId) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      const query = { _id: new ObjectID(imageId) };
-
       client.db().collection('images').aggregate([
-        { $match: query },
+        { $match: { _id: new ObjectID(imageId) } },
         { $project: this.imageAggregationProperties(userId) }
       ], (error, result) => {
         if (error) {
           return reject(error);
         }
         result.toArray().then((res) => {
-          resolve(res[0]);
+          resolve(this.addCreationTimestamp(res[0]));
         }).catch(() => {
-          reject('Something went wrong.');
+          reject(new Error('Something went wrong.'));
         });
       });
     });
@@ -208,16 +179,13 @@ class DBClient {
    * @param imageUpdates JS Object with the updated values
    * @returns Promise with empty object or error
    */
-  async updateOneImage(imageId, imageUpdates) {
+  async updateImage(imageId, imageUpdates) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates, (err) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve();
-      });
+      client.db().collection('images').updateOne({ _id: new ObjectID(imageId) }, imageUpdates)
+        .then(() => resolve())
+        .catch((error) => reject(error));
     });
   }
 
@@ -228,26 +196,26 @@ class DBClient {
    * @param imageId id of the image
    * @returns Promise with empty object or error
    */
-  async deleteOneImage(userId, imageId) {
+  async deleteImage(imageId, userId) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      this.imageIsOwnedByUser(userId, imageId).then(() => {
-        const imageObjectId = new ObjectID(imageId);
+      const userObjectId = new ObjectID(userId);
+      const imageObjectId = new ObjectID(imageId);
 
-        client.db().collection('users').updateMany({},
-          { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
-          { multi: true },
-        ).then(() => {
-          client.db().collection('images').deleteOne({ _id: new ObjectID(imageId) }, (error) => {
-            if (error) {
-              return reject(error);
-            }
-            resolve();
-          });
-        });
-      }).catch((error) => {
-        return reject(error);
+      client.db().collection('images').deleteOne({
+        _id: imageObjectId, ownerId: userObjectId
+      }).then((result) => {
+        if (result.deletedCount !== 0) {
+          client.db().collection('users').updateMany({},
+            { $pull: { likedImages: imageObjectId, postedImages: imageObjectId } },
+            { multi: true })
+            .then(() => resolve());
+        } else {
+          reject(new Error('Image not existing or owned by other user.'));
+        }
+      }).catch(() => {
+        reject(new Error('Something went wrong.'));
       });
     });
   }
@@ -268,11 +236,9 @@ class DBClient {
 
     return new Promise((resolve, reject) => {
       if (countOnly) {
-        client.db().collection('users').find(query, { _id: 1 }).count().then((res) => {
-          return resolve(res);
-        }).catch((error) => {
-          reject(error);
-        });
+        client.db().collection('users').find(query, { _id: 1 }).count()
+          .then((result) => resolve(result))
+          .catch((error) => reject(error));
       } else {
         client.db().collection('users').aggregate([
           { $match: query },
@@ -293,7 +259,7 @@ class DBClient {
    * @param user the user to be inserted in the database
    * @returns Promise with the write operation result
    */
-  async createOneUser(user) {
+  async createUser(user) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
@@ -319,7 +285,7 @@ class DBClient {
    * @param raw if true, the raw User object is returned. Default is false.
    * @returns Promise with User JS Object
    */
-  async getOneUser(field, value, raw = false) {
+  async getUser(field, value, raw = false) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
@@ -341,13 +307,12 @@ class DBClient {
         if (error) {
           reject(error);
         } else if (!result) {
-          const error = new Error('User not found.');
-          reject(error);
+          reject(new Error('User not found.'));
         } else {
           result.toArray().then((res) => {
             resolve(res[0]);
           }).catch(() => {
-            reject('Something went wrong.');
+            reject(new Error('Something went wrong.'));
           });
         }
       };
@@ -366,16 +331,13 @@ class DBClient {
    * @param userUpdates JS Object with the updated values
    * @returns Promise with empty object or error
    */
-  async updateOneUser(userId, userUpdates) {
+  async updateUser(userId, userUpdates) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection('users').updateOne({ _id: new ObjectID(userId) }, userUpdates, (err) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve();
-      });
+      client.db().collection('users').updateOne({ _id: new ObjectID(userId) }, userUpdates)
+        .then(() => resolve())
+        .catch((error) => reject(error));
     });
   }
 
@@ -385,16 +347,13 @@ class DBClient {
    * @param userId id of the user
    * @returns Promise with empty object or error
    */
-  async deleteOneUser(userId) {
+  async deleteUser(userId) {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection('users').deleteOne({ _id: new ObjectID(userId) }, (err) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve();
-      });
+      client.db().collection('users').deleteOne({ _id: new ObjectID(userId) })
+        .then(() => resolve())
+        .catch((error) => reject(error));
     });
   }
 }

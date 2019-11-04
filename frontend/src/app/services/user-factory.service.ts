@@ -10,7 +10,8 @@ export class UserFactory {
       object.avatar,
       object.bio,
       object.images,
-      object.likes
+      object.likes,
+      new Date(object.createdAt)
     );
     return user;
   }

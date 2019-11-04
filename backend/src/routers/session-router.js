@@ -22,7 +22,7 @@ class SessionRouter extends APIRouter {
       });
     };
 
-    this.dbClient.getOneUser('email', email, true).then((user) => {
+    this.dbClient.getUser('email', email, true).then((user) => {
       if (!user) {
         return authFailedBlock();
       }
