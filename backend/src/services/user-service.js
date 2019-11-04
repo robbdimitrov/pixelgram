@@ -21,7 +21,7 @@ class UserService {
       }
 
       UserFactory.createUser(name, username, email, password).then((user) => {
-        this.dbClient.createOneUser(user).then((result) => {
+        this.dbClient.createUser(user).then((result) => {
           resolve(result);
         }).catch((error) => {
           reject(error);
@@ -36,7 +36,7 @@ class UserService {
       const updatedUser = BodyParser.parseBodyParametersToObject(updates, allowedKeys);
 
       const updateClosure = (dbClient, id, updatedUser) => {
-        dbClient.updateOneUser(id, { $set: updatedUser }).then(() => {
+        dbClient.updateUser(id, { $set: updatedUser }).then(() => {
           resolve();
         }).catch((error) => {
           reject(error);
@@ -64,7 +64,7 @@ class UserService {
           return reject(error);
         }
 
-        this.dbClient.getOneUser('id', userId, true).then((user) => {
+        this.dbClient.getUser('id', userId, true).then((user) => {
           AuthService.getInstance().validatePassword(oldPassword, user['password']).then((value) => {
             if (value) {
               AuthService.getInstance().generateHash(password).then((result) => {

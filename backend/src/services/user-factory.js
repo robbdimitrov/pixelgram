@@ -10,8 +10,7 @@ class UserFactory {
         avatar: '',
         bio: '',
         likedImages: [],
-        postedImages: [],
-        registrationDate: new Date().toISOString()
+        postedImages: []
       };
 
       AuthService.getInstance().generateHash(password).then((res) => {

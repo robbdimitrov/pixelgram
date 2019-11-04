@@ -3,9 +3,9 @@ export class Image {
     public id: string,
     public owner: string,
     public filename: string,
-    public dateCreated: Date,
     public description: string,
     public likes: number,
-    public isLiked: boolean
+    public isLiked: boolean,
+    public createdAt: Date
   ) {}
 }
