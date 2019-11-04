@@ -247,7 +247,7 @@ class DBClient {
           if (err) {
             return reject(err);
           }
-          resolve(result);
+          resolve(this.addCreationTimestamps(result));
         });
       }
     });
@@ -310,7 +310,7 @@ class DBClient {
           reject(new Error('User not found.'));
         } else {
           result.toArray().then((res) => {
-            resolve(res[0]);
+            resolve(this.addCreationTimestamp(res[0]));
           }).catch(() => {
             reject(new Error('Something went wrong.'));
           });
