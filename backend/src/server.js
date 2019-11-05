@@ -12,13 +12,13 @@ const UserService = require('./services/user-service');
 const StatusCode = require('./routers/status-code');
 
 class Server {
-  constructor(port, dbClient) {
+  constructor(port, dbClient, imageDir) {
     this.port = port;
     this.dbClient = dbClient;
-
-    this.app = express();
-    this.imageDir = '/data/images';
+    this.imageDir = imageDir;
     this.routers = {};
+    this.app = express();
+
     this.imageService = new ImageService(dbClient);
     this.userService = new UserService(dbClient);
   }
