@@ -40,22 +40,24 @@ class AuthService {
   }
 
   generateToken(user) {
-    const payload = { id: user._id };
-
-    const token = jwt.sign(payload, this.secret, {
-      expiresIn: '12h'
-    });
-
+    const issuedAt = Math.floor(Date.now() / 1000);
+    const expiration = issuedAt + 60 * 60;
+    const payload = {
+      sub: user._id,
+      iat: issuedAt,
+      exp: expiration
+    };
+    const token = jwt.sign(payload, this.secret, { algorithm: 'HS256' });
     return token;
   }
 
   validateToken(token) {
     return new Promise((resolve, reject) => {
-      jwt.verify(token, this.secret, (err, decoded) => {
+      jwt.verify(token, this.secret, { algorithm: 'HS256' }, (err, decoded) => {
         if (err) {
           reject(err);
         } else {
-          resolve(decoded);
+          resolve({ id: decoded.sub });
         }
       });
     });
