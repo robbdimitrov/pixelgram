@@ -1,6 +1,6 @@
 <div class="container full-width">
   <pg-image
-    *ngFor="let image of images"
+    *ngFor="let image of images()"
     [image]="image"
     [user]="image.owner | user | async"
     (like)="onLike($event)"
@@ -12,7 +12,7 @@
 
   <button
     id="next"
-    *ngIf="images.length > 5"
+    *ngIf="count() > 5"
     class="button outline-button round-corners"
     (click)="onNextClick()"
   >

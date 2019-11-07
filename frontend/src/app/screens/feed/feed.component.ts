@@ -4,26 +4,26 @@ import { Location } from '@angular/common';
 import { Subscription } from 'rxjs';
 
 import {
-  APIClient, APIPageCountLimit, UserDidLogoutNotification
+  APIClient, UserDidLogoutNotification
 } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
-import { UserCache } from '../../services/user-cache.service';
+import { PaginationService } from '../../services/pagination.service';
 import { Session } from '../../services/session.service';
 
 @Component({
   templateUrl: './feed.component.html',
-  styleUrls: ['feed.component.scss']
+  styleUrls: ['feed.component.scss'],
+  providers: [PaginationService]
 })
 export class FeedComponent implements AfterViewInit, OnDestroy {
-  images: Image[] = [];
-  page = 0;
   isSingleImageMode = false;
   userId?: string;
   loginSubscription: Subscription;
 
   constructor(private apiClient: APIClient, private router: Router,
-              private userCache: UserCache, private session: Session,
-              private route: ActivatedRoute, private location: Location) {
+              private pagination: PaginationService<Image>,
+              private session: Session, private route: ActivatedRoute,
+              private location: Location) {
 
     this.subscribeToLogout();
 
@@ -44,8 +44,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     this.loginSubscription = this.apiClient.loginSubject.subscribe(
       (value) => {
         if (value === UserDidLogoutNotification) {
-          this.page = 0;
-          this.images = [];
+          this.pagination.reset();
           this.router.navigate(['/login']);
         }
       }
@@ -68,19 +67,14 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
 
   loadNextPage() {
     const req = (this.userId ?
-      this.apiClient.getUsersLikedImages(this.userId, this.page) :
-      this.apiClient.getAllImages(this.page));
+      this.apiClient.getUsersLikedImages(this.userId, this.pagination.page) :
+      this.apiClient.getAllImages(this.pagination.page));
 
     req.subscribe((data) => {
         const images = data.filter((image) => {
-          return !(this.images.some((value) => image.id === value.id));
+          return !(this.pagination.data.some((value) => image.id === value.id));
         });
-
-        this.images.push(...images);
-
-        if (data.length === APIPageCountLimit) {
-          this.page += 1;
-        }
+        this.pagination.update(images);
       },
       (error) => console.error('Error loading images.')
     );
@@ -88,9 +82,17 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
 
   loadImage(imageId: string) {
     this.apiClient.getImage(imageId).subscribe(
-      (data) => this.images.push(data),
+      (data) => this.pagination.update([data]),
       (error) => console.error(`Loading user failed: ${error}`)
     );
+  }
+
+  images() {
+    return this.pagination.data;
+  }
+
+  count() {
+    return this.pagination.count();
   }
 
   // Actions
@@ -112,15 +114,11 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
   }
 
   onDeleteAction(image: Image) {
-    const index = this.images.indexOf(image);
-
-    if (index > -1) {
-      this.images.splice(index, 1);
-    }
+    this.pagination.remove(image);
 
     this.apiClient.deleteImage(image.id).subscribe(
       (data) => {
-        if (this.isSingleImageMode && this.images.length === 0) {
+        if (this.isSingleImageMode && this.pagination.count() === 0) {
           this.location.back();
         }
       },

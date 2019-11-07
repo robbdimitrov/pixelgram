@@ -13,8 +13,6 @@ import { environment } from '../../environments/environment';
 export const UserDidLogoutNotification = 'UserDidLogoutNotification';
 export const UserDidLoginNotification = 'UserDidLoginNotification';
 
-export const APIPageCountLimit = 10;
-
 @Injectable()
 export class APIClient {
   private apiRoot = environment.apiRoot;

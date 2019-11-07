@@ -9,7 +9,7 @@
 
   <div class="image-container">
     <pg-thumbnail
-      *ngFor="let image of images"
+      *ngFor="let image of images()"
       [image]="image"
       (openImage)="onOpenImage($event)"
     >
@@ -18,7 +18,7 @@
 
   <button
     id="next"
-    *ngIf="images.length > 5"
+    *ngIf="count() > 5"
     class="button outline-button round-corners"
     (click)="onNextClick()"
   >
