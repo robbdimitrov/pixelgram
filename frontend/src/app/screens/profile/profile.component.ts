@@ -57,6 +57,7 @@ export class ProfileComponent implements OnDestroy {
     this.apiClient.getUser(userId).subscribe(
       (data) => {
         this.user = data;
+        this.pagination.reset();
         this.loadNextPage();
       },
       (error) => console.error(`Loading user failed: ${error}`)
