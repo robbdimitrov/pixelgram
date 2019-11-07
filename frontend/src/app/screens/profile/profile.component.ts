@@ -4,33 +4,29 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 import { Image } from '../../models/image.model';
 import {
-  APIClient, APIPageCountLimit, UserDidLogoutNotification
+  APIClient, UserDidLogoutNotification
 } from '../../services/api-client.service';
-import { Session } from '../../services/session.service';
-import { UserCache } from '../../services/user-cache.service';
+import { PaginationService } from '../../services/pagination.service';
 import { User } from '../../models/user.model';
 
 @Component({
   selector: 'pg-profile',
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  styleUrls: ['./profile.component.scss'],
+  providers: [PaginationService]
 })
 export class ProfileComponent implements OnDestroy {
-  images: Image[] = [];
-  page = 0;
   loginSubscription: Subscription;
   user: User;
 
   constructor(private apiClient: APIClient, private router: Router,
-              private userCache: UserCache, private session: Session,
+              private pagination: PaginationService<Image>,
               private route: ActivatedRoute) {
     this.subscribeToLogout();
 
     this.route.params.subscribe(params => {
       const id = params.id;
       if (!this.user || id !== this.user.id) {
-        this.page = 0;
-        this.images = [];
         this.loadUser(id);
       }
     });
@@ -42,8 +38,7 @@ export class ProfileComponent implements OnDestroy {
     this.loginSubscription = this.apiClient.loginSubject.subscribe(
       (value) => {
         if (value === UserDidLogoutNotification) {
-          this.page = 0;
-          this.images = [];
+          this.pagination.reset();
           this.router.navigate(['/login']);
         }
       }
@@ -69,20 +64,23 @@ export class ProfileComponent implements OnDestroy {
   }
 
   loadNextPage() {
-    this.apiClient.getUsersImages(this.user.id, this.page).subscribe(
+    this.apiClient.getUsersImages(this.user.id, this.pagination.page).subscribe(
       (data) => {
         const images = data.filter((image) => {
-          return !(this.images.some((value) => image.id === value.id));
+          return !(this.pagination.data.some((value) => image.id === value.id));
         });
-
-        this.images.push(...images);
-
-        if (data.length === APIPageCountLimit) {
-          this.page += 1;
-        }
+        this.pagination.update(images);
       },
       (error) => console.error(`Error loading images: ${error}`)
     );
+  }
+
+  images() {
+    return this.pagination.data;
+  }
+
+  count() {
+    return this.pagination.count();
   }
 
   // Actions
