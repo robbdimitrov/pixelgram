@@ -22,9 +22,9 @@ Pixelgram is an image sharing service.
 
 ## Screenshots
 
-Feed | Profile
---- | ---
-[![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png)
+| Feed | Profile |
+| --- | --- |
+| [![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png) |
 
 ## Setup
 
