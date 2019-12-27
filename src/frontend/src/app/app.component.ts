@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { ErrorService } from './services/error.service';
 
 @Component({
-  selector: 'app-root',
+  selector: 'pg-root',
   templateUrl: './app.component.html'
 })
 export class AppComponent {
