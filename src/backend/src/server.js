@@ -10,6 +10,7 @@ const AuthService = require('./services/auth-service');
 const ImageService = require('./services/image-service');
 const UserService = require('./services/user-service');
 const StatusCode = require('./routers/status-code');
+const Logger = require('./services/logger');
 
 class Server {
   constructor(port, dbClient, imageDir) {
@@ -35,7 +36,7 @@ class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      process.stdout.write(`Server REQUEST ${req.method} ${req.url}\n`);
+      Logger.logInfo(`Server REQUEST ${req.method} ${req.url}`);
       next();
     });
   }
@@ -108,7 +109,7 @@ class Server {
     this.configure();
 
     this.app.listen(this.port, () => {
-      process.stdout.write(`Starting server on port ${this.port}\n`);
+      Logger.logInfo(`Starting server on port ${this.port}`);
     });
   }
 }
