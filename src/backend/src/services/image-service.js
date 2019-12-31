@@ -23,10 +23,10 @@ class ImageService {
   likeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       this.dbClient.updateUser(userId,
-        { $addToSet: { likedImages: new ObjectID(imageId) } },
+        { $addToSet: { likedImages: new ObjectID(imageId) } }
       ).then(() => {
         this.dbClient.updateImage(imageId,
-          { $addToSet: { likedUsers: new ObjectID(userId) } },
+          { $addToSet: { likedUsers: new ObjectID(userId) } }
         ).then(() => {
           resolve();
         });
@@ -39,10 +39,10 @@ class ImageService {
   unlikeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       this.dbClient.updateUser(userId,
-        { $pull: { likedImages: new ObjectID(imageId) } },
+        { $pull: { likedImages: new ObjectID(imageId) } }
       ).then(() => {
         this.dbClient.updateImage(imageId,
-          { $pull: { likedUsers: new ObjectID(userId) } },
+          { $pull: { likedUsers: new ObjectID(userId) } }
         ).then(() => {
           resolve();
         });
