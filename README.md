@@ -42,22 +42,30 @@ $ cd pixelgram
 Build images
 
 ```sh
-$ docker-compose build
+$ make
 ```
 
 Run containers
 
 ```sh
-$ docker-compose up
+$ kubectl apply -f k8s
 ```
 
-Stop containers
+Enable port forwarding
 
 ```sh
-$ docker-compose down
+$ kubectl port-forward service/frontend 4000
 ```
 
-Open the front-end [here](http://localhost:4000/) and access the API [here](http://localhost:4000/api/).
+Open the front-end [here](http://localhost:4000/).
+
+### Cleanup
+
+Remove all resources
+
+```sh
+$ kubectl delete -f k8s
+```
 
 ## API
 
