@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: pixelgram
+    tier: backend
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: pixelgram
+    tier: backend
+spec:
+  selector:
+    matchLabels:
+      app: pixelgram
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: pixelgram
+        tier: backend
+    spec:
+      containers:
+      - name: backend
+        image: pixelgram/backend
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        env:
+        - name: PORT
+          value: "3000"
+        - name: DATABASE_URL
+          value: mongodb://database:27017/pixelgram
+        - name: SECRET
+          value: 7f40a8c2c68f47ef7b896586b012ae34
+        volumeMounts:
+        - mountPath: /data/images
+          name: image-storage
+      volumes:
+        - name: image-storage
+          persistentVolumeClaim:
+            claimName: storage-pv-claim
