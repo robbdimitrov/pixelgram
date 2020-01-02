@@ -11,21 +11,17 @@ class UserService {
   createUser(name, username, email, password) {
     return new Promise((resolve, reject) => {
       if (password === '') {
-        const error = new Error('Password can\'t be empty.');
-        return reject(error);
+        return reject(new Error('Password can\'t be empty.'));
       }
 
       if (!ValidatorService.isValidEmail(email)) {
-        const error = new Error('Invalid email address.');
-        return reject(error);
+        return reject(new Error('Invalid email address.'));
       }
 
       UserFactory.createUser(name, username, email, password).then((user) => {
-        this.dbClient.createUser(user).then((result) => {
-          resolve(result);
-        }).catch((error) => {
-          reject(error);
-        });
+        this.dbClient.createUser(user)
+          .then((result) => resolve(result))
+          .catch((error) => reject(error));
       });
     });
   }
@@ -36,17 +32,14 @@ class UserService {
       const updatedUser = BodyParser.parseBodyParametersToObject(updates, allowedKeys);
 
       const updateClosure = (dbClient, id, updatedUser) => {
-        dbClient.updateUser(id, { $set: updatedUser }).then(() => {
-          resolve();
-        }).catch((error) => {
-          reject(error);
-        });
+        dbClient.updateUser(id, { $set: updatedUser })
+          .then(() => resolve())
+          .catch((error) => reject(error));
       };
 
       if (updates.email !== undefined) {
         if (!ValidatorService.isValidEmail(updates.email)) {
-          const error = new Error('Invalid email address.');
-          return reject(error);
+          return reject(new Error('Invalid email address.'));
         }
       }
 
@@ -55,28 +48,21 @@ class UserService {
         const oldPassword = updates.oldPassword;
 
         if (!oldPassword) {
-          const error = new Error('Both password and the current password are required.');
-          return reject(error);
+          return reject(new Error('Both password and the current password are required.'));
         }
 
         if (password === '') {
-          const error = new Error('Password can\'t be empty.');
-          return reject(error);
+          return reject(new Error('Password can\'t be empty.'));
         }
 
         this.dbClient.getUser('id', userId, true).then((user) => {
-          AuthService.getInstance().validatePassword(oldPassword, user['password']).then((value) => {
-            if (value) {
-              AuthService.getInstance().generateHash(password).then((result) => {
-                updatedUser['password'] = result;
-                updateClosure(this.dbClient, userId, updatedUser);
-              });
-            } else {
-              throw new Error('Authentication failed.');
-            }
+          AuthService.getInstance().validatePassword(oldPassword, user['password']).then(() => {
+            AuthService.getInstance().generateHash(password).then((result) => {
+              updatedUser['password'] = result;
+              updateClosure(this.dbClient, userId, updatedUser);
+            });
           }).catch(() => {
-            const error = new Error('Wrong password. Enter the correct current password.');
-            return reject(error);
+            return reject(new Error('Wrong password. Enter the correct current password.'));
           });
         }).catch((error) => {
           return reject(error);

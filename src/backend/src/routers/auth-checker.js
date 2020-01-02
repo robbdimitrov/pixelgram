@@ -1,8 +1,7 @@
-const AuthService = require('./auth-service');
-const StatusCode = require('../routers/status-code');
-const Logger = require('./logger');
+const AuthService = require('../services/auth-service');
+const StatusCode = require('./status-code');
 
-const allowed = [
+const allowedRoutes = [
   {
     method: 'OPTIONS',
     path: ''
@@ -18,7 +17,7 @@ const allowed = [
 ];
 
 function isAllowed(req) {
-  for (const route in allowed) {
+  for (const route in allowedRoutes) {
     if (req.method === route.method && req.path.indexOf(route.path) !== -1) {
       return true;
     }
@@ -42,12 +41,10 @@ function authChecker(req, res, next) {
       req.user = result;
       next();
     }).catch((error) => {
-      Logger.logError(`Token validation failed: ${error}`);
-
       res.status(StatusCode.unauthorized).send({
         error: {
           code: StatusCode.unauthorized,
-          message: 'Failed to authenticate token.'
+          message: error.message
         }
       });
     });
