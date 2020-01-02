@@ -17,11 +17,14 @@ class UserImagesRouter extends APIRouter {
 
     this.imageService.getAllImagesForUser(userId, page, limit, count, currentUserId).then((result) => {
       res.status(StatusCode.ok).send({
-        images: result
+        data: result
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }

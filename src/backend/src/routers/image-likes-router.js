@@ -16,11 +16,14 @@ class ImageLikesRouter extends APIRouter {
 
     this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
       res.status(StatusCode.ok).send({
-        users: result
+        data: result
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -33,7 +36,10 @@ class ImageLikesRouter extends APIRouter {
       res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -44,7 +50,10 @@ class ImageLikesRouter extends APIRouter {
 
     if (userId !== req.user.id) {
       return res.status(StatusCode.forbidden).send({
-        message: 'Can\'t unlike other people\'s likes.'
+        error: {
+          code: StatusCode.forbidden,
+          message: 'Can\'t unlike other people\'s likes.'
+        }
       });
     }
 
@@ -52,7 +61,10 @@ class ImageLikesRouter extends APIRouter {
       res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }

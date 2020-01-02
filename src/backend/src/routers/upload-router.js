@@ -19,10 +19,13 @@ class UploadRouter {
     router.post('/', uploader.single('image'), (req, res) => {
       if (req.file) {
         res.status(StatusCode.created).send({
-          filename: req.file.filename
+          data: {
+            filename: req.file.filename
+          }
         });
       } else {
         res.status(StatusCode.badRequest).send({
+          code: StatusCode.badRequest,
           message: 'File missing from request. Should be sent as a multipart/form-data.'
         });
       }

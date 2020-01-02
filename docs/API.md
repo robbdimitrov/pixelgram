@@ -24,6 +24,7 @@
 * [Image assets](#image-assets)
   * [Upload an image](#upload-an-image)
   * [Load image asset](#load-image-asset)
+* [Errors](#errors)
 
 ## Sessions
 
@@ -50,18 +51,20 @@ Response:
 
 ```json
 {
-  "user": {
-    "_id": "5a0c11682ce7e1000f2a1f5a",
-    "name": "Clark Kent",
-    "username": "superman",
-    "email": "clark.kent@dailyplanet.com",
-    "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-    "bio": "Kryptonian hero",
-    "likes": 0,
-    "images": 1,
-    "createdAt": "2017-11-15T10:05:28Z"
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN1cGVybWFuIiwiaWQiOiI1YTBjMTE2ODJjZTdlMTAwMGYyYTFmNWEiLCJpYXQiOjE1MTA3NDg4ODksImV4cCI6MTUxMDc1MjQ4OX0.ZDmxdzis314r1VNSXWKjqHDCVrilfdeJO9d5Rviids0"
+  "data": {
+    "user": {
+      "_id": "5a0c11682ce7e1000f2a1f5a",
+      "name": "Clark Kent",
+      "username": "superman",
+      "email": "clark.kent@dailyplanet.com",
+      "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+      "bio": "Kryptonian hero",
+      "likes": 0,
+      "images": 1,
+      "createdAt": "2017-11-15T10:05:28Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+  }
 }
 ```
 
@@ -92,7 +95,9 @@ Response:
 
 ```json
 {
-  "_id": "5a0c11682ce7e1000f2a1f5a"
+  "data": {
+    "_id": "5a0c11682ce7e1000f2a1f5a"
+  }
 }
 ```
 
@@ -113,14 +118,14 @@ Response:
 
 ```json
 {
-  "users": [
+  "data": [
     {
       "_id": "5a0c11682ce7e1000f2a1f5a",
       "name": "Clark Kent",
       "username": "superman",
       "email": "clark.kent@dailyplanet.com",
       "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-      "bio": "Kriptonian hero",
+      "bio": "Kryptonian hero",
       "likes": 0,
       "images": 2,
       "createdAt": "2017-11-15T10:05:28Z"
@@ -130,7 +135,7 @@ Response:
       "name": "Bruce Wayne",
       "username": "batman",
       "email": "bruce@wayneindustries.com",
-      "avatar": "",
+      "avatar": "d1d99db3ac32052b9dd66cb1245891ad",
       "bio": "The dark knight",
       "likes": 1,
       "images": 1,
@@ -163,13 +168,13 @@ Response:
 
 ```json
 {
-  "user": {
+  "data": {
     "_id": "5a0c11682ce7e1000f2a1f5a",
     "name": "Clark Kent",
     "username": "superman",
     "email": "clark.kent@dailyplanet.com",
     "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-    "bio": "",
+    "bio": "Kryptonian hero",
     "likes": 1,
     "images": 1,
     "createdAt": "2017-11-15T10:05:28Z"
@@ -251,7 +256,7 @@ Response:
 
 ```json
 {
-  "images": [
+  "data": [
     {
       "_id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
@@ -298,7 +303,7 @@ Response:
 
 ```json
 {
-  "images": [
+  "data": [
     {
       "_id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
@@ -338,7 +343,9 @@ Response:
 
 ```json
 {
-  "_id": "5a0c5629ca682d61abcd5786"
+  "data": {
+    "_id": "5a0c5629ca682d61abcd5786"
+  }
 }
 ```
 
@@ -359,7 +366,7 @@ Response:
 
 ```json
 {
-  "images": [
+  "data": [
     {
       "_id": "5a0996ba2775b637bd49b0ab",
       "ownerId": "5a069fd03bd9992ce9520ec5",
@@ -411,7 +418,7 @@ Response:
 
 ```json
 {
-  "image": {
+  "data": {
     "_id": "5a0996ba2775b637bd49b0ab",
     "ownerId": "5a069fd03bd9992ce9520ec5",
     "filename": "6710497b36573655ed145f1bc1e01052",
@@ -479,13 +486,13 @@ Response:
 
 ```json
 {
-  "users": [
+  "data": [
     {
       "_id": "5a09b5acc3d0655f6f6225cb",
       "name": "Bruce Wayne",
       "username": "batman",
       "email": "bruce@wayneindustries.com",
-      "avatar": "",
+      "avatar": "d1d99db3ac32052b9dd66cb1245891ad",
       "bio": "The dark knight",
       "likes": 1,
       "images": 2,
@@ -541,7 +548,9 @@ Response:
 
 ```json
 {
-  "filename": "d4aab3fd72517522479c08520bc150a3"
+  "data": {
+    "filename": "d4aab3fd72517522479c08520bc150a3"
+  }
 }
 ```
 
@@ -561,4 +570,17 @@ Response:
 
 ```
 The image data
+```
+
+## Errors
+
+Errors contain the HTTP status code and message describing the error.
+
+```json
+{
+  "error": {
+    "code": 500,
+    "message": 'Missing argument(s). Image filename is expected.'
+  }
+}
 ```

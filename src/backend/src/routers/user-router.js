@@ -31,11 +31,14 @@ class UserRouter extends APIRouter {
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
       res.status(StatusCode.ok).send({
-        users: result
+        data: result
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -44,9 +47,11 @@ class UserRouter extends APIRouter {
     const body = req.body || {};
 
     if (!body.name || !body.username || !body.email || !body.password) {
-      const error = new Error('Missing argument(s). Name, username, email and password are expected.');
       return res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: 'Missing argument(s). Name, username, email and password are expected.'
+        }
       });
     }
 
@@ -57,11 +62,16 @@ class UserRouter extends APIRouter {
 
     this.userService.createUser(name, username, email, password).then((result) => {
       res.status(StatusCode.created).send({
-        _id: result
+        data: {
+          _id: result
+        }
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -72,12 +82,15 @@ class UserRouter extends APIRouter {
     this.dbClient.getUser('id', id).then((result) => {
       if (result) {
         res.status(StatusCode.ok).send({
-          user: result
+          data: result
         });
       }
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -88,13 +101,19 @@ class UserRouter extends APIRouter {
 
     if (userId !== req.user.id) {
       return res.status(StatusCode.forbidden).send({
-        message: 'Can\'t update other people\'s accounts.'
+        error: {
+          code: StatusCode.forbidden,
+          message: 'Can\'t update other people\'s accounts.'
+        }
       });
     }
 
     if (Object.keys(body).length < 1) {
       return res.status(StatusCode.notModified).send({
-        message: 'Nothing to update.'
+        error: {
+          code: StatusCode.notModified,
+          message: 'Nothing to update.'
+        }
       });
     }
 
@@ -102,7 +121,10 @@ class UserRouter extends APIRouter {
       res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -120,7 +142,10 @@ class UserRouter extends APIRouter {
       res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }

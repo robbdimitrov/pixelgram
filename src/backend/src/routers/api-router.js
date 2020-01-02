@@ -1,6 +1,7 @@
 const Router = require('express').Router;
 
 const StatusCode = require('./status-code');
+const Logger = require('../services/logger');
 
 class APIRouter {
   constructor(dbClient, options) {
@@ -51,9 +52,14 @@ class APIRouter {
 
   // Helpers
 
-  sendNotFound(res) {
+  sendNotFound(req, res) {
+    Logger.logError(`Resource not found ${req.method} ${req.path}`);
+
     res.status(StatusCode.notFound).send({
-      message: 'The resource was not found.'
+      error: {
+        code: StatusCode.notFound,
+        message: 'The resource was not found.'
+      }
     });
   }
 
@@ -61,27 +67,27 @@ class APIRouter {
 
   // Get all objects
   getAll(req, res) {
-    this.sendNotFound(res);
+    this.sendNotFound(req, res);
   }
 
   // Create a new object
   createOne(req, res) {
-    this.sendNotFound(res);
+    this.sendNotFound(req, res);
   }
 
   // Get an object
   getOne(req, res) {
-    this.sendNotFound(res);
+    this.sendNotFound(req, res);
   }
 
   // Update existing object
   updateOne(req, res) {
-    this.sendNotFound(res);
+    this.sendNotFound(req, res);
   }
 
   // Delete existing object
   deleteOne(req, res) {
-    this.sendNotFound(res);
+    this.sendNotFound(req, res);
   }
 }
 
