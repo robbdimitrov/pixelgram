@@ -40,7 +40,7 @@ export class APIClient {
 
   private handleError(error: HttpErrorResponse) {
     if (error.error instanceof ErrorEvent) {
-      console.error(`An error occurred: ${error.error.message}`);
+      console.error(`An error occurred: ${error}`);
     } else {
       if (error.status === 401) { // Unauthorized
         this.logoutUser();
@@ -67,9 +67,9 @@ export class APIClient {
     const headers = this.headers();
 
     return this.http.post(url, body, { headers }).pipe(
-      map((data: any) => {
-        this.session.setToken(data.token);
-        this.session.setUserId(data.user._id);
+      map((res: any) => {
+        this.session.setToken(res.data.token);
+        this.session.setUserId(res.data.user._id);
         this.loginSubject.next(UserDidLoginNotification);
       }),
       catchError(this.handleError.bind(this))
@@ -91,7 +91,7 @@ export class APIClient {
     const headers = this.headers();
 
     const req = this.http.get(url, { headers }).pipe(
-      map((data: any) => UserFactory.userFromObject(data.user)),
+      map((res: any) => UserFactory.userFromObject(res.data)),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
       share()
@@ -145,11 +145,8 @@ export class APIClient {
     }
 
     const req = this.http.get(url, { headers }).pipe(
-      map((data: any) => {
-        const images = data.images.map(
-          (object) => ImageFactory.imageFromObject(object)
-        );
-        return images;
+      map((res: any) => {
+        res.data.map((object) => ImageFactory.imageFromObject(object));
       }),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
@@ -184,7 +181,7 @@ export class APIClient {
     const headers = this.headers();
 
     const req = this.http.get(url, { headers }).pipe(
-      map((data: any) => ImageFactory.imageFromObject(data.image)),
+      map((res: any) => ImageFactory.imageFromObject(res.data)),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
       share()
