@@ -8,7 +8,7 @@ const UploadRouter = require('./routers/upload-router');
 const UserRouter = require('./routers/user-router');
 const ImageService = require('./services/image-service');
 const UserService = require('./services/user-service');
-const authChecker = require('./services/auth-checker');
+const authChecker = require('./routers/auth-checker');
 const Logger = require('./services/logger');
 
 class Server {
