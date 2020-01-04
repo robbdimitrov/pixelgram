@@ -70,20 +70,21 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
       this.apiClient.getUsersLikedImages(this.userId, this.pagination.page) :
       this.apiClient.getAllImages(this.pagination.page));
 
-    req.subscribe((data) => {
+    req.subscribe(
+      (data) => {
         const images = data.filter((image) => {
           return !(this.pagination.data.some((value) => image.id === value.id));
         });
         this.pagination.update(images);
       },
-      (error) => console.error('Error loading images.')
+      (error) => console.error(`Error loading images: ${error.message}`)
     );
   }
 
   loadImage(imageId: string) {
     this.apiClient.getImage(imageId).subscribe(
       (data) => this.pagination.update([data]),
-      (error) => console.error(`Loading user failed: ${error}`)
+      (error) => console.error(`Loading user failed: ${error.message}`)
     );
   }
 

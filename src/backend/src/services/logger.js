@@ -1,8 +1,16 @@
 function timeFormat() {
   const date = new Date();
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()} ` +
-    `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.` +
-    `${date.getMilliseconds()}`;
+  return `${date.getFullYear()}-${format(date.getMonth() + 1)}-${format(date.getDate())} ` +
+    `${format(date.getHours())}:${format(date.getMinutes())}:${format(date.getSeconds())}.` +
+    `${getMilliseconds(date)}`;
+}
+
+function format(num) {
+  return ('0' + num).slice(-2);
+}
+
+function getMilliseconds(date) {
+  return (date.getMilliseconds() + '00').slice(0, 3);
 }
 
 function logError(message) {
