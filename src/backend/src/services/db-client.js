@@ -1,6 +1,8 @@
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
+const Logger = require('./logger');
+
 class DBClient {
   constructor(dbUrl) {
     this.url = dbUrl;
@@ -19,6 +21,7 @@ class DBClient {
         this.client = result;
         resolve(this.client);
       }).catch((error) => {
+        Logger.logError(`Error connecting to database: ${error}`);
         reject(error);
       });
     });
@@ -34,6 +37,7 @@ class DBClient {
         this.client = undefined;
         resolve();
       }).catch((error) => {
+        Logger.logError(`Error closing database connection: ${error}`);
         reject(error);
       });
     });
@@ -101,18 +105,17 @@ class DBClient {
 
     return new Promise((resolve, reject) => {
       if (countOnly) {
-        client.db().collection('images').find(query, { _id: 1 }).count().then((res) => {
-          return resolve(res);
-        }).catch((error) => {
-          reject(error);
-        });
+        client.db().collection('images').find(query, { _id: 1 })
+          .count().then((res) => resolve(res))
+          .catch((error) => reject(error));
       } else {
         client.db().collection('images').aggregate([
           { $match: query },
           { $project: this.imageAggregationProperties(userId) }
-        ]).sort({ _id: -1 }).skip(page * limit).limit(limit).toArray((err, result) => {
-          if (err) {
-            return reject(err);
+        ]).sort({ _id: -1 }).skip(page * limit).limit(limit).toArray((error, result) => {
+          if (error) {
+            Logger.logError(`Error getting images: ${error}`);
+            return reject(error);
           }
           resolve(this.addCreationTimestamps(result));
         });
@@ -130,9 +133,10 @@ class DBClient {
     const client = await this.get();
 
     return new Promise((resolve, reject) => {
-      client.db().collection('images').insertOne(image, (err, result) => {
-        if (err) {
-          return reject(err);
+      client.db().collection('images').insertOne(image, (error, result) => {
+        if (error) {
+          Logger.logError(`Error creating image: ${error}`);
+          return reject(error);
         }
 
         const imageId = result.insertedId;
@@ -161,11 +165,13 @@ class DBClient {
         { $project: this.imageAggregationProperties(userId) }
       ], (error, result) => {
         if (error) {
+          Logger.logError(`Error getting image: ${error}`);
           return reject(error);
         }
         result.toArray().then((res) => {
           resolve(this.addCreationTimestamp(res[0]));
-        }).catch(() => {
+        }).catch((error) => {
+          Logger.logError(`Error getting image: ${error}`);
           reject(new Error('Something went wrong.'));
         });
       });
@@ -214,7 +220,8 @@ class DBClient {
         } else {
           reject(new Error('Image not existing or owned by other user.'));
         }
-      }).catch(() => {
+      }).catch((error) => {
+        Logger.logError(`Error deleting user: ${error}`);
         reject(new Error('Something went wrong.'));
       });
     });
@@ -243,9 +250,10 @@ class DBClient {
         client.db().collection('users').aggregate([
           { $match: query },
           { $project: this.userAggregationProperties() }
-        ]).skip(page * limit).limit(limit).toArray((err, result) => {
-          if (err) {
-            return reject(err);
+        ]).skip(page * limit).limit(limit).toArray((error, result) => {
+          if (error) {
+            Logger.logError(`Error getting users: ${error}`);
+            return reject(error);
           }
           resolve(this.addCreationTimestamps(result));
         });
@@ -265,6 +273,8 @@ class DBClient {
     return new Promise((resolve, reject) => {
       client.db().collection('users').insertOne(user, (error, result) => {
         if (error) {
+          Logger.logError(`Error creating user: ${error}`);
+
           if (error.message.includes('email')) {
             return reject(new Error('User with this email already exists'));
           } else {
@@ -305,13 +315,15 @@ class DBClient {
 
       const completion = (error, result) => {
         if (error) {
+          Logger.logError(`Error getting user: ${error}`);
           reject(error);
         } else if (!result) {
           reject(new Error('User not found.'));
         } else {
           result.toArray().then((res) => {
             resolve(this.addCreationTimestamp(res[0]));
-          }).catch(() => {
+          }).catch((error) => {
+            Logger.logError(`Error getting user: ${error}`);
             reject(new Error('Something went wrong.'));
           });
         }

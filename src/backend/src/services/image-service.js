@@ -12,11 +12,9 @@ class ImageService {
       filename, description);
 
     return new Promise((resolve, reject) => {
-      this.dbClient.createImage(image).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        reject(error);
-      });
+      this.dbClient.createImage(image)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
   }
 
@@ -27,9 +25,7 @@ class ImageService {
       ).then(() => {
         this.dbClient.updateImage(imageId,
           { $addToSet: { likedUsers: new ObjectID(userId) } }
-        ).then(() => {
-          resolve();
-        });
+        ).then(() => resolve());
       }).catch((error) => {
         reject(error);
       });
@@ -43,9 +39,7 @@ class ImageService {
       ).then(() => {
         this.dbClient.updateImage(imageId,
           { $pull: { likedUsers: new ObjectID(userId) } }
-        ).then(() => {
-          resolve();
-        });
+        ).then(() => resolve());
       }).catch((error) => {
         reject(error);
       });
@@ -54,21 +48,17 @@ class ImageService {
 
   deleteImage(imageId, userId) {
     return new Promise((resolve, reject) => {
-      this.dbClient.deleteImage(imageId, userId).then(() => {
-        resolve();
-      }).catch((error) => {
-        reject(error);
-      });
+      this.dbClient.deleteImage(imageId, userId)
+        .then(() => resolve())
+        .catch((error) => reject(error));
     });
   }
 
   getAllImages(page, limit, userId) {
     return new Promise((resolve, reject) => {
-      this.dbClient.getAllImages({}, page, limit, false, userId).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        reject(error);
-      });
+      this.dbClient.getAllImages({}, page, limit, false, userId)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
   }
 
@@ -76,11 +66,9 @@ class ImageService {
     return new Promise((resolve, reject) => {
       const query = { ownerId: new ObjectID(ownerId) };
 
-      this.dbClient.getAllImages(query, page, limit, countOnly, userId).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        reject(error);
-      });
+      this.dbClient.getAllImages(query, page, limit, countOnly, userId)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
   }
 
@@ -88,11 +76,9 @@ class ImageService {
     return new Promise((resolve, reject) => {
       const query = { likedUsers: new ObjectID(userId) };
 
-      this.dbClient.getAllImages(query, page, limit, countOnly, currentUserId).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        reject(error);
-      });
+      this.dbClient.getAllImages(query, page, limit, countOnly, currentUserId)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
   }
 
@@ -100,11 +86,9 @@ class ImageService {
     return new Promise((resolve, reject) => {
       const query = { likedImages: new ObjectID(imageId) };
 
-      this.dbClient.getAllUsers(query, page, limit, countOnly).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        reject(error);
-      });
+      this.dbClient.getAllUsers(query, page, limit, countOnly)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
   }
 }

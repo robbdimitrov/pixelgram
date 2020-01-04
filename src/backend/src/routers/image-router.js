@@ -24,11 +24,14 @@ class ImageRouter extends APIRouter {
     const userId = req.user.id;
     this.imageService.getAllImages(page, limit, userId).then((result) => {
       res.status(StatusCode.ok).send({
-        images: result
+        data: result
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -37,10 +40,11 @@ class ImageRouter extends APIRouter {
     const body = req.body || {};
 
     if (!body.filename) {
-      const error = new Error('Missing argument(s). Image filename is expected.');
-
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: 'Missing argument(s). Image filename is expected.'
+        }
       });
     }
 
@@ -50,11 +54,16 @@ class ImageRouter extends APIRouter {
 
     this.imageService.createImage(userId, filename, description).then((result) => {
       res.status(StatusCode.created).send({
-        _id: result
+        data: {
+          _id: result
+        }
       });
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -66,12 +75,15 @@ class ImageRouter extends APIRouter {
     this.dbClient.getImage(id, userId).then((result) => {
       if (result) {
         res.status(StatusCode.ok).send({
-          image: result
+          data: result
         });
       }
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }
@@ -84,7 +96,10 @@ class ImageRouter extends APIRouter {
       res.sendStatus(StatusCode.noContent);
     }).catch((error) => {
       res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: error.message
+        }
       });
     });
   }

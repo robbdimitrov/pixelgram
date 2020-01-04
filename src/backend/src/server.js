@@ -6,10 +6,9 @@ const ImageRouter = require('./routers/image-router');
 const SessionRouter = require('./routers/session-router');
 const UploadRouter = require('./routers/upload-router');
 const UserRouter = require('./routers/user-router');
-const AuthService = require('./services/auth-service');
 const ImageService = require('./services/image-service');
 const UserService = require('./services/user-service');
-const StatusCode = require('./routers/status-code');
+const authChecker = require('./routers/auth-checker');
 const Logger = require('./services/logger');
 
 class Server {
@@ -36,44 +35,13 @@ class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      Logger.logInfo(`Server REQUEST ${req.method} ${req.url}`);
+      Logger.logInfo(`Server request ${req.method} ${req.url}`);
       next();
     });
   }
 
   configureStatic() {
     this.app.use('/api/uploads', express.static(this.imageDir));
-  }
-
-  authChecker(req, res, next) {
-    // If this is a login request, create a user request or
-    // get an image request, don't check for token
-    if (req.method === 'OPTIONS' || (req.method === 'POST' &&
-        (req.path.indexOf('/sessions') !== -1 || req.path.indexOf('/users') !== -1)) ||
-        (req.method === 'GET' && req.path.indexOf('/uploads') !== -1)) {
-      return next();
-    }
-
-    const token = req.get('Authorization');
-
-    // decode token
-    if (token) {
-      // verifies secret and checks exp
-      AuthService.getInstance().validateToken(token).then((result) => {
-        req.user = result;
-        next();
-      }).catch(() => {
-        res.status(StatusCode.unauthorized).send({
-          message: 'Failed to authenticate token.',
-        });
-      });
-    } else {
-      // if there is no token
-      // return an error
-      res.status(StatusCode.unauthorized).send({
-        message: 'No token provided.',
-      });
-    }
   }
 
   // Create API routers
@@ -93,7 +61,7 @@ class Server {
 
   // Configure API endpoints
   connectRoutes() {
-    this.app.use(this.authChecker);
+    this.app.use(authChecker);
 
     // Create and map express routers
     for (const key in this.routers) {

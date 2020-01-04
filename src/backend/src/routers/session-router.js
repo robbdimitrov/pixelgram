@@ -7,9 +7,11 @@ class SessionRouter extends APIRouter {
     const body = req.body || {};
 
     if (!body.email || !body.password) {
-      const error = new Error('Missing argument(s). Email and password are required.');
       return res.status(StatusCode.badRequest).send({
-        message: error.message
+        error: {
+          code: StatusCode.badRequest,
+          message: 'Missing argument(s). Email and password are required.'
+        }
       });
     }
 
@@ -18,7 +20,10 @@ class SessionRouter extends APIRouter {
 
     const authFailedBlock = () => {
       res.status(StatusCode.unauthorized).send({
-        message: 'Authentication failed. Incorrect email or password.'
+        error: {
+          code: StatusCode.unauthorized,
+          message: 'Authentication failed. Incorrect email or password.'
+        }
       });
     };
 
@@ -32,7 +37,9 @@ class SessionRouter extends APIRouter {
           delete user['password'];
           const token = AuthService.getInstance().generateToken(user);
           res.status(StatusCode.ok).send({
-            user, token
+            data: {
+              user, token
+            }
           });
         } else {
           authFailedBlock();
@@ -40,7 +47,10 @@ class SessionRouter extends APIRouter {
       });
     }).catch((error) => {
       res.status(StatusCode.unauthorized).send({
-        message: error.message
+        error: {
+          code: StatusCode.unauthorized,
+          message: error.message
+        }
       });
     });
   }
