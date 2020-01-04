@@ -5,7 +5,7 @@ import { ImageUploadService } from '../image-upload.service';
 import { APIClient } from '../../../services/api-client.service';
 
 @Component({
-  selector: 'pg-image-create',
+  selector: 'app-image-create',
   templateUrl: './image-create.component.html',
   styleUrls: ['./image-create.component.scss']
 })

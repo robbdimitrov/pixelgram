@@ -2,22 +2,32 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { APIClient } from '../../services/api-client.service';
-import { FormComponent } from '../../shared/components/form/form.component';
 import { ErrorService } from '../../services/error.service';
 
 @Component({
-  selector: 'pg-signup',
+  selector: 'app-signup',
   templateUrl: './signup.component.html'
 })
-export class SignupComponent extends FormComponent {
+export class SignupComponent {
   nameValue = '';
   usernameValue = '';
   emailValue = '';
   passwordValue = '';
 
-  constructor(apiClient: APIClient, private router: Router,
-              private errorService: ErrorService) {
-    super(apiClient);
+  passwordFieldType = 'password';
+  showButtonTitle = 'Show';
+
+  constructor(private apiClient: APIClient, private router: Router,
+              private errorService: ErrorService) {}
+
+  onVisibilityToggle() {
+    if (this.passwordFieldType === 'password') {
+      this.passwordFieldType = 'text';
+      this.showButtonTitle = 'Hide';
+    } else {
+      this.passwordFieldType = 'password';
+      this.showButtonTitle = 'Show';
+    }
   }
 
   onSubmit() {

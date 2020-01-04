@@ -6,7 +6,7 @@ import { ErrorService } from '../../../services/error.service';
 import { Session } from '../../../services/session.service';
 
 @Component({
-  selector: 'pg-change-password',
+  selector: 'app-change-password',
   templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent {
@@ -32,7 +32,7 @@ export class ChangePasswordComponent {
       );
   }
 
-  onVisibilityToggle(event, element) {
+  onVisibilityToggle(element) {
     if (element.name === 'old-password') {
       this.toggleOldPasswordVisibility();
     } else if (element.name === 'password') {

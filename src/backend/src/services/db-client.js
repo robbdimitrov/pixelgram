@@ -78,17 +78,15 @@ class DBClient {
     return properties;
   }
 
-  // Image methods
-
-  addCreationTimestamp(value) {
-    const createdAt = value._id.getTimestamp();
-    const object = { ...value,  createdAt };
-    return object;
-  }
-
   addCreationTimestamps(values) {
-    return values.map((value) => this.addCreationTimestamp(value));
+    return values.map((value) => {
+      const createdAt = value._id.getTimestamp();
+      const object = { ...value,  createdAt };
+      return object;
+    });
   }
+
+  // Image methods
 
   /**
    * Returns all images or their count for a given query.
@@ -169,7 +167,7 @@ class DBClient {
           return reject(error);
         }
         result.toArray().then((res) => {
-          resolve(this.addCreationTimestamp(res[0]));
+          resolve(this.addCreationTimestamps(res)[0]);
         }).catch((error) => {
           Logger.logError(`Error getting image: ${error}`);
           reject(new Error('Something went wrong.'));
@@ -321,7 +319,7 @@ class DBClient {
           reject(new Error('User not found.'));
         } else {
           result.toArray().then((res) => {
-            resolve(this.addCreationTimestamp(res[0]));
+            resolve(this.addCreationTimestamps(res)[0]);
           }).catch((error) => {
             Logger.logError(`Error getting user: ${error}`);
             reject(new Error('Something went wrong.'));

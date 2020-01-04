@@ -18,7 +18,7 @@
     "component-selector": [
       true,
       "element",
-      ["app", "pg"],
+      "app",
       "kebab-case"
     ],
     "import-blacklist": [

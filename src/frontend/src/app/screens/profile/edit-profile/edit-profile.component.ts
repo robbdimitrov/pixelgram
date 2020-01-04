@@ -8,7 +8,7 @@ import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-  selector: 'pg-edit-profile',
+  selector: 'app-edit-profile',
   templateUrl: './edit-profile.component.html',
   styleUrls: ['./edit-profile.component.scss']
 })

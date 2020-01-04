@@ -1,6 +1,6 @@
 function timeFormat() {
   const date = new Date();
-  return `${date.getFullYear()}-${format(date.getMonth() + 1)}-${format(date.getDate())} ` +
+  return `${date.getFullYear()}-${format(date.getMonth() + 1)}-${format(date.getDate())}T` +
     `${format(date.getHours())}:${format(date.getMinutes())}:${format(date.getSeconds())}.` +
     `${getMilliseconds(date)}`;
 }

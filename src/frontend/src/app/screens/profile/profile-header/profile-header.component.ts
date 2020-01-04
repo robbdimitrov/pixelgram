@@ -5,7 +5,7 @@ import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
-  selector: 'pg-profile-header',
+  selector: 'app-profile-header',
   templateUrl: './profile-header.component.html',
   styleUrls: ['./profile-header.component.scss']
 })

@@ -93,7 +93,7 @@
   }
 }
 
-.title, .fieldset, button[type=submit], .reference, .alert {
+.title, .form-group, button[type=submit], .reference, .alert {
   margin-left: $spacing;
   margin-right: $spacing;
 }
@@ -103,12 +103,9 @@ button[type=submit] {
   @include center-block;
 }
 
-.fieldset {
+.form-group {
   margin-top: $vertical-spacing-internal;
   height: $fieldset-height;
-}
-
-.fieldset {
   display: flex;
   border-bottom: $button-border-width solid $button-border-color;
 

@@ -6,13 +6,12 @@
   </p>
 
   <form (ngSubmit)="onSubmit()" #form="ngForm">
-    <div class="fieldset">
+    <div class="form-group">
       <label for="email">Email</label>
       <input
         type="email"
         id="email"
         name="email"
-        #email="ngModel"
         [(ngModel)]="emailValue"
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
@@ -20,13 +19,12 @@
       >
     </div>
 
-    <div class="fieldset">
+    <div class="form-group">
       <label for="password">Password</label>
       <input
         type={{passwordFieldType}}
         id="password"
         name="password"
-        #password="ngModel"
         [(ngModel)]="passwordValue"
         placeholder="password"
         minlength="4"
@@ -46,7 +44,7 @@
     <button
       type="submit"
       class="round-corners outline-button"
-      [disabled]="!form.form.valid"
+      [disabled]="!form.valid"
     >
       Log In
     </button>

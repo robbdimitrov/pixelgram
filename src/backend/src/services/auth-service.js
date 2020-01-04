@@ -19,7 +19,7 @@ class AuthService {
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, passwordHash).then((res) => {
         if (res) {
-          return resolve(res);
+          return resolve();
         }
         reject(new Error('Authentication failed.'));
       }).catch((error) => {
