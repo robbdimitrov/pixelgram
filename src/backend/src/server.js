@@ -35,7 +35,7 @@ class Server {
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      Logger.logInfo(`Server REQUEST ${req.method} ${req.url}`);
+      Logger.logInfo(`Server request ${req.method} ${req.url}`);
       next();
     });
   }

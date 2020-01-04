@@ -79,7 +79,7 @@ export class EditProfileComponent implements AfterViewInit {
         this.emailValue = data.email;
         this.bioValue = data.bio;
       },
-      (error) => console.error(`Loading user failed: ${error}`)
+      (error) => console.error(`Loading user failed: ${error.message}`)
     );
   }
 

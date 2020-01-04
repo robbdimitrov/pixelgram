@@ -2,22 +2,14 @@ const AuthService = require('../services/auth-service');
 const StatusCode = require('./status-code');
 
 const allowedRoutes = [
-  {
-    method: 'OPTIONS',
-    path: ''
-  },
-  {
-    method: 'POST',
-    path: '/sessions'
-  },
-  {
-    method: 'POST',
-    path: '/users'
-  }
+  { method: 'OPTIONS', path: '' },
+  { method: 'POST', path: '/sessions' },
+  { method: 'POST', path: '/users' },
+  { method: 'GET', path: '/uploads' }
 ];
 
 function isAllowed(req) {
-  for (const route in allowedRoutes) {
+  for (const route of allowedRoutes) {
     if (req.method === route.method && req.path.indexOf(route.path) !== -1) {
       return true;
     }
@@ -60,4 +52,4 @@ function authChecker(req, res, next) {
   }
 }
 
-export default authChecker;
+module.exports = authChecker;

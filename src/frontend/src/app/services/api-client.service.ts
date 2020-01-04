@@ -39,14 +39,21 @@ export class APIClient {
   }
 
   private handleError(error: HttpErrorResponse) {
-    if (error.error instanceof ErrorEvent) {
-      console.error(`An error occurred: ${error}`);
+    let errorBody = error.error || error;
+
+    if (errorBody instanceof ErrorEvent) {
+      console.error(`An error occurred: ${errorBody.message}`);
     } else {
+      errorBody = errorBody.error || errorBody;
+
+      console.error(`An error occurred: ${error.message}: ` +
+        errorBody.message);
+
       if (error.status === 401) { // Unauthorized
         this.logoutUser();
       }
     }
-    return throwError(error.error || error);
+    return throwError(errorBody);
   }
 
   // User
@@ -145,9 +152,8 @@ export class APIClient {
     }
 
     const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => {
-        res.data.map((object) => ImageFactory.imageFromObject(object));
-      }),
+      map((res: any) =>
+        res.data.map((object) => ImageFactory.imageFromObject(object))),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
       share()
@@ -207,6 +213,7 @@ export class APIClient {
     formData.append('image', file, file.name);
 
     return this.http.post(url, formData, { headers }).pipe(
+      map((res: any) => res.data),
       catchError(this.handleError.bind(this))
     );
   }
