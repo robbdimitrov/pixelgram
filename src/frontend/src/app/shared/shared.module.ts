@@ -4,7 +4,6 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
-import { FormComponent } from './components/form/form.component';
 import { HeaderComponent } from './components/header/header.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { ToastComponent } from './components/toast/toast.component';
@@ -17,7 +16,6 @@ import { IconLibrary } from './icon-library.service';
 
 @NgModule({
   declarations: [
-    FormComponent,
     HeaderComponent,
     NotFoundComponent,
     ToastComponent,
@@ -41,7 +39,6 @@ import { IconLibrary } from './icon-library.service';
     FormsModule,
     RouterModule,
     FontAwesomeModule,
-    FormComponent,
     HeaderComponent,
     NotFoundComponent,
     ToastComponent,

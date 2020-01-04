@@ -32,8 +32,8 @@ class SessionRouter extends APIRouter {
         return authFailedBlock();
       }
 
-      AuthService.getInstance().validatePassword(password, user['password']).then((result) => {
-        if (result === true) {
+      AuthService.getInstance().validatePassword(password, user['password'])
+        .then(() => {
           delete user['password'];
           const token = AuthService.getInstance().generateToken(user);
           res.status(StatusCode.ok).send({
@@ -41,10 +41,10 @@ class SessionRouter extends APIRouter {
               user, token
             }
           });
-        } else {
+        })
+        .catch(() => {
           authFailedBlock();
-        }
-      });
+        });
     }).catch((error) => {
       res.status(StatusCode.unauthorized).send({
         error: {

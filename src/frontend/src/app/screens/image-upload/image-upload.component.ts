@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { ImageUploadService } from './image-upload.service';
 
 @Component({
-  selector: 'pg-upload',
+  selector: 'app-upload',
   templateUrl: './image-upload.component.html',
   styleUrls: ['./image-upload.component.scss']
 })
