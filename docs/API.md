@@ -580,7 +580,7 @@ Errors contain the HTTP status code and message describing the error.
 {
   "error": {
     "code": 500,
-    "message": 'Missing argument(s). Image filename is expected.'
+    "message": "Missing argument(s). Image filename is expected."
   }
 }
 ```
