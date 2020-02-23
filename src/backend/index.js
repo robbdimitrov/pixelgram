@@ -1,5 +1,5 @@
-const Server = require('./server');
-const DBClient = require('./services/db-client');
+const Server = require('./src/server');
+const DBClient = require('./src/services/db-client');
 
 const port = process.env.PORT;
 const dbUrl = process.env.DATABASE_URL;
