@@ -33,6 +33,10 @@ class DBClient {
 
   closeConnection() {
     return new Promise((resolve, reject) => {
+      if (!this.client) {
+        return resolve();
+      }
+
       this.client.close().then(() => {
         this.client = undefined;
         resolve();

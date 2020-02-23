@@ -3,15 +3,15 @@
 @import 'variables';
 
 .button {
-  background: $button-background-color;
+  background-color: $button-background-color;
   text-decoration: none;
   &:not(:disabled) {
     &:hover, &:focus {
-      background: darken($button-background-color,8%);
+      background-color: darken($button-background-color,8%);
       transition: all 0.3s ease;
     }
     &:active {
-      background: darken($button-background-color, 25%);
+      background-color: darken($button-background-color, 25%);
     }
   }
 }
