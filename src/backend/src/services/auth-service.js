@@ -48,14 +48,9 @@ class AuthService {
   }
 
   generateToken(user) {
-    const issuedAt = Math.floor(Date.now() / 1000);
-    const expiration = issuedAt + 60 * 60;
-    const payload = {
-      sub: user._id,
-      iat: issuedAt,
-      exp: expiration
-    };
-    const token = jwt.sign(payload, this.secret, { algorithm: 'HS256' });
+    const options = { algorithm: 'HS256', expiresIn: '12h' };
+    const payload = { sub: user._id };
+    const token = jwt.sign(payload, this.secret, options);
     return token;
   }
 

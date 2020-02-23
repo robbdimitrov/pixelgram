@@ -13,12 +13,16 @@ function getMilliseconds(date) {
   return (date.getMilliseconds() + '00').slice(0, 3);
 }
 
+function getEnvironment() {
+  return process.env.NODE_ENV ? '' : 'DEBUG ';
+}
+
 function logError(message) {
-  process.stderr.write(`[${timeFormat()}] ${message}\n`);
+  process.stderr.write(`${getEnvironment()}[${timeFormat()}] ${message}\n`);
 }
 
 function logInfo(message) {
-  process.stdout.write(`[${timeFormat()}] ${message}\n`);
+  process.stdout.write(`${getEnvironment()}[${timeFormat()}] ${message}\n`);
 }
 
 module.exports = {
