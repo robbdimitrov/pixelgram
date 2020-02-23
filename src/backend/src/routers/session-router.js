@@ -15,9 +15,6 @@ class SessionRouter extends APIRouter {
       });
     }
 
-    const email = body.email || '';
-    const password = body.password || '';
-
     const authFailedBlock = () => {
       res.status(StatusCode.unauthorized).send({
         error: {
@@ -27,12 +24,12 @@ class SessionRouter extends APIRouter {
       });
     };
 
-    this.dbClient.getUser('email', email, true).then((user) => {
+    this.dbClient.getUser('email', body.email, true).then((user) => {
       if (!user) {
         return authFailedBlock();
       }
 
-      AuthService.getInstance().validatePassword(password, user['password'])
+      AuthService.getInstance().validatePassword(body.password, user['password'])
         .then(() => {
           delete user['password'];
           const token = AuthService.getInstance().generateToken(user);
