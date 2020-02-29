@@ -1,15 +1,10 @@
-const ObjectID = require('mongodb').ObjectID;
-
-const ImageFactory = require('./image-factory');
-
 class ImageService {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
 
   createImage(userId, filename, description) {
-    const image = ImageFactory.createImage(new ObjectID(userId),
-      filename, description);
+    const image = { userId, filename, description };
 
     return new Promise((resolve, reject) => {
       this.dbClient.createImage(image)
@@ -21,10 +16,10 @@ class ImageService {
   likeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       this.dbClient.updateUser(userId,
-        { $addToSet: { likedImages: new ObjectID(imageId) } }
+        { $addToSet: { likedImages: imageId } }
       ).then(() => {
         this.dbClient.updateImage(imageId,
-          { $addToSet: { likedUsers: new ObjectID(userId) } }
+          { $addToSet: { likedUsers: userId } }
         ).then(() => resolve());
       }).catch((error) => {
         reject(error);
@@ -35,10 +30,10 @@ class ImageService {
   unlikeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       this.dbClient.updateUser(userId,
-        { $pull: { likedImages: new ObjectID(imageId) } }
+        { $pull: { likedImages: imageId } }
       ).then(() => {
         this.dbClient.updateImage(imageId,
-          { $pull: { likedUsers: new ObjectID(userId) } }
+          { $pull: { likedUsers: userId } }
         ).then(() => resolve());
       }).catch((error) => {
         reject(error);
@@ -56,37 +51,37 @@ class ImageService {
 
   getAllImages(page, limit, userId) {
     return new Promise((resolve, reject) => {
-      this.dbClient.getAllImages({}, page, limit, false, userId)
+      this.dbClient.getAllImages({}, page, limit, userId)
         .then((result) => resolve(result))
         .catch((error) => reject(error));
     });
   }
 
-  getAllImagesForUser(ownerId, page, limit, countOnly = false, userId) {
+  getAllImagesForUser(ownerId, page, limit, userId) {
     return new Promise((resolve, reject) => {
-      const query = { ownerId: new ObjectID(ownerId) };
+      const query = { ownerId: ownerId };
 
-      this.dbClient.getAllImages(query, page, limit, countOnly, userId)
+      this.dbClient.getAllImages(query, page, limit, userId)
         .then((result) => resolve(result))
         .catch((error) => reject(error));
     });
   }
 
-  getAllImagesLikedByUser(userId, page, limit, countOnly = false, currentUserId) {
+  getAllImagesLikedByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
-      const query = { likedUsers: new ObjectID(userId) };
+      const query = { likedUsers: userId };
 
-      this.dbClient.getAllImages(query, page, limit, countOnly, currentUserId)
+      this.dbClient.getAllImages(query, page, limit, currentUserId)
         .then((result) => resolve(result))
         .catch((error) => reject(error));
     });
   }
 
-  getUsersLikedImage(imageId, page, limit, countOnly = false) {
+  getUsersLikedImage(imageId, page, limit) {
     return new Promise((resolve, reject) => {
-      const query = { likedImages: new ObjectID(imageId) };
+      const query = { likedImages: imageId };
 
-      this.dbClient.getAllUsers(query, page, limit, countOnly)
+      this.dbClient.getAllUsers(query, page, limit)
         .then((result) => resolve(result))
         .catch((error) => reject(error));
     });

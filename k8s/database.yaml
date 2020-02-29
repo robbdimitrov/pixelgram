@@ -8,8 +8,8 @@ spec:
     tier: database
   ports:
   - protocol: TCP
-    port: 27017
-    targetPort: 27017
+    port: 5432
+    targetPort: 5432
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -34,12 +34,12 @@ spec:
         image: pixelgram/database
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 27017
+        - containerPort: 5432
         env:
-        - name: MONGO_INITDB_DATABASE
-          value: pixelgram
+        - name: POSTGRES_PASSWORD
+          value: kubernetes
         volumeMounts:
-        - mountPath: /data/db
+        - mountPath: /var/lib/postgresql/data
           name: database-storage
       volumes:
         - name: database-storage

@@ -31,7 +31,7 @@ export class SettingsComponent {
   }
 
   onChangePasswordClick() {
-    this.router.navigate(['account/change_password']);
+    this.router.navigate(['account/change-password']);
   }
 
   onLikedPostsClick() {

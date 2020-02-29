@@ -18,11 +18,11 @@ function getEnvironment() {
 }
 
 function logError(message) {
-  process.stderr.write(`${getEnvironment()}[${timeFormat()}] ${message}\n`);
+  console.error(`${getEnvironment()}[${timeFormat()}] ${message}`);
 }
 
 function logInfo(message) {
-  process.stdout.write(`${getEnvironment()}[${timeFormat()}] ${message}\n`);
+  console.log(`${getEnvironment()}[${timeFormat()}] ${message}`);
 }
 
 module.exports = {

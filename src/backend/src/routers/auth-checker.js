@@ -1,4 +1,4 @@
-const AuthService = require('../services/auth-service');
+const { validateToken } = require('../services/auth-service');
 const StatusCode = require('./status-code');
 
 const allowedRoutes = [
@@ -29,7 +29,7 @@ function authChecker(req, res, next) {
   // decode token
   if (token) {
     // verifies secret and checks exp
-    AuthService.getInstance().validateToken(token).then((result) => {
+    validateToken(token).then((result) => {
       req.user = result;
       next();
     }).catch((error) => {

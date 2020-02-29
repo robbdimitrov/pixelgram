@@ -1,4 +1,4 @@
-const AuthService = require('../services/auth-service');
+const { validatePassword, generateToken } = require('../tools/auth');
 const APIRouter = require('./api-router');
 const StatusCode = require('./status-code');
 
@@ -24,15 +24,19 @@ class SessionRouter extends APIRouter {
       });
     };
 
-    this.dbClient.getUser('email', body.email, true).then((user) => {
+    this.dbClient.getUserCredentials('email', body.email).then((user) => {
       if (!user) {
         return authFailedBlock();
       }
 
-      AuthService.getInstance().validatePassword(body.password, user['password'])
-        .then(() => {
+      validatePassword(body.password, user['password'])
+        .then((valid) => {
+          if (!valid) {
+            return authFailedBlock();
+          }
+
           delete user['password'];
-          const token = AuthService.getInstance().generateToken(user);
+          const token = generateToken(user);
           res.status(StatusCode.ok).send({
             data: {
               user, token

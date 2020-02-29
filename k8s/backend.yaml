@@ -39,7 +39,7 @@ spec:
         - name: PORT
           value: "3000"
         - name: DATABASE_URL
-          value: mongodb://database:27017/pixelgram
+          value: postgresql://postgres:kubernetes@database:5432
         - name: SECRET
           value: 7f40a8c2c68f47ef7b896586b012ae34
         - name: NODE_ENV
