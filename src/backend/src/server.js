@@ -12,15 +12,16 @@ const authChecker = require('./routers/auth-checker');
 const Logger = require('./services/logger');
 
 class Server {
-  constructor(port, dbClient, imageDir) {
+  constructor(port, userClient, imageClient, imageDir) {
     this.port = port;
-    this.dbClient = dbClient;
+    this.userClient = userClient;
+    this.imageClient = imageClient;
     this.imageDir = imageDir;
     this.routers = {};
     this.app = express();
 
-    this.imageService = new ImageService(dbClient);
-    this.userService = new UserService(dbClient);
+    this.userService = new UserService(userClient);
+    this.imageService = new ImageService(imageClient);
   }
 
   // Configure Express middleware
@@ -42,7 +43,7 @@ class Server {
   }
 
   configureStatic() {
-    this.app.use('/api/uploads', express.static(this.imageDir));
+    this.app.use('/uploads', express.static(this.imageDir));
   }
 
   configureCors() {
@@ -52,8 +53,8 @@ class Server {
 
     this.app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-      res.header('Access-Control-Allow-Headers', 'Origin,Authorization,X-Requested-With,X-Access-Token,Content-Type,Accept');
+      res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE');
+      res.header('Access-Control-Allow-Headers', 'Origin, Authorization, Content-Type, Accept');
       next();
     });
   }
@@ -81,7 +82,7 @@ class Server {
     for (const key in this.routers) {
       if (Object.prototype.hasOwnProperty.call(this.routers, key)) {
         const value = this.routers[key];
-        this.app.use(`/api/${key}`, value.router);
+        this.app.use(`/${key}`, value.router);
       }
     }
   }
@@ -108,9 +109,8 @@ class Server {
       }
     });
 
-    this.dbClient.closeConnection().catch((error) => {
-      Logger.logError(`Closing database connection failed: ${error}`);
-    });
+    this.userClient.close();
+    this.imageClient.close();
   }
 }
 

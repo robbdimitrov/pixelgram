@@ -14,11 +14,11 @@ Pixelgram is an image sharing service.
 
 ## Stack
 
-- Angular front end
-- Express back end
-- MongoDB database
-- NGINX
+- Angular
+- Express
+- PostgreSQL
 - Docker
+- Kubernetes
 
 ## Screenshots
 

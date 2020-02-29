@@ -13,7 +13,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'account/change_password',
+    path: 'account/change-password',
     component: ChangePasswordComponent,
     canActivate: [AuthGuard]
   }

@@ -1,7 +1,5 @@
-const AuthService = require('./auth-service');
-const BodyParser = require('./body-parser');
-const UserFactory = require('./user-factory');
-const ValidatorService = require('./validator-service');
+const { generateHash, validatePassword } = require('../tools/auth');
+const { isValidEmail, castObject } = require('../tools/utils');
 
 class UserService {
   constructor(dbClient) {
@@ -14,36 +12,32 @@ class UserService {
         return reject(new Error('Password can\'t be empty.'));
       }
 
-      if (!ValidatorService.isValidEmail(email)) {
+      if (!isValidEmail(email)) {
         return reject(new Error('Invalid email address.'));
       }
 
-      UserFactory.createUser(name, username, email, password).then((user) => {
-        this.dbClient.createUser(user)
-          .then((result) => resolve(result))
-          .catch((error) => reject(error));
-      });
+      const user = { email, name, username };
+
+      try {
+        user.password = await generateHash(password);
+        const result = await this.dbClient.createUser(user);
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 
   updateUser(userId, updates) {
     return new Promise((resolve, reject) => {
       const allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
-      const updatedUser = BodyParser.parseBodyParametersToObject(updates, allowedKeys);
+      const updatedUser = castObject(updates, allowedKeys);
 
-      const updateClosure = (dbClient, id, updatedUser) => {
-        dbClient.updateUser(id, { $set: updatedUser })
-          .then(() => resolve())
-          .catch((error) => reject(error));
-      };
-
-      if (updates.email !== undefined) {
-        if (!ValidatorService.isValidEmail(updates.email)) {
-          return reject(new Error('Invalid email address.'));
-        }
+      if (updates.email && !isValidEmail(updates.email)) {
+        return reject(new Error('Invalid email address.'));
       }
 
-      if (updates.password !== undefined) {
+      if (updates.password) {
         const password = updates.password;
         const oldPassword = updates.oldPassword;
 
@@ -55,20 +49,27 @@ class UserService {
           return reject(new Error('Password can\'t be empty.'));
         }
 
-        this.dbClient.getUser('id', userId, true).then((user) => {
-          AuthService.getInstance().validatePassword(oldPassword, user['password']).then(() => {
-            AuthService.getInstance().generateHash(password).then((result) => {
-              updatedUser['password'] = result;
-              updateClosure(this.dbClient, userId, updatedUser);
-            });
-          }).catch(() => {
+        try {
+          const user = await this.dbClient.getUserCredentials(userId);
+          const isPasswordValid = await validatePassword(oldPassword, user.password);
+
+          if (!isPasswordValid) {
             return reject(new Error('Wrong password. Enter the correct current password.'));
-          });
-        }).catch((error) => {
-          return reject(error);
-        });
+          }
+
+          updatedUser.password = await generateHash(password);
+          await dbClient.updateUser(id, updatedUser);
+          resolve();
+        } catch(error) {
+          reject(error);
+        }
       } else {
-        updateClosure(this.dbClient, userId, updatedUser);
+        try {
+          await dbClient.updateUser(id, updatedUser);
+          resolve();
+        } catch(error) {
+          reject(error);
+        }
       }
     });
   }

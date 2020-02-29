@@ -55,7 +55,7 @@ class ImageRouter extends APIRouter {
     this.imageService.createImage(userId, filename, description).then((result) => {
       res.status(StatusCode.created).send({
         data: {
-          _id: result
+          id: result
         }
       });
     }).catch((error) => {
