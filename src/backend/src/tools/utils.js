@@ -8,7 +8,7 @@ function castObject(source, allowedKeys) {
 
   for (const key of allowedKeys) {
     if (Object.keys(source).indexOf(key) !== -1) {
-      object[key] = body[key];
+      object[key] = source[key];
     }
   }
 

@@ -12,9 +12,9 @@ class UserImagesRouter extends APIRouter {
     const query = req.query || {};
     const limit = parseInt(query.limit, 10) || 20;
     const page = parseInt(query.page, 10) || 0;
-    const userId = req.user.id;
+    const currentUserId = req.user.id;
 
-    this.imageService.getAllImagesForUser(userId, page, limit, userId)
+    this.imageService.getAllImagesForUser(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(StatusCode.ok).send({
           data: result

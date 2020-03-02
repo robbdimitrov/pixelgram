@@ -52,20 +52,21 @@ class ImageRouter extends APIRouter {
     const filename = body.filename || '';
     const description = body.description || '';
 
-    this.imageService.createImage(userId, filename, description).then((result) => {
-      res.status(StatusCode.created).send({
-        data: {
-          id: result
-        }
+    this.imageService.createImage(userId, filename, description)
+      .then((result) => {
+        res.status(StatusCode.created).send({
+          data: {
+            id: result
+          }
+        });
+      }).catch((error) => {
+        res.status(StatusCode.badRequest).send({
+          error: {
+            code: StatusCode.badRequest,
+            message: error.message
+          }
+        });
       });
-    }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
-      });
-    });
   }
 
   getOne(req, res) {
