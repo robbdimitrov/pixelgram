@@ -1,6 +1,5 @@
 const Router = require('express').Router;
 
-const StatusCode = require('./status-code');
 const Logger = require('../tools/logger');
 
 class APIRouter {
@@ -55,11 +54,8 @@ class APIRouter {
   sendNotFound(req, res) {
     Logger.logError(`Resource not found ${req.method} ${req.path}`);
 
-    res.status(StatusCode.notFound).send({
-      error: {
-        code: StatusCode.notFound,
-        message: 'The resource was not found.'
-      }
+    res.status(404).send({
+      message: 'The resource was not found.'
     });
   }
 
