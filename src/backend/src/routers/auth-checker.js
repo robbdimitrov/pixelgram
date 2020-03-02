@@ -1,4 +1,3 @@
-const AuthService = require('../services/auth-service');
 const StatusCode = require('./status-code');
 
 const allowedRoutes = [
@@ -17,39 +16,41 @@ function isAllowed(req) {
   return false;
 }
 
-function authChecker(req, res, next) {
-  // If this is a login request, create a user request or
-  // get an image request, don't check for token
-  if (isAllowed(req)) {
-    return next();
-  }
+function authChecker(authService) {
+  return function(req, res, next) {
+    // If this is a login request, create a user request or
+    // get an image request, don't check for token
+    if (isAllowed(req)) {
+      return next();
+    }
 
-  const token = req.get('Authorization');
+    const token = req.get('Authorization');
 
-  // decode token
-  if (token) {
-    // verifies secret and checks exp
-    AuthService.getInstance().validateToken(token).then((result) => {
-      req.user = result;
-      next();
-    }).catch((error) => {
+    // decode token
+    if (token) {
+      // verifies secret and checks exp
+      authService.validateToken(token).then((result) => {
+        req.user = result;
+        next();
+      }).catch((error) => {
+        res.status(StatusCode.unauthorized).send({
+          error: {
+            code: StatusCode.unauthorized,
+            message: error.message
+          }
+        });
+      });
+    } else {
+      // if there is no token
+      // return an error
       res.status(StatusCode.unauthorized).send({
         error: {
           code: StatusCode.unauthorized,
-          message: error.message
+          message: 'No token provided.'
         }
       });
-    });
-  } else {
-    // if there is no token
-    // return an error
-    res.status(StatusCode.unauthorized).send({
-      error: {
-        code: StatusCode.unauthorized,
-        message: 'No token provided.'
-      }
-    });
-  }
+    }
+  };
 }
 
 module.exports = authChecker;

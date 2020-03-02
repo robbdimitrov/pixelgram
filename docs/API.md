@@ -53,7 +53,7 @@ Response:
 {
   "data": {
     "user": {
-      "_id": "5a0c11682ce7e1000f2a1f5a",
+      "id": "5a0c11682ce7e1000f2a1f5a",
       "name": "Clark Kent",
       "username": "superman",
       "email": "clark.kent@dailyplanet.com",
@@ -96,7 +96,7 @@ Response:
 ```json
 {
   "data": {
-    "_id": "5a0c11682ce7e1000f2a1f5a"
+    "id": "5a0c11682ce7e1000f2a1f5a"
   }
 }
 ```
@@ -120,7 +120,7 @@ Response:
 {
   "data": [
     {
-      "_id": "5a0c11682ce7e1000f2a1f5a",
+      "id": "5a0c11682ce7e1000f2a1f5a",
       "name": "Clark Kent",
       "username": "superman",
       "email": "clark.kent@dailyplanet.com",
@@ -131,7 +131,7 @@ Response:
       "createdAt": "2017-11-15T10:05:28Z"
     },
     {
-      "_id": "5a0c361b7ceeae000ffc8bdd",
+      "id": "5a0c361b7ceeae000ffc8bdd",
       "name": "Bruce Wayne",
       "username": "batman",
       "email": "bruce@wayneindustries.com",
@@ -169,7 +169,7 @@ Response:
 ```json
 {
   "data": {
-    "_id": "5a0c11682ce7e1000f2a1f5a",
+    "id": "5a0c11682ce7e1000f2a1f5a",
     "name": "Clark Kent",
     "username": "superman",
     "email": "clark.kent@dailyplanet.com",
@@ -242,7 +242,6 @@ URL parameters:
 
 ```
 userId - id of the user
-count - if count=1, the request returns only the count (optional)
 ```
 
 Headers:
@@ -258,7 +257,7 @@ Response:
 {
   "data": [
     {
-      "_id": "5a0c5629ca682d61abcd5786",
+      "id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
@@ -267,7 +266,7 @@ Response:
       "createdAt": "2017-11-15T16:58:49Z"
     },
     {
-      "_id": "5a0c5630ca682d61abcd5787",
+      "id": "5a0c5630ca682d61abcd5787",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Other description #awesome",
@@ -289,7 +288,6 @@ URL parameters:
 
 ```
 userId - id of the user
-count - if count=1, the request returns only the count (optional)
 ```
 
 Headers:
@@ -305,7 +303,7 @@ Response:
 {
   "data": [
     {
-      "_id": "5a0c5629ca682d61abcd5786",
+      "id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
@@ -344,7 +342,7 @@ Response:
 ```json
 {
   "data": {
-    "_id": "5a0c5629ca682d61abcd5786"
+    "id": "5a0c5629ca682d61abcd5786"
   }
 }
 ```
@@ -368,7 +366,7 @@ Response:
 {
   "data": [
     {
-      "_id": "5a0996ba2775b637bd49b0ab",
+      "id": "5a0996ba2775b637bd49b0ab",
       "ownerId": "5a069fd03bd9992ce9520ec5",
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
@@ -377,7 +375,7 @@ Response:
       "createdAt": "2017-11-13T14:57:19Z"
     },
     {
-      "_id": "5a0c5629ca682d61abcd5786",
+      "id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description 2",
@@ -419,7 +417,7 @@ Response:
 ```json
 {
   "data": {
-    "_id": "5a0996ba2775b637bd49b0ab",
+    "id": "5a0996ba2775b637bd49b0ab",
     "ownerId": "5a069fd03bd9992ce9520ec5",
     "filename": "6710497b36573655ed145f1bc1e01052",
     "description": "Image description",
@@ -472,7 +470,6 @@ URL parameters:
 
 ```
 imageId - id of the image
-count - if count=1, the request returns only the count (optional)
 ```
 
 Headers:
@@ -488,7 +485,7 @@ Response:
 {
   "data": [
     {
-      "_id": "5a09b5acc3d0655f6f6225cb",
+      "id": "5a09b5acc3d0655f6f6225cb",
       "name": "Bruce Wayne",
       "username": "batman",
       "email": "bruce@wayneindustries.com",

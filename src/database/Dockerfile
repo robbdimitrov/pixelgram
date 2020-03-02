@@ -1,2 +1,2 @@
-FROM mongo:4.2
-COPY setup.js /docker-entrypoint-initdb.d/
+FROM postgres:11.0-alpine
+COPY schema.sql /docker-entrypoint-initdb.d/

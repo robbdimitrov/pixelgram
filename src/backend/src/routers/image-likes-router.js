@@ -10,22 +10,22 @@ class ImageLikesRouter extends APIRouter {
   getAll(req, res) {
     const imageId = req.params.parentId;
     const query = req.query || {};
-    const count = Boolean(parseInt(query.count, 10) || 0);
     const limit = parseInt(query.limit, 10) || 20;
     const page = parseInt(query.page, 10) || 0;
 
-    this.imageService.getUsersLikedImage(imageId, page, limit, count).then((result) => {
-      res.status(StatusCode.ok).send({
-        data: result
+    this.imageService.getUsersLikedImage(imageId, page, limit)
+      .then((result) => {
+        res.status(StatusCode.ok).send({
+          data: result
+        });
+      }).catch((error) => {
+        res.status(StatusCode.badRequest).send({
+          error: {
+            code: StatusCode.badRequest,
+            message: error.message
+          }
+        });
       });
-    }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
-      });
-    });
   }
 
   createOne(req, res) {

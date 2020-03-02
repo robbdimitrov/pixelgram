@@ -1,7 +1,7 @@
 const Router = require('express').Router;
 
 const StatusCode = require('./status-code');
-const Logger = require('../services/logger');
+const Logger = require('../tools/logger');
 
 class APIRouter {
   constructor(dbClient, options) {

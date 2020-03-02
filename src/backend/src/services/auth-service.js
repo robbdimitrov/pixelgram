@@ -1,37 +1,27 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const Logger = require('./logger');
+const Logger = require('../tools/logger');
 
 class AuthService {
-  constructor() {
-    this.secret = process.env.SECRET;
-  }
-
-  static getInstance() {
-    if (!AuthService.instance) {
-      AuthService.instance = new AuthService();
-    }
-    return AuthService.instance;
+  constructor(secret) {
+    this.secret = secret;
   }
 
   validatePassword(password, passwordHash) {
     return new Promise((resolve, reject) => {
-      bcrypt.compare(password, passwordHash).then((res) => {
-        if (res) {
-          return resolve();
-        }
-        reject(new Error('Authentication failed.'));
+      bcrypt.compare(password, passwordHash).then((result) => {
+        resolve(result);
       }).catch((error) => {
         Logger.logError(`Error validating password: ${error}`);
-        reject(new Error('Authentication failed.'));
+        reject(error);
       });
     });
   }
 
   generateHash(password) {
     return new Promise((resolve, reject) => {
-      bcrypt.genSalt(10, (error, salt) => {
+      bcrypt.genSalt(12, (error, salt) => {
         if (error) {
           Logger.logError(`Error generating hash: ${error}`);
           return reject(error);
@@ -49,19 +39,19 @@ class AuthService {
 
   generateToken(user) {
     const options = { algorithm: 'HS256', expiresIn: '12h' };
-    const payload = { sub: user._id };
+    const payload = { sub: user.id };
     const token = jwt.sign(payload, this.secret, options);
     return token;
   }
 
   validateToken(token) {
     return new Promise((resolve, reject) => {
-      jwt.verify(token, this.secret, { algorithm: 'HS256' }, (error, decoded) => {
+      jwt.verify(token, this.secret, { algorithm: 'HS256' }, (error, result) => {
         if (error) {
           Logger.logError(`Error validating token: ${error}`);
           reject(new Error('Failed to authenticate token.'));
         } else {
-          resolve({ id: decoded.sub });
+          resolve({ id: result.sub });
         }
       });
     });

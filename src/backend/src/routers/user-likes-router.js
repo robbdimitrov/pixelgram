@@ -10,13 +10,12 @@ class UserLikesRouter extends APIRouter {
   getAll(req, res) {
     const userId = req.params.parentId;
     const query = req.query || {};
-    const count = Boolean(parseInt(query.count, 10) || 0);
     const limit = parseInt(query.limit, 10) || 20;
     const page = parseInt(query.page, 10) || 0;
     const currentUserId = req.user.id;
 
     this.imageService.getAllImagesLikedByUser(
-      userId, page, limit, count, currentUserId).then((result) => {
+      userId, page, limit, currentUserId).then((result) => {
       res.status(StatusCode.ok).send({
         data: result
       });

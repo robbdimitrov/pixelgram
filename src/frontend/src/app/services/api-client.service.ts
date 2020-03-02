@@ -162,17 +162,17 @@ export class APIClient {
     return req;
   }
 
-  getUsersImages(userId: string, page: number, limit: number = 10) {
+  getUsersImages(userId: string, page: number, limit: number) {
     const url = this.url(`/users/${userId}/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getAllImages(page: number, limit: number = 10) {
+  getAllImages(page: number, limit: number) {
     const url = this.url(`/images?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
 
-  getUsersLikedImages(userId: string, page: number, limit: number = 10) {
+  getUsersLikedImages(userId: string, page: number, limit: number) {
     const url = this.url(`/users/${userId}/likes?page=${page}&limit=${limit}`);
     return this.getImages(url);
   }
