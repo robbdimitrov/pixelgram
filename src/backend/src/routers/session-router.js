@@ -1,5 +1,4 @@
 const APIRouter = require('./api-router');
-const StatusCode = require('./status-code');
 
 class SessionRouter extends APIRouter {
   constructor(dbClient, options, authService) {
@@ -12,20 +11,14 @@ class SessionRouter extends APIRouter {
     const body = req.body || {};
 
     if (!body.email || !body.password) {
-      return res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: 'Missing argument(s). Email and password are required.'
-        }
+      return res.status(400).send({
+        message: 'Missing argument(s). Email and password are required.'
       });
     }
 
     const authFailedBlock = () => {
-      res.status(StatusCode.unauthorized).send({
-        error: {
-          code: StatusCode.unauthorized,
-          message: 'Authentication failed. Incorrect email or password.'
-        }
+      res.status(401).send({
+        message: 'Authentication failed. Incorrect email or password.'
       });
     };
 
@@ -42,21 +35,16 @@ class SessionRouter extends APIRouter {
 
           delete user['password'];
           const token = this.authService.generateToken(user);
-          res.status(StatusCode.ok).send({
-            data: {
-              user, token
-            }
+          res.status(200).send({
+            user, token
           });
         })
         .catch(() => {
           authFailedBlock();
         });
     }).catch((error) => {
-      res.status(StatusCode.unauthorized).send({
-        error: {
-          code: StatusCode.unauthorized,
-          message: error.message
-        }
+      res.status(401).send({
+        message: error.message
       });
     });
   }

@@ -1,5 +1,4 @@
 const APIRouter = require('./api-router');
-const StatusCode = require('./status-code');
 
 class UserLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -16,15 +15,12 @@ class UserLikesRouter extends APIRouter {
 
     this.imageService.getAllImagesLikedByUser(
       userId, page, limit, currentUserId).then((result) => {
-      res.status(StatusCode.ok).send({
-        data: result
+      res.status(200).send({
+        items: result
       });
     }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
+      res.status(400).send({
+        message: error.message
       });
     });
   }

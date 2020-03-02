@@ -1,6 +1,5 @@
 const APIRouter = require('./api-router');
 const ImageLikesRouter = require('./image-likes-router');
-const StatusCode = require('./status-code');
 
 class ImageRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -23,15 +22,12 @@ class ImageRouter extends APIRouter {
     const page = parseInt(query.page, 10) || 0;
     const userId = req.user.id;
     this.imageService.getAllImages(page, limit, userId).then((result) => {
-      res.status(StatusCode.ok).send({
-        data: result
+      res.status(200).send({
+        items: result
       });
     }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
+      res.status(400).send({
+        message: error.message
       });
     });
   }
@@ -40,11 +36,8 @@ class ImageRouter extends APIRouter {
     const body = req.body || {};
 
     if (!body.filename) {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: 'Missing argument(s). Image filename is expected.'
-        }
+      res.status(400).send({
+        message: 'Missing argument(s). Image filename is expected.'
       });
     }
 
@@ -54,17 +47,12 @@ class ImageRouter extends APIRouter {
 
     this.imageService.createImage(userId, filename, description)
       .then((result) => {
-        res.status(StatusCode.created).send({
-          data: {
-            id: result
-          }
+        res.status(201).send({
+          id: result
         });
       }).catch((error) => {
-        res.status(StatusCode.badRequest).send({
-          error: {
-            code: StatusCode.badRequest,
-            message: error.message
-          }
+        res.status(400).send({
+          message: error.message
         });
       });
   }
@@ -75,16 +63,11 @@ class ImageRouter extends APIRouter {
 
     this.dbClient.getImage(id, userId).then((result) => {
       if (result) {
-        res.status(StatusCode.ok).send({
-          data: result
-        });
+        res.status(200).send(result);
       }
     }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
+      res.status(400).send({
+        message: error.message
       });
     });
   }
@@ -94,13 +77,10 @@ class ImageRouter extends APIRouter {
     const imageId = req.params.id;
 
     this.imageService.deleteImage(imageId, userId).then(() => {
-      res.sendStatus(StatusCode.noContent);
+      res.sendStatus(204);
     }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
+      res.status(400).send({
+        message: error.message
       });
     });
   }

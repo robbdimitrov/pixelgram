@@ -1,5 +1,4 @@
 const APIRouter = require('./api-router');
-const StatusCode = require('./status-code');
 
 class ImageLikesRouter extends APIRouter {
   constructor(dbClient, imageService, options) {
@@ -15,15 +14,12 @@ class ImageLikesRouter extends APIRouter {
 
     this.imageService.getUsersLikedImage(imageId, page, limit)
       .then((result) => {
-        res.status(StatusCode.ok).send({
-          data: result
+        res.status(200).send({
+          items: result
         });
       }).catch((error) => {
-        res.status(StatusCode.badRequest).send({
-          error: {
-            code: StatusCode.badRequest,
-            message: error.message
-          }
+        res.status(400).send({
+          message: error.message
         });
       });
   }
@@ -33,13 +29,10 @@ class ImageLikesRouter extends APIRouter {
     const userId = req.user.id;
 
     this.imageService.likeImage(imageId, userId).then(() => {
-      res.sendStatus(StatusCode.noContent);
+      res.sendStatus(204);
     }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
+      res.status(400).send({
+        message: error.message
       });
     });
   }
@@ -49,22 +42,16 @@ class ImageLikesRouter extends APIRouter {
     const userId = req.params.id;
 
     if (userId !== req.user.id) {
-      return res.status(StatusCode.forbidden).send({
-        error: {
-          code: StatusCode.forbidden,
-          message: 'Can\'t unlike other people\'s likes.'
-        }
+      return res.status(403).send({
+        message: 'Can\'t unlike other people\'s likes.'
       });
     }
 
     this.imageService.unlikeImage(imageId, userId).then(() => {
-      res.sendStatus(StatusCode.noContent);
+      res.sendStatus(204);
     }).catch((error) => {
-      res.status(StatusCode.badRequest).send({
-        error: {
-          code: StatusCode.badRequest,
-          message: error.message
-        }
+      res.status(400).send({
+        message: error.message
       });
     });
   }
