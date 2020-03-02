@@ -1,8 +1,6 @@
 const Router = require('express').Router;
 const multer = require('multer');
 
-const StatusCode = require('./status-code');
-
 class UploadRouter {
   constructor(imageDir) {
     this.imageDir = imageDir;
@@ -18,14 +16,11 @@ class UploadRouter {
 
     router.post('/', uploader.single('image'), (req, res) => {
       if (req.file) {
-        res.status(StatusCode.created).send({
-          data: {
-            filename: req.file.filename
-          }
+        res.status(201).send({
+          filename: req.file.filename
         });
       } else {
-        res.status(StatusCode.badRequest).send({
-          code: StatusCode.badRequest,
+        res.status(400).send({
           message: 'File missing from request. Should be sent as a multipart/form-data.'
         });
       }

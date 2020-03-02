@@ -1,5 +1,3 @@
-const StatusCode = require('./status-code');
-
 const allowedRoutes = [
   { method: 'OPTIONS', path: '' },
   { method: 'POST', path: '/sessions' },
@@ -33,21 +31,15 @@ function authChecker(authService) {
         req.user = result;
         next();
       }).catch((error) => {
-        res.status(StatusCode.unauthorized).send({
-          error: {
-            code: StatusCode.unauthorized,
-            message: error.message
-          }
+        res.status(401).send({
+          message: error.message
         });
       });
     } else {
       // if there is no token
       // return an error
-      res.status(StatusCode.unauthorized).send({
-        error: {
-          code: StatusCode.unauthorized,
-          message: 'No token provided.'
-        }
+      res.status(401).send({
+        message: 'No token provided.'
       });
     }
   };

@@ -51,20 +51,18 @@ Response:
 
 ```json
 {
-  "data": {
-    "user": {
-      "id": "5a0c11682ce7e1000f2a1f5a",
-      "name": "Clark Kent",
-      "username": "superman",
-      "email": "clark.kent@dailyplanet.com",
-      "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-      "bio": "Kryptonian hero",
-      "likes": 0,
-      "images": 1,
-      "createdAt": "2017-11-15T10:05:28Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-  }
+  "user": {
+    "id": "5a0c11682ce7e1000f2a1f5a",
+    "name": "Clark Kent",
+    "username": "superman",
+    "email": "clark.kent@dailyplanet.com",
+    "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+    "bio": "Kryptonian hero",
+    "likes": 0,
+    "images": 1,
+    "created": "2017-11-15T10:05:28Z"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 }
 ```
 
@@ -95,9 +93,7 @@ Response:
 
 ```json
 {
-  "data": {
-    "id": "5a0c11682ce7e1000f2a1f5a"
-  }
+  "id": "5a0c11682ce7e1000f2a1f5a"
 }
 ```
 
@@ -118,7 +114,7 @@ Response:
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "id": "5a0c11682ce7e1000f2a1f5a",
       "name": "Clark Kent",
@@ -128,7 +124,7 @@ Response:
       "bio": "Kryptonian hero",
       "likes": 0,
       "images": 2,
-      "createdAt": "2017-11-15T10:05:28Z"
+      "created": "2017-11-15T10:05:28Z"
     },
     {
       "id": "5a0c361b7ceeae000ffc8bdd",
@@ -139,7 +135,7 @@ Response:
       "bio": "The dark knight",
       "likes": 1,
       "images": 1,
-      "createdAt": "2017-11-15T12:42:03Z"
+      "created": "2017-11-15T12:42:03Z"
     }
   ]
 }
@@ -168,17 +164,15 @@ Response:
 
 ```json
 {
-  "data": {
-    "id": "5a0c11682ce7e1000f2a1f5a",
-    "name": "Clark Kent",
-    "username": "superman",
-    "email": "clark.kent@dailyplanet.com",
-    "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-    "bio": "Kryptonian hero",
-    "likes": 1,
-    "images": 1,
-    "createdAt": "2017-11-15T10:05:28Z"
-  }
+  "id": "5a0c11682ce7e1000f2a1f5a",
+  "name": "Clark Kent",
+  "username": "superman",
+  "email": "clark.kent@dailyplanet.com",
+  "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+  "bio": "Kryptonian hero",
+  "likes": 1,
+  "images": 1,
+  "created": "2017-11-15T10:05:28Z"
 }
 ```
 
@@ -255,7 +249,7 @@ Response:
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
@@ -263,7 +257,7 @@ Response:
       "description": "Image description",
       "likes": 2,
       "isLiked": true,
-      "createdAt": "2017-11-15T16:58:49Z"
+      "created": "2017-11-15T16:58:49Z"
     },
     {
       "id": "5a0c5630ca682d61abcd5787",
@@ -272,7 +266,7 @@ Response:
       "description": "Other description #awesome",
       "likes": 1,
       "isLiked": false,
-      "createdAt": "2017-11-15T16:58:56Z"
+      "created": "2017-11-15T16:58:56Z"
     }
   ]
 }
@@ -301,7 +295,7 @@ Response:
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "id": "5a0c5629ca682d61abcd5786",
       "ownerId": "5a09b5acc3d0655f6f6225cb",
@@ -309,7 +303,7 @@ Response:
       "description": "Image description",
       "likes": 2,
       "isLiked": true,
-      "createdAt": "2017-11-15T16:58:49Z"
+      "created": "2017-11-15T16:58:49Z"
     }
   ]
 }
@@ -341,9 +335,7 @@ Response:
 
 ```json
 {
-  "data": {
-    "id": "5a0c5629ca682d61abcd5786"
-  }
+  "id": "5a0c5629ca682d61abcd5786"
 }
 ```
 
@@ -364,7 +356,7 @@ Response:
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "id": "5a0996ba2775b637bd49b0ab",
       "ownerId": "5a069fd03bd9992ce9520ec5",
@@ -372,7 +364,7 @@ Response:
       "description": "Some image description",
       "likes": 0,
       "isLiked": false,
-      "createdAt": "2017-11-13T14:57:19Z"
+      "created": "2017-11-13T14:57:19Z"
     },
     {
       "id": "5a0c5629ca682d61abcd5786",
@@ -381,7 +373,7 @@ Response:
       "description": "Image description 2",
       "likes": 1,
       "isLiked": true,
-      "createdAt": "2017-11-15T16:58:49Z"
+      "created": "2017-11-15T16:58:49Z"
     }
   ]
 }
@@ -416,15 +408,13 @@ Response:
 
 ```json
 {
-  "data": {
-    "id": "5a0996ba2775b637bd49b0ab",
-    "ownerId": "5a069fd03bd9992ce9520ec5",
-    "filename": "6710497b36573655ed145f1bc1e01052",
-    "description": "Image description",
-    "likes": 2,
-    "isLiked": true,
-    "createdAt": "2017-11-13T14:57:19Z"
-  }
+  "id": "5a0996ba2775b637bd49b0ab",
+  "ownerId": "5a069fd03bd9992ce9520ec5",
+  "filename": "6710497b36573655ed145f1bc1e01052",
+  "description": "Image description",
+  "likes": 2,
+  "isLiked": true,
+  "created": "2017-11-13T14:57:19Z"
 }
 ```
 
@@ -483,7 +473,7 @@ Response:
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "id": "5a09b5acc3d0655f6f6225cb",
       "name": "Bruce Wayne",
@@ -493,7 +483,7 @@ Response:
       "bio": "The dark knight",
       "likes": 1,
       "images": 2,
-      "createdAt": "2017-11-13T17:09:19Z"
+      "created": "2017-11-13T17:09:19Z"
     }
   ]
 }
@@ -545,9 +535,7 @@ Response:
 
 ```json
 {
-  "data": {
-    "filename": "d4aab3fd72517522479c08520bc150a3"
-  }
+  "filename": "d4aab3fd72517522479c08520bc150a3"
 }
 ```
 
@@ -571,13 +559,10 @@ The image data
 
 ## Errors
 
-Errors contain the HTTP status code and message describing the error.
+Errors contain the message describing the error.
 
 ```json
 {
-  "error": {
-    "code": 500,
-    "message": "Missing argument(s). Image filename is expected."
-  }
+  "message": "Missing argument(s). Image filename is expected."
 }
 ```
