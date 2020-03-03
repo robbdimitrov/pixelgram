@@ -14,7 +14,7 @@ function isAllowed(req) {
   return false;
 }
 
-function authChecker(authService) {
+function authGuard(authService) {
   return function(req, res, next) {
     // If this is a login request, create a user request or
     // get an image request, don't check for token
@@ -45,4 +45,4 @@ function authChecker(authService) {
   };
 }
 
-module.exports = authChecker;
+module.exports = authGuard;
