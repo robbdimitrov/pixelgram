@@ -1,45 +1,42 @@
-const bodyParser = require('body-parser');
 const express = require('express');
+const bodyParser = require('body-parser');
 const helmet = require('helmet');
-const { Pool } = require('pg');
 
-const ImageRouter = require('./routers/image-router');
-const SessionRouter = require('./routers/session-router');
-const UploadRouter = require('./routers/upload-router');
-const UserRouter = require('./routers/user-router');
-const authChecker = require('./routers/auth-checker');
-const AuthService = require('./services/auth-service');
-const ImageService = require('./src/services/image-service');
-const UserService = require('./services/user-service');
-const Logger = require('./tools/logger');
+const DbClient = require('./db');
+const ImageController = require('./src/services/image-controller');
+const UserController = require('./controllers/user-controller');
+const SessionController = require('./controllers/session-controller');
+const imageRouter = require('./routes/image-router');
+const sessionRouter = require('./routes/session-router');
+const userRouter = require('./routes/user-router');
+const uploadRouter = require('./routes/upload-router');
+const logger = require('./tools/logger');
 
 class Server {
   constructor(port, dbUrl, secret, imageDir) {
     this.port = port;
     this.imageDir = imageDir;
 
-    this.routers = {};
     this.app = express();
 
-    this.authService = new AuthService(secret);
-
-    this.userService = new UserService(dbUrl, this.authService);
-    this.imageService = new ImageService(dbUrl);
+    this.dbClient = new DbClient(dbUrl);
+    this.imageController = new ImageController(this.dbClient);
+    this.sessionCotroller = new SessionController(this.dbClient, secret);
+    this.userController = new UserController(this.dbClient, this.sessionCotroller);
   }
 
-  // Configure Express middleware
+  // Configure middleware
   configure() {
-    this.configureLogger();
-    this.app.use(bodyParser.json());
     this.app.use(helmet());
-    this.configureRoutes();
-    this.connectRoutes();
+    this.app.use(bodyParser.json());
+    this.configureLogger();
     this.configureStatic();
+    this.configureRoutes();
   }
 
   configureLogger() {
     this.app.use((req, res, next) => {
-      Logger.logInfo(`Server request ${req.method} ${req.url}`);
+      logger.logInfo(`Server request ${req.method} ${req.url}`);
       next();
     });
   }
@@ -48,32 +45,20 @@ class Server {
     this.app.use('/uploads', express.static(this.imageDir));
   }
 
-  // Create API routers
+  // Configure routes
   configureRoutes() {
-    const sessionRouter = new SessionRouter(this.dbClient, this.authService);
-    this.routers.sessions = sessionRouter;
+    this.app.use(authGuard(this.authService));
 
-    const userRouter = new UserRouter(this.dbClient, this.userService, this.imageClient);
-    this.routers.users = userRouter;
+    this.app.use('/images', imageRouter(this.imageController));
+    this.app.use('/sessions', sessionRouter(this.sessionCotroller));
+    this.app.use('/users', userRouter(this.userController, this.imageController));
+    this.app.use('/uploads', uploadRouter(this.imageDir));
 
-    const imageRouter = new ImageRouter(this.dbClient, this.imageClient);
-    this.routers.images = imageRouter;
-
-    const uploadRouter = new UploadRouter(this.imageDir);
-    this.routers.upload = uploadRouter;
-  }
-
-  // Configure API endpoints
-  connectRoutes() {
-    this.app.use(authChecker(this.authService));
-
-    // Create and map express routers
-    for (const key in this.routers) {
-      if (Object.prototype.hasOwnProperty.call(this.routers, key)) {
-        const value = this.routers[key];
-        this.app.use(`/${key}`, value.router);
-      }
-    }
+    this.app.use((req, res, next) => {
+      res.status(404).send({
+        message: 'The resource was not found.'
+      });
+    });
   }
 
   // Setup state and start server
@@ -81,7 +66,7 @@ class Server {
     this.configure();
 
     this.server = this.app.listen(this.port, () => {
-      Logger.logInfo(`Starting server on port ${this.port}`);
+      logger.logInfo(`Starting server on port ${this.port}`);
     });
 
     process.on('SIGINT', this.shutdown.bind(this));
@@ -90,16 +75,15 @@ class Server {
 
   // Stop server, close database connection
   shutdown() {
-    Logger.logInfo('Shutting down...');
+    logger.logInfo('Shutting down...');
 
     this.server.close((error) => {
       if (error) {
-        Logger.logError(`Closing server failed: ${err}`);
+        logger.logError(`Closing server failed: ${err}`);
       }
     });
 
-    this.userClient.close();
-    this.imageClient.close();
+    this.dbClient.close();
   }
 }
 

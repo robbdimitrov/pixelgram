@@ -1,9 +1,7 @@
-const APIRouter = require('./api-router');
-const UserImagesRouter = require('./user-images-router');
-const UserLikesRouter = require('./user-likes-router');
+const { isValidEmail, castObject } = require('../tools/utils');
 
-class UserRouter extends APIRouter {
-  constructor(dbClient, userService, imageService, options) {
+class UserController {
+  constructor(dbClient, userService, imageService, authService, options) {
     super(dbClient, options);
 
     this.userService = userService;
@@ -13,14 +11,40 @@ class UserRouter extends APIRouter {
     this.setupSubrouters(this.router);
   }
 
-  createSubrouters() {
-    const imagesRouter = new UserImagesRouter(this.dbClient,
-      this.imageService, { mergeParams: true });
-    this.subrouters.images = imagesRouter;
+  validateUpdates(userId, updates) {
+    return new Promise((resolve, reject) => {
+      if (updates.email && !isValidEmail(updates.email)) {
+        return reject(new Error('Invalid email address.'));
+      }
 
-    const likedRouter = new UserLikesRouter(this.dbClient,
-      this.imageService, { mergeParams: true });
-    this.subrouters.likes = likedRouter;
+      const allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
+      const userUpdates = castObject(updates, allowedKeys);
+
+      if (updates.password) {
+        const password = updates.password;
+        const oldPassword = updates.oldPassword;
+
+        if (!oldPassword || !password) {
+          return reject(new Error('Both password and the current password are required.'));
+        }
+
+        this.getUserCredentials(userId).then((user) => {
+          return this.authService.validatePassword(oldPassword, user.password);
+        }).then((valid) => {
+          if (!valid) {
+            return reject(new Error('Wrong password. Enter the correct current password.'));
+          }
+          return this.authService.generateHash(password);
+        }).then((hash) => {
+          userUpdates.password = hash;
+          resolve(userUpdates);
+        }).catch((error) => {
+          reject(error);
+        });
+      } else {
+        resolve(userUpdates);
+      }
+    });
   }
 
   getAll(req, res) {
@@ -42,26 +66,24 @@ class UserRouter extends APIRouter {
   createOne(req, res) {
     const body = req.body || {};
 
-    if (!body.name || !body.username || !body.email || !body.password) {
+    const { name, username, email, password } = body;
+
+    if (!name || !username || !email || !password) {
       return res.status(400).send({
         message: 'Missing argument(s). Name, username, email and password are expected.'
       });
     }
 
-    const name = body.name || '';
-    const username = body.username || '';
-    const email = body.email || '';
-    const password = body.password || '';
-
-    this.userService.createUser(name, username, email, password).then((result) => {
-      res.status(201).send({
-        id: result
+    this.userService.createUser(name, username, email, password)
+      .then((result) => {
+        res.status(201).send({
+          id: result
+        });
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
-    });
   }
 
   getOne(req, res) {
@@ -122,4 +144,4 @@ class UserRouter extends APIRouter {
   }
 }
 
-module.exports = UserRouter;
+module.exports = UserController;
