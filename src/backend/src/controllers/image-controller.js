@@ -1,16 +1,37 @@
 class ImageController {
-  constructor(dbClient, imageService, options) {
-    super(dbClient, options);
-
-    this.imageService = imageService;
+  constructor(dbClient) {
+    this.dbClient = dbClient;
   }
 
-  getAll(req, res) {
+  createImage(req, res) {
+    const body = req.body || {};
+    const { filename, description } = body;
+    const userId = req.user.id;
+
+    if (!filename) {
+      res.status(400).send({
+        message: 'Missing argument(s). Image filename is expected.'
+      });
+    }
+
+    this.dbClient.createImage(userId, filename, description || '')
+      .then((result) => {
+        res.status(201).send({
+          id: result
+        });
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
+      });
+  }
+
+  getImages(req, res) {
     const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 20;
+    const limit = parseInt(query.limit, 10) || 10;
     const page = parseInt(query.page, 10) || 0;
     const userId = req.user.id;
-    this.imageService.getAllImages(page, limit, userId).then((result) => {
+    this.dbClient.getAllImages(page, limit, userId).then((result) => {
       res.status(200).send({
         items: result
       });
@@ -21,29 +42,10 @@ class ImageController {
     });
   }
 
-  getAllLikedByUser(req, res) {
+  getImagesByUser(req, res) {
     const userId = req.params.parentId;
     const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 20;
-    const page = parseInt(query.page, 10) || 0;
-    const currentUserId = req.user.id;
-
-    this.imageService.getAllImagesLikedByUser(
-      userId, page, limit, currentUserId).then((result) => {
-      res.status(200).send({
-        items: result
-      });
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
-    });
-  }
-
-  getAllByUser(req, res) {
-    const userId = req.params.parentId;
-    const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 20;
+    const limit = parseInt(query.limit, 10) || 10;
     const page = parseInt(query.page, 10) || 0;
     const currentUserId = req.user.id;
 
@@ -59,32 +61,26 @@ class ImageController {
       });
   }
 
-  create(req, res) {
-    const body = req.body || {};
+  getImagesLikedByUser(req, res) {
+    const userId = req.params.parentId;
+    const query = req.query || {};
+    const limit = parseInt(query.limit, 10) || 10;
+    const page = parseInt(query.page, 10) || 0;
+    const currentUserId = req.user.id;
 
-    if (!body.filename) {
+    this.imageService.getAllImagesLikedByUser(
+      userId, page, limit, currentUserId).then((result) => {
+      res.status(200).send({
+        items: result
+      });
+    }).catch((error) => {
       res.status(400).send({
-        message: 'Missing argument(s). Image filename is expected.'
+        message: error.message
       });
-    }
-
-    const userId = req.user.id;
-    const filename = body.filename || '';
-    const description = body.description || '';
-
-    this.imageService.createImage(userId, filename, description)
-      .then((result) => {
-        res.status(201).send({
-          id: result
-        });
-      }).catch((error) => {
-        res.status(400).send({
-          message: error.message
-        });
-      });
+    });
   }
 
-  get(req, res) {
+  getImage(req, res) {
     const id = req.params.id;
     const userId = req.user.id;
 
@@ -99,7 +95,7 @@ class ImageController {
     });
   }
 
-  delete(req, res) {
+  deleteImage(req, res) {
     const userId = req.user.id;
     const imageId = req.params.id;
 
@@ -112,27 +108,7 @@ class ImageController {
     });
   }
 
-  // image likes router
-
-  getAll(req, res) {
-    const imageId = req.params.parentId;
-    const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 20;
-    const page = parseInt(query.page, 10) || 0;
-
-    this.imageService.getUsersLikedImage(imageId, page, limit)
-      .then((result) => {
-        res.status(200).send({
-          items: result
-        });
-      }).catch((error) => {
-        res.status(400).send({
-          message: error.message
-        });
-      });
-  }
-
-  createOne(req, res) {
+  likeImage(req, res) {
     const imageId = req.params.parentId;
     const userId = req.user.id;
 
@@ -145,7 +121,7 @@ class ImageController {
     });
   }
 
-  deleteOne(req, res) {
+  unlikeImage(req, res) {
     const imageId = req.params.parentId;
     const userId = req.params.id;
 

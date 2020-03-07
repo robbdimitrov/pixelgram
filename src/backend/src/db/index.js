@@ -1,31 +1,17 @@
 const { Pool } = require('pg');
 
-const logger = require('../tools/logger');
+const logger = require('../shared/logger');
 
 class DbClient {
   constructor(dbUrl) {
     this.pool = new Pool({
       connectionString: dbUrl,
-      max: 3
+      max: 10
     });
   }
 
   close() {
     this.pool.end();
-  }
-
-  //
-  // Helpers
-  //
-
-  userWhereClause(identifier) {
-    let type = 'username';
-    if (Number.isInteger(identifier)) {
-      type = 'id';
-    } else if (identifier.contains('@')) {
-      type = 'email';
-    }
-    return ` WHERE ${type} = $1`;
   }
 
   //
@@ -65,12 +51,11 @@ class DbClient {
     });
   }
 
-  getUserCredentials(identifier) {
+  getUserCredentials(email) {
     return new Promise((resolve, reject) => {
-      let query = 'SELECT id, password FROM users';
-      query += this.userWhereClause(identifier);
+      const query = 'SELECT id, password FROM users WHERE email = $1';
 
-      this.pool.query(query, [identifier])
+      this.pool.query(query, [email])
         .then((result) => {
           resolve(result);
         }).catch((error) => {
@@ -80,33 +65,7 @@ class DbClient {
     });
   }
 
-  getUser(identifier) {
-    return new Promise((resolve, reject) => {
-      let query =
-        `SELECT id, name, username, email, avatar, bio, created,
-        (
-          SELECT count(*) from likes where images.user_id = users.id
-        ) as likes,
-        (
-          SELECT count(*) from images where images.user_id = users.id
-        ) as likes,
-        FROM users`;
-      query += this.userWhereClause(identifier);
-
-      this.pool.query(query, [identifier]).then((result) => {
-        if (!result.length) {
-          reject(new Error('User not found.'));
-        } else {
-          resolve(result);
-        }
-      }).catch((error) => {
-        logger.logError(`Error getting user: ${error}`);
-        reject(new Error('Getting user failed.'));
-      });
-    });
-  }
-
-  getAllUsers(query, page, limit) {
+  getUser(userId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, name, username, email, avatar, bio, created,
@@ -116,15 +75,18 @@ class DbClient {
         (
           SELECT count(*) from images where images.user_id = users.id
         ) as likes,
-        FROM users LIMIT $1 OFFSET $2`;
+        FROM users WHERE id = $1`;
 
-      this.pool.query(query, [limit, page * limit])
-        .then((result) => {
+      this.pool.query(query, [userId]).then((result) => {
+        if (!result.length) {
+          reject(new Error('User not found.'));
+        } else {
           resolve(result);
-        }).catch((error) => {
-          logger.logError(`Error getting users: ${error}`);
-          reject('Getting users failed.');
-        });
+        }
+      }).catch((error) => {
+        logger.logError(`Error getting user: ${error}`);
+        reject(new Error('Getting user failed.'));
+      });
     });
   }
 
@@ -159,12 +121,13 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query = 'DELETE FROM users WHERE id = $1';
 
-      this.pool.query(query, [userId]).then(() => {
-        resolve();
-      }).catch((error) => {
-        logger.logError(`Error deleting user: ${error}`);
-        reject(new Error('Deleting user failed.'));
-      });
+      this.pool.query(query, [userId])
+        .then(() => {
+          resolve();
+        }).catch((error) => {
+          logger.logError(`Error deleting user: ${error}`);
+          reject(new Error('Deleting user failed.'));
+        });
     });
   }
 
@@ -172,7 +135,23 @@ class DbClient {
   // Images
   //
 
-  getAllImages(page, limit, userId) {
+  createImage(userId, filename, description) {
+    return new Promise((resolve, reject) => {
+      const query =
+        `INSERT INTO images (user_id, filename, description)
+        VALUES ($1, $2, $3) RETURNING id`;
+
+      this.pool.query(query, [userId, filename, description])
+        .then((result) => {
+          resolve(result);
+        }).catch((error) => {
+          logger.logError(`Error creating image: ${error}`);
+          reject(new Error('Creating image failed.'));
+        });
+    });
+  }
+
+  getImages(page, limit, userId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description, created,
@@ -193,7 +172,7 @@ class DbClient {
     });
   }
 
-  getImagesForUser(userId, page, limit, currentUserId) {
+  getImagesByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description, created,
@@ -215,7 +194,7 @@ class DbClient {
     });
   }
 
-  getLikedImages(page, limit, userId) {
+  getImagesLikedByUser(page, limit, userId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description, created,
@@ -233,22 +212,6 @@ class DbClient {
         }).catch((error) => {
           logger.logError(`Error getting images: ${error}`);
           reject(error);
-        });
-    });
-  }
-
-  createImage(image) {
-    return new Promise((resolve, reject) => {
-      const query =
-        `INSERT INTO images (user_id, filename, description)
-        VALUES ($1, $2, $3) RETURNING id`;
-
-      this.pool.query(query, [image.userId, image.filename, image.description])
-        .then((result) => {
-          resolve(result);
-        }).catch((error) => {
-          logger.logError(`Error creating image: ${error}`);
-          reject(new Error('Creating image failed.'));
         });
     });
   }
@@ -273,6 +236,24 @@ class DbClient {
         });
     });
   }
+
+  deleteImage(imageId, userId) {
+    return new Promise((resolve, reject) => {
+      const query = 'DELETE FROM images WHERE id = $1 and user_id = $2';
+
+      this.pool.query(query, [imageId, userId])
+        .then(() => {
+          resolve();
+        }).catch((error) => {
+          logger.logError(`Error deleting image: ${error}`);
+          reject(new Error('Deleting image failed.'));
+        });
+    });
+  }
+
+  //
+  // Likes
+  //
 
   likeImage(userId, imageId) {
     return new Promise((resolve, reject) => {
@@ -299,19 +280,6 @@ class DbClient {
           logger.logError(`Error unliking image: ${error}`);
           reject(new Error('Unliking image failed.'));
         });
-    });
-  }
-
-  deleteImage(imageId, userId) {
-    return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM images WHERE id = $1 and user_id = $2';
-
-      this.pool.query(query, [imageId, userId]).then(() => {
-        resolve();
-      }).catch((error) => {
-        logger.logError(`Error deleting image: ${error}`);
-        reject(new Error('Deleting image failed.'));
-      });
     });
   }
 }
