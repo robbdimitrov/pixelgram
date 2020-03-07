@@ -14,20 +14,21 @@ function isAllowed(req) {
   return false;
 }
 
-function authGuard(authService) {
-  return function(req, res, next) {
+module.exports = function (sessionController) {
+  return function (req, res, next) {
+    // TODO: validate session
+    // TODO: Get session id from cookie
+
     // If this is a login request, create a user request or
     // get an image request, don't check for token
     if (isAllowed(req)) {
       return next();
     }
 
-    const token = req.get('Authorization');
-
     // decode token
     if (token) {
       // verifies secret and checks exp
-      authService.validateToken(token).then((result) => {
+      sessionController.validate(token).then((result) => {
         req.user = result;
         next();
       }).catch((error) => {
@@ -44,5 +45,3 @@ function authGuard(authService) {
     }
   };
 }
-
-module.exports = authGuard;

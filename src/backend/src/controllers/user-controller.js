@@ -1,14 +1,10 @@
-const { isValidEmail, castObject } = require('../tools/utils');
+const { isValidEmail, castObject } = require('../shared/utils');
 
 class UserController {
-  constructor(dbClient, userService, imageService, authService, options) {
-    super(dbClient, options);
-
+  constructor(dbClient, userService, imageService) {
+    this.dbClient = dbClient;
     this.userService = userService;
     this.imageService = imageService;
-
-    this.createSubrouters();
-    this.setupSubrouters(this.router);
   }
 
   validateUpdates(userId, updates) {
@@ -49,7 +45,7 @@ class UserController {
 
   getAll(req, res) {
     const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 20;
+    const limit = parseInt(query.limit, 10) || 10;
     const page = parseInt(query.page, 10) || 0;
 
     this.dbClient.getAllUsers({}, page, limit).then((result) => {
@@ -89,15 +85,16 @@ class UserController {
   getOne(req, res) {
     const id = req.params.id;
 
-    this.dbClient.getUser('id', id).then((result) => {
-      if (result) {
-        res.status(200).send(result);
-      }
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
+    this.dbClient.getUser(id)
+      .then((result) => {
+        if (result) {
+          res.status(200).send(result);
+        }
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    });
   }
 
   updateOne(req, res) {

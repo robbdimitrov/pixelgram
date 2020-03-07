@@ -1,62 +1,6 @@
 class SessionController {
-  constructor(secret) {
-    this.secret = secret;
-  }
-
-  validatePassword(password, passwordHash) {
-    return new Promise((resolve, reject) => {
-      bcrypt.compare(password, passwordHash).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        logger.logError(`Error validating password: ${error}`);
-        reject(error);
-      });
-    });
-  }
-
-  generateHash(password) {
-    return new Promise((resolve, reject) => {
-      bcrypt.genSalt(12, (error, salt) => {
-        if (error) {
-          logger.logError(`Error generating hash: ${error}`);
-          return reject(error);
-        }
-        bcrypt.hash(password, salt, (error, hash) => {
-          if (error) {
-            logger.logError(`Error generating hash: ${error}`);
-            return reject(error);
-          }
-          resolve(hash);
-        });
-      });
-    });
-  }
-
-  generateToken(user) {
-    const options = { algorithm: 'HS256', expiresIn: '12h' };
-    const payload = { sub: user.id };
-    const token = jwt.sign(payload, this.secret, options);
-    return token;
-  }
-
-  validateToken(token) {
-    return new Promise((resolve, reject) => {
-      jwt.verify(token, this.secret, { algorithm: 'HS256' }, (error, result) => {
-        if (error) {
-          logger.logError(`Error validating token: ${error}`);
-          reject(new Error('Failed to authenticate token.'));
-        } else {
-          resolve({ id: result.sub });
-        }
-      });
-    });
-  }
-
-
-  constructor(dbClient, options, authService) {
-    super(dbClient, options);
-
-    this.authService = authService;
+  constructor(dbClient) {
+    this.dbClient = dbClient;
   }
 
   create(req, res) {
@@ -100,9 +44,7 @@ class SessionController {
     });
   }
 
-  // router
-
-  createOne(req, res) {
+  get(req, res) {
     const body = req.body || {};
 
     if (!body.email || !body.password) {

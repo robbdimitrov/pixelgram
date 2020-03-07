@@ -1,7 +1,7 @@
 const Router = require('express').Router;
 const multer = require('multer');
 
-function router(imageDir) {
+module.exports = function (imageDir) {
   const router = Router();
 
   const upload = multer({

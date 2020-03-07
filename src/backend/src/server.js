@@ -3,17 +3,20 @@ const bodyParser = require('body-parser');
 const helmet = require('helmet');
 
 const DbClient = require('./db');
-const ImageController = require('./src/services/image-controller');
-const UserController = require('./controllers/user-controller');
+const authGuard = require('./routes/auth-guard');
+const ImageController = require('./controllers/image-controller');
 const SessionController = require('./controllers/session-controller');
+const UserController = require('./controllers/user-controller');
+const feedRouter = require('./routes/feed-router');
 const imageRouter = require('./routes/image-router');
+const likeRouter = require('./routes/like-router');
 const sessionRouter = require('./routes/session-router');
 const userRouter = require('./routes/user-router');
 const uploadRouter = require('./routes/upload-router');
-const logger = require('./tools/logger');
+const logger = require('./shared/logger');
 
 class Server {
-  constructor(port, dbUrl, secret, imageDir) {
+  constructor(port, dbUrl, imageDir) {
     this.port = port;
     this.imageDir = imageDir;
 
@@ -21,8 +24,8 @@ class Server {
 
     this.dbClient = new DbClient(dbUrl);
     this.imageController = new ImageController(this.dbClient);
-    this.sessionCotroller = new SessionController(this.dbClient, secret);
-    this.userController = new UserController(this.dbClient, this.sessionCotroller);
+    this.sessionController = new SessionController(this.dbClient);
+    this.userController = new UserController(this.dbClient);
   }
 
   // Configure middleware
@@ -30,8 +33,9 @@ class Server {
     this.app.use(helmet());
     this.app.use(bodyParser.json());
     this.configureLogger();
-    this.configureStatic();
     this.configureRoutes();
+    this.configureStatic();
+    this.configureNotFound();
   }
 
   configureLogger() {
@@ -41,19 +45,23 @@ class Server {
     });
   }
 
+  // Configure routes
+  configureRoutes() {
+    this.app.use(authGuard(this.sessionController));
+
+    this.app.use('/feed', feedRouter(this.imageController));
+    this.app.use('/users/:userId/images', imageRouter(this.imageController));
+    this.app.use('/users/:userId/likes', likeRouter(this.imageController));
+    this.app.use('/sessions', sessionRouter(this.sessionController));
+    this.app.use('/users', userRouter(this.userController));
+    this.app.use('/uploads', uploadRouter(this.imageDir));
+  }
+
   configureStatic() {
     this.app.use('/uploads', express.static(this.imageDir));
   }
 
-  // Configure routes
-  configureRoutes() {
-    this.app.use(authGuard(this.authService));
-
-    this.app.use('/images', imageRouter(this.imageController));
-    this.app.use('/sessions', sessionRouter(this.sessionCotroller));
-    this.app.use('/users', userRouter(this.userController, this.imageController));
-    this.app.use('/uploads', uploadRouter(this.imageDir));
-
+  configureNotFound() {
     this.app.use((req, res, next) => {
       res.status(404).send({
         message: 'The resource was not found.'

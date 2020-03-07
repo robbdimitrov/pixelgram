@@ -37,5 +37,6 @@ CREATE TABLE sessions (
   id serial PRIMARY KEY,
   user_id integer REFERENCES users ON DELETE CASCADE,
   user_agent varchar(255) NOT NULL,
-  created timestamp NOT NULL DEFAULT now()
+  created timestamp NOT NULL DEFAULT now(),
+  UNIQUE(user_id)
 );
