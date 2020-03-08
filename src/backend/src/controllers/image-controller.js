@@ -109,13 +109,14 @@ class ImageController {
       });
     }
 
-    this.dbClient.deleteImage(imageId, userId).then(() => {
-      res.sendStatus(204);
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
+    this.dbClient.deleteImage(imageId, userId)
+      .then(() => {
+        res.sendStatus(204);
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    });
   }
 
   likeImage(req, res) {
@@ -129,13 +130,14 @@ class ImageController {
       });
     }
 
-    this.dbClient.likeImage(imageId, userId).then(() => {
-      res.sendStatus(204);
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
+    this.dbClient.likeImage(imageId, userId)
+      .then(() => {
+        res.sendStatus(204);
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    });
   }
 
   unlikeImage(req, res) {
@@ -148,13 +150,14 @@ class ImageController {
       });
     }
 
-    this.dbClient.unlikeImage(imageId, userId).then(() => {
-      res.sendStatus(204);
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
+    this.dbClient.unlikeImage(imageId, userId)
+      .then(() => {
+        res.sendStatus(204);
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    });
   }
 }
 
