@@ -9,4 +9,4 @@ module.exports = function (imageController) {
   router.delete('/:imageId', imageController.deleteImage);
 
   return router;
-}
+};

@@ -8,4 +8,4 @@ module.exports = function (imageController) {
   router.delete('/:imageId', imageController.unlikeImage);
 
   return router;
-}
+};

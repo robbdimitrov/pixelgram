@@ -1,6 +1,16 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
-// TODO: add key generation
+function generateKey() {
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(21, (error, buffer) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(buffer.toString('base64'));
+    });
+  });
+}
 
 function generateHash(password) {
   return new Promise((resolve, reject) => {
@@ -27,6 +37,7 @@ function validatePassword(password, passwordHash) {
 }
 
 module.exports = {
+  generateKey,
   generateHash,
   validatePassword
-}
+};

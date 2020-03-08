@@ -1,10 +1,9 @@
 const { isValidEmail, castObject } = require('../shared/utils');
+const { generateHash, validatePassword } = require('../shared/crypto');
 
 class UserController {
-  constructor(dbClient, userService, imageService) {
+  constructor(dbClient) {
     this.dbClient = dbClient;
-    this.userService = userService;
-    this.imageService = imageService;
   }
 
   validateUpdates(userId, updates) {
@@ -25,12 +24,12 @@ class UserController {
         }
 
         this.getUserCredentials(userId).then((user) => {
-          return this.authService.validatePassword(oldPassword, user.password);
+          return validatePassword(oldPassword, user.password);
         }).then((valid) => {
           if (!valid) {
             return reject(new Error('Wrong password. Enter the correct current password.'));
           }
-          return this.authService.generateHash(password);
+          return generateHash(password);
         }).then((hash) => {
           userUpdates.password = hash;
           resolve(userUpdates);
@@ -43,23 +42,7 @@ class UserController {
     });
   }
 
-  getAll(req, res) {
-    const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 10;
-    const page = parseInt(query.page, 10) || 0;
-
-    this.dbClient.getAllUsers({}, page, limit).then((result) => {
-      res.status(200).send({
-        items: result
-      });
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
-    });
-  }
-
-  createOne(req, res) {
+  createUser(req, res) {
     const body = req.body || {};
 
     const { name, username, email, password } = body;
@@ -70,7 +53,7 @@ class UserController {
       });
     }
 
-    this.userService.createUser(name, username, email, password)
+    this.dbClient.createUser(name, username, email, password)
       .then((result) => {
         res.status(201).send({
           id: result
@@ -82,10 +65,10 @@ class UserController {
       });
   }
 
-  getOne(req, res) {
-    const id = req.params.id;
+  getUser(req, res) {
+    const userId = req.params.userId;
 
-    this.dbClient.getUser(id)
+    this.dbClient.getUser(userId)
       .then((result) => {
         if (result) {
           res.status(200).send(result);
@@ -97,47 +80,30 @@ class UserController {
       });
   }
 
-  updateOne(req, res) {
-    const userId = req.params.id;
+  updateUser(req, res) {
+    const userId = req.params.userId;
     const body = req.body;
 
-    if (userId !== req.user.id) {
+    if (userId !== req.userId) {
       return res.status(403).send({
         message: 'Can\'t update other people\'s accounts.'
       });
     }
 
-    if (Object.keys(body).length < 1) {
+    if (Object.keys(body).length === 0) {
       return res.status(304).send({
         message: 'Nothing to update.'
       });
     }
 
-    this.userService.updateUser(userId, body).then(() => {
-      res.sendStatus(204);
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
+    this.dbClient.updateUser(userId, body)
+      .then(() => {
+        res.sendStatus(204);
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    });
-  }
-
-  deleteOne(req, res) {
-    const id = req.params.id;
-
-    if (id !== req.user.id) {
-      return res.status(403).send({
-        message: 'Can\'t delete other people\'s accounts.'
-      });
-    }
-
-    this.dbClient.deleteUser(id).then(() => {
-      res.sendStatus(204);
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
-    });
   }
 }
 
