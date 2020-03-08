@@ -9,4 +9,4 @@ module.exports = function (userController) {
   router.delete('/:userId', userController.deleteUser);
 
   return router;
-}
+};

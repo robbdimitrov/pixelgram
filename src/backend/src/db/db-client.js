@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 
+const { isValidEmail } = require('../shared/utils');
 const logger = require('../shared/logger');
 
 class DbClient {
@@ -151,7 +152,7 @@ class DbClient {
     });
   }
 
-  getImages(page, limit, userId) {
+  getImages(page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description, created,
@@ -162,7 +163,7 @@ class DbClient {
         ) as is_liked
         FROM images LIMIT $2 OFFSET $3`;
 
-      this.pool.query(query, [userId, limit, page * limit])
+      this.pool.query(query, [currentUserId, limit, page * limit])
         .then((result) => {
           resolve(result);
         }).catch((error) => {
@@ -179,34 +180,12 @@ class DbClient {
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
-          and likes.user_id = $4
-        ) as is_liked
-        FROM images WHERE user_id = $1
-        LIMIT $2 OFFSET $3`;
-
-      this.pool.query(query, [userId, limit, page * limit, currentUserId])
-        .then((result) => {
-          resolve(result);
-        }).catch((error) => {
-          logger.logError(`Error getting images: ${error}`);
-          reject(error);
-        });
-    });
-  }
-
-  getImagesLikedByUser(page, limit, userId) {
-    return new Promise((resolve, reject) => {
-      const query =
-        `SELECT id, user_id, filename, description, created,
-        true as is_liked
-        FROM images WHERE id IN (
-          SELECT image_id FROM likes
-          WHERE likes.image_id = images.id
           and likes.user_id = $1
-          LIMIT $2 OFFSET $3
-        )`;
+        ) as is_liked
+        FROM images WHERE user_id = $2
+        LIMIT $3 OFFSET $4`;
 
-      this.pool.query(query, [userId, limit, page * limit])
+      this.pool.query(query, [currentUserId, userId, limit, page * limit])
         .then((result) => {
           resolve(result);
         }).catch((error) => {
@@ -216,18 +195,44 @@ class DbClient {
     });
   }
 
-  getImage(imageId, userId) {
+  getImagesLikedByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description, created,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
-          and likes.user_id = $2
+          and likes.user_id = $1
         ) as is_liked
-        FROM images WHERE id = $1`;
+        FROM images WHERE id IN (
+          SELECT image_id FROM likes
+          WHERE likes.image_id = images.id
+          and likes.user_id = $2
+          LIMIT $3 OFFSET $4
+        )`;
 
-      this.pool.query(query, [imageId, userId])
+      this.pool.query(query, [currentUserId, userId, limit, page * limit])
+        .then((result) => {
+          resolve(result);
+        }).catch((error) => {
+          logger.logError(`Error getting images: ${error}`);
+          reject(error);
+        });
+    });
+  }
+
+  getImage(imageId, currentUserId) {
+    return new Promise((resolve, reject) => {
+      const query =
+        `SELECT id, user_id, filename, description, created,
+        EXISTS (
+          SELECT 1 FROM likes
+          WHERE likes.image_id = images.id
+          and likes.user_id = $1
+        ) as is_liked
+        FROM images WHERE id = $2`;
+
+      this.pool.query(query, [currentUserId, imageId])
         .then((result) => {
           resolve(result);
         }).catch((error) => {
@@ -279,6 +284,54 @@ class DbClient {
         }).catch((error) => {
           logger.logError(`Error unliking image: ${error}`);
           reject(new Error('Unliking image failed.'));
+        });
+    });
+  }
+
+  //
+  // Sessions
+  //
+
+  createSession(sessionId, userId, userAgent) {
+    return new Promise((resolve, reject) => {
+      const query =
+        'INSERT INTO sessions (id, user_id, user_agent) VALUES ($1, $2, $3)';
+
+      this.pool.query(query, [sessionId, userId, userAgent])
+        .then(() => {
+          resolve();
+        }).catch((error) => {
+          logger.logError(`Error creating session: ${error}`);
+          reject(new Error('Creating session failed.'));
+        });
+    });
+  }
+
+  getSession(sessionId) {
+    return new Promise((resolve, reject) => {
+      const query =
+        'SELECT id, user_id, user_agent FROM sessions WHERE id = $1';
+
+      this.pool.query(query, [sessionId])
+        .then(() => {
+          resolve();
+        }).catch((error) => {
+          logger.logError(`Error getting session: ${error}`);
+          reject(new Error('Getting session failed.'));
+        });
+    });
+  }
+
+  deleteSession(sessionId) {
+    return new Promise((resolve, reject) => {
+      const query = 'DELETE FROM sessions WHERE id = $1';
+
+      this.pool.query(query, [sessionId])
+        .then(() => {
+          resolve();
+        }).catch((error) => {
+          logger.logError(`Error deleting session: ${error}`);
+          reject(new Error('Deleting session failed.'));
         });
     });
   }

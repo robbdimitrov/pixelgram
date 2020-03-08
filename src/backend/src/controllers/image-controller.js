@@ -5,8 +5,9 @@ class ImageController {
 
   createImage(req, res) {
     const body = req.body || {};
+    const userId = req.userId;
+
     const { filename, description } = body;
-    const userId = req.user.id;
 
     if (!filename) {
       res.status(400).send({
@@ -14,7 +15,7 @@ class ImageController {
       });
     }
 
-    this.dbClient.createImage(userId, filename, description || '')
+    this.dbClient.createImage(userId, filename, description)
       .then((result) => {
         res.status(201).send({
           id: result
@@ -30,26 +31,28 @@ class ImageController {
     const query = req.query || {};
     const limit = parseInt(query.limit, 10) || 10;
     const page = parseInt(query.page, 10) || 0;
-    const userId = req.user.id;
-    this.dbClient.getAllImages(page, limit, userId).then((result) => {
-      res.status(200).send({
-        items: result
+    const currentUserId = req.userId;
+
+    this.dbClient.getAllImages(page, limit, currentUserId)
+      .then((result) => {
+        res.status(200).send({
+          items: result
+        });
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
-    });
   }
 
   getImagesByUser(req, res) {
-    const userId = req.params.parentId;
+    const userId = req.params.userId;
     const query = req.query || {};
     const limit = parseInt(query.limit, 10) || 10;
     const page = parseInt(query.page, 10) || 0;
-    const currentUserId = req.user.id;
+    const currentUserId = req.userId;
 
-    this.imageService.getAllImagesForUser(userId, page, limit, currentUserId)
+    this.dbClient.getImagesByUser(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -62,44 +65,51 @@ class ImageController {
   }
 
   getImagesLikedByUser(req, res) {
-    const userId = req.params.parentId;
+    const userId = req.params.userId;
     const query = req.query || {};
     const limit = parseInt(query.limit, 10) || 10;
     const page = parseInt(query.page, 10) || 0;
-    const currentUserId = req.user.id;
+    const currentUserId = req.userId;
 
-    this.imageService.getAllImagesLikedByUser(
-      userId, page, limit, currentUserId).then((result) => {
-      res.status(200).send({
-        items: result
+    this.dbClient.getAllImagesLikedByUser(userId, page, limit, currentUserId)
+      .then((result) => {
+        res.status(200).send({
+          items: result
+        });
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
-    });
   }
 
   getImage(req, res) {
-    const id = req.params.id;
-    const userId = req.user.id;
+    const id = req.params.imageId;
+    const currentUserId = req.userId;
 
-    this.dbClient.getImage(id, userId).then((result) => {
-      if (result) {
-        res.status(200).send(result);
-      }
-    }).catch((error) => {
-      res.status(400).send({
-        message: error.message
+    this.dbClient.getImage(id, currentUserId)
+      .then((result) => {
+        if (result) {
+          res.status(200).send(result);
+        }
+      }).catch((error) => {
+        res.status(400).send({
+          message: error.message
+        });
       });
-    });
   }
 
   deleteImage(req, res) {
-    const userId = req.user.id;
-    const imageId = req.params.id;
+    const userId = req.params.userId;
+    const imageId = req.params.imageId;
 
-    this.imageService.deleteImage(imageId, userId).then(() => {
+    if (userId !== req.userId) {
+      return res.status(403).send({
+        message: 'Can\'t delete other people\'s images.'
+      });
+    }
+
+    this.dbClient.deleteImage(imageId, userId).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
       res.status(400).send({
@@ -109,10 +119,17 @@ class ImageController {
   }
 
   likeImage(req, res) {
-    const imageId = req.params.parentId;
-    const userId = req.user.id;
+    const body = req.body || {};
+    const userId = req.params.userId;
+    const imageId = body.imageId;
 
-    this.imageService.likeImage(imageId, userId).then(() => {
+    if (userId !== req.userId) {
+      return res.status(403).send({
+        message: 'Can\'t like other people\'s likes.'
+      });
+    }
+
+    this.dbClient.likeImage(imageId, userId).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
       res.status(400).send({
@@ -122,16 +139,16 @@ class ImageController {
   }
 
   unlikeImage(req, res) {
-    const imageId = req.params.parentId;
-    const userId = req.params.id;
+    const userId = req.params.userId;
+    const imageId = req.params.imageId;
 
-    if (userId !== req.user.id) {
+    if (userId !== req.userId) {
       return res.status(403).send({
         message: 'Can\'t unlike other people\'s likes.'
       });
     }
 
-    this.imageService.unlikeImage(imageId, userId).then(() => {
+    this.dbClient.unlikeImage(imageId, userId).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
       res.status(400).send({

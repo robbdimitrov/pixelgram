@@ -34,9 +34,8 @@ CREATE TABLE likes (
 -- Sessions
 
 CREATE TABLE sessions (
-  id serial PRIMARY KEY,
+  id varchar(255) PRIMARY KEY,
   user_id integer REFERENCES users ON DELETE CASCADE,
   user_agent varchar(255) NOT NULL,
-  created timestamp NOT NULL DEFAULT now(),
-  UNIQUE(user_id)
+  created timestamp NOT NULL DEFAULT now()
 );

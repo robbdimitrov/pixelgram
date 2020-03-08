@@ -6,4 +6,4 @@ module.exports = function (imageController) {
   router.get('/', imageController.getImages);
 
   return router;
-}
+};

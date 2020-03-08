@@ -1,8 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 
-const DbClient = require('./db');
+const DbClient = require('./db/db-client');
 const authGuard = require('./routes/auth-guard');
 const ImageController = require('./controllers/image-controller');
 const SessionController = require('./controllers/session-controller');
@@ -32,6 +33,7 @@ class Server {
   configure() {
     this.app.use(helmet());
     this.app.use(bodyParser.json());
+    this.app.use(cookieParser());
     this.configureLogger();
     this.configureRoutes();
     this.configureStatic();
