@@ -23,19 +23,20 @@ class UserController {
           return reject(new Error('Both password and the current password are required.'));
         }
 
-        this.getUserCredentials(userId).then((user) => {
-          return validatePassword(oldPassword, user.password);
-        }).then((valid) => {
-          if (!valid) {
-            return reject(new Error('Wrong password. Enter the correct current password.'));
-          }
-          return generateHash(password);
-        }).then((hash) => {
-          userUpdates.password = hash;
-          resolve(userUpdates);
-        }).catch((error) => {
-          reject(error);
-        });
+        this.getUserCredentials(userId)
+          .then((user) => {
+            return validatePassword(oldPassword, user.password);
+          }).then((valid) => {
+            if (!valid) {
+              throw new Error('Wrong password. Enter the correct current password.');
+            }
+            return generateHash(password);
+          }).then((hash) => {
+            userUpdates.password = hash;
+            resolve(userUpdates);
+          }).catch((error) => {
+            reject(error);
+          });
       } else {
         resolve(userUpdates);
       }

@@ -33,22 +33,23 @@ class DbClient {
         `INSERT INTO users (name, username, email, password)
         VALUES ($1, $2, $3, $4) RETURNING id`;
 
-      this.authService.generateHash(password).then((hash) => {
-        const values = [name, username, email, hash];
-        return this.pool.query(query, values);
-      }).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        logger.logError(`Error creating user: ${error}`);
+      this.authService.generateHash(password)
+        .then((hash) => {
+          const values = [name, username, email, hash];
+          return this.pool.query(query, values);
+        }).then((result) => {
+          resolve(result);
+        }).catch((error) => {
+          logger.logError(`Error creating user: ${error}`);
 
-        if (error.message.includes('email')) {
-          reject(new Error('User with this email already exists.'));
-        } else if (error.message.includes('username')) {
-          reject(new Error('User with this username already exists.'));
-        } else {
-          reject(new Error('Error creating user.'));
-        }
-      });
+          if (error.message.includes('email')) {
+            reject(new Error('User with this email already exists.'));
+          } else if (error.message.includes('username')) {
+            reject(new Error('User with this username already exists.'));
+          } else {
+            reject(new Error('Creating user failed.'));
+          }
+        });
     });
   }
 
@@ -60,8 +61,8 @@ class DbClient {
         .then((result) => {
           resolve(result);
         }).catch((error) => {
-          logger.logError(`Error getting user: ${error}`);
-          reject(error);
+          logger.logError(`Error getting user credentials: ${error}`);
+          reject(new Error('Getting user failed.'));
         });
     });
   }
@@ -78,56 +79,44 @@ class DbClient {
         ) as likes,
         FROM users WHERE id = $1`;
 
-      this.pool.query(query, [userId]).then((result) => {
-        if (!result.length) {
-          reject(new Error('User not found.'));
-        } else {
-          resolve(result);
-        }
-      }).catch((error) => {
-        logger.logError(`Error getting user: ${error}`);
-        reject(new Error('Getting user failed.'));
-      });
+      this.pool.query(query, [userId])
+        .then((result) => {
+          if (!result.length) {
+            reject(new Error('User not found.'));
+          } else {
+            resolve(result);
+          }
+        }).catch((error) => {
+          logger.logError(`Error getting user: ${error}`);
+          reject(new Error('Getting user failed.'));
+        });
     });
   }
 
   updateUser(userId, updates) {
     return new Promise((resolve, reject) => {
-      this.validateUpdates(userId, updates).then((updates) => {
-        let query = 'UPDATE users SET ';
-        const changes = [];
-        const values = [];
+      this.validateUpdates(userId, updates)
+        .then((updates) => {
+          let query = 'UPDATE users SET ';
+          const changes = [];
+          const values = [];
 
-        for (const [key, value] of Object.entries(updates)) {
-          values.push(value);
-          changes.push(`${key} = $${values.length}`);
-        }
+          for (const [key, value] of Object.entries(updates)) {
+            values.push(value);
+            changes.push(`${key} = $${values.length}`);
+          }
 
-        query += values.join(', ');
+          query += values.join(', ');
 
-        values.push(userId);
-        query += ` WHERE id = $${values.length}`;
+          values.push(userId);
+          query += ` WHERE id = $${values.length}`;
 
-        return this.pool.query(query, values);
-      }).then(() => {
-        resolve();
-      }).catch((error) => {
-        logger.logError(`Error updating user: ${error}`);
-        reject(new Error('Updating user failed.'));
-      });
-    });
-  }
-
-  deleteUser(userId) {
-    return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM users WHERE id = $1';
-
-      this.pool.query(query, [userId])
-        .then(() => {
+          return this.pool.query(query, values);
+        }).then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Error deleting user: ${error}`);
-          reject(new Error('Deleting user failed.'));
+          logger.logError(`Error updating user: ${error}`);
+          reject(new Error('Updating user failed.'));
         });
     });
   }
@@ -190,7 +179,7 @@ class DbClient {
           resolve(result);
         }).catch((error) => {
           logger.logError(`Error getting images: ${error}`);
-          reject(error);
+          reject(new Error('Getting images failed.'));
         });
     });
   }
@@ -216,7 +205,7 @@ class DbClient {
           resolve(result);
         }).catch((error) => {
           logger.logError(`Error getting images: ${error}`);
-          reject(error);
+          reject(new Error('Getting images failed.'));
         });
     });
   }
