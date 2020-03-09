@@ -4,10 +4,9 @@ class ImageController {
   }
 
   createImage(req, res) {
-    const body = req.body || {};
     const userId = req.userId;
 
-    const { filename, description } = body;
+    const { filename, description } = req.body;
 
     if (!filename) {
       res.status(400).send({
@@ -28,9 +27,8 @@ class ImageController {
   }
 
   getImages(req, res) {
-    const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 10;
-    const page = parseInt(query.page, 10) || 0;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
     this.dbClient.getAllImages(page, limit, currentUserId)
@@ -47,9 +45,8 @@ class ImageController {
 
   getImagesByUser(req, res) {
     const userId = req.params.userId;
-    const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 10;
-    const page = parseInt(query.page, 10) || 0;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
     this.dbClient.getImagesByUser(userId, page, limit, currentUserId)
@@ -66,9 +63,8 @@ class ImageController {
 
   getImagesLikedByUser(req, res) {
     const userId = req.params.userId;
-    const query = req.query || {};
-    const limit = parseInt(query.limit, 10) || 10;
-    const page = parseInt(query.page, 10) || 0;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
     this.dbClient.getAllImagesLikedByUser(userId, page, limit, currentUserId)
@@ -120,9 +116,8 @@ class ImageController {
   }
 
   likeImage(req, res) {
-    const body = req.body || {};
     const userId = req.params.userId;
-    const imageId = body.imageId;
+    const imageId = req.body.imageId;
 
     if (userId !== req.userId) {
       return res.status(403).send({

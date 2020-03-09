@@ -1,19 +1,21 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 
 const DbClient = require('./db/db-client');
-const authGuard = require('./routes/auth-guard');
 const ImageController = require('./controllers/image-controller');
 const SessionController = require('./controllers/session-controller');
 const UserController = require('./controllers/user-controller');
+
+const authGuard = require('./middleware/auth-guard');
+const cookieParser = require('./middleware/cookie-parser');
+
 const feedRouter = require('./routes/feed-router');
 const imageRouter = require('./routes/image-router');
 const likeRouter = require('./routes/like-router');
 const sessionRouter = require('./routes/session-router');
 const userRouter = require('./routes/user-router');
 const uploadRouter = require('./routes/upload-router');
+
 const logger = require('./shared/logger');
 
 class Server {
@@ -32,8 +34,7 @@ class Server {
   // Configure middleware
   configure() {
     this.app.use(helmet());
-    this.app.use(bodyParser.json());
-    this.app.use(cookieParser());
+    this.app.use(express.json());
     this.configureLogger();
     this.configureRoutes();
     this.configureStatic();
@@ -49,8 +50,11 @@ class Server {
 
   // Configure routes
   configureRoutes() {
+    // Middleware
+    this.app.use(cookieParser);
     this.app.use(authGuard(this.sessionController));
 
+    // Routers
     this.app.use('/feed', feedRouter(this.imageController));
     this.app.use('/users/:userId/images', imageRouter(this.imageController));
     this.app.use('/users/:userId/likes', likeRouter(this.imageController));
