@@ -44,9 +44,7 @@ class UserController {
   }
 
   createUser(req, res) {
-    const body = req.body || {};
-
-    const { name, username, email, password } = body;
+    const { name, username, email, password } = req.body;
 
     if (!name || !username || !email || !password) {
       return res.status(400).send({
@@ -83,7 +81,6 @@ class UserController {
 
   updateUser(req, res) {
     const userId = req.params.userId;
-    const body = req.body;
 
     if (userId !== req.userId) {
       return res.status(403).send({
@@ -91,13 +88,13 @@ class UserController {
       });
     }
 
-    if (Object.keys(body).length === 0) {
+    if (Object.keys(req.body).length === 0) {
       return res.status(304).send({
         message: 'Nothing to update.'
       });
     }
 
-    this.dbClient.updateUser(userId, body)
+    this.dbClient.updateUser(userId, req.body)
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {

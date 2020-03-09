@@ -19,6 +19,6 @@ module.exports = function (sessionController) {
     if (isAllowed(req)) {
       return next();
     }
-    sessionController.validateSession(req, res);
+    sessionController.validateSession(req, res, next);
   };
 };
