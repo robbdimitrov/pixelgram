@@ -1,24 +1,14 @@
-function timeFormat() {
+function dateString() {
   const date = new Date();
-  return `${date.getFullYear()}-${format(date.getMonth() + 1)}-${format(date.getDate())}T` +
-    `${format(date.getHours())}:${format(date.getMinutes())}:${format(date.getSeconds())}.` +
-    `${getMilliseconds(date)}`;
-}
-
-function format(num) {
-  return ('0' + num).slice(-2);
-}
-
-function getMilliseconds(date) {
-  return (date.getMilliseconds() + '00').slice(0, 3);
+  return date.toISOString();
 }
 
 function logError(message) {
-  console.error(`[${timeFormat()}] ${message}`);
+  console.error(`[${dateString()}] ${message}`);
 }
 
 function logInfo(message) {
-  console.log(`[${timeFormat()}] ${message}`);
+  console.log(`[${dateString()}] ${message}`);
 }
 
 module.exports = {

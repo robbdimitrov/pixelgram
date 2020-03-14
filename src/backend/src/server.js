@@ -6,12 +6,10 @@ const ImageController = require('./controllers/image-controller');
 const SessionController = require('./controllers/session-controller');
 const UserController = require('./controllers/user-controller');
 
-const authGuard = require('./middleware/auth-guard');
-const cookieParser = require('./middleware/cookie-parser');
+const authGuard = require('./middlewares/auth-guard');
+const cookieParser = require('./middlewares/cookie-parser');
 
-const feedRouter = require('./routes/feed-router');
 const imageRouter = require('./routes/image-router');
-const likeRouter = require('./routes/like-router');
 const sessionRouter = require('./routes/session-router');
 const userRouter = require('./routes/user-router');
 const uploadRouter = require('./routes/upload-router');
@@ -55,11 +53,9 @@ class Server {
     this.app.use(authGuard(this.sessionController));
 
     // Routers
-    this.app.use('/feed', feedRouter(this.imageController));
-    this.app.use('/users/:userId/images', imageRouter(this.imageController));
-    this.app.use('/users/:userId/likes', likeRouter(this.imageController));
+    this.app.use('/images', imageRouter(this.imageController));
     this.app.use('/sessions', sessionRouter(this.sessionController));
-    this.app.use('/users', userRouter(this.userController));
+    this.app.use('/users', userRouter(this.userController, this.imageController));
     this.app.use('/uploads', uploadRouter(this.imageDir));
   }
 
@@ -70,7 +66,7 @@ class Server {
   configureNotFound() {
     this.app.use((req, res, next) => {
       res.status(404).send({
-        message: 'The resource was not found.'
+        message: 'Resource not found.'
       });
     });
   }

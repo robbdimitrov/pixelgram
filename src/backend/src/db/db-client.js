@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
 
 const { isValidEmail } = require('../shared/utils');
+const { generateHash } = require('../shared/crypto');
+const { mapUser, mapImage, mapSession } = require('../shared/mappers');
 const logger = require('../shared/logger');
 
 class DbClient {
@@ -33,14 +35,14 @@ class DbClient {
         `INSERT INTO users (name, username, email, password)
         VALUES ($1, $2, $3, $4) RETURNING id`;
 
-      this.authService.generateHash(password)
+      generateHash(password)
         .then((hash) => {
           const values = [name, username, email, hash];
           return this.pool.query(query, values);
         }).then((result) => {
-          resolve(result);
+          resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Error creating user: ${error}`);
+          logger.logError(`Creating user failed: ${error}`);
 
           if (error.message.includes('email')) {
             reject(new Error('User with this email already exists.'));
@@ -59,9 +61,9 @@ class DbClient {
 
       this.pool.query(query, [email])
         .then((result) => {
-          resolve(result);
+          resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Error getting user credentials: ${error}`);
+          logger.logError(`Getting user credentials failed: ${error}`);
           reject(new Error('Getting user failed.'));
         });
     });
@@ -70,24 +72,20 @@ class DbClient {
   getUser(userId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, name, username, email, avatar, bio, created,
+        `SELECT id, name, username, email, avatar, bio,
         (
-          SELECT count(*) from likes where images.user_id = users.id
+          SELECT count(*) FROM likes WHERE likes.user_id = users.id
         ) as likes,
         (
-          SELECT count(*) from images where images.user_id = users.id
-        ) as likes,
+          SELECT count(*) FROM images WHERE images.user_id = users.id
+        ) as images, created
         FROM users WHERE id = $1`;
 
       this.pool.query(query, [userId])
         .then((result) => {
-          if (!result.length) {
-            reject(new Error('User not found.'));
-          } else {
-            resolve(result);
-          }
+          resolve(mapUser(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Error getting user: ${error}`);
+          logger.logError(`Getting user failed: ${error}`);
           reject(new Error('Getting user failed.'));
         });
     });
@@ -95,27 +93,24 @@ class DbClient {
 
   updateUser(userId, updates) {
     return new Promise((resolve, reject) => {
-      this.validateUpdates(userId, updates)
-        .then((updates) => {
-          let query = 'UPDATE users SET ';
-          const changes = [];
-          const values = [];
+      let query = 'UPDATE users SET ';
+      const changes = [];
+      const values = [];
 
-          for (const [key, value] of Object.entries(updates)) {
-            values.push(value);
-            changes.push(`${key} = $${values.length}`);
-          }
+      for (const [key, value] of Object.entries(updates)) {
+        values.push(value);
+        changes.push(`${key} = $${values.length}`);
+      }
 
-          query += values.join(', ');
+      values.push(userId);
+      query += changes.join(', ');
+      query += ` WHERE id = $${values.length}`;
 
-          values.push(userId);
-          query += ` WHERE id = $${values.length}`;
-
-          return this.pool.query(query, values);
-        }).then(() => {
+      this.pool.query(query, values)
+        .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Error updating user: ${error}`);
+          logger.logError(`Updating user failed: ${error}`);
           reject(new Error('Updating user failed.'));
         });
     });
@@ -133,9 +128,9 @@ class DbClient {
 
       this.pool.query(query, [userId, filename, description])
         .then((result) => {
-          resolve(result);
+          resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Error creating image: ${error}`);
+          logger.logError(`Creating image failed: ${error}`);
           reject(new Error('Creating image failed.'));
         });
     });
@@ -144,19 +139,19 @@ class DbClient {
   getImages(page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, user_id, filename, description, created,
+        `SELECT id, user_id, filename, description,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked
+        ) as is_liked, created
         FROM images LIMIT $2 OFFSET $3`;
 
       this.pool.query(query, [currentUserId, limit, page * limit])
         .then((result) => {
-          resolve(result);
+          resolve(result.rows.map(image => mapImage(image)));
         }).catch((error) => {
-          logger.logError(`Error getting images: ${error}`);
+          logger.logError(`Getting images failed: ${error}`);
           reject(new Error('Getting images failed.'));
         });
     });
@@ -165,20 +160,20 @@ class DbClient {
   getImagesByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, user_id, filename, description, created,
+        `SELECT id, user_id, filename, description,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked
+        ) as is_liked, created
         FROM images WHERE user_id = $2
         LIMIT $3 OFFSET $4`;
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
         .then((result) => {
-          resolve(result);
+          resolve(result.rows.map(image => mapImage(image)));
         }).catch((error) => {
-          logger.logError(`Error getting images: ${error}`);
+          logger.logError(`Getting images failed: ${error}`);
           reject(new Error('Getting images failed.'));
         });
     });
@@ -187,12 +182,12 @@ class DbClient {
   getImagesLikedByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, user_id, filename, description, created,
+        `SELECT id, user_id, filename, description,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked
+        ) as is_liked, created
         FROM images WHERE id IN (
           SELECT image_id FROM likes
           WHERE likes.image_id = images.id
@@ -202,9 +197,9 @@ class DbClient {
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
         .then((result) => {
-          resolve(result);
+          resolve(result.rows.map(image => mapImage(image)));
         }).catch((error) => {
-          logger.logError(`Error getting images: ${error}`);
+          logger.logError(`Getting images failed: ${error}`);
           reject(new Error('Getting images failed.'));
         });
     });
@@ -213,19 +208,19 @@ class DbClient {
   getImage(imageId, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, user_id, filename, description, created,
+        `SELECT id, user_id, filename, description,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked
+        ) as is_liked, created
         FROM images WHERE id = $2`;
 
       this.pool.query(query, [currentUserId, imageId])
         .then((result) => {
-          resolve(result);
+          resolve(mapImage(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Error getting image: ${error}`);
+          logger.logError(`Getting image failed: ${error}`);
           reject(new Error('Getting image failed.'));
         });
     });
@@ -239,7 +234,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Error deleting image: ${error}`);
+          logger.logError(`Deleting image failed: ${error}`);
           reject(new Error('Deleting image failed.'));
         });
     });
@@ -249,7 +244,7 @@ class DbClient {
   // Likes
   //
 
-  likeImage(userId, imageId) {
+  likeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       const query = 'INSERT INTO likes (user_id, image_id) VALUES ($1, $2)';
 
@@ -257,13 +252,13 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Error liking image: ${error}`);
+          logger.logError(`Liking image failed: ${error}`);
           reject(new Error('Liking image failed.'));
         });
     });
   }
 
-  unlikeImage(userId, imageId) {
+  unlikeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       const query = 'DELETE FROM likes WHERE user_id = $1 AND image_id = $2';
 
@@ -271,7 +266,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Error unliking image: ${error}`);
+          logger.logError(`Unliking image failed: ${error}`);
           reject(new Error('Unliking image failed.'));
         });
     });
@@ -284,13 +279,15 @@ class DbClient {
   createSession(sessionId, userId, userAgent) {
     return new Promise((resolve, reject) => {
       const query =
-        'INSERT INTO sessions (id, user_id, user_agent) VALUES ($1, $2, $3)';
+        `INSERT INTO sessions (id, user_id, user_agent)
+        VALUES ($1, $2, $3)
+        RETURNING id, user_id, user_agent`;
 
       this.pool.query(query, [sessionId, userId, userAgent])
-        .then(() => {
-          resolve();
+        .then((result) => {
+          resolve(mapSession(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Error creating session: ${error}`);
+          logger.logError(`Creating session failed: ${error}`);
           reject(new Error('Creating session failed.'));
         });
     });
@@ -302,10 +299,10 @@ class DbClient {
         'SELECT id, user_id, user_agent FROM sessions WHERE id = $1';
 
       this.pool.query(query, [sessionId])
-        .then(() => {
-          resolve();
+        .then((result) => {
+          resolve(mapSession(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Error getting session: ${error}`);
+          logger.logError(`Getting session failed: ${error}`);
           reject(new Error('Getting session failed.'));
         });
     });
@@ -319,7 +316,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Error deleting session: ${error}`);
+          logger.logError(`Deleting session failed: ${error}`);
           reject(new Error('Deleting session failed.'));
         });
     });

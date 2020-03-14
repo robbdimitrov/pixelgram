@@ -3,8 +3,8 @@ const Router = require('express').Router;
 module.exports = function (sessionCotroller) {
   const router = Router();
 
-  router.post('/', sessionCotroller.createSession);
-  router.delete('/:sessionId', sessionCotroller.deleteSession);
+  router.post('/', (req, res) => sessionCotroller.createSession(req, res));
+  router.delete('/', (req, res) => sessionCotroller.deleteSession(req, res));
 
   return router;
 };

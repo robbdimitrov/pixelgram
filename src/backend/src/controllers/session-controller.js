@@ -1,5 +1,4 @@
 const { generateKey, validatePassword } = require('../shared/crypto');
-const logger = require('../shared/logger');
 
 class SessionController {
   constructor(dbClient) {
@@ -7,7 +6,8 @@ class SessionController {
   }
 
   createSession(req, res) {
-    const { email, password, userAgent } = req.body;
+    const { email, password } = req.body;
+    const userAgent = req.get('User-Agent');
 
     if (!email || !password) {
       return res.status(400).send({
@@ -21,30 +21,30 @@ class SessionController {
       }
       validatePassword(password, user.password).then((valid) => {
         if (!valid) {
-          throw new Error('Invalid password.');
+          throw new Error('Incorrect email or password.');
         }
-        generateKey().then((sessionId) => {
-          this.dbClient.createSession(sessionId, user.id, userAgent)
-            .then(() => {
-              this.dbClient.getUser(user.id).then((user) => {
-                res.cookie('SID', sessionId, {
-                  sameSite: 'strict',
-                  maxAge: 7 * 24 * 60 * 60 * 1000,
-                  httpOnly: true
-                });
-
-                res.status(200).send({
-                  user
-                });
-              });
-            });
-        });
+        return generateKey();
+      }).then((sessionId) => {
+        return this.dbClient.createSession(sessionId, user.id, userAgent);
+      }).then((session) => {
+        this.createCookie(res, session.id);
+        return this.dbClient.getUser(session.userId);
+      }).then((result) => {
+        res.status(200).send(result);
       });
     }).catch((error) => {
-      logger.logError(`Validating password failed: ${error}`);
       res.status(401).send({
-        message: 'Authentication failed. Incorrect email or password.'
+        message: error.message
       });
+    });
+  }
+
+  createCookie(res, sessionId) {
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    res.cookie('SID', sessionId, {
+      sameSite: 'strict',
+      maxAge: oneWeek,
+      httpOnly: true
     });
   }
 
@@ -64,13 +64,9 @@ class SessionController {
         }
 
         req.sessionId = session.id;
-        req.userId = session.userId;
+        req.userId = session.userId.toString();
 
-        res.cookie('SID', sessionId, {
-          sameSite: 'strict',
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-          httpOnly: true
-        });
+        this.createCookie(res, sessionId);
 
         next();
       }).catch((error) => {
@@ -85,7 +81,7 @@ class SessionController {
     this.dbClient.deleteSession(req.sessionId)
       .then(() => {
         res.clearCookie('SID');
-        res.status(204);
+        res.sendStatus(204);
       }).catch((error) => {
         res.status(500).send({
           message: error.message
