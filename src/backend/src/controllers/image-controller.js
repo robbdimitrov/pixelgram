@@ -16,9 +16,7 @@ class ImageController {
 
     this.dbClient.createImage(userId, filename, description)
       .then((result) => {
-        res.status(201).send({
-          id: result
-        });
+        res.status(201).send(result);
       }).catch((error) => {
         res.status(400).send({
           message: error.message
@@ -31,7 +29,7 @@ class ImageController {
     const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
-    this.dbClient.getAllImages(page, limit, currentUserId)
+    this.dbClient.getImages(page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -67,7 +65,7 @@ class ImageController {
     const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
-    this.dbClient.getAllImagesLikedByUser(userId, page, limit, currentUserId)
+    this.dbClient.getImagesLikedByUser(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -80,13 +78,17 @@ class ImageController {
   }
 
   getImage(req, res) {
-    const id = req.params.imageId;
+    const imageId = req.params.imageId;
     const currentUserId = req.userId;
 
-    this.dbClient.getImage(id, currentUserId)
+    this.dbClient.getImage(imageId, currentUserId)
       .then((result) => {
         if (result) {
           res.status(200).send(result);
+        } else {
+          res.status(404).send({
+            message: 'Image not found.'
+          });
         }
       }).catch((error) => {
         res.status(400).send({
@@ -96,14 +98,8 @@ class ImageController {
   }
 
   deleteImage(req, res) {
-    const userId = req.params.userId;
+    const userId = req.userId;
     const imageId = req.params.imageId;
-
-    if (userId !== req.userId) {
-      return res.status(403).send({
-        message: 'Can\'t delete other people\'s images.'
-      });
-    }
 
     this.dbClient.deleteImage(imageId, userId)
       .then(() => {
@@ -116,14 +112,8 @@ class ImageController {
   }
 
   likeImage(req, res) {
-    const userId = req.params.userId;
-    const imageId = req.body.imageId;
-
-    if (userId !== req.userId) {
-      return res.status(403).send({
-        message: 'Can\'t like other people\'s likes.'
-      });
-    }
+    const userId = req.userId;
+    const imageId = req.params.imageId;
 
     this.dbClient.likeImage(imageId, userId)
       .then(() => {
@@ -136,14 +126,8 @@ class ImageController {
   }
 
   unlikeImage(req, res) {
-    const userId = req.params.userId;
+    const userId = req.userId;
     const imageId = req.params.imageId;
-
-    if (userId !== req.userId) {
-      return res.status(403).send({
-        message: 'Can\'t unlike other people\'s likes.'
-      });
-    }
 
     this.dbClient.unlikeImage(imageId, userId)
       .then(() => {

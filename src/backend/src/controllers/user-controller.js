@@ -14,29 +14,26 @@ class UserController {
 
       const allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
       const userUpdates = castObject(updates, allowedKeys);
+      const { password, oldPassword } = updates;
 
-      if (updates.password) {
-        const password = updates.password;
-        const oldPassword = updates.oldPassword;
-
-        if (!oldPassword || !password) {
+      if (password) {
+        if (!oldPassword) {
           return reject(new Error('Both password and the current password are required.'));
         }
 
-        this.getUserCredentials(userId)
-          .then((user) => {
-            return validatePassword(oldPassword, user.password);
-          }).then((valid) => {
-            if (!valid) {
-              throw new Error('Wrong password. Enter the correct current password.');
-            }
-            return generateHash(password);
-          }).then((hash) => {
-            userUpdates.password = hash;
-            resolve(userUpdates);
-          }).catch((error) => {
-            reject(error);
-          });
+        this.getUserCredentials(userId).then((user) => {
+          return validatePassword(oldPassword, user.password);
+        }).then((valid) => {
+          if (!valid) {
+            throw new Error('Wrong password. Enter the correct current password.');
+          }
+          return generateHash(password);
+        }).then((hash) => {
+          userUpdates.password = hash;
+          resolve(userUpdates);
+        }).catch((error) => {
+          reject(error);
+        });
       } else {
         resolve(userUpdates);
       }
@@ -54,9 +51,7 @@ class UserController {
 
     this.dbClient.createUser(name, username, email, password)
       .then((result) => {
-        res.status(201).send({
-          id: result
-        });
+        res.status(201).send(result);
       }).catch((error) => {
         res.status(400).send({
           message: error.message
@@ -70,7 +65,16 @@ class UserController {
     this.dbClient.getUser(userId)
       .then((result) => {
         if (result) {
-          res.status(200).send(result);
+          res.status(200).send({
+            id: result.id,
+            name: result.name,
+
+            result
+          });
+        } else {
+          res.status(404).send({
+            message: 'User not found.'
+          });
         }
       }).catch((error) => {
         res.status(400).send({
@@ -89,9 +93,7 @@ class UserController {
     }
 
     if (Object.keys(req.body).length === 0) {
-      return res.status(304).send({
-        message: 'Nothing to update.'
-      });
+      return res.sendStatus(304);
     }
 
     this.dbClient.updateUser(userId, req.body)
