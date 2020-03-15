@@ -45,7 +45,7 @@ class UserController {
 
     if (!name || !username || !email || !password) {
       return res.status(400).send({
-        message: 'Missing argument(s). Name, username, email and password are expected.'
+        message: 'Name, username, email and password are required.'
       });
     }
 
@@ -87,9 +87,7 @@ class UserController {
     const userId = req.params.userId;
 
     if (userId !== req.userId) {
-      return res.status(403).send({
-        message: 'Can\'t update other people\'s accounts.'
-      });
+      return res.sendStatus(403);
     }
 
     if (Object.keys(req.body).length === 0) {

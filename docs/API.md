@@ -4,31 +4,30 @@
 
 * [Sessions](#sessions)
   * [Login](#login)
+  * [Logout](#logout)
 * [Users](#users)
-  * [User registration](#user-registration)
-  * [Get all users](#get-all-users)
+  * [Create user](#create-user)
   * [Get user](#get-user)
   * [Update user](#update-user)
-  * [Delete user](#delete-user)
   * [Get user's images](#get-users-images)
-  * [Get user's liked images](#get-users-liked-images)
+  * [Get user's likes](#get-users-likes)
 * [Images](#images)
-  * [Create an image](#create-an-image)
+  * [Create image](#create-image)
   * [Get all images](#get-all-images)
   * [Get image](#get-image)
-  * [Update image](#update-image)
   * [Delete image](#delete-image)
-  * [Add image to the current user's likes](#add-image-to-the-current-users-likes)
-  * [Get all users liked an image](#get-all-users-liked-an-image)
-  * [Remove image from user's likes](#remove-image-from-users-likes)
+  * [Like image](#like-image)
+  * [Unlike image](#unlike-image)
 * [Image assets](#image-assets)
-  * [Upload an image](#upload-an-image)
+  * [Upload image](#upload-image)
   * [Load image asset](#load-image-asset)
 * [Errors](#errors)
 
 ## Sessions
 
 ### Login
+
+Sets an `SID` cookie with the session id.
 
 ```
 POST /sessions
@@ -41,34 +40,33 @@ email: string
 password: string
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-```
-
 Response:
 
 ```json
 {
-  "user": {
-    "id": "5a0c11682ce7e1000f2a1f5a",
-    "name": "Clark Kent",
-    "username": "superman",
-    "email": "clark.kent@dailyplanet.com",
-    "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-    "bio": "Kryptonian hero",
-    "likes": 0,
-    "images": 1,
-    "created": "2017-11-15T10:05:28Z"
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+  "id": "10",
+  "name": "Clark Kent",
+  "username": "superman",
+  "email": "clark.kent@dailyplanet.com",
+  "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
+  "bio": "Kryptonian hero",
+  "likes": 2,
+  "images": 10,
+  "created": "2017-11-15T10:05:28Z"
 }
+```
+
+### Logout
+
+The active session is taken from the `SID` cookie.
+
+```
+DELETE /sessions
 ```
 
 ## Users
 
-### User registration
+### Create user
 
 ```
 POST /users
@@ -83,61 +81,11 @@ email: string
 password: string
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-```
-
 Response:
 
 ```json
 {
-  "id": "5a0c11682ce7e1000f2a1f5a"
-}
-```
-
-### Get all users
-
-```
-GET /users
-```
-
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
-Response:
-
-```json
-{
-  "items": [
-    {
-      "id": "5a0c11682ce7e1000f2a1f5a",
-      "name": "Clark Kent",
-      "username": "superman",
-      "email": "clark.kent@dailyplanet.com",
-      "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-      "bio": "Kryptonian hero",
-      "likes": 0,
-      "images": 2,
-      "created": "2017-11-15T10:05:28Z"
-    },
-    {
-      "id": "5a0c361b7ceeae000ffc8bdd",
-      "name": "Bruce Wayne",
-      "username": "batman",
-      "email": "bruce@wayneindustries.com",
-      "avatar": "d1d99db3ac32052b9dd66cb1245891ad",
-      "bio": "The dark knight",
-      "likes": 1,
-      "images": 1,
-      "created": "2017-11-15T12:42:03Z"
-    }
-  ]
+  "id": "10"
 }
 ```
 
@@ -153,25 +101,18 @@ URL parameters:
 userId - id of the user
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 Response:
 
 ```json
 {
-  "id": "5a0c11682ce7e1000f2a1f5a",
+  "id": "10",
   "name": "Clark Kent",
   "username": "superman",
   "email": "clark.kent@dailyplanet.com",
   "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
   "bio": "Kryptonian hero",
-  "likes": 1,
-  "images": 1,
+  "likes": 2,
+  "images": 10,
   "created": "2017-11-15T10:05:28Z"
 }
 ```
@@ -200,32 +141,6 @@ avatar: string (optional)
 bio: string (optional)
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
-### Delete user
-
-```
-DELETE /users/<userId>
-```
-
-URL parameters:
-
-```
-userId - id of the user
-```
-
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 ### Get user's images
 
 ```
@@ -238,41 +153,25 @@ URL parameters:
 userId - id of the user
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 Response:
 
 ```json
 {
   "items": [
     {
-      "id": "5a0c5629ca682d61abcd5786",
-      "ownerId": "5a09b5acc3d0655f6f6225cb",
+      "id": "12",
+      "ownerId": "10",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
       "isLiked": true,
       "created": "2017-11-15T16:58:49Z"
-    },
-    {
-      "id": "5a0c5630ca682d61abcd5787",
-      "ownerId": "5a09b5acc3d0655f6f6225cb",
-      "filename": "d1d99db3ac32052b9dd66cb5914508dd",
-      "description": "Other description #awesome",
-      "likes": 1,
-      "isLiked": false,
-      "created": "2017-11-15T16:58:56Z"
     }
   ]
 }
 ```
 
-### Get user's liked images
+### Get user's likes
 
 ```
 GET /users/<userId>/likes
@@ -284,21 +183,14 @@ URL parameters:
 userId - id of the user
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 Response:
 
 ```json
 {
   "items": [
     {
-      "id": "5a0c5629ca682d61abcd5786",
-      "ownerId": "5a09b5acc3d0655f6f6225cb",
+      "id": "12",
+      "ownerId": "10",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
@@ -311,7 +203,7 @@ Response:
 
 ## Images
 
-### Create an image
+### Create image
 
 ```
 POST /images
@@ -324,18 +216,11 @@ filename: string
 description: string
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 Response:
 
 ```json
 {
-  "id": "5a0c5629ca682d61abcd5786"
+  "id": "12"
 }
 ```
 
@@ -345,35 +230,19 @@ Response:
 GET /images
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 Response:
 
 ```json
 {
   "items": [
     {
-      "id": "5a0996ba2775b637bd49b0ab",
-      "ownerId": "5a069fd03bd9992ce9520ec5",
+      "id": "12",
+      "ownerId": "10",
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
       "likes": 0,
       "isLiked": false,
       "created": "2017-11-13T14:57:19Z"
-    },
-    {
-      "id": "5a0c5629ca682d61abcd5786",
-      "ownerId": "5a09b5acc3d0655f6f6225cb",
-      "filename": "d1d99db3ac32052b9dd66cb5914508dd",
-      "description": "Image description 2",
-      "likes": 1,
-      "isLiked": true,
-      "created": "2017-11-15T16:58:49Z"
     }
   ]
 }
@@ -391,29 +260,16 @@ URL parameters:
 imageId - id of the image
 ```
 
-Body parameters:
-
-```
-description: string
-```
-
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
 Response:
 
 ```json
 {
-  "id": "5a0996ba2775b637bd49b0ab",
-  "ownerId": "5a069fd03bd9992ce9520ec5",
+  "id": "12",
+  "ownerId": "10",
   "filename": "6710497b36573655ed145f1bc1e01052",
-  "description": "Image description",
-  "likes": 2,
-  "isLiked": true,
+  "description": "Some image description",
+  "likes": 0,
+  "isLiked": false,
   "created": "2017-11-13T14:57:19Z"
 }
 ```
@@ -430,92 +286,37 @@ URL parameters:
 imageId - id of the image
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
-### Add image to the current user's likes
+### Like image
 
 ```
 POST /images/<imageId>/likes
 ```
 
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
-### Get all users liked an image
-
-```
-GET /images/<imageId>/likes
-```
-
 URL parameters:
 
 ```
 imageId - id of the image
 ```
 
-Headers:
+### Unlike image
 
 ```
-Content-Type: application/json
-Authorization: <access-token>
-```
-
-Response:
-
-```json
-{
-  "items": [
-    {
-      "id": "5a09b5acc3d0655f6f6225cb",
-      "name": "Bruce Wayne",
-      "username": "batman",
-      "email": "bruce@wayneindustries.com",
-      "avatar": "d1d99db3ac32052b9dd66cb1245891ad",
-      "bio": "The dark knight",
-      "likes": 1,
-      "images": 2,
-      "created": "2017-11-13T17:09:19Z"
-    }
-  ]
-}
-```
-
-### Remove image from user's likes
-
-```
-DELETE /images/<imageId>/likes/<userId>
+DELETE /images/<imageId>/likes
 ```
 
 URL parameters:
 
 ```
 imageId - id of the image
-userId - id of the user
-```
-
-Headers:
-
-```
-Content-Type: application/json
-Authorization: <access-token>
 ```
 
 ## Image assets
 
-### Upload an image
+### Upload image
 
-An image asset has to be uploaded before creating an Image object. The returned image name
-is used for the `filename` parameter. File size should be less than 1MB.
-This is used for uploading user's avatars as well.
+An image asset has to be uploaded before creating an Image object.
+The returned image name is used for the `filename` parameter.
+File size should be less than 1MB.
 
 ```
 POST /upload
@@ -525,10 +326,6 @@ Body parameters:
 
 ```
 image: file sent as multipart/form-data
-```
-
-```
-Authorization: <access-token>
 ```
 
 Response:
@@ -563,6 +360,6 @@ Errors contain the message describing the error.
 
 ```json
 {
-  "message": "Missing argument(s). Image filename is expected."
+  "message": "Incorrect email or password."
 }
 ```

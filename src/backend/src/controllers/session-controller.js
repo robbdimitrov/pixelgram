@@ -11,7 +11,7 @@ class SessionController {
 
     if (!email || !password) {
       return res.status(400).send({
-        message: 'Missing argument(s). Email and password are required.'
+        message: 'Email and password are required.'
       });
     }
 

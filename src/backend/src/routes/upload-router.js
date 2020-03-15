@@ -19,7 +19,7 @@ module.exports = function (imageDir) {
       });
     } else {
       res.status(400).send({
-        message: 'File missing from request. Should be sent as a multipart/form-data.'
+        message: 'File missing from request.'
       });
     }
   });
