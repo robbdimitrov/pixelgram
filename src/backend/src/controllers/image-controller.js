@@ -9,8 +9,8 @@ class ImageController {
     const { filename, description } = req.body;
 
     if (!filename) {
-      res.status(400).send({
-        message: 'Missing argument(s). Image filename is expected.'
+      return res.status(400).send({
+        message: 'Image filename is required.'
       });
     }
 
