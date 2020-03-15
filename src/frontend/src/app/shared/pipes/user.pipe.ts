@@ -10,11 +10,9 @@ export class UserPipe implements PipeTransform {
 
   transform(value: string) {
     return new Promise((resolve, reject) => {
-      this.userCache.userWithId(value).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        reject(error);
-      });
+      this.userCache.userWithId(value)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
   }
 }
