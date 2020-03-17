@@ -28,11 +28,11 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     this.subscribeToLogout();
 
     this.route.params.subscribe(params => {
-      if (params.id !== undefined) {
+      if (params.id) {
         const id = params.id;
         this.isSingleImageMode = true;
         this.loadImage(id);
-      } else if (params.userId !== undefined) {
+      } else if (params.userId) {
         this.userId = params.userId;
       }
     });
@@ -67,7 +67,7 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
 
   loadNextPage() {
     const req = (this.userId ?
-      this.apiClient.getUsersLikedImages(this.userId, this.pagination.page) :
+      this.apiClient.getImagesLikedByUser(this.userId, this.pagination.page) :
       this.apiClient.getAllImages(this.pagination.page));
 
     req.subscribe(

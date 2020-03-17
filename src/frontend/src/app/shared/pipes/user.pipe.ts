@@ -1,18 +1,14 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { UserCache } from '../../services/user-cache.service';
+import { APIClient } from '../../services/api-client.service';
 
 @Pipe({
   name: 'user'
 })
 export class UserPipe implements PipeTransform {
-  constructor(private userCache: UserCache) {}
+  constructor(private apiClient: APIClient) {}
 
   transform(value: string) {
-    return new Promise((resolve, reject) => {
-      this.userCache.userWithId(value)
-        .then((result) => resolve(result))
-        .catch((error) => reject(error));
-    });
+    return this.apiClient.getUser(value);
   }
 }

@@ -9,8 +9,7 @@ import { NotFoundComponent } from './components/not-found/not-found.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { ImagePipe } from './pipes/image.pipe';
 import { UserPipe } from './pipes/user.pipe';
-import { AuthGuard } from './guards/auth-guard.service';
-import { NotAuthGuard } from './guards/not-auth-guard.service';
+import { AuthGuard } from './auth-guard.service';
 import { RelativeDatePipe } from './pipes/relative-date.pipe';
 import { IconLibrary } from './icon-library.service';
 
@@ -25,7 +24,6 @@ import { IconLibrary } from './icon-library.service';
   ],
   providers: [
     AuthGuard,
-    NotAuthGuard,
     IconLibrary
   ],
   imports: [

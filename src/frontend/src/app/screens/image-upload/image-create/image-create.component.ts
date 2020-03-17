@@ -20,7 +20,7 @@ export class ImageCreateComponent {
   }
 
   hasSelectedFile(): boolean {
-    return this.imagePreview !== undefined && this.imagePreview.length !== 0;
+    return this.imagePreview && this.imagePreview.length !== 0;
   }
 
   getImagePreview(file: File) {

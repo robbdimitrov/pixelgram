@@ -95,7 +95,7 @@ Response:
 GET /users/<userId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -123,7 +123,7 @@ Response:
 PUT /users/<userId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -147,7 +147,7 @@ bio: string (optional)
 GET /users/<userId>/images
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -177,7 +177,7 @@ Response:
 GET /users/<userId>/likes
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -254,7 +254,7 @@ Response:
 GET /images/<imageId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -280,7 +280,7 @@ Response:
 DELETE /images/<imageId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -292,7 +292,7 @@ imageId - id of the image
 POST /images/<imageId>/likes
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -304,7 +304,7 @@ imageId - id of the image
 DELETE /images/<imageId>/likes
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -342,7 +342,7 @@ Response:
 GET /uploads/<filename>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 filename - filename returned from the upload function

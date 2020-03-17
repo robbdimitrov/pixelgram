@@ -65,7 +65,7 @@ export class ProfileComponent implements OnDestroy {
   }
 
   loadNextPage() {
-    this.apiClient.getUsersImages(this.user.id, this.pagination.page).subscribe(
+    this.apiClient.getImagesByUser(this.user.id, this.pagination.page).subscribe(
       (data) => {
         const images = data.filter((image) => {
           return !(this.pagination.data.some((value) => image.id === value.id));

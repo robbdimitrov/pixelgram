@@ -3,13 +3,11 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { SharedModule } from '../../shared/shared.module';
 import { SignupComponent } from './signup.component';
-import { NotAuthGuard } from '../../shared/guards/not-auth-guard.service';
 
 export const routes: Routes = [
   {
     path: 'signup',
-    component: SignupComponent,
-    canActivate: [NotAuthGuard]
+    component: SignupComponent
   },
 ];
 
