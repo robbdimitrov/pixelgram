@@ -7,7 +7,7 @@ class SessionController {
 
   createSession(req, res) {
     const { email, password } = req.body;
-    const userAgent = req.get('User-Agent');
+    const userAgent = req.get('user-agent');
 
     if (!email || !password) {
       return res.status(400).send({
@@ -78,7 +78,9 @@ class SessionController {
   }
 
   deleteSession(req, res) {
-    this.dbClient.deleteSession(req.sessionId)
+    const sessionId = req.cookies['SID'];
+
+    this.dbClient.deleteSession(sessionId)
       .then(() => {
         res.clearCookie('SID');
         res.sendStatus(204);

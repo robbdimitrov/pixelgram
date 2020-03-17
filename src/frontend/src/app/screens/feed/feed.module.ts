@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AuthGuard } from '../../shared/guards/auth-guard.service';
+import { AuthGuard } from '../../shared/auth-guard.service';
 import { FeedComponent } from './feed.component';
 import { ImageComponent } from './image/image.component';
 import { SharedModule } from '../../shared/shared.module';

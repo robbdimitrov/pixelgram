@@ -6,8 +6,7 @@ import { Subject, throwError } from 'rxjs';
 import { catchError, map, share, finalize } from 'rxjs/operators';
 
 import { Session } from './session.service';
-import { ImageFactory } from './image-factory.service';
-import { UserFactory } from './user-factory.service';
+import { mapImage, mapUser } from '../shared/utils/mappers';
 import { environment } from '../../environments/environment';
 
 export const UserDidLogoutNotification = 'UserDidLogoutNotification';
@@ -21,17 +20,12 @@ export class APIClient {
 
   constructor(private http: HttpClient, private session: Session) {}
 
-  // Internal
+  // Private
 
   private headers(): HttpHeaders {
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
+    return new HttpHeaders({
+      'content-type': 'application/json'
     });
-    const token = this.session.token();
-    if (token !== null) {
-      headers = headers.set('Authorization', token);
-    }
-    return headers;
   }
 
   private url(urlPath: string) {
@@ -75,7 +69,6 @@ export class APIClient {
 
     return this.http.post(url, body, { headers }).pipe(
       map((res: any) => {
-        this.session.setToken(res.data.token);
         this.session.setUserId(res.data.user._id);
         this.loginSubject.next(UserDidLoginNotification);
       }),
@@ -84,8 +77,15 @@ export class APIClient {
   }
 
   logoutUser() {
-    this.session.reset();
-    this.loginSubject.next(UserDidLogoutNotification);
+    const url = this.url('/sessions');
+
+    return this.http.delete(url).pipe(
+      map((res: any) => {
+        this.session.reset();
+        this.loginSubject.next(UserDidLogoutNotification);
+      }),
+      catchError(this.handleError.bind(this))
+    );
   }
 
   getUser(userId: string) {
@@ -98,7 +98,7 @@ export class APIClient {
     const headers = this.headers();
 
     const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => UserFactory.userFromObject(res.data)),
+      map((res: any) => mapUser(res.data)),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
       share()
@@ -153,7 +153,7 @@ export class APIClient {
 
     const req = this.http.get(url, { headers }).pipe(
       map((res: any) =>
-        res.data.map((object) => ImageFactory.imageFromObject(object))),
+        res.data.map((object) => mapImage(object))),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
       share()
@@ -162,18 +162,18 @@ export class APIClient {
     return req;
   }
 
-  getUsersImages(userId: string, page: number, limit: number) {
-    const url = this.url(`/users/${userId}/images?page=${page}&limit=${limit}`);
+  getAllImages(page: number) {
+    const url = this.url(`/images?page=${page}`);
     return this.getImages(url);
   }
 
-  getAllImages(page: number, limit: number) {
-    const url = this.url(`/images?page=${page}&limit=${limit}`);
+  getImagesByUser(userId: string, page: number) {
+    const url = this.url(`/users/${userId}/images?page=${page}`);
     return this.getImages(url);
   }
 
-  getUsersLikedImages(userId: string, page: number, limit: number) {
-    const url = this.url(`/users/${userId}/likes?page=${page}&limit=${limit}`);
+  getImagesLikedByUser(userId: string, page: number) {
+    const url = this.url(`/users/${userId}/likes?page=${page}`);
     return this.getImages(url);
   }
 
@@ -187,7 +187,7 @@ export class APIClient {
     const headers = this.headers();
 
     const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => ImageFactory.imageFromObject(res.data)),
+      map((res: any) => mapImage(res.data)),
       catchError(this.handleError.bind(this)),
       finalize(() => delete this.activeRequests[url]),
       share()
@@ -207,12 +207,11 @@ export class APIClient {
 
   uploadImage(file: File) {
     const url = this.url(`/upload`);
-    const headers = this.headers().delete('Content-Type');
 
     const formData = new FormData();
     formData.append('image', file, file.name);
 
-    return this.http.post(url, formData, { headers }).pipe(
+    return this.http.post(url, formData).pipe(
       map((res: any) => res.data),
       catchError(this.handleError.bind(this))
     );

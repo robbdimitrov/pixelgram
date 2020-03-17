@@ -1,5 +1,6 @@
 const allowedRoutes = [
   { method: 'POST', path: '/sessions' },
+  { method: 'DELETE', path: '/sessions' },
   { method: 'POST', path: '/users' },
   { method: 'GET', path: '/uploads' }
 ];

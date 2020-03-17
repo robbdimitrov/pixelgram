@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 })
 export class ImagePipe implements PipeTransform {
   transform(value: string, placeholder: string = '') {
-    if (value === null || value.length === 0) {
+    if (!value || value.length === 0) {
       return placeholder || '';
     }
     return `${environment.apiRoot}/uploads/${value}`;

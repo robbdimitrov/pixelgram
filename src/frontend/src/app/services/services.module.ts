@@ -4,7 +4,6 @@ import { HttpClientModule } from '@angular/common/http';
 import { APIClient } from './api-client.service';
 import { ErrorService } from './error.service';
 import { Session } from './session.service';
-import { UserCache } from './user-cache.service';
 import { PlaceholderService } from './placeholder.service';
 
 @NgModule({
@@ -15,7 +14,6 @@ import { PlaceholderService } from './placeholder.service';
     APIClient,
     ErrorService,
     Session,
-    UserCache,
     PlaceholderService
   ]
 })

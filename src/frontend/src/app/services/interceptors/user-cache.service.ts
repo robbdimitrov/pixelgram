@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { User } from '../models/user.model';
-import { APIClient } from './api-client.service';
+import { User } from '../../models/user.model';
+import { APIClient } from '../api-client.service';
 
 @Injectable()
 export class UserCache {
