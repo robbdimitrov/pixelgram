@@ -6,7 +6,7 @@ export class Session {
     return localStorage.getItem('userId');
   }
 
-  setUserId(userId: string | null) {
+  setUserId(userId: string) {
     localStorage.setItem('userId', userId);
   }
 

@@ -2,7 +2,6 @@ import { Component, AfterViewInit } from '@angular/core';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../../services/api-client.service';
-import { ErrorService } from '../../../services/error.service';
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
 import { PlaceholderService } from '../../../services/placeholder.service';
@@ -22,7 +21,6 @@ export class EditProfileComponent implements AfterViewInit {
   user: User;
 
   constructor(private apiClient: APIClient,
-              private errorService: ErrorService,
               private location: Location,
               private session: Session,
               private placeholderService: PlaceholderService) {}
@@ -39,14 +37,14 @@ export class EditProfileComponent implements AfterViewInit {
       this.apiClient.updateUser(userId, this.nameValue, this.usernameValue,
         this.emailValue, this.bioValue, avatar).subscribe(
           () => this.location.back(),
-          (error) => this.errorService.error = error.message
+          (error) => window.alert(error.message)
         );
     };
 
     if (this.selectedFile) {
       this.apiClient.uploadImage(this.selectedFile).subscribe(
         (data: any) => updateClosure(data.filename),
-        (error) => this.errorService.error = error.message
+        (error) => window.alert(error.message)
       );
     } else {
       updateClosure();

@@ -1,11 +1,8 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { Image } from '../../models/image.model';
-import {
-  APIClient, UserDidLogoutNotification
-} from '../../services/api-client.service';
+import { APIClient } from '../../services/api-client.service';
 import { PaginationService } from '../../services/pagination.service';
 import { User } from '../../models/user.model';
 
@@ -15,40 +12,18 @@ import { User } from '../../models/user.model';
   styleUrls: ['./profile.component.scss'],
   providers: [PaginationService]
 })
-export class ProfileComponent implements OnDestroy {
-  loginSubscription: Subscription;
+export class ProfileComponent {
   user: User;
 
   constructor(private apiClient: APIClient, private router: Router,
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute) {
-    this.subscribeToLogout();
-
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       const id = params.id;
       if (!this.user || id !== this.user.id) {
         this.loadUser(id);
       }
     });
-  }
-
-  // Subscriptions
-
-  private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe(
-      (value) => {
-        if (value === UserDidLogoutNotification) {
-          this.pagination.reset();
-          this.router.navigate(['/login']);
-        }
-      }
-    );
-  }
-
-  // Component lifecycle
-
-  ngOnDestroy() {
-    this.loginSubscription.unsubscribe();
   }
 
   // Data

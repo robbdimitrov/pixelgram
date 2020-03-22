@@ -1,53 +1,33 @@
 import { Injectable } from '@angular/core';
-import {
-  HttpClient, HttpHeaders, HttpErrorResponse
-} from '@angular/common/http';
-import { Subject, throwError } from 'rxjs';
-import { catchError, map, share, finalize } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 
-import { Session } from './session.service';
 import { mapImage, mapUser } from '../shared/utils/mappers';
 import { environment } from '../../environments/environment';
-
-export const UserDidLogoutNotification = 'UserDidLogoutNotification';
-export const UserDidLoginNotification = 'UserDidLoginNotification';
 
 @Injectable()
 export class APIClient {
   private apiRoot = environment.apiRoot;
-  loginSubject = new Subject<string>();
-  private activeRequests = {};
 
-  constructor(private http: HttpClient, private session: Session) {}
+  constructor(private http: HttpClient) {}
 
   // Private
-
-  private headers(): HttpHeaders {
-    return new HttpHeaders({
-      'content-type': 'application/json'
-    });
-  }
 
   private url(urlPath: string) {
     return this.apiRoot + urlPath;
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let errorBody = error.error || error;
+  // Session
 
-    if (errorBody instanceof ErrorEvent) {
-      console.error(`An error occurred: ${errorBody.message}`);
-    } else {
-      errorBody = errorBody.error || errorBody;
+  loginUser(email: string, password: string) {
+    const url = this.url('/sessions');
+    const body = { email, password };
+    return this.http.post(url, body);
+  }
 
-      console.error(`An error occurred: ${error.message}: ` +
-        errorBody.message);
-
-      if (error.status === 401) { // Unauthorized
-        this.logoutUser();
-      }
-    }
-    return throwError(errorBody);
+  logoutUser() {
+    const url = this.url('/sessions');
+    return this.http.delete(url);
   }
 
   // User
@@ -55,81 +35,33 @@ export class APIClient {
   createUser(name: string, username: string, email: string, password: string) {
     const url = this.url('/users');
     const body = { name, username, email, password };
-    const headers = this.headers();
-
-    return this.http.post(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  loginUser(email: string, password: string) {
-    const url = this.url('/sessions');
-    const body = { email, password };
-    const headers = this.headers();
-
-    return this.http.post(url, body, { headers }).pipe(
-      map((res: any) => {
-        this.session.setUserId(res.data.user._id);
-        this.loginSubject.next(UserDidLoginNotification);
-      }),
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  logoutUser() {
-    const url = this.url('/sessions');
-
-    return this.http.delete(url).pipe(
-      map((res: any) => {
-        this.session.reset();
-        this.loginSubject.next(UserDidLogoutNotification);
-      }),
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, body);
   }
 
   getUser(userId: string) {
     const url = this.url(`/users/${userId}`);
 
-    if (this.activeRequests[url]) {
-      return this.activeRequests[url];
-    }
-
-    const headers = this.headers();
-
-    const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => mapUser(res.data)),
-      catchError(this.handleError.bind(this)),
-      finalize(() => delete this.activeRequests[url]),
-      share()
+    return this.http.get(url).pipe(
+      map((res: any) => mapUser(res.data))
     );
-    this.activeRequests[url] = req;
-    return req;
   }
 
   updateUser(userId: string, name: string, username: string,
              email: string, bio: string, avatar?: string) {
     const url = this.url(`/users/${userId}`);
     const body: any = { name, username, email, bio };
-    const headers = this.headers();
 
     if (avatar) {
       body.avatar = avatar;
     }
 
-    return this.http.put(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.put(url, body);
   }
 
   changePassword(userId: string, oldPassword: string, password: string) {
     const url = this.url(`/users/${userId}`);
     const body = { password, oldPassword };
-    const headers = this.headers();
-
-    return this.http.put(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.put(url, body);
   }
 
   // Image
@@ -137,29 +69,13 @@ export class APIClient {
   createImage(filename: string, description: string) {
     const url = this.url('/images');
     const body = { filename, description };
-    const headers = this.headers();
-
-    return this.http.post(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, body);
   }
 
   getImages(url: string) {
-    const headers = this.headers();
-
-    if (this.activeRequests[url]) {
-      return this.activeRequests[url];
-    }
-
-    const req = this.http.get(url, { headers }).pipe(
-      map((res: any) =>
-        res.data.map((object) => mapImage(object))),
-      catchError(this.handleError.bind(this)),
-      finalize(() => delete this.activeRequests[url]),
-      share()
+    return this.http.get(url).pipe(
+      map((res: any) => res.data.map((item) => mapImage(item)))
     );
-    this.activeRequests[url] = req;
-    return req;
   }
 
   getAllImages(page: number) {
@@ -180,29 +96,14 @@ export class APIClient {
   getImage(imageId: string) {
     const url = this.url(`/images/${imageId}`);
 
-    if (this.activeRequests[url]) {
-      return this.activeRequests[url];
-    }
-
-    const headers = this.headers();
-
-    const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => mapImage(res.data)),
-      catchError(this.handleError.bind(this)),
-      finalize(() => delete this.activeRequests[url]),
-      share()
+    return this.http.get(url).pipe(
+      map((res: any) => mapImage(res.data))
     );
-    this.activeRequests[url] = req;
-    return req;
   }
 
   deleteImage(imageId: string) {
     const url = this.url(`/images/${imageId}`);
-    const headers = this.headers();
-
-    return this.http.delete(url, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.delete(url);
   }
 
   uploadImage(file: File) {
@@ -212,26 +113,17 @@ export class APIClient {
     formData.append('image', file, file.name);
 
     return this.http.post(url, formData).pipe(
-      map((res: any) => res.data),
-      catchError(this.handleError.bind(this))
+      map((res: any) => res.data)
     );
   }
 
   likeImage(imageId: string) {
     const url = this.url(`/images/${imageId}/likes`);
-    const headers = this.headers();
-
-    return this.http.post(url, undefined, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, {});
   }
 
   unlikeImage(userId: string, imageId: string) {
     const url = this.url(`/images/${imageId}/likes/${userId}`);
-    const headers = this.headers();
-
-    return this.http.delete(url, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.delete(url);
   }
 }

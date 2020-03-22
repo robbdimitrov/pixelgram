@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { APIClient } from '../../services/api-client.service';
-import { ErrorService } from '../../services/error.service';
+import { Session } from '../../services/session.service';
 
 @Component({
   selector: 'app-signup',
@@ -18,7 +18,7 @@ export class SignupComponent {
   showButtonTitle = 'Show';
 
   constructor(private apiClient: APIClient, private router: Router,
-              private errorService: ErrorService) {}
+              private session: Session) {}
 
   onVisibilityToggle() {
     if (this.passwordFieldType === 'password') {
@@ -35,10 +35,13 @@ export class SignupComponent {
       this.emailValue, this.passwordValue).subscribe(
         () => {
           this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-            () => this.router.navigate(['/'])
+            (data: any) => {
+              this.session.setUserId(data.user.id);
+              this.router.navigate(['/']);
+            }
           );
         },
-        (error) => this.errorService.error = error.message
+        (error) => window.alert(error.message)
       );
   }
 }
