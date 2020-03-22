@@ -1,11 +1,8 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { Subscription } from 'rxjs';
 
-import {
-  APIClient, UserDidLogoutNotification
-} from '../../services/api-client.service';
+import { APIClient } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
 import { PaginationService } from '../../services/pagination.service';
 import { Session } from '../../services/session.service';
@@ -15,19 +12,16 @@ import { Session } from '../../services/session.service';
   styleUrls: ['feed.component.scss'],
   providers: [PaginationService]
 })
-export class FeedComponent implements AfterViewInit, OnDestroy {
+export class FeedComponent implements AfterViewInit {
   isSingleImageMode = false;
   userId?: string;
-  loginSubscription: Subscription;
 
   constructor(private apiClient: APIClient, private router: Router,
               private pagination: PaginationService<Image>,
               private session: Session, private route: ActivatedRoute,
               private location: Location) {
 
-    this.subscribeToLogout();
-
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       if (params.id) {
         const id = params.id;
         this.isSingleImageMode = true;
@@ -38,29 +32,12 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  // Subscriptions
-
-  private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe(
-      (value) => {
-        if (value === UserDidLogoutNotification) {
-          this.pagination.reset();
-          this.router.navigate(['/login']);
-        }
-      }
-    );
-  }
-
   // Component lifecycle
 
   ngAfterViewInit() {
     if (!this.isSingleImageMode) {
       this.loadNextPage();
     }
-  }
-
-  ngOnDestroy() {
-    this.loginSubscription.unsubscribe();
   }
 
   // Data

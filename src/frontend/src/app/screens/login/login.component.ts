@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
-import { APIClient } from '../../services/api-client.service';
 import { Router } from '@angular/router';
-import { ErrorService } from '../../services/error.service';
+
+import { APIClient } from '../../services/api-client.service';
+import { Session } from '../../services/session.service';
 
 @Component({
   selector: 'app-login',
@@ -15,7 +16,7 @@ export class LoginComponent {
   showButtonTitle = 'Show';
 
   constructor(private apiClient: APIClient, private router: Router,
-              private errorService: ErrorService) {}
+              private session: Session) {}
 
   onVisibilityToggle() {
     if (this.passwordFieldType === 'password') {
@@ -29,8 +30,11 @@ export class LoginComponent {
 
   onSubmit() {
     this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-      () => this.router.navigate(['/']),
-      (error) => this.errorService.error = error.message
+      (data: any) => {
+        this.session.setUserId(data.user.id);
+        this.router.navigate(['/']);
+      },
+      (error) => window.alert(error.message)
     );
   }
 }
