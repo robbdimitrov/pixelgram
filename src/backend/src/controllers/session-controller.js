@@ -7,7 +7,6 @@ class SessionController {
 
   createSession(req, res) {
     const { email, password } = req.body;
-    const userAgent = req.get('user-agent');
 
     if (!email || !password) {
       return res.status(400).send({
@@ -25,7 +24,7 @@ class SessionController {
         }
         return generateKey();
       }).then((sessionId) => {
-        return this.dbClient.createSession(sessionId, user.id, userAgent);
+        return this.dbClient.createSession(sessionId, user.id);
       }).then((session) => {
         this.createCookie(res, session.id);
         return this.dbClient.getUser(session.userId);

@@ -160,7 +160,7 @@ Response:
   "items": [
     {
       "id": "12",
-      "ownerId": "10",
+      "userId": "10",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
@@ -190,7 +190,7 @@ Response:
   "items": [
     {
       "id": "12",
-      "ownerId": "10",
+      "userId": "10",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
@@ -237,7 +237,7 @@ Response:
   "items": [
     {
       "id": "12",
-      "ownerId": "10",
+      "userId": "10",
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
       "likes": 0,
@@ -265,7 +265,7 @@ Response:
 ```json
 {
   "id": "12",
-  "ownerId": "10",
+  "userId": "10",
   "filename": "6710497b36573655ed145f1bc1e01052",
   "description": "Some image description",
   "likes": 0,
@@ -319,7 +319,7 @@ The returned image name is used for the `filename` parameter.
 File size should be less than 1MB.
 
 ```
-POST /upload
+POST /uploads
 ```
 
 Body parameters:

@@ -78,7 +78,8 @@ class DbClient {
         ) as likes,
         (
           SELECT count(*) FROM images WHERE images.user_id = users.id
-        ) as images, created
+        ) as images,
+        time_format(created) as created
         FROM users WHERE id = $1`;
 
       this.pool.query(query, [userId])
@@ -140,11 +141,13 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked, created
+        ) as is_liked,
+        time_format(created) as created
         FROM images LIMIT $2 OFFSET $3`;
 
       this.pool.query(query, [currentUserId, limit, page * limit])
@@ -161,11 +164,13 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked, created
+        ) as is_liked,
+        time_format(created) as created
         FROM images WHERE user_id = $2
         LIMIT $3 OFFSET $4`;
 
@@ -183,11 +188,13 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked, created
+        ) as is_liked,
+        time_format(created) as created
         FROM images WHERE id IN (
           SELECT image_id FROM likes
           WHERE likes.image_id = images.id
@@ -209,11 +216,13 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id
           and likes.user_id = $1
-        ) as is_liked, created
+        ) as is_liked,
+        time_format(created) as created
         FROM images WHERE id = $2`;
 
       this.pool.query(query, [currentUserId, imageId])
@@ -276,14 +285,12 @@ class DbClient {
   // Sessions
   //
 
-  createSession(sessionId, userId, userAgent) {
+  createSession(sessionId, userId) {
     return new Promise((resolve, reject) => {
       const query =
-        `INSERT INTO sessions (id, user_id, user_agent)
-        VALUES ($1, $2, $3)
-        RETURNING id, user_id, user_agent`;
+        'INSERT INTO sessions (id, user_id) VALUES ($1, $2) RETURNING id, user_id';
 
-      this.pool.query(query, [sessionId, userId, userAgent])
+      this.pool.query(query, [sessionId, userId])
         .then((result) => {
           resolve(mapSession(result.rows[0]));
         }).catch((error) => {
@@ -296,7 +303,7 @@ class DbClient {
   getSession(sessionId) {
     return new Promise((resolve, reject) => {
       const query =
-        'SELECT id, user_id, user_agent FROM sessions WHERE id = $1';
+        'SELECT id, user_id FROM sessions WHERE id = $1';
 
       this.pool.query(query, [sessionId])
         .then((result) => {
