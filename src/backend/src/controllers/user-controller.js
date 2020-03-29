@@ -65,12 +65,7 @@ class UserController {
     this.dbClient.getUser(userId)
       .then((result) => {
         if (result) {
-          res.status(200).send({
-            id: result.id,
-            name: result.name,
-
-            result
-          });
+          res.status(200).send(result);
         } else {
           res.status(404).send({
             message: 'User not found.'
