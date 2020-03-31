@@ -42,7 +42,7 @@ export class APIClient {
     const url = this.url(`/users/${userId}`);
 
     return this.http.get(url).pipe(
-      map((res: any) => mapUser(res.data))
+      map((res: any) => mapUser(res))
     );
   }
 
@@ -74,7 +74,7 @@ export class APIClient {
 
   getImages(url: string) {
     return this.http.get(url).pipe(
-      map((res: any) => res.data.map((item) => mapImage(item)))
+      map((res: any) => res.items.map((item) => mapImage(item)))
     );
   }
 
@@ -97,7 +97,7 @@ export class APIClient {
     const url = this.url(`/images/${imageId}`);
 
     return this.http.get(url).pipe(
-      map((res: any) => mapImage(res.data))
+      map((res: any) => mapImage(res))
     );
   }
 
@@ -107,14 +107,12 @@ export class APIClient {
   }
 
   uploadImage(file: File) {
-    const url = this.url(`/upload`);
+    const url = this.url(`/uploads`);
 
     const formData = new FormData();
     formData.append('image', file, file.name);
 
-    return this.http.post(url, formData).pipe(
-      map((res: any) => res.data)
-    );
+    return this.http.post(url, formData);
   }
 
   likeImage(imageId: string) {
@@ -122,8 +120,8 @@ export class APIClient {
     return this.http.post(url, {});
   }
 
-  unlikeImage(userId: string, imageId: string) {
-    const url = this.url(`/images/${imageId}/likes/${userId}`);
+  unlikeImage(imageId: string) {
+    const url = this.url(`/images/${imageId}/likes`);
     return this.http.delete(url);
   }
 }

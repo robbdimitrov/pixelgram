@@ -29,6 +29,9 @@ export class ErrorInterceptor implements HttpInterceptor {
         error.error.message);
 
       if (error.status === 401) { // Unauthorized
+        if (!this.session.userId()) {
+          return;
+        }
         this.apiClient.logoutUser().subscribe(
           () => {
             this.session.reset();

@@ -15,7 +15,8 @@ export class LoginComponent {
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
 
-  constructor(private apiClient: APIClient, private router: Router,
+  constructor(private apiClient: APIClient,
+              private router: Router,
               private session: Session) {}
 
   onVisibilityToggle() {
@@ -31,7 +32,7 @@ export class LoginComponent {
   onSubmit() {
     this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
       (data: any) => {
-        this.session.setUserId(data.user.id);
+        this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
       (error) => window.alert(error.message)

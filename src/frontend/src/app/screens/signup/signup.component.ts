@@ -36,7 +36,7 @@ export class SignupComponent {
         () => {
           this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
             (data: any) => {
-              this.session.setUserId(data.user.id);
+              this.session.setUserId(data.id);
               this.router.navigate(['/']);
             }
           );

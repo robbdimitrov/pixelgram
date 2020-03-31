@@ -20,7 +20,6 @@ export class FeedComponent implements AfterViewInit {
               private pagination: PaginationService<Image>,
               private session: Session, private route: ActivatedRoute,
               private location: Location) {
-
     this.route.params.subscribe((params) => {
       if (params.id) {
         const id = params.id;
@@ -61,7 +60,7 @@ export class FeedComponent implements AfterViewInit {
   loadImage(imageId: string) {
     this.apiClient.getImage(imageId).subscribe(
       (data) => this.pagination.update([data]),
-      (error) => console.error(`Loading user failed: ${error.message}`)
+      (error) => console.error(`Loading image failed: ${error.message}`)
     );
   }
 
@@ -80,7 +79,7 @@ export class FeedComponent implements AfterViewInit {
   }
 
   onUnlike(imageId: string) {
-    this.apiClient.unlikeImage(this.session.userId(), imageId).subscribe();
+    this.apiClient.unlikeImage(imageId).subscribe();
   }
 
   onShowProfile(userId: string) {

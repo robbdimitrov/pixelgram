@@ -3,7 +3,6 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { APIClient } from './api-client.service';
 import { Session } from './session.service';
-import { PlaceholderService } from './placeholder.service';
 import { interceptorProviders } from './interceptors';
 
 @NgModule({
@@ -13,7 +12,6 @@ import { interceptorProviders } from './interceptors';
   providers: [
     APIClient,
     Session,
-    PlaceholderService,
     interceptorProviders
   ]
 })

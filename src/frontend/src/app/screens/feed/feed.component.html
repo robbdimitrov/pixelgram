@@ -2,7 +2,7 @@
   <app-image
     *ngFor="let image of images()"
     [image]="image"
-    [user]="image.owner | user | async"
+    [user]="image.userId | user | async"
     (like)="onLike($event)"
     (unlike)="onUnlike($event)"
     (showProfile)="onShowProfile($event)"
