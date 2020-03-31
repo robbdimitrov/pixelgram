@@ -13,7 +13,6 @@ function mapUser(user) {
 }
 
 function mapImage(image) {
-  console.log(JSON.stringify(image))
   return {
     id: image.id,
     userId: image.user_id,

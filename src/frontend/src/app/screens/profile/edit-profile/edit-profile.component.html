@@ -5,7 +5,7 @@
     <div class="avatar-secton">
       <img
         class="avatar"
-        [src]="imagePreview || user?.avatar | image"
+        [src]="imagePreview || !user ? '' : user?.avatar | image"
       >
 
       <label for="file" class="round-corners outline-button">
