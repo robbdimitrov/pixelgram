@@ -2,7 +2,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
-import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
   selector: 'app-profile-header',
@@ -14,8 +13,7 @@ export class ProfileHeaderComponent {
   @Output() openSettings = new EventEmitter();
   @Output() openEditProfile = new EventEmitter();
 
-  constructor(private session: Session,
-              private placeholderService: PlaceholderService) {}
+  constructor(private session: Session) {}
 
   isCurrentUser() {
     if (!this.user) {
@@ -30,14 +28,5 @@ export class ProfileHeaderComponent {
 
   onEditProfileClick() {
     this.openEditProfile.emit();
-  }
-
-  avatar() {
-    return this.user ? this.user.avatar : '';
-  }
-
-  avatarPlaceholder() {
-    const name = this.user ? this.user.name : '';
-    return this.placeholderService.getAvatar(name);
   }
 }

@@ -4,7 +4,6 @@ import { Location } from '@angular/common';
 import { APIClient } from '../../../services/api-client.service';
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
-import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
   selector: 'app-edit-profile',
@@ -22,8 +21,7 @@ export class EditProfileComponent implements AfterViewInit {
 
   constructor(private apiClient: APIClient,
               private location: Location,
-              private session: Session,
-              private placeholderService: PlaceholderService) {}
+              private session: Session) {}
 
   ngAfterViewInit(): void {
     const userId = this.session.userId();
@@ -79,10 +77,5 @@ export class EditProfileComponent implements AfterViewInit {
       },
       (error) => console.error(`Loading user failed: ${error.message}`)
     );
-  }
-
-  avatarPlaceholder() {
-    const name = this.user ? this.user.name : '';
-    return this.placeholderService.getAvatar(name);
   }
 }

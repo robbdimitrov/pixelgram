@@ -6,9 +6,9 @@ import { environment } from '../../../environments/environment';
   name: 'image'
 })
 export class ImagePipe implements PipeTransform {
-  transform(value: string, placeholder: string = '') {
+  transform(value: string) {
     if (!value || value.length === 0) {
-      return placeholder || '';
+      return '/assets/placeholder.svg';
     }
     return `${environment.apiRoot}/uploads/${value}`;
   }

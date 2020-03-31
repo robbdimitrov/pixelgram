@@ -8,22 +8,11 @@ export class CacheInterceptor implements HttpInterceptor {
   private cache = new Map<string, any>();
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
-    if (!this.isCacheable(req)) {
+    if (!isCacheable(req)) {
       return next.handle(req);
     }
-
     const cachedResponse = this.cache.get(req.urlWithParams);
-
-    if (req.headers.get('x-refresh')) {
-      const result = this.sendRequest(req, next);
-      return cachedResponse ? result.pipe( startWith(cachedResponse) ) : result;
-    }
-
     return cachedResponse ? of(cachedResponse) : this.sendRequest(req, next);
-  }
-
-  private isCacheable(req: HttpRequest<any>) {
-    return (req.method === 'GET' && req.url.includes('/users/'));
   }
 
   private sendRequest(req: HttpRequest<any>, next: HttpHandler) {
@@ -38,4 +27,8 @@ export class CacheInterceptor implements HttpInterceptor {
     this.cache.set(req.urlWithParams, result);
     return result;
   }
+}
+
+function isCacheable(req: HttpRequest<any>) {
+  return req.method === 'GET' && req.url.includes('/users/');
 }

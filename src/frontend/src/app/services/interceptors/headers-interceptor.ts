@@ -4,13 +4,15 @@ import { Injectable } from '@angular/core';
 @Injectable()
 export class HeaderInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler) {
-    console.log(`req = ${req.url} headers = ${req.headers}`);
-
-    if (!req.headers.get('content-type')) {
-      const headers = { 'content-type': 'application/json' };
-      const result = req.clone({ setHeaders: headers });
-      return next.handle(result);
+    if (isImageUpload(req) || !req.body) {
+      return next.handle(req);
     }
-    return next.handle(req);
+    const headers = { 'Content-Type': 'application/json' };
+    const result = req.clone({ setHeaders: headers });
+    return next.handle(result);
   }
+}
+
+function isImageUpload(req: HttpRequest<any>) {
+  return req.method === 'POST' && req.url.includes('/uploads');
 }

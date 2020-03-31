@@ -8,6 +8,6 @@ export class User {
     public bio: string,
     public images: number,
     public likes: number,
-    public createdAt: Date
+    public created: Date
   ) {}
 }

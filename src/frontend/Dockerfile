@@ -7,7 +7,6 @@ COPY . .
 RUN npm run build
 
 FROM nginx:1.17-alpine
-COPY nginx/default.conf /etc/nginx/conf.d/
-RUN rm -rf /usr/share/nginx/html/*
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
 CMD ["nginx", "-g", "daemon off;"]
