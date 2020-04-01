@@ -66,7 +66,7 @@ export class EditProfileComponent implements AfterViewInit {
     };
   }
 
-  loadUser(userId: string) {
+  loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe(
       (data) => {
         this.user = data;

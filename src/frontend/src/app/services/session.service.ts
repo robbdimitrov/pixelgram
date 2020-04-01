@@ -3,11 +3,11 @@ import { Injectable } from '@angular/core';
 @Injectable()
 export class Session {
   userId() {
-    return localStorage.getItem('userId');
+    return +localStorage.getItem('userId');
   }
 
-  setUserId(userId: string) {
-    localStorage.setItem('userId', userId);
+  setUserId(userId: number) {
+    localStorage.setItem('userId', userId.toString());
   }
 
   reset() {

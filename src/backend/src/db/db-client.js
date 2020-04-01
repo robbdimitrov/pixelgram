@@ -55,16 +55,32 @@ class DbClient {
     });
   }
 
-  getUserCredentials(email) {
+  getUserWithEmail(email) {
     return new Promise((resolve, reject) => {
-      const query = 'SELECT id, password FROM users WHERE email = $1';
+      const query =
+        'SELECT id, password FROM users WHERE email = $1';
 
       this.pool.query(query, [email])
         .then((result) => {
           resolve(result.rows[0]);
         }).catch((error) => {
           logger.logError(`Getting user credentials failed: ${error}`);
-          reject(new Error('Getting user failed.'));
+          reject(new Error('Getting user credentials failed.'));
+        });
+    });
+  }
+
+  getUserWithId(userId) {
+    return new Promise((resolve, reject) => {
+      const query =
+        'SELECT id, password FROM users WHERE id = $1';
+
+      this.pool.query(query, [userId])
+        .then((result) => {
+          resolve(result.rows[0]);
+        }).catch((error) => {
+          logger.logError(`Getting user credentials failed: ${error}`);
+          reject(new Error('Getting user credentials failed.'));
         });
     });
   }
@@ -199,8 +215,8 @@ class DbClient {
           SELECT image_id FROM likes
           WHERE likes.image_id = images.id AND likes.user_id = $2
           ORDER BY likes.created DESC
-          LIMIT $3 OFFSET $4
-        )`;
+        )
+        LIMIT $3 OFFSET $4`;
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
         .then((result) => {
@@ -287,7 +303,8 @@ class DbClient {
   createSession(sessionId, userId) {
     return new Promise((resolve, reject) => {
       const query =
-        'INSERT INTO sessions (id, user_id) VALUES ($1, $2) RETURNING id, user_id';
+        `INSERT INTO sessions (id, user_id) VALUES ($1, $2)
+        RETURNING id, user_id, created`;
 
       this.pool.query(query, [sessionId, userId])
         .then((result) => {

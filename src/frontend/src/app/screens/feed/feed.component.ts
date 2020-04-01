@@ -13,7 +13,7 @@ import { PaginationService } from '../../services/pagination.service';
 })
 export class FeedComponent implements AfterViewInit {
   isSingleImageMode = false;
-  userId?: string;
+  userId?: number;
 
   constructor(private apiClient: APIClient,
               private router: Router,
@@ -57,7 +57,7 @@ export class FeedComponent implements AfterViewInit {
     );
   }
 
-  loadImage(imageId: string) {
+  loadImage(imageId: number) {
     this.apiClient.getImage(imageId).subscribe(
       (data) => this.pagination.update([data]),
       (error) => console.error(`Loading image failed: ${error.message}`)
@@ -74,15 +74,15 @@ export class FeedComponent implements AfterViewInit {
 
   // Actions
 
-  onLike(imageId: string) {
+  onLike(imageId: number) {
     this.apiClient.likeImage(imageId).subscribe();
   }
 
-  onUnlike(imageId: string) {
+  onUnlike(imageId: number) {
     this.apiClient.unlikeImage(imageId).subscribe();
   }
 
-  onShowProfile(userId: string) {
+  onShowProfile(userId: number) {
     this.router.navigate(['/user', userId]);
   }
 

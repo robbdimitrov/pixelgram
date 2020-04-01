@@ -87,13 +87,13 @@ class Server {
   shutdown() {
     logger.logInfo('Shutting down...');
 
+    setTimeout(() => process.exit(1), 10000);
+    this.dbClient.close();
     this.server.close((error) => {
       if (error) {
         logger.logError(`Closing server failed: ${err}`);
       }
     });
-
-    this.dbClient.close();
   }
 }
 
