@@ -9,11 +9,13 @@ import { APIClient } from '../api-client.service';
 import { Session } from '../session.service';
 import { throwError } from 'rxjs';
 
+import { CacheService } from '../cache.service';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
   constructor(private apiClient: APIClient,
               private session: Session,
+              private cache: CacheService,
               private router: Router) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
@@ -26,7 +28,8 @@ export class ErrorInterceptor implements HttpInterceptor {
     if (error.status === 401) { // Unauthorized
       if (this.session.userId()) {
         this.apiClient.logoutUser().subscribe(() => {
-          this.session.reset();
+          this.cache.clear();
+          this.session.clear();
           this.router.navigate(['/']);
         });
       }

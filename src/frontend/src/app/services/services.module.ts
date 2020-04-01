@@ -2,8 +2,9 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 
 import { APIClient } from './api-client.service';
+import { CacheService } from './cache.service';
+import { interceptors } from './interceptors';
 import { Session } from './session.service';
-import { interceptorProviders } from './interceptors';
 
 @NgModule({
   imports: [
@@ -11,8 +12,9 @@ import { interceptorProviders } from './interceptors';
   ],
   providers: [
     APIClient,
-    Session,
-    interceptorProviders
+    CacheService,
+    interceptors,
+    Session
   ]
 })
 export class ServicesModule {}
