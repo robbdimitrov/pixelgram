@@ -30,7 +30,7 @@ export class ProfileComponent {
   // Data
 
   loadUser(userId: number) {
-    this.apiClient.getUser(userId).subscribe(
+    this.apiClient.getUser(userId, true).subscribe(
       (data) => {
         this.user = data;
         this.pagination.reset();

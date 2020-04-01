@@ -10,7 +10,7 @@ export class Session {
     localStorage.setItem('userId', userId.toString());
   }
 
-  reset() {
+  clear() {
     localStorage.removeItem('userId');
   }
 }

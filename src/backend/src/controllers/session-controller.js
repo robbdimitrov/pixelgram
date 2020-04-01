@@ -71,7 +71,7 @@ class SessionController {
       });
   }
 
-  // Helpers
+  // Private
 
   loginUser(email, password) {
     return new Promise((resolve, reject) => {

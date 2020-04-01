@@ -1,11 +1,15 @@
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpResponse } from '@angular/common/http';
+import {
+  HttpInterceptor, HttpRequest, HttpHandler, HttpResponse
+} from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { tap, share, startWith } from 'rxjs/operators';
+import { tap, share } from 'rxjs/operators';
 import { of } from 'rxjs';
+
+import { CacheService } from '../cache.service';
 
 @Injectable()
 export class CacheInterceptor implements HttpInterceptor {
-  private cache = new Map<string, any>();
+  constructor(private cache: CacheService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
     if (!isCacheable(req)) {

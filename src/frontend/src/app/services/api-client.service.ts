@@ -4,12 +4,14 @@ import { map } from 'rxjs/operators';
 
 import { mapImage, mapUser } from '../shared/utils/mappers';
 import { environment } from '../../environments/environment';
+import { CacheService } from './cache.service';
 
 @Injectable()
 export class APIClient {
   private apiRoot = environment.apiRoot;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,
+              private cache: CacheService) {}
 
   // Private
 
@@ -38,8 +40,12 @@ export class APIClient {
     return this.http.post(url, body);
   }
 
-  getUser(userId: number) {
+  getUser(userId: number, clearCache = false) {
     const url = this.url(`/users/${userId}`);
+
+    if (clearCache) {
+      this.cache.delete(url);
+    }
 
     return this.http.get(url).pipe(
       map((res: any) => mapUser(res))
