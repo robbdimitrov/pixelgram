@@ -75,11 +75,11 @@ class DbClient {
         `SELECT id, name, username, email, avatar, bio,
         (
           SELECT count(*) FROM likes WHERE likes.user_id = users.id
-        ) as likes,
+        ) AS likes,
         (
           SELECT count(*) FROM images WHERE images.user_id = users.id
-        ) as images,
-        time_format(created) as created
+        ) AS images,
+        time_format(created) AS created
         FROM users WHERE id = $1`;
 
       this.pool.query(query, [userId])
@@ -141,14 +141,15 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
-        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked,
-        time_format(created) as created
-        FROM images LIMIT $2 OFFSET $3`;
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
+        FROM images
+        ORDER BY images.created DESC
+        LIMIT $2 OFFSET $3`;
 
       this.pool.query(query, [currentUserId, limit, page * limit])
         .then((result) => {
@@ -164,14 +165,14 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
-        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked,
-        time_format(created) as created
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
         FROM images WHERE user_id = $2
+        ORDER BY images.created DESC
         LIMIT $3 OFFSET $4`;
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
@@ -188,17 +189,16 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
-        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked,
-        time_format(created) as created
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
         FROM images WHERE id IN (
           SELECT image_id FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $2
+          WHERE likes.image_id = images.id AND likes.user_id = $2
+          ORDER BY likes.created DESC
           LIMIT $3 OFFSET $4
         )`;
 
@@ -216,13 +216,12 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
-        (SELECT count(*) FROM likes WHERE image_id = id) as likes,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked,
-        time_format(created) as created
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
         FROM images WHERE id = $2`;
 
       this.pool.query(query, [currentUserId, imageId])
@@ -237,7 +236,7 @@ class DbClient {
 
   deleteImage(imageId, userId) {
     return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM images WHERE id = $1 and user_id = $2';
+      const query = 'DELETE FROM images WHERE id = $1 AND user_id = $2';
 
       this.pool.query(query, [imageId, userId])
         .then(() => {
