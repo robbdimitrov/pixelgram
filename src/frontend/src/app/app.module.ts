@@ -6,7 +6,6 @@ import { AppComponent } from './app.component';
 import { FeedModule } from './screens/feed/feed.module';
 import { SharedModule } from './shared/shared.module';
 import { ServicesModule } from './services/services.module';
-import { LoginModule } from './screens/login/login.module';
 import { SignupModule } from './screens/signup/signup.module';
 import { SettingsModule } from './screens/settings/settings.module';
 import { ImageUploadModule } from './screens/image-upload/image-upload.module';
@@ -36,7 +35,6 @@ export const routes: Routes = [
     SharedModule,
     FeedModule,
     ServicesModule,
-    LoginModule,
     SignupModule,
     SettingsModule,
     ImageUploadModule,

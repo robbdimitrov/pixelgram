@@ -15,7 +15,8 @@ import { User } from '../../models/user.model';
 export class ProfileComponent {
   user: User;
 
-  constructor(private apiClient: APIClient, private router: Router,
+  constructor(private apiClient: APIClient,
+              private router: Router,
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute) {
     this.route.params.subscribe((params) => {

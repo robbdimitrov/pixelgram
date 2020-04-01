@@ -12,7 +12,8 @@ import { throwError } from 'rxjs';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
-  constructor(private apiClient: APIClient, private session: Session,
+  constructor(private apiClient: APIClient,
+              private session: Session,
               private router: Router) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {

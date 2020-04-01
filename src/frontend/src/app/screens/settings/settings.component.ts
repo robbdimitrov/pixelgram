@@ -10,7 +10,8 @@ import { Session } from '../../services/session.service';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent {
-  constructor(private apiClient: APIClient, private router: Router,
+  constructor(private apiClient: APIClient,
+              private router: Router,
               private session: Session) {}
 
   onChangePasswordClick() {

@@ -5,7 +5,6 @@ import { Location } from '@angular/common';
 import { APIClient } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
 import { PaginationService } from '../../services/pagination.service';
-import { Session } from '../../services/session.service';
 
 @Component({
   templateUrl: './feed.component.html',
@@ -16,9 +15,10 @@ export class FeedComponent implements AfterViewInit {
   isSingleImageMode = false;
   userId?: string;
 
-  constructor(private apiClient: APIClient, private router: Router,
+  constructor(private apiClient: APIClient,
+              private router: Router,
               private pagination: PaginationService<Image>,
-              private session: Session, private route: ActivatedRoute,
+              private route: ActivatedRoute,
               private location: Location) {
     this.route.params.subscribe((params) => {
       if (params.id) {
