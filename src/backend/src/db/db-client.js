@@ -204,18 +204,14 @@ class DbClient {
   getImagesLikedByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, user_id, filename, description,
+        `SELECT id, images.user_id, filename, description,
         (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
-        EXISTS (
-          SELECT 1 FROM likes
-          WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS is_liked,
-        time_format(created) AS created
-        FROM images WHERE id IN (
-          SELECT image_id FROM likes
-          WHERE likes.image_id = images.id AND likes.user_id = $2
-          ORDER BY likes.created DESC
-        )
+        (likes.user_id = $1) AS is_liked,
+        time_format(images.created) AS created
+        FROM images
+        INNER JOIN likes on images.id = likes.image_id
+        WHERE likes.user_id = $2
+        ORDER BY likes.created DESC
         LIMIT $3 OFFSET $4`;
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
