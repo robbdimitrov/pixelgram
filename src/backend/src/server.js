@@ -91,7 +91,7 @@ class Server {
     this.dbClient.close();
     this.server.close((error) => {
       if (error) {
-        logger.logError(`Closing server failed: ${err}`);
+        logger.logError(`Closing server failed: ${error}`);
       }
     });
   }
