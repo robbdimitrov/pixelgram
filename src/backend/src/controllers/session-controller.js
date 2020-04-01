@@ -14,36 +14,17 @@ class SessionController {
       });
     }
 
-    this.dbClient.getUserCredentials(email).then((user) => {
-      if (!user) {
-        throw new Error('User not found.');
-      }
-      validatePassword(password, user.password).then((valid) => {
-        if (!valid) {
-          throw new Error('Incorrect email or password.');
-        }
-        return generateKey();
-      }).then((sessionId) => {
-        return this.dbClient.createSession(sessionId, user.id);
-      }).then((session) => {
-        this.createCookie(res, session.id);
-        return this.dbClient.getUser(session.userId);
-      }).then((result) => {
-        res.status(200).send(result);
-      });
+    this.loginUser(email, password).then((user) => {
+      return this.createSessionWithId(user.id);
+    }).then((session) => {
+      this.createCookie(res, session.id);
+      return this.dbClient.getUser(session.userId);
+    }).then((result) => {
+      res.status(200).send(result);
     }).catch((error) => {
       res.status(401).send({
         message: error.message
       });
-    });
-  }
-
-  createCookie(res, sessionId) {
-    const oneWeek = 7 * 24 * 60 * 60 * 1000;
-    res.cookie('SID', sessionId, {
-      sameSite: 'strict',
-      maxAge: oneWeek,
-      httpOnly: true
     });
   }
 
@@ -88,6 +69,43 @@ class SessionController {
           message: error.message
         });
       });
+  }
+
+  // Helpers
+
+  loginUser(email, password) {
+    return new Promise((resolve, reject) => {
+      this.dbClient.getUserWithEmail(email).then((user) => {
+        if (!user) {
+          return reject(new Error('Incorrect email or password.'));
+        }
+        validatePassword(password, user.password).then((valid) => {
+          if (!valid) {
+            return reject(new Error('Incorrect email or password.'));
+          }
+          resolve(user);
+        });
+      }).catch((error) => reject(error));
+    });
+  }
+
+  createSessionWithId(userId) {
+    return new Promise((resolve, reject) => {
+      generateKey().then((sessionId) => {
+        this.dbClient.createSession(sessionId, userId)
+          .then((session) => resolve(session))
+          .catch((error) => reject(error));
+      }).catch((error) => reject(error));
+    });
+  }
+
+  createCookie(res, sessionId) {
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    res.cookie('SID', sessionId, {
+      sameSite: 'strict',
+      maxAge: oneWeek,
+      httpOnly: true
+    });
   }
 }
 

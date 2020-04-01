@@ -38,7 +38,7 @@ export class APIClient {
     return this.http.post(url, body);
   }
 
-  getUser(userId: string) {
+  getUser(userId: number) {
     const url = this.url(`/users/${userId}`);
 
     return this.http.get(url).pipe(
@@ -46,7 +46,7 @@ export class APIClient {
     );
   }
 
-  updateUser(userId: string, name: string, username: string,
+  updateUser(userId: number, name: string, username: string,
              email: string, bio: string, avatar?: string) {
     const url = this.url(`/users/${userId}`);
     const body: any = { name, username, email, bio };
@@ -58,7 +58,7 @@ export class APIClient {
     return this.http.put(url, body);
   }
 
-  changePassword(userId: string, oldPassword: string, password: string) {
+  changePassword(userId: number, oldPassword: string, password: string) {
     const url = this.url(`/users/${userId}`);
     const body = { password, oldPassword };
     return this.http.put(url, body);
@@ -83,17 +83,17 @@ export class APIClient {
     return this.getImages(url);
   }
 
-  getImagesByUser(userId: string, page: number) {
+  getImagesByUser(userId: number, page: number) {
     const url = this.url(`/users/${userId}/images?page=${page}`);
     return this.getImages(url);
   }
 
-  getImagesLikedByUser(userId: string, page: number) {
+  getImagesLikedByUser(userId: number, page: number) {
     const url = this.url(`/users/${userId}/likes?page=${page}`);
     return this.getImages(url);
   }
 
-  getImage(imageId: string) {
+  getImage(imageId: number) {
     const url = this.url(`/images/${imageId}`);
 
     return this.http.get(url).pipe(
@@ -101,7 +101,7 @@ export class APIClient {
     );
   }
 
-  deleteImage(imageId: string) {
+  deleteImage(imageId: number) {
     const url = this.url(`/images/${imageId}`);
     return this.http.delete(url);
   }
@@ -115,12 +115,12 @@ export class APIClient {
     return this.http.post(url, formData);
   }
 
-  likeImage(imageId: string) {
+  likeImage(imageId: number) {
     const url = this.url(`/images/${imageId}/likes`);
     return this.http.post(url, {});
   }
 
-  unlikeImage(imageId: string) {
+  unlikeImage(imageId: number) {
     const url = this.url(`/images/${imageId}/likes`);
     return this.http.delete(url);
   }

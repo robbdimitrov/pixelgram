@@ -11,9 +11,9 @@ import { Session } from '../../../services/session.service';
   styleUrls: ['./image.component.scss']
 })
 export class ImageComponent {
-  @Output() like = new EventEmitter<string>();
-  @Output() unlike = new EventEmitter<string>();
-  @Output() showProfile = new EventEmitter<string>();
+  @Output() like = new EventEmitter<number>();
+  @Output() unlike = new EventEmitter<number>();
+  @Output() showProfile = new EventEmitter<number>();
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User;

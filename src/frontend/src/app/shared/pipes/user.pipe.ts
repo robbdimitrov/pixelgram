@@ -8,7 +8,7 @@ import { APIClient } from '../../services/api-client.service';
 export class UserPipe implements PipeTransform {
   constructor(private apiClient: APIClient) {}
 
-  transform(value: string) {
+  transform(value: number) {
     return this.apiClient.getUser(value);
   }
 }

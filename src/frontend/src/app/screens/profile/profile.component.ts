@@ -29,7 +29,7 @@ export class ProfileComponent {
 
   // Data
 
-  loadUser(userId: string) {
+  loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe(
       (data) => {
         this.user = data;
@@ -74,7 +74,7 @@ export class ProfileComponent {
     this.loadNextPage();
   }
 
-  onOpenImage(imageId: string) {
+  onOpenImage(imageId: number) {
     this.router.navigate(['/image', imageId]);
   }
 }

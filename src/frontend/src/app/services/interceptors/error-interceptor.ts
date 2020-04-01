@@ -23,22 +23,12 @@ export class ErrorInterceptor implements HttpInterceptor {
   }
 
   private handleError(error: HttpErrorResponse) {
-    if (error.error instanceof ErrorEvent) {
-      console.error(`An error occurred: ${error.error.message}`);
-    } else {
-      console.error(`An error occurred: ${error.message}: ` +
-        error.error.message);
-
-      if (error.status === 401) { // Unauthorized
-        if (!this.session.userId()) {
-          return;
-        }
-        this.apiClient.logoutUser().subscribe(
-          () => {
-            this.session.reset();
-            this.router.navigate(['/']);
-          }
-        );
+    if (error.status === 401) { // Unauthorized
+      if (this.session.userId()) {
+        this.apiClient.logoutUser().subscribe(() => {
+          this.session.reset();
+          this.router.navigate(['/']);
+        });
       }
     }
     return throwError(error.error);
