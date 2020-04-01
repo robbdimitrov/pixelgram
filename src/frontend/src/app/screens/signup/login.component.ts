@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { APIClient } from '../../services/api-client.service';
@@ -8,7 +8,7 @@ import { Session } from '../../services/session.service';
   selector: 'app-login',
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   emailValue = '';
   passwordValue = '';
 
@@ -18,6 +18,12 @@ export class LoginComponent {
   constructor(private apiClient: APIClient,
               private router: Router,
               private session: Session) {}
+
+  ngOnInit() {
+    if (this.session.userId()) {
+      this.router.navigate(['/']);
+    }
+  }
 
   onVisibilityToggle() {
     if (this.passwordFieldType === 'password') {
