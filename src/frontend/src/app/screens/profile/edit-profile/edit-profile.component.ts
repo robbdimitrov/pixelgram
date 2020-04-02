@@ -1,4 +1,6 @@
-import { Component, AfterViewInit } from '@angular/core';
+import {
+  Component, AfterViewInit, AfterViewChecked, ChangeDetectorRef
+} from '@angular/core';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../../services/api-client.service';
@@ -10,30 +12,31 @@ import { Session } from '../../../services/session.service';
   templateUrl: './edit-profile.component.html',
   styleUrls: ['./edit-profile.component.scss']
 })
-export class EditProfileComponent implements AfterViewInit {
-  nameValue = '';
-  usernameValue = '';
-  emailValue = '';
-  bioValue = '';
+export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   selectedFile: any;
   imagePreview: string;
   user: User;
 
   constructor(private apiClient: APIClient,
               private location: Location,
-              private session: Session) {}
+              private session: Session,
+              private changeDetector : ChangeDetectorRef) {}
 
-  ngAfterViewInit(): void {
+  ngAfterViewInit() {
     const userId = this.session.userId();
     this.loadUser(userId);
+  }
+
+  ngAfterViewChecked() {
+    this.changeDetector.detectChanges();
   }
 
   onSubmit() {
     const userId = this.session.userId();
 
     const updateClosure = (avatar?: string) => {
-      this.apiClient.updateUser(userId, this.nameValue, this.usernameValue,
-        this.emailValue, this.bioValue, avatar).subscribe(
+      this.apiClient.updateUser(userId, this.user.name, this.user.username,
+        this.user.email, this.user.bio, avatar).subscribe(
           () => this.location.back(),
           (error) => window.alert(error.message)
         );
@@ -68,13 +71,7 @@ export class EditProfileComponent implements AfterViewInit {
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe(
-      (data) => {
-        this.user = data;
-        this.nameValue = data.name;
-        this.usernameValue = data.username;
-        this.emailValue = data.email;
-        this.bioValue = data.bio;
-      },
+      (data) => this.user = data,
       (error) => console.error(`Loading user failed: ${error.message}`)
     );
   }

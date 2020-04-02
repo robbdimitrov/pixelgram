@@ -1,11 +1,11 @@
 <div class="container full-width">
   <h1 class="title">Edit Profile</h1>
 
-  <form (ngSubmit)="onSubmit()" #form="ngForm">
+  <form (ngSubmit)="onSubmit()" #form="ngForm" *ngIf="user">
     <div class="avatar-secton">
       <img
         class="avatar"
-        [src]="imagePreview || !user ? '' : user?.avatar | image"
+        [src]="imagePreview || (user.avatar | image)"
       >
 
       <label for="file" class="round-corners outline-button">
@@ -26,7 +26,7 @@
         type="text"
         id="name"
         name="name"
-        [(ngModel)]="nameValue"
+        [(ngModel)]="user.name"
         placeholder="John Doe"
         required
       >
@@ -38,7 +38,7 @@
         type="text"
         id="username"
         name="username"
-        [(ngModel)]="usernameValue"
+        [(ngModel)]="user.username"
         placeholder="johndoe"
         required
       >
@@ -50,7 +50,7 @@
         type="email"
         id="email"
         name="email"
-        [(ngModel)]="emailValue"
+        [(ngModel)]="user.email"
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
         required
@@ -63,7 +63,7 @@
         type="text"
         id="bio"
         name="bio"
-        [(ngModel)]="bioValue"
+        [(ngModel)]="user.bio"
         maxlength="160"
       >
     </div>

@@ -13,8 +13,8 @@ class DbClient {
     });
   }
 
-  close() {
-    this.pool.end();
+  close(callback) {
+    this.pool.end(callback);
   }
 
   //
