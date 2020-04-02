@@ -1,6 +1,6 @@
 export class User {
   constructor(
-    public id: string,
+    public id: number,
     public name: string,
     public username: string,
     public email: string,
@@ -8,6 +8,6 @@ export class User {
     public bio: string,
     public images: number,
     public likes: number,
-    public createdAt: Date
+    public created: Date
   ) {}
 }

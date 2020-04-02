@@ -95,7 +95,7 @@ Response:
 GET /users/<userId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -123,7 +123,7 @@ Response:
 PUT /users/<userId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -147,7 +147,7 @@ bio: string (optional)
 GET /users/<userId>/images
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -160,7 +160,7 @@ Response:
   "items": [
     {
       "id": "12",
-      "ownerId": "10",
+      "userId": "10",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
@@ -177,7 +177,7 @@ Response:
 GET /users/<userId>/likes
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 userId - id of the user
@@ -190,7 +190,7 @@ Response:
   "items": [
     {
       "id": "12",
-      "ownerId": "10",
+      "userId": "10",
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
@@ -237,7 +237,7 @@ Response:
   "items": [
     {
       "id": "12",
-      "ownerId": "10",
+      "userId": "10",
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
       "likes": 0,
@@ -254,7 +254,7 @@ Response:
 GET /images/<imageId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -265,7 +265,7 @@ Response:
 ```json
 {
   "id": "12",
-  "ownerId": "10",
+  "userId": "10",
   "filename": "6710497b36573655ed145f1bc1e01052",
   "description": "Some image description",
   "likes": 0,
@@ -280,7 +280,7 @@ Response:
 DELETE /images/<imageId>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -292,7 +292,7 @@ imageId - id of the image
 POST /images/<imageId>/likes
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -304,7 +304,7 @@ imageId - id of the image
 DELETE /images/<imageId>/likes
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 imageId - id of the image
@@ -319,7 +319,7 @@ The returned image name is used for the `filename` parameter.
 File size should be less than 1MB.
 
 ```
-POST /upload
+POST /uploads
 ```
 
 Body parameters:
@@ -342,7 +342,7 @@ Response:
 GET /uploads/<filename>
 ```
 
-URL parameters:
+Path parameters:
 
 ```
 filename - filename returned from the upload function

@@ -1,59 +1,35 @@
 import { Injectable } from '@angular/core';
-import {
-  HttpClient, HttpHeaders, HttpErrorResponse
-} from '@angular/common/http';
-import { Subject, throwError } from 'rxjs';
-import { catchError, map, share, finalize } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 
-import { Session } from './session.service';
-import { ImageFactory } from './image-factory.service';
-import { UserFactory } from './user-factory.service';
+import { mapImage, mapUser } from '../shared/utils/mappers';
 import { environment } from '../../environments/environment';
-
-export const UserDidLogoutNotification = 'UserDidLogoutNotification';
-export const UserDidLoginNotification = 'UserDidLoginNotification';
+import { CacheService } from './cache.service';
 
 @Injectable()
 export class APIClient {
   private apiRoot = environment.apiRoot;
-  loginSubject = new Subject<string>();
-  private activeRequests = {};
 
-  constructor(private http: HttpClient, private session: Session) {}
+  constructor(private http: HttpClient,
+              private cache: CacheService) {}
 
-  // Internal
-
-  private headers(): HttpHeaders {
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    const token = this.session.token();
-    if (token !== null) {
-      headers = headers.set('Authorization', token);
-    }
-    return headers;
-  }
+  // Private
 
   private url(urlPath: string) {
     return this.apiRoot + urlPath;
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let errorBody = error.error || error;
+  // Session
 
-    if (errorBody instanceof ErrorEvent) {
-      console.error(`An error occurred: ${errorBody.message}`);
-    } else {
-      errorBody = errorBody.error || errorBody;
+  loginUser(email: string, password: string) {
+    const url = this.url('/sessions');
+    const body = { email, password };
+    return this.http.post(url, body);
+  }
 
-      console.error(`An error occurred: ${error.message}: ` +
-        errorBody.message);
-
-      if (error.status === 401) { // Unauthorized
-        this.logoutUser();
-      }
-    }
-    return throwError(errorBody);
+  logoutUser() {
+    const url = this.url('/sessions');
+    return this.http.delete(url);
   }
 
   // User
@@ -61,75 +37,37 @@ export class APIClient {
   createUser(name: string, username: string, email: string, password: string) {
     const url = this.url('/users');
     const body = { name, username, email, password };
-    const headers = this.headers();
-
-    return this.http.post(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, body);
   }
 
-  loginUser(email: string, password: string) {
-    const url = this.url('/sessions');
-    const body = { email, password };
-    const headers = this.headers();
-
-    return this.http.post(url, body, { headers }).pipe(
-      map((res: any) => {
-        this.session.setToken(res.data.token);
-        this.session.setUserId(res.data.user._id);
-        this.loginSubject.next(UserDidLoginNotification);
-      }),
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  logoutUser() {
-    this.session.reset();
-    this.loginSubject.next(UserDidLogoutNotification);
-  }
-
-  getUser(userId: string) {
+  getUser(userId: number, clearCache = false) {
     const url = this.url(`/users/${userId}`);
 
-    if (this.activeRequests[url]) {
-      return this.activeRequests[url];
+    if (clearCache) {
+      this.cache.delete(url);
     }
 
-    const headers = this.headers();
-
-    const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => UserFactory.userFromObject(res.data)),
-      catchError(this.handleError.bind(this)),
-      finalize(() => delete this.activeRequests[url]),
-      share()
+    return this.http.get(url).pipe(
+      map((res: any) => mapUser(res))
     );
-    this.activeRequests[url] = req;
-    return req;
   }
 
-  updateUser(userId: string, name: string, username: string,
+  updateUser(userId: number, name: string, username: string,
              email: string, bio: string, avatar?: string) {
     const url = this.url(`/users/${userId}`);
     const body: any = { name, username, email, bio };
-    const headers = this.headers();
 
     if (avatar) {
       body.avatar = avatar;
     }
 
-    return this.http.put(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.put(url, body);
   }
 
-  changePassword(userId: string, oldPassword: string, password: string) {
+  changePassword(userId: number, oldPassword: string, password: string) {
     const url = this.url(`/users/${userId}`);
     const body = { password, oldPassword };
-    const headers = this.headers();
-
-    return this.http.put(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.put(url, body);
   }
 
   // Image
@@ -137,102 +75,59 @@ export class APIClient {
   createImage(filename: string, description: string) {
     const url = this.url('/images');
     const body = { filename, description };
-    const headers = this.headers();
-
-    return this.http.post(url, body, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, body);
   }
 
   getImages(url: string) {
-    const headers = this.headers();
-
-    if (this.activeRequests[url]) {
-      return this.activeRequests[url];
-    }
-
-    const req = this.http.get(url, { headers }).pipe(
-      map((res: any) =>
-        res.data.map((object) => ImageFactory.imageFromObject(object))),
-      catchError(this.handleError.bind(this)),
-      finalize(() => delete this.activeRequests[url]),
-      share()
+    return this.http.get(url).pipe(
+      map((res: any) => res.items.map((item) => mapImage(item)))
     );
-    this.activeRequests[url] = req;
-    return req;
   }
 
-  getUsersImages(userId: string, page: number, limit: number) {
-    const url = this.url(`/users/${userId}/images?page=${page}&limit=${limit}`);
+  getAllImages(page: number) {
+    const url = this.url(`/images?page=${page}`);
     return this.getImages(url);
   }
 
-  getAllImages(page: number, limit: number) {
-    const url = this.url(`/images?page=${page}&limit=${limit}`);
+  getImagesByUser(userId: number, page: number) {
+    const url = this.url(`/users/${userId}/images?page=${page}`);
     return this.getImages(url);
   }
 
-  getUsersLikedImages(userId: string, page: number, limit: number) {
-    const url = this.url(`/users/${userId}/likes?page=${page}&limit=${limit}`);
+  getImagesLikedByUser(userId: number, page: number) {
+    const url = this.url(`/users/${userId}/likes?page=${page}`);
     return this.getImages(url);
   }
 
-  getImage(imageId: string) {
+  getImage(imageId: number) {
     const url = this.url(`/images/${imageId}`);
 
-    if (this.activeRequests[url]) {
-      return this.activeRequests[url];
-    }
-
-    const headers = this.headers();
-
-    const req = this.http.get(url, { headers }).pipe(
-      map((res: any) => ImageFactory.imageFromObject(res.data)),
-      catchError(this.handleError.bind(this)),
-      finalize(() => delete this.activeRequests[url]),
-      share()
+    return this.http.get(url).pipe(
+      map((res: any) => mapImage(res))
     );
-    this.activeRequests[url] = req;
-    return req;
   }
 
-  deleteImage(imageId: string) {
+  deleteImage(imageId: number) {
     const url = this.url(`/images/${imageId}`);
-    const headers = this.headers();
-
-    return this.http.delete(url, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.delete(url);
   }
 
   uploadImage(file: File) {
-    const url = this.url(`/upload`);
-    const headers = this.headers().delete('Content-Type');
+    const url = this.url(`/uploads`);
 
     const formData = new FormData();
     formData.append('image', file, file.name);
 
-    return this.http.post(url, formData, { headers }).pipe(
-      map((res: any) => res.data),
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, formData);
   }
 
-  likeImage(imageId: string) {
+  likeImage(imageId: number) {
     const url = this.url(`/images/${imageId}/likes`);
-    const headers = this.headers();
-
-    return this.http.post(url, undefined, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+    return this.http.post(url, {});
   }
 
-  unlikeImage(userId: string, imageId: string) {
-    const url = this.url(`/images/${imageId}/likes/${userId}`);
-    const headers = this.headers();
-
-    return this.http.delete(url, { headers }).pipe(
-      catchError(this.handleError.bind(this))
-    );
+  unlikeImage(imageId: number) {
+    const url = this.url(`/images/${imageId}/likes`);
+    return this.http.delete(url);
   }
 }

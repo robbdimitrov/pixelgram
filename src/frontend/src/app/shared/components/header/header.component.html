@@ -5,7 +5,7 @@
     </a>
 
     <div class="navigation">
-      <ul *ngIf="isAuthed()">
+      <ul *ngIf="userId()">
         <li>
           <a
             class="image-button nav-button nav-home"
@@ -40,7 +40,7 @@
         </li>
       </ul>
 
-      <ul *ngIf="!isAuthed()">
+      <ul *ngIf="!userId()">
         <li>
           <a class="outline-button round-corners" routerLink="/login">
             Log In

@@ -9,7 +9,7 @@ import { Image } from '../../../models/image.model';
 })
 export class ThumbnailComponent {
   @Input() image: Image;
-  @Output() openImage = new EventEmitter<string>();
+  @Output() openImage = new EventEmitter<number>();
 
   onClick() {
     this.openImage.emit(this.image.id);

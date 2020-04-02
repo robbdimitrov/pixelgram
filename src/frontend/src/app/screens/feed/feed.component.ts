@@ -1,54 +1,34 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { Subscription } from 'rxjs';
 
-import {
-  APIClient, UserDidLogoutNotification
-} from '../../services/api-client.service';
+import { APIClient } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
 import { PaginationService } from '../../services/pagination.service';
-import { Session } from '../../services/session.service';
 
 @Component({
   templateUrl: './feed.component.html',
   styleUrls: ['feed.component.scss'],
   providers: [PaginationService]
 })
-export class FeedComponent implements AfterViewInit, OnDestroy {
+export class FeedComponent implements AfterViewInit {
   isSingleImageMode = false;
-  userId?: string;
-  loginSubscription: Subscription;
+  userId?: number;
 
-  constructor(private apiClient: APIClient, private router: Router,
+  constructor(private apiClient: APIClient,
+              private router: Router,
               private pagination: PaginationService<Image>,
-              private session: Session, private route: ActivatedRoute,
+              private route: ActivatedRoute,
               private location: Location) {
-
-    this.subscribeToLogout();
-
-    this.route.params.subscribe(params => {
-      if (params.id !== undefined) {
+    this.route.params.subscribe((params) => {
+      if (params.id) {
         const id = params.id;
         this.isSingleImageMode = true;
         this.loadImage(id);
-      } else if (params.userId !== undefined) {
+      } else if (params.userId) {
         this.userId = params.userId;
       }
     });
-  }
-
-  // Subscriptions
-
-  private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe(
-      (value) => {
-        if (value === UserDidLogoutNotification) {
-          this.pagination.reset();
-          this.router.navigate(['/login']);
-        }
-      }
-    );
   }
 
   // Component lifecycle
@@ -59,15 +39,11 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    this.loginSubscription.unsubscribe();
-  }
-
   // Data
 
   loadNextPage() {
     const req = (this.userId ?
-      this.apiClient.getUsersLikedImages(this.userId, this.pagination.page) :
+      this.apiClient.getImagesLikedByUser(this.userId, this.pagination.page) :
       this.apiClient.getAllImages(this.pagination.page));
 
     req.subscribe(
@@ -81,10 +57,10 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  loadImage(imageId: string) {
+  loadImage(imageId: number) {
     this.apiClient.getImage(imageId).subscribe(
       (data) => this.pagination.update([data]),
-      (error) => console.error(`Loading user failed: ${error.message}`)
+      (error) => console.error(`Loading image failed: ${error.message}`)
     );
   }
 
@@ -98,15 +74,15 @@ export class FeedComponent implements AfterViewInit, OnDestroy {
 
   // Actions
 
-  onLike(imageId: string) {
+  onLike(imageId: number) {
     this.apiClient.likeImage(imageId).subscribe();
   }
 
-  onUnlike(imageId: string) {
-    this.apiClient.unlikeImage(this.session.userId(), imageId).subscribe();
+  onUnlike(imageId: number) {
+    this.apiClient.unlikeImage(imageId).subscribe();
   }
 
-  onShowProfile(userId: string) {
+  onShowProfile(userId: number) {
     this.router.navigate(['/user', userId]);
   }
 

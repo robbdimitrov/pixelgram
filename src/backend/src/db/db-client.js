@@ -13,8 +13,8 @@ class DbClient {
     });
   }
 
-  close() {
-    this.pool.end();
+  close(callback) {
+    this.pool.end(callback);
   }
 
   //
@@ -55,16 +55,32 @@ class DbClient {
     });
   }
 
-  getUserCredentials(email) {
+  getUserWithEmail(email) {
     return new Promise((resolve, reject) => {
-      const query = 'SELECT id, password FROM users WHERE email = $1';
+      const query =
+        'SELECT id, password FROM users WHERE email = $1';
 
       this.pool.query(query, [email])
         .then((result) => {
           resolve(result.rows[0]);
         }).catch((error) => {
           logger.logError(`Getting user credentials failed: ${error}`);
-          reject(new Error('Getting user failed.'));
+          reject(new Error('Getting user credentials failed.'));
+        });
+    });
+  }
+
+  getUserWithId(userId) {
+    return new Promise((resolve, reject) => {
+      const query =
+        'SELECT id, password FROM users WHERE id = $1';
+
+      this.pool.query(query, [userId])
+        .then((result) => {
+          resolve(result.rows[0]);
+        }).catch((error) => {
+          logger.logError(`Getting user credentials failed: ${error}`);
+          reject(new Error('Getting user credentials failed.'));
         });
     });
   }
@@ -75,10 +91,11 @@ class DbClient {
         `SELECT id, name, username, email, avatar, bio,
         (
           SELECT count(*) FROM likes WHERE likes.user_id = users.id
-        ) as likes,
+        ) AS likes,
         (
           SELECT count(*) FROM images WHERE images.user_id = users.id
-        ) as images, created
+        ) AS images,
+        time_format(created) AS created
         FROM users WHERE id = $1`;
 
       this.pool.query(query, [userId])
@@ -140,12 +157,15 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked, created
-        FROM images LIMIT $2 OFFSET $3`;
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
+        FROM images
+        ORDER BY images.created DESC
+        LIMIT $2 OFFSET $3`;
 
       this.pool.query(query, [currentUserId, limit, page * limit])
         .then((result) => {
@@ -161,12 +181,14 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked, created
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
         FROM images WHERE user_id = $2
+        ORDER BY images.created DESC
         LIMIT $3 OFFSET $4`;
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
@@ -182,18 +204,15 @@ class DbClient {
   getImagesLikedByUser(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
-        `SELECT id, user_id, filename, description,
-        EXISTS (
-          SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked, created
-        FROM images WHERE id IN (
-          SELECT image_id FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $2
-          LIMIT $3 OFFSET $4
-        )`;
+        `SELECT id, images.user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
+        (likes.user_id = $1) AS is_liked,
+        time_format(images.created) AS created
+        FROM images
+        INNER JOIN likes on images.id = likes.image_id
+        WHERE likes.user_id = $2
+        ORDER BY likes.created DESC
+        LIMIT $3 OFFSET $4`;
 
       this.pool.query(query, [currentUserId, userId, limit, page * limit])
         .then((result) => {
@@ -209,11 +228,12 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
+        (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
         EXISTS (
           SELECT 1 FROM likes
-          WHERE likes.image_id = images.id
-          and likes.user_id = $1
-        ) as is_liked, created
+          WHERE likes.image_id = images.id AND likes.user_id = $1
+        ) AS is_liked,
+        time_format(created) AS created
         FROM images WHERE id = $2`;
 
       this.pool.query(query, [currentUserId, imageId])
@@ -228,7 +248,7 @@ class DbClient {
 
   deleteImage(imageId, userId) {
     return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM images WHERE id = $1 and user_id = $2';
+      const query = 'DELETE FROM images WHERE id = $1 AND user_id = $2';
 
       this.pool.query(query, [imageId, userId])
         .then(() => {
@@ -276,14 +296,13 @@ class DbClient {
   // Sessions
   //
 
-  createSession(sessionId, userId, userAgent) {
+  createSession(sessionId, userId) {
     return new Promise((resolve, reject) => {
       const query =
-        `INSERT INTO sessions (id, user_id, user_agent)
-        VALUES ($1, $2, $3)
-        RETURNING id, user_id, user_agent`;
+        `INSERT INTO sessions (id, user_id) VALUES ($1, $2)
+        RETURNING id, user_id, created`;
 
-      this.pool.query(query, [sessionId, userId, userAgent])
+      this.pool.query(query, [sessionId, userId])
         .then((result) => {
           resolve(mapSession(result.rows[0]));
         }).catch((error) => {
@@ -296,7 +315,7 @@ class DbClient {
   getSession(sessionId) {
     return new Promise((resolve, reject) => {
       const query =
-        'SELECT id, user_id, user_agent FROM sessions WHERE id = $1';
+        'SELECT id, user_id FROM sessions WHERE id = $1';
 
       this.pool.query(query, [sessionId])
         .then((result) => {

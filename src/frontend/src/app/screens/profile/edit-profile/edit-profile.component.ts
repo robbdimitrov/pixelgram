@@ -1,52 +1,51 @@
-import { Component, AfterViewInit } from '@angular/core';
+import {
+  Component, AfterViewInit, AfterViewChecked, ChangeDetectorRef
+} from '@angular/core';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../../services/api-client.service';
-import { ErrorService } from '../../../services/error.service';
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
-import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
   selector: 'app-edit-profile',
   templateUrl: './edit-profile.component.html',
   styleUrls: ['./edit-profile.component.scss']
 })
-export class EditProfileComponent implements AfterViewInit {
-  nameValue = '';
-  usernameValue = '';
-  emailValue = '';
-  bioValue = '';
+export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   selectedFile: any;
   imagePreview: string;
   user: User;
 
   constructor(private apiClient: APIClient,
-              private errorService: ErrorService,
               private location: Location,
               private session: Session,
-              private placeholderService: PlaceholderService) {}
+              private changeDetector : ChangeDetectorRef) {}
 
-  ngAfterViewInit(): void {
+  ngAfterViewInit() {
     const userId = this.session.userId();
     this.loadUser(userId);
+  }
+
+  ngAfterViewChecked() {
+    this.changeDetector.detectChanges();
   }
 
   onSubmit() {
     const userId = this.session.userId();
 
     const updateClosure = (avatar?: string) => {
-      this.apiClient.updateUser(userId, this.nameValue, this.usernameValue,
-        this.emailValue, this.bioValue, avatar).subscribe(
+      this.apiClient.updateUser(userId, this.user.name, this.user.username,
+        this.user.email, this.user.bio, avatar).subscribe(
           () => this.location.back(),
-          (error) => this.errorService.error = error.message
+          (error) => window.alert(error.message)
         );
     };
 
     if (this.selectedFile) {
       this.apiClient.uploadImage(this.selectedFile).subscribe(
         (data: any) => updateClosure(data.filename),
-        (error) => this.errorService.error = error.message
+        (error) => window.alert(error.message)
       );
     } else {
       updateClosure();
@@ -70,21 +69,10 @@ export class EditProfileComponent implements AfterViewInit {
     };
   }
 
-  loadUser(userId: string) {
+  loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe(
-      (data) => {
-        this.user = data;
-        this.nameValue = data.name;
-        this.usernameValue = data.username;
-        this.emailValue = data.email;
-        this.bioValue = data.bio;
-      },
+      (data) => this.user = data,
       (error) => console.error(`Loading user failed: ${error.message}`)
     );
-  }
-
-  avatarPlaceholder() {
-    const name = this.user ? this.user.name : '';
-    return this.placeholderService.getAvatar(name);
   }
 }

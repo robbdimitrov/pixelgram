@@ -1,7 +1,7 @@
 <div class="container">
   <div class="user-content">
     <img class="avatar"
-      [src]="avatar() | image:avatarPlaceholder()"
+      [src]="!user ? '' : user.avatar | image"
     >
 
     <div class="counters-buttons">

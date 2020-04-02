@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 
-import { APIClient, UserDidLogoutNotification } from '../../services/api-client.service';
+import { APIClient } from '../../services/api-client.service';
+import { CacheService } from 'src/app/services/cache.service';
 import { Session } from '../../services/session.service';
 
 @Component({
@@ -11,24 +11,10 @@ import { Session } from '../../services/session.service';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent {
-  loginSubscription: Subscription;
-
-  constructor(private apiClient: APIClient, private session: Session,
-              private router: Router) {
-    this.subscribeToLogout();
-  }
-
-  // Subscriptions
-
-  private subscribeToLogout() {
-    this.loginSubscription = this.apiClient.loginSubject.subscribe(
-      (value) => {
-        if (value === UserDidLogoutNotification) {
-          this.router.navigate(['/login']);
-        }
-      }
-    );
-  }
+  constructor(private apiClient: APIClient,
+              private router: Router,
+              private cache: CacheService,
+              private session: Session) {}
 
   onChangePasswordClick() {
     this.router.navigate(['account/change-password']);
@@ -40,6 +26,10 @@ export class SettingsComponent {
   }
 
   onLogoutClick() {
-    this.apiClient.logoutUser();
+    this.apiClient.logoutUser().subscribe(() => {
+      this.cache.clear();
+      this.session.clear();
+      this.router.navigate(['/']);
+    });
   }
 }

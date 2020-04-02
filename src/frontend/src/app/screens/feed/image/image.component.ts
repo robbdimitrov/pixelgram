@@ -4,7 +4,6 @@ import { EventEmitter } from '@angular/core';
 import { Image } from '../../../models/image.model';
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
-import { PlaceholderService } from '../../../services/placeholder.service';
 
 @Component({
   selector: 'app-image',
@@ -12,16 +11,15 @@ import { PlaceholderService } from '../../../services/placeholder.service';
   styleUrls: ['./image.component.scss']
 })
 export class ImageComponent {
-  @Output() like = new EventEmitter<string>();
-  @Output() unlike = new EventEmitter<string>();
-  @Output() showProfile = new EventEmitter<string>();
+  @Output() like = new EventEmitter<number>();
+  @Output() unlike = new EventEmitter<number>();
+  @Output() showProfile = new EventEmitter<number>();
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User;
   optionsOpened = false;
 
-  constructor(private session: Session,
-              private placeholderService: PlaceholderService) {}
+  constructor(private session: Session) {}
 
   onLikeClick() {
     this.image.isLiked = !this.image.isLiked;
@@ -34,7 +32,7 @@ export class ImageComponent {
   }
 
   isOwnedByCurrentUser() {
-    return this.session.userId() === this.image.owner;
+    return this.session.userId() === this.image.userId;
   }
 
   isDescriptionPresent() {
@@ -42,19 +40,10 @@ export class ImageComponent {
   }
 
   onProfileClick() {
-    this.showProfile.emit(this.image.owner);
+    this.showProfile.emit(this.image.userId);
   }
 
   onDeleteClick() {
     this.deleteAction.emit(this.image);
-  }
-
-  avatar() {
-    return this.user ? this.user.avatar : '';
-  }
-
-  avatarPlaceholder() {
-    const name = this.user ? this.user.name : '';
-    return this.placeholderService.getAvatar(name);
   }
 }

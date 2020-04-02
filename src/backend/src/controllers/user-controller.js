@@ -21,7 +21,7 @@ class UserController {
           return reject(new Error('Both password and the current password are required.'));
         }
 
-        this.getUserCredentials(userId).then((user) => {
+        this.dbClient.getUserWithId(userId).then((user) => {
           return validatePassword(oldPassword, user.password);
         }).then((valid) => {
           if (!valid) {
@@ -65,12 +65,7 @@ class UserController {
     this.dbClient.getUser(userId)
       .then((result) => {
         if (result) {
-          res.status(200).send({
-            id: result.id,
-            name: result.name,
-
-            result
-          });
+          res.status(200).send(result);
         } else {
           res.status(404).send({
             message: 'User not found.'
@@ -94,14 +89,15 @@ class UserController {
       return res.sendStatus(304);
     }
 
-    this.dbClient.updateUser(userId, req.body)
-      .then(() => {
-        res.sendStatus(204);
-      }).catch((error) => {
-        res.status(400).send({
-          message: error.message
-        });
+    this.validateUpdates(userId, req.body).then((updates) => {
+      return this.dbClient.updateUser(userId, updates);
+    }).then(() => {
+      res.sendStatus(204);
+    }).catch((error) => {
+      res.status(400).send({
+        message: error.message
       });
+    });
   }
 }
 

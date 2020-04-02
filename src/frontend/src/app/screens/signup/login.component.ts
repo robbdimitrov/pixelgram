@@ -5,12 +5,10 @@ import { APIClient } from '../../services/api-client.service';
 import { Session } from '../../services/session.service';
 
 @Component({
-  selector: 'app-signup',
-  templateUrl: './signup.component.html'
+  selector: 'app-login',
+  templateUrl: './login.component.html'
 })
-export class SignupComponent implements OnInit {
-  nameValue = '';
-  usernameValue = '';
+export class LoginComponent implements OnInit {
   emailValue = '';
   passwordValue = '';
 
@@ -38,17 +36,12 @@ export class SignupComponent implements OnInit {
   }
 
   onSubmit() {
-    this.apiClient.createUser(this.nameValue, this.usernameValue,
-      this.emailValue, this.passwordValue).subscribe(
-        () => {
-          this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-            (data: any) => {
-              this.session.setUserId(data.id);
-              this.router.navigate(['/']);
-            }
-          );
-        },
-        (error) => window.alert(error.message)
-      );
+    this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
+      (data: any) => {
+        this.session.setUserId(data.id);
+        this.router.navigate(['/']);
+      },
+      (error) => window.alert(error.message)
+    );
   }
 }

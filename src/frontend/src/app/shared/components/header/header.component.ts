@@ -10,10 +10,6 @@ import { Session } from '../../../services/session.service';
 export class HeaderComponent {
   constructor(private session: Session) {}
 
-  isAuthed() {
-    return this.session.token() !== null;
-  }
-
   userId() {
     return this.session.userId();
   }

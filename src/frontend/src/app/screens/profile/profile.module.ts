@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AuthGuard } from '../../shared/guards/auth-guard.service';
+import { AuthGuard } from '../../shared/auth-guard.service';
 import { SharedModule } from '../../shared/shared.module';
 import { ProfileComponent } from './profile.component';
 import { EditProfileComponent } from './edit-profile/edit-profile.component';

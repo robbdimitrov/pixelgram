@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../../services/api-client.service';
-import { ErrorService } from '../../../services/error.service';
 import { Session } from '../../../services/session.service';
 
 @Component({
@@ -19,7 +18,6 @@ export class ChangePasswordComponent {
   passwordShowButtonTitle = 'Show';
 
   constructor(private apiClient: APIClient,
-              private errorService: ErrorService,
               private session: Session,
               private location: Location) {}
 
@@ -28,7 +26,7 @@ export class ChangePasswordComponent {
     this.apiClient.changePassword(userId, this.oldPasswordValue,
       this.passwordValue).subscribe(
         () => this.location.back(),
-        (error) => this.errorService.error = error.message
+        (error) => window.alert(error.message)
       );
   }
 
