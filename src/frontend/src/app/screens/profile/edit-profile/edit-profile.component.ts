@@ -20,7 +20,7 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   constructor(private apiClient: APIClient,
               private location: Location,
               private session: Session,
-              private changeDetector : ChangeDetectorRef) {}
+              private changeDetector: ChangeDetectorRef) {}
 
   ngAfterViewInit() {
     const userId = this.session.userId();
