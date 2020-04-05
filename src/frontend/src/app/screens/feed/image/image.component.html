@@ -1,19 +1,16 @@
-<div class="container">
+<div class="container component bordered">
   <div class="header">
-    <div class="user-content">
-      <img
-        [src]="!user ? '' : user.avatar | image"
-        (click)="onProfileClick()"
-      >
+    <img
+      class="avatar"
+      [src]="!user ? '' : user.avatar | image"
+      (click)="onProfileClick()"
+    >
 
-      <span class="bold" (click)="onProfileClick()">
-        {{user ? user.username : ''}}
-      </span>
-    </div>
+    <span class="bold" (click)="onProfileClick()">{{user ? user.username : ''}}</span>
 
     <button
       *ngIf="isOwnedByCurrentUser()"
-      class="dropdown-button"
+      class="dropdown-button icon"
       (click)="optionsOpened = !optionsOpened"
     >
       <fa-icon [icon]="['fas', 'chevron-down']"></fa-icon>
@@ -25,12 +22,12 @@
     </div>
   </div>
 
-  <div class="image-container">
-    <img class="image" [src]="image.filename | image">
+  <div class="frame">
+    <img [src]="image.filename | image">
   </div>
 
   <div class="likes">
-    <button class="like" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()">
+    <button class="like icon" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()">
         <div *ngIf="image.isLiked; else elseBlock">
           <fa-icon [icon]="['fas', 'heart']"></fa-icon>
         </div>
@@ -43,12 +40,8 @@
   </div>
 
   <div class="content">
-    <span class="bold" *ngIf="isDescriptionPresent()">
-      {{user ? user.name : ''}}
-    </span>
-
+    <span class="bold name" *ngIf="isDescriptionPresent()">{{user ? user.name : ''}}</span>
     <p>{{image.description}}</p>
-
     <span class="small date">{{image.created | relativedate}}</span>
   </div>
 </div>

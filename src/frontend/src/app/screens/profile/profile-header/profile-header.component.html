@@ -1,44 +1,26 @@
 <div class="container">
   <div class="user-content">
-    <img class="avatar"
-      [src]="!user ? '' : user.avatar | image"
-    >
+    <img class="avatar" [src]="!user ? '' : user.avatar | image">
 
     <div class="counters-buttons">
       <div class="counter-container">
         <div class="counter">
-          <span class="value bold">
-            {{user.likes}}
-          </span>
-
-          <span class="label">
-            Likes
-          </span>
+          <span class="value bold">{{user.likes}}</span>
+          <span class="label">Likes</span>
         </div>
 
         <div class="counter">
-          <span class="value bold">
-            {{user.images}}
-          </span>
-
-          <span class="label">
-            Images
-          </span>
+          <span class="value bold">{{user.images}}</span>
+          <span class="label">Images</span>
         </div>
       </div>
 
       <div *ngIf="isCurrentUser()" class="control-buttons">
-        <button
-          class="round-corners outline-button"
-          (click)="onEditProfileClick()"
-        >
+        <button class="button" (click)="onEditProfileClick()">
           Edit Profile
         </button>
 
-        <button
-          class="round-corners outline-button"
-          (click)="onSettingsClick()"
-        >
+        <button class="button" (click)="onSettingsClick()">
           <fa-icon [icon]="['fas', 'cog']"></fa-icon>
         </button>
       </div>
@@ -46,12 +28,7 @@
   </div>
 
   <div class="user-info">
-    <span class="bold">
-      {{user.name}}
-    </span>
-
-    <span>
-      {{user.bio}}
-    </span>
+    <span class="bold">{{user.name}}</span>
+    <span>{{user.bio}}</span>
   </div>
 </div>

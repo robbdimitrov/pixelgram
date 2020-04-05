@@ -2,27 +2,16 @@
 @import 'helpers';
 @import 'variables';
 
-.button {
-  background-color: $button-background-color;
-  text-decoration: none;
-  &:not(:disabled) {
-    &:hover, &:focus {
-      background-color: darken($button-background-color,8%);
-      transition: all 0.3s ease;
-    }
-    &:active {
-      background-color: darken($button-background-color, 25%);
-    }
-  }
-}
+// Buttons
 
-.outline-button {
+.button {
   border-style: solid;
-  border-width: $button-border-width;
+  border-width: $border-width-regular;
   border-color: $button-background-color;
   text-decoration: none;
   color: $primary-text-color;
-  background-color: white;
+  border-radius: $button-border-radius;
+  padding: $button-border-radius;
 
   &:not(:disabled) {
     &:hover, &:focus {
@@ -37,38 +26,49 @@
   }
 }
 
+.nav-button {
+  opacity: 0.4;
+  font-size: rem(26);
+
+  &.active {
+    opacity: 0.8;
+  }
+}
+
+// Dropdown
+
+.dropdown-options {
+  z-index: 1;
+  width: $dropdown-width;
+  border: $border-width-regular solid $button-active-color;
+  border-radius: $button-border-radius;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    height: $icon-button-width;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: $vertical-spacing-internal;
+    margin-right: $vertical-spacing-internal;
+  }
+}
+
+// Classes
+
 .centered {
   margin-left: auto;
   margin-right: auto;
 }
 
-.button, .outline-button {
-  padding: 5px;
-}
-
-.image-button {
-  color: $primary-text-color;
-  opacity: 0.4;
-}
-
-.image-button.active {
-  opacity: 0.8;
-}
-
-.image-button, .button, .outline-button {
+.nav-button, .button {
   &:disabled {
     opacity: 0.6;
-  }
-}
-
-.round-corners {
-  border-radius: $button-border-radius;
-}
-
-@media only screen and (min-width: $break-extra-small) {
-  .full-width {
-    width: $big-component-width;
-    @include center-block;
   }
 }
 
@@ -93,6 +93,44 @@
   }
 }
 
+.component, .dropdown-options {
+  background-color: $component-background;
+}
+
+.bordered {
+  border: $border-width-thin solid $component-border-color;
+  border-radius: $component-border-radius;
+}
+
+.icon {
+  color: $primary-text-color;
+}
+
+// Images
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.frame {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  background-color: $background-color;
+
+  img {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+// Elements
+
 .title, .form-group, button[type=submit], .reference, .alert {
   margin-left: $spacing;
   margin-right: $spacing;
@@ -107,7 +145,7 @@ button[type=submit] {
   margin-top: $vertical-spacing-internal;
   height: $fieldset-height;
   display: flex;
-  border-bottom: $button-border-width solid $button-border-color;
+  border-bottom: $border-width-regular solid $button-border-color;
 
   label {
     width: 30%;
@@ -115,11 +153,23 @@ button[type=submit] {
 
   input {
     flex: 1;
-    border: none;
   }
 
   button, label {
     margin-top: auto;
     margin-bottom: auto;
   }
+}
+
+// Media
+
+@media only screen and (min-width: $break-extra-small) {
+  .full-width {
+    width: $big-component-width;
+    @include center-block;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+
 }

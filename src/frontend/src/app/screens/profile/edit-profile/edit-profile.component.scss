@@ -1,7 +1,4 @@
 @import '../../../../styles/variables';
-@import '../../../../styles/colors';
-
-$avatar-side: $avatar-side-large * 0.75;
 
 .container {
   padding-bottom: $vertical-spacing-medium;
@@ -20,9 +17,6 @@ $avatar-side: $avatar-side-large * 0.75;
   .avatar {
     width: $avatar-side;
     height: $avatar-side;
-    border-radius: $avatar-side / 2;
-    background-color: $background-color;
-    object-fit: cover;
   }
 
   #file {
