@@ -3,14 +3,9 @@
 
   <form (ngSubmit)="onSubmit()" #form="ngForm" *ngIf="user">
     <div class="avatar-secton">
-      <img
-        class="avatar"
-        [src]="imagePreview || (user.avatar | image)"
-      >
+      <img class="avatar" [src]="imagePreview || (user.avatar | image)">
 
-      <label for="file" class="round-corners outline-button">
-        Change Profile Photo
-      </label>
+      <label for="file" class="button">Change Profile Photo</label>
       <input
         type="file"
         id="file"
@@ -68,11 +63,7 @@
       >
     </div>
 
-    <button
-      type="submit"
-      class="round-corners outline-button"
-      [disabled]="!form.valid"
-    >
+    <button type="submit" class="button" [disabled]="!form.valid">
       Save Changes
     </button>
   </form>

@@ -32,20 +32,12 @@
         required
       >
 
-      <button
-        type="button"
-        class="round-corners outline-button"
-        (click)="onVisibilityToggle()"
-      >
+      <button type="button" class="button" (click)="onVisibilityToggle()">
         {{showButtonTitle | uppercase}}
       </button>
     </div>
 
-    <button
-      type="submit"
-      class="round-corners outline-button"
-      [disabled]="!form.valid"
-    >
+    <button type="submit" class="button" [disabled]="!form.valid">
       Log In
     </button>
   </form>

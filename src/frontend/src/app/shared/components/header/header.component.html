@@ -1,5 +1,5 @@
-<div class="container">
-    <a class="logo" routerLink="/">
+<div class="container component">
+    <a class="logo icon" routerLink="/">
       <fa-icon [icon]="['fas', 'camera-retro']"></fa-icon>
       <span class="text">PixelGram</span>
     </a>
@@ -8,7 +8,7 @@
       <ul *ngIf="userId()">
         <li>
           <a
-            class="image-button nav-button nav-home"
+            class="nav-button icon"
             routerLinkActive="active"
             aria-label="Feed"
             routerLink="/feed"
@@ -19,7 +19,7 @@
 
         <li>
           <a
-            class="image-button nav-button nav-new"
+            class="nav-button icon"
             routerLinkActive="active"
             aria-label="New Image"
             routerLink="/upload"
@@ -30,7 +30,7 @@
 
         <li>
           <a
-            class="image-button nav-button nav-profile"
+            class="nav-button icon"
             routerLinkActive="active"
             aria-label="My Profile"
             [routerLink]="['user', userId()]"
@@ -42,15 +42,11 @@
 
       <ul *ngIf="!userId()">
         <li>
-          <a class="outline-button round-corners" routerLink="/login">
-            Log In
-          </a>
+          <a class="button" routerLink="/login">Log In</a>
         </li>
 
         <li>
-          <a class="outline-button round-corners" routerLink="/signup">
-            Sign Up
-          </a>
+          <a class="button" routerLink="/signup">Sign Up</a>
         </li>
       </ul>
     </div>

@@ -1,9 +1,9 @@
 <div class="container full-width">
   <h1 class="title">New Post</h1>
 
-  <div class="post-section">
-    <div class="image-container">
-      <img *ngIf="imagePreview" class="image" [src]="imagePreview">
+  <div class="section">
+    <div class="frame">
+      <img *ngIf="imagePreview" [src]="imagePreview">
     </div>
 
     <textarea
@@ -15,7 +15,7 @@
   </div>
 
   <button
-    class="round-corners centered outline-button"
+    class="button centered"
     (click)="onSubmitClick()"
     [disabled]="!hasSelectedFile()"
   >

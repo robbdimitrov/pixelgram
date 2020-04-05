@@ -1,5 +1,4 @@
 @import '../../../styles/variables';
-@import '../../../styles/colors';
 
 li {
   list-style: none;
@@ -15,8 +14,7 @@ li {
   }
 
   .disclosure {
-    color: $primary-text-color;
-    min-width: 10px;
+    min-width: $spacing;
     font-size: rem(16);
   }
 }

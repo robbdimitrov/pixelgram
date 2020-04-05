@@ -7,5 +7,5 @@
 
 button#next {
   @include center-block;
-  min-width: 100px;
+  min-width: $min-button-width;
 }

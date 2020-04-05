@@ -7,8 +7,6 @@
 .avatar {
   width: $avatar-side-large;
   height: $avatar-side-large;
-  border-radius: $avatar-side-large / 2;
-  object-fit: cover;
 }
 
 .user-content, .counters-buttons, .control-buttons, .counter-container {
@@ -20,7 +18,7 @@
   flex-direction: column;
 }
 
-.outline-button {
+.button {
   min-width: $icon-button-width;
 
   &:last-child {
@@ -40,9 +38,7 @@
   }
 }
 
-.user-info, .counter {
-  span {
-    display: inline-block;
-    width: 100%;
-  }
+span {
+  display: inline-block;
+  width: 100%;
 }
