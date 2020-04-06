@@ -2,11 +2,6 @@
 @import '../../../../styles/variables';
 @import '../../../../styles/fonts';
 
-.container {
-  margin-top: $vertical-spacing-medium;
-  margin-bottom: $vertical-spacing-medium;
-}
-
 .header, .content, .likes {
   margin-top: $spacing;
   margin-left: $spacing;

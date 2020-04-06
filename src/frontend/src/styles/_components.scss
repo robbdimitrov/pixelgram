@@ -41,7 +41,7 @@ button.like {
   }
 }
 
-.button, .icon, textarea {
+.button, input, .icon, textarea {
   color: var(--text-color);
 }
 
@@ -93,7 +93,7 @@ button.like {
 }
 
 .form-group, .underlined {
-  border-bottom: $border-width-regular solid var(--control-color);
+  @include underline;
 }
 
 // Images

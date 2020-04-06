@@ -5,7 +5,27 @@
   padding-bottom: $vertical-spacing-medium;
 }
 
+.list li {
+  margin-top: $vertical-spacing-medium;
+  margin-bottom: $vertical-spacing-medium;
+}
+
 button#next {
   @include center-block;
   min-width: $min-button-width;
+}
+
+@media (max-width: $break-extra-small) {
+  .list li {
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+    border-radius: 0;
+    @include underline;
+    border-width: $border-width-thin;
+
+    &:last {
+      border: none;
+    }
+  }
 }
