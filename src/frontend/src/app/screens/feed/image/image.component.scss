@@ -68,14 +68,6 @@
   }
 }
 
-button.like {
-  font-size: rem(26);
-
-  &.active {
-    color: red;
-  }
-}
-
 .header {
   .avatar {
     width: $avatar-side-small;

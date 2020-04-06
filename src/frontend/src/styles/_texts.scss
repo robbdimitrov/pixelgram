@@ -3,6 +3,7 @@
 
 body {
   font-family: $text-font;
+  color: var(--text-color);
 }
 
 h1 {
@@ -16,7 +17,7 @@ p, label, button, input, span {
 
 .small {
   font-size: rem(13);
-  color: darken($color: lightgray, $amount: 25%);
+  color: var(--control-color);
 }
 
 .bold {

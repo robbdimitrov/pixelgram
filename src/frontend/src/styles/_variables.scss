@@ -1,10 +1,9 @@
 // Components
-$button-border-radius: 5px;
+
 $border-width-regular: 2px;
 $border-width-thin: 1px;
 $fieldset-height: 40px;
 $navigation-bar-height: 50px;
-$component-border-radius: 4px;
 $avatar-side-large: 100px;
 $avatar-side: $avatar-side-large * 0.75;
 $avatar-side-small: $avatar-side-large * 0.5;
@@ -12,11 +11,14 @@ $icon-button-width: 40px;
 $big-component-width: 450px;
 $min-button-width: 100px;
 $dropdown-width: 200px;
+$border-radius: 5px;
 
 // Screen media query breaks
+
 $break-extra-small: 450px;
 
 // Spacing
+
 $spacing: 12px;
 $vertical-spacing-large: 40px;
 $vertical-spacing-medium: 20px;
