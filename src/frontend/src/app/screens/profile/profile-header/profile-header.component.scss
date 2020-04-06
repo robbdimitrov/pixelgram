@@ -1,7 +1,7 @@
 @import '../../../../styles/variables';
 
 .container {
-  margin: $vertical-spacing-medium;
+  margin: $spacing-medium;
 }
 
 .avatar {
@@ -9,7 +9,8 @@
   height: $avatar-side-large;
 }
 
-.user-content, .counters-buttons, .control-buttons, .counter-container {
+.user-content, .counters-buttons,
+.control-buttons, .counter-container {
   display: flex;
   justify-content: space-between;
 }
@@ -22,8 +23,12 @@
   min-width: $icon-button-width;
 
   &:last-child {
-    margin-left: $vertical-spacing-internal;
+    margin-left: $spacing-small;
   }
+}
+
+.user-info {
+  margin-top: $spacing-small;
 }
 
 .counter-container {
