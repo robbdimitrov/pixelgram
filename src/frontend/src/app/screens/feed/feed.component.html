@@ -1,14 +1,17 @@
 <div class="container full-width">
-  <app-image
-    *ngFor="let image of images()"
-    [image]="image"
-    [user]="image.userId | user | async"
-    (like)="onLike($event)"
-    (unlike)="onUnlike($event)"
-    (showProfile)="onShowProfile($event)"
-    (deleteAction)="onDeleteAction($event)"
-  >
-  </app-image>
+  <ul class="list">
+    <li class="bordered" *ngFor="let image of images()">
+      <app-image
+        [image]="image"
+        [user]="image.userId | user | async"
+        (like)="onLike($event)"
+        (unlike)="onUnlike($event)"
+        (showProfile)="onShowProfile($event)"
+        (deleteAction)="onDeleteAction($event)"
+      >
+      </app-image>
+    </li>
+  </ul>
 
   <button id="next" *ngIf="count() > 5" class="button" (click)="onNextClick()">
     Next
