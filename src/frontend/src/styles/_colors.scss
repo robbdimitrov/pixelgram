@@ -1,10 +1,19 @@
-$background-color: #F8F9F8;
-$component-background: #FFFFFF;
-$component-border-color: #DFE0DF;
+// Light
 
-$primary-text-color: #32323C;
+:root {
+  --text-color: #333333;
+  --background-color: #ffffff;
+  --detail-color: #e1f4f3;
+  --control-color: #706c61;
+}
 
-$button-border-color: #C0C1C0;
+// Dark
 
-$button-background-color: #D3D2D3;
-$button-active-color: #949494;
+@media(prefers-color-scheme: dark) {
+  :root {
+    --text-color: #e6e6e6;
+    --background-color: #323232;
+    --detail-color: #646464;
+    --button-color: #8f939e;
+  }
+}

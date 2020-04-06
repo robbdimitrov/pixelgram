@@ -1,27 +1,20 @@
-@import 'colors';
 @import 'helpers';
 @import 'variables';
 
 // Buttons
 
 .button {
-  border-style: solid;
-  border-width: $border-width-regular;
-  border-color: $button-background-color;
-  text-decoration: none;
-  color: $primary-text-color;
-  border-radius: $button-border-radius;
-  padding: $button-border-radius;
+  border: $border-width-regular solid var(--control-color);
+  border-radius: $border-radius;
+  padding: $border-radius;
+  transition: all 0.3s ease;
 
   &:not(:disabled) {
     &:hover, &:focus {
-      border-color: darken($button-background-color,8%);
-      color: darken($primary-text-color, 8%);
-      transition: all 0.3s ease;
+      filter: brightness(1.75);
     }
     &:active {
-      border-color: darken($button-background-color, 25%);
-      color: darken($primary-text-color, 25%);
+      filter: brightness(1.5);
     }
   }
 }
@@ -35,13 +28,36 @@
   }
 }
 
+button[type=submit] {
+  width: 40%;
+  @include center-block;
+}
+
+button.like {
+  font-size: rem(26);
+
+  &.active {
+    color: red;
+  }
+}
+
+.button, .icon, textarea {
+  color: var(--text-color);
+}
+
+.nav-button, .button {
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
 // Dropdown
 
 .dropdown-options {
   z-index: 1;
   width: $dropdown-width;
-  border: $border-width-regular solid $button-active-color;
-  border-radius: $button-border-radius;
+  border: $border-width-regular solid var(--control-color);
+  border-radius: $border-radius;
 
   ul {
     list-style: none;
@@ -61,15 +77,57 @@
 
 // Classes
 
+.full-width {
+  max-width: $big-component-width;
+  @include center-block;
+}
+
 .centered {
   margin-left: auto;
   margin-right: auto;
 }
 
-.nav-button, .button {
-  &:disabled {
-    opacity: 0.6;
+.bordered {
+  border: $border-width-thin solid var(--detail-color);
+  border-radius: $border-radius;
+}
+
+.form-group, .underlined {
+  border-bottom: $border-width-regular solid var(--control-color);
+}
+
+// Images
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.frame {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  background-color: var(--detail-color);
+
+  img {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
+}
+
+// Elements
+
+body {
+  background-color: var(--background-color);
+}
+
+.title, .form-group, button[type=submit], .reference, .alert {
+  margin-left: $spacing;
+  margin-right: $spacing;
 }
 
 .description {
@@ -94,58 +152,15 @@
 }
 
 .component, .dropdown-options {
-  background-color: $component-background;
+  background-color: var(--background-color);
 }
 
-.bordered {
-  border: $border-width-thin solid $component-border-color;
-  border-radius: $component-border-radius;
-}
-
-.icon {
-  color: $primary-text-color;
-}
-
-// Images
-
-.avatar {
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.frame {
-  width: 100%;
-  padding-top: 100%;
-  position: relative;
-  background-color: $background-color;
-
-  img {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-// Elements
-
-.title, .form-group, button[type=submit], .reference, .alert {
-  margin-left: $spacing;
-  margin-right: $spacing;
-}
-
-button[type=submit] {
-  width: 40%;
-  @include center-block;
-}
+// Forms
 
 .form-group {
   margin-top: $vertical-spacing-internal;
   height: $fieldset-height;
   display: flex;
-  border-bottom: $border-width-regular solid $button-border-color;
 
   label {
     width: 30%;
@@ -159,17 +174,4 @@ button[type=submit] {
     margin-top: auto;
     margin-bottom: auto;
   }
-}
-
-// Media
-
-@media only screen and (min-width: $break-extra-small) {
-  .full-width {
-    width: $big-component-width;
-    @include center-block;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-
 }

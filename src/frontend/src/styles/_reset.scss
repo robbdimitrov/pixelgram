@@ -3,7 +3,8 @@ body, h1, h2, h3, h4, h5, h6, p, fieldset, button {
   padding:0;
 }
 
-button, textarea, input {
+button, textarea, input, fieldset {
+  text-decoration: none;
   background: none;
   border: none;
 }
@@ -24,9 +25,4 @@ ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
-}
-
-fieldset {
-  border-style: none;
-  border-width: 0;
 }
