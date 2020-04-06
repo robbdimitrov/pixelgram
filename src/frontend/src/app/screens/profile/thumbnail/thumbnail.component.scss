@@ -1,6 +1,6 @@
 @import '../../../../styles/variables';
 
-$margin: ($vertical-spacing-internal / $big-component-width) * 100%;
+$margin: ($spacing-small / $big-component-width) * 100%;
 $image-side: 50% - $margin;
 
 .frame {

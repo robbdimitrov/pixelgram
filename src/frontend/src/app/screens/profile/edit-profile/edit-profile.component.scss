@@ -1,7 +1,7 @@
 @import '../../../../styles/variables';
 
 .container {
-  padding-bottom: $vertical-spacing-medium;
+  padding-bottom: $spacing-medium;
 }
 
 .avatar-secton {
@@ -10,13 +10,13 @@
   flex-direction: column;
 
   label {
-    margin-top: $vertical-spacing-medium;
-    margin-bottom: $vertical-spacing-internal;
+    margin-top: $spacing-medium;
+    margin-bottom: $spacing-small;
   }
 
   .avatar {
-    width: $avatar-side;
-    height: $avatar-side;
+    width: $avatar-side-medium;
+    height: $avatar-side-medium;
   }
 
   #file {

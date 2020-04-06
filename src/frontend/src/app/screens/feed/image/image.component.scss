@@ -3,16 +3,16 @@
 @import '../../../../styles/fonts';
 
 .header, .content, .likes {
-  margin-top: $spacing;
-  margin-left: $spacing;
-  margin-right: $spacing;
+  margin-top: $spacing-small;
+  margin-left: $spacing-small;
+  margin-right: $spacing-small;
 }
 
 .dropdown-options {
   position: absolute;
   float: right;
-  right: -$vertical-spacing-internal;
-  top: $vertical-spacing-large;
+  right: -$spacing-small;
+  top: $spacing-large;
 }
 
 .header, .likes {
@@ -20,8 +20,8 @@
   align-items: center;
 
   span {
-    margin-left: $spacing;
-    margin-right: $spacing;
+    margin-left: $spacing-small;
+    margin-right: $spacing-small;
     white-space: nowrap;
     flex-grow: 1;
   }
@@ -33,7 +33,7 @@
 }
 
 .header, .content {
-  margin-bottom: $spacing;
+  margin-bottom: $spacing-small;
 }
 
 .content {
@@ -44,7 +44,7 @@
   }
 
   .date {
-    margin-top: $spacing;
+    margin-top: $spacing-small;
     display: block;
   }
 
@@ -54,7 +54,7 @@
 }
 
 .dropdown-button {
-  min-width: $spacing * 2;
+  min-width: $spacing-medium;
   font-size: rem(16);
 
   &:hover, &:focus {

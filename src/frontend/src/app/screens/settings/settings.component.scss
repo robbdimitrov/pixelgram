@@ -2,7 +2,6 @@
 
 li {
   list-style: none;
-  border-bottom: 1px black solid;
   height: $icon-button-width;
   vertical-align: middle;
   display: flex;
@@ -14,7 +13,7 @@ li {
   }
 
   .disclosure {
-    min-width: $spacing;
+    min-width: $spacing-small;
     font-size: rem(16);
   }
 }
