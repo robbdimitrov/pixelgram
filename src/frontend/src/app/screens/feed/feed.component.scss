@@ -1,4 +1,3 @@
-@import '../../../styles/helpers';
 @import '../../../styles/variables';
 
 .container {
@@ -11,7 +10,6 @@
 }
 
 button#next {
-  @include center-block;
   min-width: $min-button-width;
 }
 
@@ -21,8 +19,7 @@ button#next {
     margin-bottom: 0;
     border: none;
     border-radius: 0;
-    @include underline;
-    border-width: $border-width-thin;
+    @include underline($border-width-thin);
 
     &:last {
       border: none;

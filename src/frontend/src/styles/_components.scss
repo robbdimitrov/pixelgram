@@ -21,7 +21,7 @@
 
 .nav-button {
   opacity: 0.4;
-  font-size: rem(26);
+  font-size: $text-size-title;
 
   &.active {
     opacity: 0.8;
@@ -34,7 +34,7 @@ button[type=submit] {
 }
 
 button.like {
-  font-size: rem(26);
+  font-size: $text-size-title;
 
   &.active {
     color: red;
@@ -93,7 +93,7 @@ button.like {
 }
 
 .form-group, .underlined {
-  @include underline;
+  @include underline($border-width-regular);
 }
 
 // Images
@@ -125,7 +125,7 @@ body {
   background-color: var(--background-color);
 }
 
-.title, .form-group, button[type=submit], .reference, .alert {
+.title, .form-group, .reference, .alert {
   margin-left: $spacing-small;
   margin-right: $spacing-small;
 }
@@ -148,6 +148,14 @@ body {
 
   span {
     margin-right: $spacing-small;
+  }
+}
+
+a {
+  color: var(--text-color);
+
+  &:hover {
+    filter: brightness(1.75);
   }
 }
 
