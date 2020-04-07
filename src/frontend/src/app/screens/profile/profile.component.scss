@@ -1,4 +1,3 @@
-@import '../../../styles/helpers';
 @import '../../../styles/variables';
 
 .container {
@@ -10,7 +9,6 @@
 }
 
 button#next {
-  @include center-block;
   min-width: $min-button-width;
   margin-top: $spacing-medium;
 }

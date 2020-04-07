@@ -1,5 +1,3 @@
-@import 'variables';
-
 @function rem($pixels, $browser-context: 16) {
   @return ($pixels / $browser-context) * 1rem;
 }
@@ -12,7 +10,7 @@
   margin-right: auto;
 }
 
-@mixin underline {
-  border-bottom: $border-width-regular solid var(--control-color);
+@mixin underline($border-width) {
+  border-bottom: $border-width solid var(--control-color);
   border-radius: 0;
 }

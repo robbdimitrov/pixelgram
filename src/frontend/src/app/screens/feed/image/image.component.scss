@@ -1,6 +1,4 @@
-@import '../../../../styles/helpers';
 @import '../../../../styles/variables';
-@import '../../../../styles/fonts';
 
 .header, .content, .likes {
   margin-top: $spacing-small;
@@ -55,7 +53,7 @@
 
 .dropdown-button {
   min-width: $spacing-medium;
-  font-size: rem(16);
+  font-size: $text-size-button;
 
   &:hover, &:focus {
     opacity: 0.6;

@@ -1,5 +1,11 @@
 @import '../../../styles/variables';
 
+ul {
+  margin-top: $spacing-medium;
+  margin-left: $spacing-small / 2;
+  margin-right: $spacing-small / 2;
+}
+
 li {
   list-style: none;
   height: $icon-button-width;
@@ -14,6 +20,6 @@ li {
 
   .disclosure {
     min-width: $spacing-small;
-    font-size: rem(16);
+    font-size: $text-size-button;
   }
 }

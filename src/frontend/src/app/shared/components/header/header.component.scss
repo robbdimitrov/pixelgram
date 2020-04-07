@@ -1,5 +1,4 @@
 @import '../../../../styles/variables';
-@import '../../../../styles/helpers';
 
 .container {
   height: $navigation-bar-height;
@@ -9,14 +8,14 @@
 
 .logo {
   margin: $spacing-small;
-  font-size: rem(26);
+  font-size: $text-size-title;
   display: flex;
   align-items: center;
   text-decoration: none;
 
   .text {
     margin-left: $spacing-small;
-    font-size: rem(18);
+    font-size: $text-size-subtitle;
   }
 }
 

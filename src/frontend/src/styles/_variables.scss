@@ -1,3 +1,5 @@
+@import 'helpers';
+
 // Components
 
 $border-width-thin: 1px;
@@ -12,6 +14,14 @@ $big-component-width: 450px;
 $min-button-width: 100px;
 $dropdown-width: 200px;
 $border-radius: 5px;
+
+// Texts
+
+$text-size-title: rem(26);
+$text-size-subtitle: rem(18);
+$text-size-button: rem(16);
+$text-size-body: rem(15);
+$text-size-detail: rem(13);
 
 // Spacing
 
