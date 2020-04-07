@@ -1,11 +1,28 @@
-@import '../../../styles/helpers';
 @import '../../../styles/variables';
 
 .container {
-  padding-bottom: $vertical-spacing-medium;
+  padding-bottom: $spacing-medium;
+}
+
+.list li {
+  margin-top: $spacing-medium;
+  margin-bottom: $spacing-medium;
 }
 
 button#next {
-  @include center-block;
-  min-width: 100px;
+  min-width: $min-button-width;
+}
+
+@media (max-width: $big-component-width) {
+  .list li {
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+    border-radius: 0;
+    @include underline($border-width-thin);
+
+    &:last {
+      border: none;
+    }
+  }
 }

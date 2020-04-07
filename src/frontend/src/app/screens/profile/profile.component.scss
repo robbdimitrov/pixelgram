@@ -1,8 +1,7 @@
-@import '../../../styles/helpers';
 @import '../../../styles/variables';
 
 .container {
-  padding-bottom: $vertical-spacing-medium;
+  padding-bottom: $spacing-medium;
 }
 
 .image-container {
@@ -10,7 +9,6 @@
 }
 
 button#next {
-  @include center-block;
   min-width: $min-button-width;
-  margin-top: $vertical-spacing-medium;
+  margin-top: $spacing-medium;
 }

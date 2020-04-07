@@ -1,24 +1,30 @@
+@import 'helpers';
+
 // Components
-$button-border-radius: 5px;
-$button-border-width: 2px;
+
+$border-width-thin: 1px;
+$border-width-regular: 2px;
 $fieldset-height: 40px;
 $navigation-bar-height: 50px;
-$component-border-radius: 4px;
+$avatar-side-small: 50px;
+$avatar-side-medium: 75px;
 $avatar-side-large: 100px;
 $icon-button-width: 40px;
 $big-component-width: 450px;
 $min-button-width: 100px;
 $dropdown-width: 200px;
+$border-radius: 5px;
+
+// Texts
+
+$text-size-title: rem(26);
+$text-size-subtitle: rem(18);
+$text-size-button: rem(16);
+$text-size-body: rem(15);
+$text-size-detail: rem(13);
 
 // Spacing
-$spacing: 12px;
-$vertical-spacing-large: 40px;
-$vertical-spacing-medium: 20px;
-$vertical-spacing-internal: 10px;
 
-// Screen media query breaks
-$break-extra-small: 450px;
-$break-small: 576px;
-$break-medium: 768px;
-$break-large: 992px;
-$break-extra-large: 1200px;
+$spacing-small: 10px;
+$spacing-medium: 20px;
+$spacing-large: 40px;

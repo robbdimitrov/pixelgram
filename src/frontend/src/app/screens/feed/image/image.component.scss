@@ -1,55 +1,27 @@
-@import '../../../../styles/helpers';
 @import '../../../../styles/variables';
-@import '../../../../styles/fonts';
-@import '../../../../styles/colors';
-
-.container {
-  border: 1px solid $component-border-color;
-  margin-top: $vertical-spacing-medium;
-  margin-bottom: $vertical-spacing-medium;
-  background-color: $component-background;
-  border-radius: $component-border-radius;
-}
 
 .header, .content, .likes {
-  margin-top: $spacing;
-  margin-left: $spacing;
-  margin-right: $spacing;
+  margin-top: $spacing-small;
+  margin-left: $spacing-small;
+  margin-right: $spacing-small;
 }
 
 .dropdown-options {
   position: absolute;
   float: right;
-  z-index: 1;
-  right: -$vertical-spacing-internal;
-  width: $dropdown-width;
-  top: $vertical-spacing-large;
-  border: $button-border-width solid $button-active-color;
-  border-radius: $button-border-radius;
-  background-color: $component-background;
-
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    height: $icon-button-width;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-left: $vertical-spacing-internal;
-    margin-right: $vertical-spacing-internal;
-  }
+  right: -$spacing-small;
+  top: $spacing-large;
 }
 
-.header, .likes, .user-content {
+.header, .likes {
   display: flex;
   align-items: center;
 
   span {
-    margin-left: $spacing;
+    margin-left: $spacing-small;
+    margin-right: $spacing-small;
+    white-space: nowrap;
+    flex-grow: 1;
   }
 }
 
@@ -59,43 +31,29 @@
 }
 
 .header, .content {
-  margin-bottom: $spacing;
+  margin-bottom: $spacing-small;
 }
 
 .content {
+  word-break: break-word;
+
   p {
     display: inline;
   }
 
   .date {
-    margin-top: $spacing;
+    margin-top: $spacing-small;
     display: block;
+  }
+
+  .name::after {
+    content: ' ';
   }
 }
 
-.image-container {
-  width: 100%;
-  padding-top: 100%;
-  position: relative;
-}
-
-.image {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.small {
-  color: darken($color: lightgray, $amount: 25%);
-}
-
 .dropdown-button {
-  min-width: 24px;
-  font-size: rem(16);
-  color: $primary-text-color;
-  background-color: white;
+  min-width: $spacing-medium;
+  font-size: $text-size-button;
 
   &:hover, &:focus {
     opacity: 0.6;
@@ -103,22 +61,10 @@
   }
 }
 
-button.like {
-  font-size: rem(26);
-  color: $primary-text-color;
-  background-color: white;
-}
-
-button.like.active {
-  color: red;
-}
-
 .header {
-  img {
-    width: 50px;
-    height: 50px;
-    border-radius: 25px;
-    object-fit: cover;
+  .avatar {
+    width: $avatar-side-small;
+    height: $avatar-side-small;
   }
 
   span {

@@ -1,6 +1,9 @@
 <img src="docs/img/logo.png" alt="Pixelgram Logo" width="400"/>
 
-Pixelgram is an image sharing service.
+Pixelgram is an image-sharing application allowing the creation of users and images. 
+Sessions are stored in the database with a random session id and are exchanged 
+with the frontend through [HttpOnly](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) session cookies.
+The frontend includes dark mode using [CSS variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties).
 
 ## Table of contents
 

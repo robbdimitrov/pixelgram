@@ -1,20 +1,22 @@
 <div class="container full-width">
+  <h1 class="title">Settings</h1>
+
   <ul>
-    <li (click)="onChangePasswordClick()">
+    <li class="underlined" (click)="onChangePasswordClick()">
       <span>Change Password</span>
       <span class="disclosure">
           <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
       </span>
     </li>
 
-    <li (click)="onLikedPostsClick()">
+    <li class="underlined" (click)="onLikedPostsClick()">
       <span>Posts you've liked</span>
-      <span class="disclosure">
+      <span class="disclosure icon">
         <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
       </span>
     </li>
 
-    <li (click)="onLogoutClick()">
+    <li class="underlined" (click)="onLogoutClick()">
       <span>Logout</span>
     </li>
   </ul>

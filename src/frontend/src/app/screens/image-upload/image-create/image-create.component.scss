@@ -1,46 +1,27 @@
 @import '../../../../styles/variables';
-@import '../../../../styles/colors';
 
-.post-section {
+.section {
   display: flex;
-  align-items: center;
-  margin-top: $vertical-spacing-internal;
+  margin-top: $spacing-medium;
+  height: $avatar-side-large;
 }
 
-.image-container {
+.frame {
+  display: inline-block;
   width: $avatar-side-large;
-  height: $avatar-side-large;
-  background-color: $background-color;
-  margin: $vertical-spacing-internal;
+  margin: 0 $spacing-small;
+  padding-top: $avatar-side-large;
 }
 
 textarea {
   resize: none;
-  border: 0;
+  margin-right: $spacing-small;
   flex-grow: 1;
-  margin-top: $vertical-spacing-internal;
-  margin-right: $vertical-spacing-internal;
-  margin-bottom: $vertical-spacing-internal;
-  height: $avatar-side-large;
-}
-
-.image {
-  width: 100%;
   height: 100%;
-  object-fit: cover;
 }
 
 button {
-  margin-top: $vertical-spacing-internal;
-  margin-bottom: $vertical-spacing-large;
+  margin-top: $spacing-medium;
+  margin-bottom: $spacing-large;
   display: block;
-}
-
-label {
-  display: inline-block;
-  margin-bottom: $vertical-spacing-large;
-}
-
-#file {
-  display: none;
 }

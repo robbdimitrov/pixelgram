@@ -1,40 +1,85 @@
-@import 'colors';
 @import 'helpers';
 @import 'variables';
 
+// Buttons
+
 .button {
-  background-color: $button-background-color;
-  text-decoration: none;
+  border: $border-width-regular solid var(--control-color);
+  border-radius: $border-radius;
+  padding: $border-radius;
+  transition: all 0.3s ease;
+
   &:not(:disabled) {
     &:hover, &:focus {
-      background-color: darken($button-background-color,8%);
-      transition: all 0.3s ease;
+      filter: brightness(1.75);
     }
     &:active {
-      background-color: darken($button-background-color, 25%);
+      filter: brightness(1.5);
     }
   }
 }
 
-.outline-button {
-  border-style: solid;
-  border-width: $button-border-width;
-  border-color: $button-background-color;
-  text-decoration: none;
-  color: $primary-text-color;
-  background-color: white;
+.nav-button {
+  opacity: 0.4;
+  font-size: $text-size-title;
 
-  &:not(:disabled) {
-    &:hover, &:focus {
-      border-color: darken($button-background-color,8%);
-      color: darken($primary-text-color, 8%);
-      transition: all 0.3s ease;
-    }
-    &:active {
-      border-color: darken($button-background-color, 25%);
-      color: darken($primary-text-color, 25%);
-    }
+  &.active {
+    opacity: 0.8;
   }
+}
+
+button[type=submit] {
+  width: 40%;
+  @include center-block;
+}
+
+button.like {
+  font-size: $text-size-title;
+
+  &.active {
+    color: red;
+  }
+}
+
+.button, input, .icon, textarea {
+  color: var(--text-color);
+}
+
+.nav-button, .button {
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+// Dropdown
+
+.dropdown-options {
+  z-index: 1;
+  width: $dropdown-width;
+  border: $border-width-regular solid var(--control-color);
+  border-radius: $border-radius;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    height: $icon-button-width;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: $spacing-small;
+    margin-right: $spacing-small;
+  }
+}
+
+// Classes
+
+.full-width {
+  max-width: $big-component-width;
+  @include center-block;
 }
 
 .centered {
@@ -42,34 +87,47 @@
   margin-right: auto;
 }
 
-.button, .outline-button {
-  padding: 5px;
+.bordered {
+  border: $border-width-thin solid var(--detail-color);
+  border-radius: $border-radius;
 }
 
-.image-button {
-  color: $primary-text-color;
-  opacity: 0.4;
+.form-group, .underlined {
+  @include underline($border-width-regular);
 }
 
-.image-button.active {
-  opacity: 0.8;
+// Images
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-.image-button, .button, .outline-button {
-  &:disabled {
-    opacity: 0.6;
+.frame {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  background-color: var(--detail-color);
+
+  img {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 }
 
-.round-corners {
-  border-radius: $button-border-radius;
+// Elements
+
+body {
+  background-color: var(--background-color);
 }
 
-@media only screen and (min-width: $break-extra-small) {
-  .full-width {
-    width: $big-component-width;
-    @include center-block;
-  }
+.title, .form-group, .reference, .alert {
+  margin-left: $spacing-small;
+  margin-right: $spacing-small;
 }
 
 .description {
@@ -81,33 +139,36 @@
 }
 
 .title, .description, form, button[type=submit] {
-  margin-top: $vertical-spacing-medium;
+  margin-top: $spacing-medium;
 }
 
 .reference {
-  margin-top: $vertical-spacing-large;
-  margin-bottom: $vertical-spacing-medium;
+  margin-top: $spacing-large;
+  margin-bottom: $spacing-medium;
 
   span {
-    margin-right: $spacing;
+    margin-right: $spacing-small;
   }
 }
 
-.title, .form-group, button[type=submit], .reference, .alert {
-  margin-left: $spacing;
-  margin-right: $spacing;
+a {
+  color: var(--text-color);
+
+  &:hover {
+    filter: brightness(1.75);
+  }
 }
 
-button[type=submit] {
-  width: 40%;
-  @include center-block;
+.component, .dropdown-options {
+  background-color: var(--background-color);
 }
+
+// Forms
 
 .form-group {
-  margin-top: $vertical-spacing-internal;
+  margin-top: $spacing-small;
   height: $fieldset-height;
   display: flex;
-  border-bottom: $button-border-width solid $button-border-color;
 
   label {
     width: 30%;
@@ -115,7 +176,6 @@ button[type=submit] {
 
   input {
     flex: 1;
-    border: none;
   }
 
   button, label {
@@ -123,3 +183,17 @@ button[type=submit] {
     margin-bottom: auto;
   }
 }
+
+// Media
+
+@media (prefers-color-scheme: dark) {
+  img {
+    opacity: 0.85;
+    transition: all 0.3s ease;
+
+    &:hover {
+      opacity: 1.0;
+    }
+  }
+}
+

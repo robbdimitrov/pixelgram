@@ -1,17 +1,16 @@
 @import '../../../../styles/variables';
 
 .container {
-  margin: $vertical-spacing-medium;
+  margin: $spacing-medium;
 }
 
 .avatar {
   width: $avatar-side-large;
   height: $avatar-side-large;
-  border-radius: $avatar-side-large / 2;
-  object-fit: cover;
 }
 
-.user-content, .counters-buttons, .control-buttons, .counter-container {
+.user-content, .counters-buttons,
+.control-buttons, .counter-container {
   display: flex;
   justify-content: space-between;
 }
@@ -20,12 +19,16 @@
   flex-direction: column;
 }
 
-.outline-button {
+.button {
   min-width: $icon-button-width;
 
   &:last-child {
-    margin-left: $vertical-spacing-internal;
+    margin-left: $spacing-small;
   }
+}
+
+.user-info {
+  margin-top: $spacing-small;
 }
 
 .counter-container {
@@ -40,9 +43,7 @@
   }
 }
 
-.user-info, .counter {
-  span {
-    display: inline-block;
-    width: 100%;
-  }
+span {
+  display: inline-block;
+  width: 100%;
 }

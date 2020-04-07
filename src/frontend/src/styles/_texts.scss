@@ -1,21 +1,23 @@
 @import 'fonts';
-@import 'helpers';
+@import 'variables';
 
 body {
   font-family: $text-font;
+  color: var(--text-color);
 }
 
 h1 {
-  font-size: rem(26);
+  font-size: $text-size-title;
   font-weight: $font-weight-regular;
 }
 
 p, label, button, input, span {
-  font-size: rem(15);
+  font-size: $text-size-body;
 }
 
 .small {
-  font-size: rem(13);
+  font-size: $text-size-detail;
+  color: var(--control-color);
 }
 
 .bold {

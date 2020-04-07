@@ -1,15 +1,13 @@
-<div class="container full-width">
+<div class="full-width">
   <h1 class="title">New Post</h1>
 
-  <div class="image-section">
-    <div class="image-container">
-      <img *ngIf="imagePreview" class="image" [src]="imagePreview">
+  <div class="container">
+    <div class="frame">
+      <img *ngIf="imagePreview" [src]="imagePreview">
     </div>
 
     <div class="controls">
-      <label for="file" class="round-corners outline-button">
-        Select a Photo
-      </label>
+      <label for="file" class="button">Select a Photo</label>
       <input
         type="file"
         id="file"
@@ -18,11 +16,7 @@
         (change)="onChange(file.files)"
       >
 
-      <button
-        class="round-corners outline-button"
-        (click)="onNextClick()"
-        [disabled]="!imagePreview"
-      >
+      <button class="button" (click)="onNextClick()" [disabled]="!imagePreview">
         Next
       </button>
     </div>

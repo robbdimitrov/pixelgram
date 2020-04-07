@@ -1,9 +1,13 @@
 @import '../../../styles/variables';
-@import '../../../styles/colors';
+
+ul {
+  margin-top: $spacing-medium;
+  margin-left: $spacing-small / 2;
+  margin-right: $spacing-small / 2;
+}
 
 li {
   list-style: none;
-  border-bottom: 1px black solid;
   height: $icon-button-width;
   vertical-align: middle;
   display: flex;
@@ -15,8 +19,7 @@ li {
   }
 
   .disclosure {
-    color: $primary-text-color;
-    min-width: 10px;
-    font-size: rem(16);
+    min-width: $spacing-small;
+    font-size: $text-size-button;
   }
 }

@@ -1,51 +1,40 @@
 @import '../../../../styles/variables';
-@import '../../../../styles/helpers';
-@import '../../../../styles/colors';
 
 .container {
   height: $navigation-bar-height;
   display: flex;
   justify-content: space-between;
-  background-color: $component-background;
 }
 
 .logo {
-  margin: $vertical-spacing-internal;
-  font-size: rem(26);
+  margin: $spacing-small;
+  font-size: $text-size-title;
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: $primary-text-color;
 
   .text {
-    margin-left: $vertical-spacing-internal;
-    font-size: rem(18);
+    margin-left: $spacing-small;
+    font-size: $text-size-subtitle;
   }
 }
 
 .logo, ul {
-  margin-left: $vertical-spacing-internal;
-  margin-right: $vertical-spacing-internal;
-}
-
-.nav-button {
-  font-size: rem(26);
+  margin-left: $spacing-small;
+  margin-right: $spacing-small;
 }
 
 ul {
-  list-style-type: none;
-  padding: 0;
   display: flex;
-  margin: 0;
   height: 100%;
-  margin-right: $vertical-spacing-internal;
+  margin-right: $spacing-small;
 
   li {
     text-align: center;
     margin-top: auto;
     margin-bottom: auto;
-    margin-left: $vertical-spacing-internal;
-    margin-right: $vertical-spacing-internal;
+    margin-left: $spacing-small;
+    margin-right: $spacing-small;
   }
 
   li a {

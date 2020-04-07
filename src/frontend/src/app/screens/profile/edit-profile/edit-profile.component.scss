@@ -1,10 +1,7 @@
 @import '../../../../styles/variables';
-@import '../../../../styles/colors';
-
-$avatar-side: $avatar-side-large * 0.75;
 
 .container {
-  padding-bottom: $vertical-spacing-medium;
+  padding-bottom: $spacing-medium;
 }
 
 .avatar-secton {
@@ -13,16 +10,13 @@ $avatar-side: $avatar-side-large * 0.75;
   flex-direction: column;
 
   label {
-    margin-top: $vertical-spacing-medium;
-    margin-bottom: $vertical-spacing-internal;
+    margin-top: $spacing-medium;
+    margin-bottom: $spacing-small;
   }
 
   .avatar {
-    width: $avatar-side;
-    height: $avatar-side;
-    border-radius: $avatar-side / 2;
-    background-color: $background-color;
-    object-fit: cover;
+    width: $avatar-side-medium;
+    height: $avatar-side-medium;
   }
 
   #file {
