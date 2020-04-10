@@ -44,4 +44,4 @@ spec:
       volumes:
         - name: database-storage
           persistentVolumeClaim:
-            claimName: database-pv-claim
+            claimName: database-pvc

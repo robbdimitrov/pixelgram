@@ -10,6 +10,6 @@ export class ImagePipe implements PipeTransform {
     if (!value || value.length === 0) {
       return '/assets/placeholder.svg';
     }
-    return `${environment.apiRoot}/uploads/${value}`;
+    return `/api/uploads/${value}`;
   }
 }
