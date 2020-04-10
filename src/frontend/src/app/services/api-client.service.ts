@@ -8,15 +8,13 @@ import { CacheService } from './cache.service';
 
 @Injectable()
 export class APIClient {
-  private apiRoot = environment.apiRoot;
-
   constructor(private http: HttpClient,
               private cache: CacheService) {}
 
   // Private
 
-  private url(urlPath: string) {
-    return this.apiRoot + urlPath;
+  private url(path: string) {
+    return `/api/${path}`;
   }
 
   // Session
