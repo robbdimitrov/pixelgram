@@ -161,7 +161,7 @@ class DbClient {
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS is_liked,
+        ) AS liked,
         time_format(created) AS created
         FROM images
         ORDER BY images.created DESC
@@ -185,7 +185,7 @@ class DbClient {
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS is_liked,
+        ) AS liked,
         time_format(created) AS created
         FROM images WHERE user_id = $2
         ORDER BY images.created DESC
@@ -206,7 +206,7 @@ class DbClient {
       const query =
         `SELECT id, images.user_id, filename, description,
         (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
-        (likes.user_id = $1) AS is_liked,
+        (likes.user_id = $1) AS liked,
         time_format(images.created) AS created
         FROM images
         INNER JOIN likes on images.id = likes.image_id
@@ -232,7 +232,7 @@ class DbClient {
         EXISTS (
           SELECT 1 FROM likes
           WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS is_liked,
+        ) AS liked,
         time_format(created) AS created
         FROM images WHERE id = $2`;
 

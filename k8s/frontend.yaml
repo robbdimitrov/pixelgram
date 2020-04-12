@@ -7,8 +7,7 @@ spec:
     app: pixelgram
     tier: frontend
   ports:
-  - protocol: TCP
-    port: 4000
+  - port: 4000
     targetPort: 80
 ---
 apiVersion: apps/v1

@@ -44,7 +44,7 @@ export class FeedComponent implements AfterViewInit {
   loadNextPage() {
     const req = (this.userId ?
       this.apiClient.getImagesLikedByUser(this.userId, this.pagination.page) :
-      this.apiClient.getAllImages(this.pagination.page));
+      this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe(
       (data) => {

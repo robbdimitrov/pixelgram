@@ -1,7 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 
-const DbClient = require('./db/db-client');
+const DbClient = require('./db');
 const ImageController = require('./controllers/image-controller');
 const SessionController = require('./controllers/session-controller');
 const UserController = require('./controllers/user-controller');

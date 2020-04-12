@@ -82,7 +82,7 @@ export class APIClient {
     );
   }
 
-  getAllImages(page: number) {
+  getFeed(page: number) {
     const url = this.url(`/images?page=${page}`);
     return this.getImages(url);
   }

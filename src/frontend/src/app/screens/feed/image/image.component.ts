@@ -22,9 +22,9 @@ export class ImageComponent {
   constructor(private session: Session) {}
 
   onLikeClick() {
-    this.image.isLiked = !this.image.isLiked;
-    this.image.likes += (this.image.isLiked ? 1 : -1);
-    if (this.image.isLiked) {
+    this.image.liked = !this.image.liked;
+    this.image.likes += (this.image.liked ? 1 : -1);
+    if (this.image.liked) {
       this.like.emit(this.image.id);
     } else {
       this.unlike.emit(this.image.id);

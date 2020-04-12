@@ -33,14 +33,6 @@ button[type=submit] {
   @include center-block;
 }
 
-button.like {
-  font-size: $text-size-title;
-
-  &.active {
-    color: red;
-  }
-}
-
 .button, input, .icon, textarea {
   color: var(--text-color);
 }
