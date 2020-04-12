@@ -12,8 +12,8 @@
   * [Get user's images](#get-users-images)
   * [Get user's likes](#get-users-likes)
 * [Images](#images)
+  * [Get feed](#get-feed)
   * [Create image](#create-image)
-  * [Get all images](#get-all-images)
   * [Get image](#get-image)
   * [Delete image](#delete-image)
   * [Like image](#like-image)
@@ -44,7 +44,7 @@ Response:
 
 ```json
 {
-  "id": "10",
+  "id": 10,
   "name": "Clark Kent",
   "username": "superman",
   "email": "clark.kent@dailyplanet.com",
@@ -85,7 +85,7 @@ Response:
 
 ```json
 {
-  "id": "10"
+  "id": 10
 }
 ```
 
@@ -105,7 +105,7 @@ Response:
 
 ```json
 {
-  "id": "10",
+  "id": 10,
   "name": "Clark Kent",
   "username": "superman",
   "email": "clark.kent@dailyplanet.com",
@@ -159,12 +159,12 @@ Response:
 {
   "items": [
     {
-      "id": "12",
-      "userId": "10",
+      "id": 12,
+      "userId": 10,
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
-      "isLiked": true,
+      "liked": true,
       "created": "2017-11-15T16:58:49Z"
     }
   ]
@@ -189,12 +189,12 @@ Response:
 {
   "items": [
     {
-      "id": "12",
-      "userId": "10",
+      "id": 12,
+      "userId": 10,
       "filename": "d1d99db3ac32052b9dd66cb5914508dd",
       "description": "Image description",
       "likes": 2,
-      "isLiked": true,
+      "liked": true,
       "created": "2017-11-15T16:58:49Z"
     }
   ]
@@ -220,11 +220,11 @@ Response:
 
 ```json
 {
-  "id": "12"
+  "id": 12
 }
 ```
 
-### Get all images
+### Get feed
 
 ```
 GET /images
@@ -236,12 +236,12 @@ Response:
 {
   "items": [
     {
-      "id": "12",
-      "userId": "10",
+      "id": 12,
+      "userId": 10,
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
       "likes": 0,
-      "isLiked": false,
+      "liked": false,
       "created": "2017-11-13T14:57:19Z"
     }
   ]
@@ -264,12 +264,12 @@ Response:
 
 ```json
 {
-  "id": "12",
-  "userId": "10",
+  "id": 12,
+  "userId": 10,
   "filename": "6710497b36573655ed145f1bc1e01052",
   "description": "Some image description",
   "likes": 0,
-  "isLiked": false,
+  "liked": false,
   "created": "2017-11-13T14:57:19Z"
 }
 ```

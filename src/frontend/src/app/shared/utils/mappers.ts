@@ -22,7 +22,7 @@ export function mapImage(object: any) {
     object.filename,
     object.description,
     object.likes,
-    object.isLiked,
+    object.liked,
     new Date(object.created)
   );
 }

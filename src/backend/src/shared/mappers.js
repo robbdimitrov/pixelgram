@@ -19,7 +19,7 @@ function mapImage(image) {
     filename: image.filename,
     description: image.description,
     likes: +image.likes,
-    isLiked: image.is_liked,
+    liked: image.liked,
     created: image.created
   };
 }
