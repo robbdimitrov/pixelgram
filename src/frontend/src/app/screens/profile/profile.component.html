@@ -16,7 +16,12 @@
     </app-thumbnail>
   </div>
 
-  <button id="next" *ngIf="count() > 5" class="button centered" (click)="onNextClick()">
+  <button
+    id="next"
+    *ngIf="count() > 5"
+    class="button centered"
+    (click)="onNextClick()"
+  >
     Next
   </button>
 </div>

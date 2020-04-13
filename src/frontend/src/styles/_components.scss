@@ -30,7 +30,6 @@
 
 button[type=submit] {
   width: 40%;
-  @include center-block;
 }
 
 .button, input, .icon, textarea {
@@ -75,8 +74,7 @@ button[type=submit] {
 }
 
 .centered {
-  margin-left: auto;
-  margin-right: auto;
+  @include center-block;
 }
 
 .bordered {
