@@ -16,7 +16,11 @@
         (change)="onChange(file.files)"
       >
 
-      <button class="button" (click)="onNextClick()" [disabled]="!imagePreview">
+      <button
+        class="button"
+        (click)="onNextClick()"
+        [disabled]="!imagePreview"
+      >
         Next
       </button>
     </div>

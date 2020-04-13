@@ -27,8 +27,8 @@
   </div>
 
   <div class="likes">
-    <button class="like icon" [ngClass]="{'active': image.isLiked}" (click)="onLikeClick()">
-        <div *ngIf="image.isLiked; else elseBlock">
+    <button class="like icon" [ngClass]="{'active': image.liked}" (click)="onLikeClick()">
+        <div *ngIf="image.liked; else elseBlock">
           <fa-icon [icon]="['fas', 'heart']"></fa-icon>
         </div>
         <ng-template #elseBlock>

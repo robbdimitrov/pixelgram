@@ -5,7 +5,7 @@ export class Image {
     public filename: string,
     public description: string,
     public likes: number,
-    public isLiked: boolean,
+    public liked: boolean,
     public created: Date
   ) {}
 }

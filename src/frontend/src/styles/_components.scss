@@ -30,15 +30,6 @@
 
 button[type=submit] {
   width: 40%;
-  @include center-block;
-}
-
-button.like {
-  font-size: $text-size-title;
-
-  &.active {
-    color: red;
-  }
 }
 
 .button, input, .icon, textarea {
@@ -83,8 +74,7 @@ button.like {
 }
 
 .centered {
-  margin-left: auto;
-  margin-right: auto;
+  @include center-block;
 }
 
 .bordered {
