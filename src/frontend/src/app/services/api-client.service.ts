@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 
 import { mapImage, mapUser } from '../shared/utils/mappers';
-import { environment } from '../../environments/environment';
 import { CacheService } from './cache.service';
 
 @Injectable()
