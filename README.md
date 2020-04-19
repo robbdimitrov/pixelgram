@@ -60,7 +60,7 @@ Enable port forwarding
 $ kubectl port-forward service/frontend 4000
 ```
 
-Open the front-end [here](http://localhost:4000/).
+Open the frontend [here](http://localhost:4000/).
 
 ### Cleanup
 
