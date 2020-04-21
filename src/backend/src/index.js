@@ -1,6 +1,9 @@
 const express = require('express');
 const helmet = require('helmet');
 
+const createControllers = require('./controllers');
+const logger = require('./shared/logger');
+
 const authGuard = require('./middlewares/auth-guard');
 const cookieParser = require('./middlewares/cookie-parser');
 
@@ -8,8 +11,6 @@ const imageRouter = require('./routes/image-router');
 const sessionRouter = require('./routes/session-router');
 const userRouter = require('./routes/user-router');
 const uploadRouter = require('./routes/upload-router');
-
-const logger = require('./shared/logger');
 
 function configureRoutes(app, imageDir, controllers) {
   // Middleware
@@ -33,7 +34,7 @@ function configureRoutes(app, imageDir, controllers) {
   });
 }
 
-module.exports = function (imageDir, controllers) {
+module.exports = function (dbClient, imageDir) {
   const app = express();
 
   app.use(helmet());
@@ -44,6 +45,7 @@ module.exports = function (imageDir, controllers) {
     next();
   });
 
+  const controllers = createControllers(dbClient);
   configureRoutes(app, imageDir, controllers);
 
   return app;

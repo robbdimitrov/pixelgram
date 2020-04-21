@@ -18,9 +18,7 @@ class SessionController {
       return this.createSessionWithId(user.id);
     }).then((session) => {
       this.createCookie(res, session.id);
-      return this.dbClient.getUser(session.userId);
-    }).then((result) => {
-      res.status(200).send(result);
+      res.status(200).send(session.userId);
     }).catch((error) => {
       res.status(401).send({
         message: error.message
@@ -29,7 +27,7 @@ class SessionController {
   }
 
   validateSession(req, res, next) {
-    const sessionId = req.cookies['SID'];
+    const sessionId = req.cookies['session'];
 
     if (!sessionId) {
       return res.status(401).send({
@@ -50,7 +48,7 @@ class SessionController {
 
         next();
       }).catch((error) => {
-        res.clearCookie('SID');
+        res.clearCookie('session');
         res.status(401).send({
           message: error.message
         });
@@ -58,11 +56,11 @@ class SessionController {
   }
 
   deleteSession(req, res) {
-    const sessionId = req.cookies['SID'];
+    const sessionId = req.cookies['session'];
 
     this.dbClient.deleteSession(sessionId)
       .then(() => {
-        res.clearCookie('SID');
+        res.clearCookie('session');
         res.sendStatus(204);
       }).catch((error) => {
         res.status(500).send({
@@ -101,7 +99,7 @@ class SessionController {
 
   createCookie(res, sessionId) {
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
-    res.cookie('SID', sessionId, {
+    res.cookie('session', sessionId, {
       sameSite: 'strict',
       maxAge: oneWeek,
       httpOnly: true

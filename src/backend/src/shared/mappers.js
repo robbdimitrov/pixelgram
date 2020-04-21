@@ -6,8 +6,8 @@ function mapUser(user) {
     email: user.email,
     avatar: user.avatar,
     bio: user.bio,
-    likes: +user.likes,
     images: +user.images,
+    likes: +user.likes,
     created: user.created
   };
 }

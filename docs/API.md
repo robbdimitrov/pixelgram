@@ -27,7 +27,7 @@
 
 ### Login
 
-Sets an `SID` cookie with the session id.
+Sets an `session` cookie with the session id.
 
 ```
 POST /sessions
@@ -44,21 +44,13 @@ Response:
 
 ```json
 {
-  "id": 10,
-  "name": "Clark Kent",
-  "username": "superman",
-  "email": "clark.kent@dailyplanet.com",
-  "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-  "bio": "Kryptonian hero",
-  "likes": 2,
-  "images": 10,
-  "created": "2017-11-15T10:05:28Z"
+  "id": 10
 }
 ```
 
 ### Logout
 
-The active session is taken from the `SID` cookie.
+The active session is taken from the `session` cookie.
 
 ```
 DELETE /sessions

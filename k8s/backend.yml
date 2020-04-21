@@ -7,7 +7,7 @@ spec:
     app: pixelgram
     tier: backend
   ports:
-  - port: 3000
+  - port: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,10 +32,8 @@ spec:
         image: pixelgram/backend
         imagePullPolicy: Never
         ports:
-        - containerPort: 3000
+        - containerPort: 8080
         env:
-        - name: PORT
-          value: "3000"
         - name: DATABASE_URL
           value: postgresql://postgres:kubernetes@database:5432/pixelgram
         - name: SECRET
