@@ -90,11 +90,11 @@ class DbClient {
       const query =
         `SELECT id, name, username, email, avatar, bio,
         (
-          SELECT count(*) FROM likes WHERE likes.user_id = users.id
-        ) AS likes,
-        (
           SELECT count(*) FROM images WHERE images.user_id = users.id
         ) AS images,
+        (
+          SELECT count(*) FROM likes WHERE likes.user_id = users.id
+        ) AS likes,
         time_format(created) AS created
         FROM users WHERE id = $1`;
 

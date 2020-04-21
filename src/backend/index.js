@@ -1,25 +1,23 @@
 const http = require('http')
 
-const DbClient = require('./src/db');
-const createControllers = require('./src/controllers');
 const createApp = require('./src');
+const DbClient = require('./src/db');
 const logger = require('./src/shared/logger');
 
-const port = process.env.PORT;
+const port = process.env.PORT || '8080';
 const dbUrl = process.env.DATABASE_URL;
 const imageDir = process.env.IMAGE_DIR;
 
 const dbClient = new DbClient(dbUrl);
-const controllers = createControllers(dbClient);
-
-const server = http.createServer(createApp(imageDir, controllers));
+const app = createApp(dbClient, imageDir);
+const server = http.createServer(app);
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 // Stop server, close database connection
 function shutdown() {
-  logger.logInfo('Shutting down...');
+  logger.logInfo('Server is shutting down...');
   setTimeout(() => {
     process.exit(1);
   }, 10000);
@@ -31,6 +29,6 @@ function shutdown() {
 }
 
 if (!module.parent) {
-  logger.logInfo(`Starting server on port ${port}`);
+  logger.logInfo(`Server is starting on port ${port}`);
   server.listen(port);
 }

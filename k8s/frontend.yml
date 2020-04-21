@@ -7,8 +7,7 @@ spec:
     app: pixelgram
     tier: frontend
   ports:
-  - port: 4000
-    targetPort: 80
+  - port: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -33,4 +32,4 @@ spec:
         image: pixelgram/frontend
         imagePullPolicy: Never
         ports:
-        - containerPort: 80
+        - containerPort: 8080
