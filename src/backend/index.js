@@ -2,7 +2,7 @@ const http = require('http')
 
 const createApp = require('./src');
 const DbClient = require('./src/db');
-const logger = require('./src/shared/logger');
+const printLog = require('./src/shared/logger');
 
 const port = process.env.PORT || '8080';
 const dbUrl = process.env.DATABASE_URL;
@@ -17,7 +17,7 @@ process.on('SIGTERM', shutdown);
 
 // Stop server, close database connection
 function shutdown() {
-  logger.logInfo('Server is shutting down...');
+  printLog('Server is shutting down...');
   setTimeout(() => {
     process.exit(1);
   }, 10000);
@@ -29,6 +29,6 @@ function shutdown() {
 }
 
 if (!module.parent) {
-  logger.logInfo(`Server is starting on port ${port}`);
+  printLog(`Server is starting on port ${port}`);
   server.listen(port);
 }

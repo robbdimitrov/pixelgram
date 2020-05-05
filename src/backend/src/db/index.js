@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 const { isValidEmail } = require('../shared/utils');
 const { generateHash } = require('../shared/crypto');
 const { mapUser, mapImage, mapSession } = require('../shared/mappers');
-const logger = require('../shared/logger');
+const printLog = require('../shared/logger');
 
 class DbClient {
   constructor(dbUrl) {
@@ -42,7 +42,7 @@ class DbClient {
         }).then((result) => {
           resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Creating user failed: ${error}`);
+          printLog(`Creating user failed: ${error}`);
 
           if (error.message.includes('email')) {
             reject(new Error('User with this email already exists.'));
@@ -64,7 +64,7 @@ class DbClient {
         .then((result) => {
           resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Getting user credentials failed: ${error}`);
+          printLog(`Getting user credentials failed: ${error}`);
           reject(new Error('Getting user credentials failed.'));
         });
     });
@@ -79,7 +79,7 @@ class DbClient {
         .then((result) => {
           resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Getting user credentials failed: ${error}`);
+          printLog(`Getting user credentials failed: ${error}`);
           reject(new Error('Getting user credentials failed.'));
         });
     });
@@ -102,7 +102,7 @@ class DbClient {
         .then((result) => {
           resolve(mapUser(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Getting user failed: ${error}`);
+          printLog(`Getting user failed: ${error}`);
           reject(new Error('Getting user failed.'));
         });
     });
@@ -127,7 +127,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Updating user failed: ${error}`);
+          printLog(`Updating user failed: ${error}`);
           reject(new Error('Updating user failed.'));
         });
     });
@@ -147,7 +147,7 @@ class DbClient {
         .then((result) => {
           resolve(result.rows[0]);
         }).catch((error) => {
-          logger.logError(`Creating image failed: ${error}`);
+          printLog(`Creating image failed: ${error}`);
           reject(new Error('Creating image failed.'));
         });
     });
@@ -171,7 +171,7 @@ class DbClient {
         .then((result) => {
           resolve(result.rows.map(image => mapImage(image)));
         }).catch((error) => {
-          logger.logError(`Getting images failed: ${error}`);
+          printLog(`Getting images failed: ${error}`);
           reject(new Error('Getting images failed.'));
         });
     });
@@ -195,7 +195,7 @@ class DbClient {
         .then((result) => {
           resolve(result.rows.map(image => mapImage(image)));
         }).catch((error) => {
-          logger.logError(`Getting images failed: ${error}`);
+          printLog(`Getting images failed: ${error}`);
           reject(new Error('Getting images failed.'));
         });
     });
@@ -218,7 +218,7 @@ class DbClient {
         .then((result) => {
           resolve(result.rows.map(image => mapImage(image)));
         }).catch((error) => {
-          logger.logError(`Getting images failed: ${error}`);
+          printLog(`Getting images failed: ${error}`);
           reject(new Error('Getting images failed.'));
         });
     });
@@ -240,7 +240,7 @@ class DbClient {
         .then((result) => {
           resolve(mapImage(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Getting image failed: ${error}`);
+          printLog(`Getting image failed: ${error}`);
           reject(new Error('Getting image failed.'));
         });
     });
@@ -254,7 +254,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Deleting image failed: ${error}`);
+          printLog(`Deleting image failed: ${error}`);
           reject(new Error('Deleting image failed.'));
         });
     });
@@ -272,7 +272,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Liking image failed: ${error}`);
+          printLog(`Liking image failed: ${error}`);
           reject(new Error('Liking image failed.'));
         });
     });
@@ -286,7 +286,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Unliking image failed: ${error}`);
+          printLog(`Unliking image failed: ${error}`);
           reject(new Error('Unliking image failed.'));
         });
     });
@@ -306,7 +306,7 @@ class DbClient {
         .then((result) => {
           resolve(mapSession(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Creating session failed: ${error}`);
+          printLog(`Creating session failed: ${error}`);
           reject(new Error('Creating session failed.'));
         });
     });
@@ -321,7 +321,7 @@ class DbClient {
         .then((result) => {
           resolve(mapSession(result.rows[0]));
         }).catch((error) => {
-          logger.logError(`Getting session failed: ${error}`);
+          printLog(`Getting session failed: ${error}`);
           reject(new Error('Getting session failed.'));
         });
     });
@@ -335,7 +335,7 @@ class DbClient {
         .then(() => {
           resolve();
         }).catch((error) => {
-          logger.logError(`Deleting session failed: ${error}`);
+          printLog(`Deleting session failed: ${error}`);
           reject(new Error('Deleting session failed.'));
         });
     });

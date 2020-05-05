@@ -18,7 +18,7 @@ class SessionController {
       return this.createSessionWithId(user.id);
     }).then((session) => {
       this.createCookie(res, session.id);
-      res.status(200).send(session.userId);
+      res.status(200).send({id: session.userId});
     }).catch((error) => {
       res.status(401).send({
         message: error.message
