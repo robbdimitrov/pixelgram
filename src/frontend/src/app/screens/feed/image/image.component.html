@@ -2,7 +2,7 @@
   <div class="header">
     <img
       class="avatar"
-      [src]="!user ? '' : user.avatar | image"
+      [src]="(!user ? '' : user.avatar) | image"
       (click)="onProfileClick()"
     >
 

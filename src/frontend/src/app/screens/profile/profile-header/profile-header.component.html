@@ -1,6 +1,6 @@
 <div class="container">
   <div class="user-content">
-    <img class="avatar" [src]="!user ? '' : user.avatar | image">
+    <img class="avatar" [src]="(!user ? '' : user.avatar) | image">
 
     <div class="counters-buttons">
       <div class="counter-container">
