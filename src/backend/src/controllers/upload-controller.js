@@ -17,7 +17,6 @@ module.exports = function (imageDir) {
           filename: req.file.filename
         });
       } else {
-        console.log('uploading file failed');
         res.status(400).send({
           message: 'File missing from request.'
         });

@@ -1,5 +1,6 @@
 const { isValidEmail, castObject } = require('../shared/utils');
 const { generateHash, validatePassword } = require('../shared/crypto');
+const printLog = require('../shared/logger');
 
 class UserController {
   constructor(dbClient) {
@@ -32,6 +33,7 @@ class UserController {
           userUpdates.password = hash;
           resolve(userUpdates);
         }).catch((error) => {
+          printLog(`Getting user credentials failed: ${error}`);
           reject(error);
         });
       } else {
@@ -49,12 +51,19 @@ class UserController {
       });
     }
 
+    if (!isValidEmail(email)) {
+      return res.status(400).send({
+        message: 'Invalid email address.'
+      });
+    }
+
     this.dbClient.createUser(name, username, email, password)
       .then((result) => {
         res.status(201).send(result);
       }).catch((error) => {
+        printLog(`Creating user failed: ${error}`);
         res.status(400).send({
-          message: error.message
+          message: 'User with this username or email already exists.'
         });
       });
   }
@@ -68,12 +77,13 @@ class UserController {
           res.status(200).send(result);
         } else {
           res.status(404).send({
-            message: 'User not found.'
+            message: 'Not Found'
           });
         }
       }).catch((error) => {
+        printLog(`Getting user failed: ${error}`);
         res.status(400).send({
-          message: error.message
+          message: 'Bad Request'
         });
       });
   }
@@ -94,8 +104,9 @@ class UserController {
     }).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
+      printLog(`Updating user failed: ${error}`);
       res.status(400).send({
-        message: error.message
+        message: 'Bad Request'
       });
     });
   }
