@@ -1,15 +1,14 @@
-const allowedRoutes = [
+const allowed = [
   { method: 'POST', path: '/sessions' },
   { method: 'DELETE', path: '/sessions' },
-  { method: 'POST', path: '/users' },
-  { method: 'GET', path: '/uploads' }
+  { method: 'POST', path: '/users' }
 ];
 
 function isAllowed(req) {
   if (req.method === 'OPTIONS') {
     return true;
   }
-  for (const route of allowedRoutes) {
+  for (const route of allowed) {
     if (req.method === route.method && req.path === route.path) {
       return true;
     }

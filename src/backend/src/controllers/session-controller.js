@@ -1,4 +1,5 @@
 const { generateKey, validatePassword } = require('../shared/crypto');
+const printLog = require('../shared/logger');
 
 class SessionController {
   constructor(dbClient) {
@@ -18,10 +19,13 @@ class SessionController {
       return this.createSessionWithId(user.id);
     }).then((session) => {
       this.createCookie(res, session.id);
-      res.status(200).send({id: session.userId});
+      res.status(200).send({
+        id: session.userId
+      });
     }).catch((error) => {
+      printLog(`Creating session failed: ${error}`);
       res.status(401).send({
-        message: error.message
+        message: 'Unauthorized'
       });
     });
   }
@@ -31,7 +35,7 @@ class SessionController {
 
     if (!sessionId) {
       return res.status(401).send({
-        message: 'Missing session cookie.'
+        message: 'Unauthorized'
       });
     }
 
@@ -48,9 +52,10 @@ class SessionController {
 
         next();
       }).catch((error) => {
+        printLog(`Getting session failed: ${error}`);
         res.clearCookie('session');
         res.status(401).send({
-          message: error.message
+          message: 'Unauthorized'
         });
       });
   }
@@ -63,8 +68,9 @@ class SessionController {
         res.clearCookie('session');
         res.sendStatus(204);
       }).catch((error) => {
+        printLog(`Deleting session failed: ${error}`);
         res.status(500).send({
-          message: error.message
+          message: 'Internal Server Error'
         });
       });
   }
@@ -83,7 +89,9 @@ class SessionController {
           }
           resolve(user);
         });
-      }).catch((error) => reject(error));
+      }).catch((error) => {
+        reject(error);
+      });
     });
   }
 
@@ -92,8 +100,14 @@ class SessionController {
       generateKey().then((sessionId) => {
         this.dbClient.createSession(sessionId, userId)
           .then((session) => resolve(session))
-          .catch((error) => reject(error));
-      }).catch((error) => reject(error));
+          .catch((error) => {
+            printLog(`Creating session failed: ${error}`);
+            reject(error);
+          });
+      }).catch((error) => {
+        printLog(`Generating session id failed: ${error}`);
+        reject(error);
+      });
     });
   }
 
