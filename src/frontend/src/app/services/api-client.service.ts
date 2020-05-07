@@ -13,7 +13,7 @@ export class APIClient {
   // Private
 
   private url(path: string) {
-    return `/api/${path}`;
+    return `/api${path}`;
   }
 
   // Session

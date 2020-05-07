@@ -14,11 +14,11 @@ module.exports = function ({session, user, image, upload}) {
 
   // Images
   router.post('/images', (req, res) => image.createImage(req, res));
-  router.get('/images', (req, res) => image.getImages(req, res));
+  router.get('/images', (req, res) => image.getFeed(req, res));
+  router.get('/users/:userId/images', (req, res) => image.getImages(req, res));
+  router.get('/users/:userId/likes', (req, res) => image.getLikedImages(req, res));
   router.get('/images/:imageId', (req, res) => image.getImage(req, res));
   router.delete('/images/:imageId', (req, res) => image.deleteImage(req, res));
-  router.get('/users/:userId/images', (req, res) => image.getImagesByUser(req, res));
-  router.get('/users/:userId/likes', (req, res) => image.getImagesLikedByUser(req, res));
   router.post('/images/:imageId/likes', (req, res) => image.likeImage(req, res));
   router.delete('/images/:imageId/likes', (req, res) => image.unlikeImage(req, res));
 

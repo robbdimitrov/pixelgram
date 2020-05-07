@@ -25,7 +25,7 @@ class SessionController {
     }).catch((error) => {
       printLog(`Creating session failed: ${error}`);
       res.status(401).send({
-        message: 'Unauthorized'
+        message: error.message
       });
     });
   }
@@ -41,10 +41,6 @@ class SessionController {
 
     this.dbClient.getSession(sessionId)
       .then((session) => {
-        if (!session) {
-          throw new Error('Session doesn\'t exist.');
-        }
-
         req.sessionId = session.id;
         req.userId = session.userId.toString();
 
