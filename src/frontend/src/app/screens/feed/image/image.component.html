@@ -1,9 +1,9 @@
 <div class="component">
   <div class="header">
-    <a [routerLink]="['/user', user.id]">
+    <a [routerLink]="['/user', user.id]" *ngIf="user">
       <img class="avatar" [src]="user.avatar | image">
     </a>
-    <a [routerLink]="['/user', user.id]" class="bold username">
+    <a [routerLink]="['/user', user.id]" class="bold username" *ngIf="user">
       {{user.username}}
     </a>
 
@@ -39,7 +39,9 @@
   </div>
 
   <div class="content">
-    <span class="bold name" *ngIf="isDescriptionPresent()">{{user.name}}</span>
+    <span class="bold name" *ngIf="user && isDescriptionPresent()">
+      {{user.name}}
+    </span>
     <p class="description">{{image.description}}</p>
     <span class="small date">{{image.created | relativedate}}</span>
   </div>

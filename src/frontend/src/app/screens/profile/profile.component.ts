@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { Image } from '../../models/image.model';
 import { APIClient } from '../../services/api-client.service';
@@ -16,7 +16,6 @@ export class ProfileComponent {
   user: User;
 
   constructor(private apiClient: APIClient,
-              private router: Router,
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute) {
     this.route.params.subscribe((params) => {
