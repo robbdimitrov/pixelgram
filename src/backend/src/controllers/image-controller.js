@@ -27,12 +27,31 @@ class ImageController {
       });
   }
 
+  getFeed(req, res) {
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 0;
+    const currentUserId = req.userId;
+
+    this.dbClient.getFeed(page, limit, currentUserId)
+      .then((result) => {
+        res.status(200).send({
+          items: result
+        });
+      }).catch((error) => {
+        printLog(`Getting images failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
+        });
+      });
+  }
+
   getImages(req, res) {
+    const userId = req.params.userId;
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
-    this.dbClient.getImages(page, limit, currentUserId)
+    this.dbClient.getImages(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -45,32 +64,13 @@ class ImageController {
       });
   }
 
-  getImagesByUser(req, res) {
+  getLikedImages(req, res) {
     const userId = req.params.userId;
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
-    this.dbClient.getImagesByUser(userId, page, limit, currentUserId)
-      .then((result) => {
-        res.status(200).send({
-          items: result
-        });
-      }).catch((error) => {
-        printLog(`Getting images failed: ${error}`);
-        res.status(500).send({
-          message: 'Internal Server Error'
-        });
-      });
-  }
-
-  getImagesLikedByUser(req, res) {
-    const userId = req.params.userId;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const page = parseInt(req.query.page, 10) || 0;
-    const currentUserId = req.userId;
-
-    this.dbClient.getImagesLikedByUser(userId, page, limit, currentUserId)
+    this.dbClient.getLikedImages(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result

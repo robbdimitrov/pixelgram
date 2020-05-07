@@ -12,8 +12,10 @@
   * [Get user's images](#get-users-images)
   * [Get user's likes](#get-users-likes)
 * [Images](#images)
-  * [Get feed](#get-feed)
   * [Create image](#create-image)
+  * [Get feed](#get-feed)
+  * [Get images](#get-images)
+  * [Get liked images](#get-liked-images)
   * [Get image](#get-image)
   * [Delete image](#delete-image)
   * [Like image](#like-image)
@@ -232,7 +234,55 @@ Response:
       "userId": 10,
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
-      "likes": 0,
+      "likes": 3,
+      "liked": false,
+      "created": "2017-11-13T14:57:19Z"
+    }
+  ]
+}
+```
+
+### Get images
+
+```
+GET /users/<userId>/images
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "userId": 10,
+      "filename": "6710497b36573655ed145f1bc1e01052",
+      "description": "Some image description",
+      "likes": 3,
+      "liked": false,
+      "created": "2017-11-13T14:57:19Z"
+    }
+  ]
+}
+```
+
+### Get liked images
+
+```
+GET /users/<userId>/likes
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "userId": 10,
+      "filename": "6710497b36573655ed145f1bc1e01052",
+      "description": "Some image description",
+      "likes": 3,
       "liked": false,
       "created": "2017-11-13T14:57:19Z"
     }
@@ -260,7 +310,7 @@ Response:
   "userId": 10,
   "filename": "6710497b36573655ed145f1bc1e01052",
   "description": "Some image description",
-  "likes": 0,
+  "likes": 3,
   "liked": false,
   "created": "2017-11-13T14:57:19Z"
 }

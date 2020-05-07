@@ -113,7 +113,7 @@ class DbClient {
     });
   }
 
-  getImages(page, limit, currentUserId) {
+  getFeed(page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
@@ -133,7 +133,7 @@ class DbClient {
     });
   }
 
-  getImagesByUser(userId, page, limit, currentUserId) {
+  getImages(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, user_id, filename, description,
@@ -153,7 +153,7 @@ class DbClient {
     });
   }
 
-  getImagesLikedByUser(userId, page, limit, currentUserId) {
+  getLikedImages(userId, page, limit, currentUserId) {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, images.user_id, filename, description,
@@ -199,10 +199,6 @@ class DbClient {
         .catch((error) => reject(error));
     });
   }
-
-  //
-  // Likes
-  //
 
   likeImage(imageId, userId) {
     return new Promise((resolve, reject) => {

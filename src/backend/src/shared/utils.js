@@ -1,6 +1,6 @@
 function isValidEmail(email) {
-  const emailRegex = /^[^@]+@[^@]+.[^@]+/;
-  return emailRegex.test(email);
+  const regex = /^[^@]+@[^@]+.[^@]+/;
+  return regex.test(email);
 }
 
 function castObject(source, allowedKeys) {
