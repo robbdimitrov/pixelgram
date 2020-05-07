@@ -75,25 +75,25 @@ export class APIClient {
     return this.http.post(url, body);
   }
 
-  getImages(url: string) {
+  getFeed(page: number) {
+    const url = this.url(`/images?page=${page}`);
     return this.http.get(url).pipe(
       map((res: any) => res.items.map((item) => mapImage(item)))
     );
   }
 
-  getFeed(page: number) {
-    const url = this.url(`/images?page=${page}`);
-    return this.getImages(url);
-  }
-
-  getImagesByUser(userId: number, page: number) {
+  getImages(userId: number, page: number) {
     const url = this.url(`/users/${userId}/images?page=${page}`);
-    return this.getImages(url);
+    return this.http.get(url).pipe(
+      map((res: any) => res.items.map((item) => mapImage(item)))
+    );
   }
 
-  getImagesLikedByUser(userId: number, page: number) {
+  getLikedImages(userId: number, page: number) {
     const url = this.url(`/users/${userId}/likes?page=${page}`);
-    return this.getImages(url);
+    return this.http.get(url).pipe(
+      map((res: any) => res.items.map((item) => mapImage(item)))
+    );
   }
 
   getImage(imageId: number) {
