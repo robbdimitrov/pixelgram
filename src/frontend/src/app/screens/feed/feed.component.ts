@@ -1,5 +1,5 @@
 import { Component, AfterViewInit } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../services/api-client.service';
@@ -16,7 +16,6 @@ export class FeedComponent implements AfterViewInit {
   userId?: number;
 
   constructor(private apiClient: APIClient,
-              private router: Router,
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute,
               private location: Location) {
