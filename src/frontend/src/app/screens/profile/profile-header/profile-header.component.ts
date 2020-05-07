@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 import { User } from '../../../models/user.model';
 import { Session } from '../../../services/session.service';
@@ -10,8 +10,6 @@ import { Session } from '../../../services/session.service';
 })
 export class ProfileHeaderComponent {
   @Input() user: User;
-  @Output() openSettings = new EventEmitter();
-  @Output() openEditProfile = new EventEmitter();
 
   constructor(private session: Session) {}
 
@@ -20,13 +18,5 @@ export class ProfileHeaderComponent {
       return false;
     }
     return this.session.userId() === this.user.id;
-  }
-
-  onSettingsClick() {
-    this.openSettings.emit();
-  }
-
-  onEditProfileClick() {
-    this.openEditProfile.emit();
   }
 }

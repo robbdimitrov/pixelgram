@@ -2,8 +2,6 @@
   <app-profile-header
     *ngIf="user"
     [user]="user"
-    (openSettings)="onOpenSettings()"
-    (openEditProfile)="onOpenEditProfile()"
   >
   </app-profile-header>
 
@@ -11,7 +9,6 @@
     <app-thumbnail
       *ngFor="let image of images()"
       [image]="image"
-      (openImage)="onOpenImage($event)"
     >
     </app-thumbnail>
   </div>

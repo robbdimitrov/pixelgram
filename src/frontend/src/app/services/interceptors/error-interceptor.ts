@@ -30,7 +30,7 @@ export class ErrorInterceptor implements HttpInterceptor {
         this.apiClient.logoutUser().subscribe(() => {
           this.cache.clear();
           this.session.clear();
-          this.router.navigate(['/']);
+          this.router.navigate(['/login']);
         });
       }
     }

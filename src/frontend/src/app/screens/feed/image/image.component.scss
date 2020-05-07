@@ -13,11 +13,15 @@
   top: $spacing-large;
 }
 
+.username {
+  text-decoration: none;
+}
+
 .header, .likes {
   display: flex;
   align-items: center;
 
-  span {
+  span, .username {
     margin-left: $spacing-small;
     margin-right: $spacing-small;
     white-space: nowrap;
@@ -53,6 +57,7 @@
 
 button.like {
   font-size: $text-size-title;
+  cursor: pointer;
 }
 
 .dropdown-button {

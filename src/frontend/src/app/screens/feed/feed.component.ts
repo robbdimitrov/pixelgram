@@ -43,7 +43,7 @@ export class FeedComponent implements AfterViewInit {
 
   loadNextPage() {
     const req = (this.userId ?
-      this.apiClient.getImagesLikedByUser(this.userId, this.pagination.page) :
+      this.apiClient.getLikedImages(this.userId, this.pagination.page) :
       this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe(
@@ -80,10 +80,6 @@ export class FeedComponent implements AfterViewInit {
 
   onUnlike(imageId: number) {
     this.apiClient.unlikeImage(imageId).subscribe();
-  }
-
-  onShowProfile(userId: number) {
-    this.router.navigate(['/user', userId]);
   }
 
   onNextClick() {

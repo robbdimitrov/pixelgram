@@ -13,7 +13,6 @@ import { Session } from '../../../services/session.service';
 export class ImageComponent {
   @Output() like = new EventEmitter<number>();
   @Output() unlike = new EventEmitter<number>();
-  @Output() showProfile = new EventEmitter<number>();
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User;
@@ -37,10 +36,6 @@ export class ImageComponent {
 
   isDescriptionPresent() {
     return this.image.description.length > 0;
-  }
-
-  onProfileClick() {
-    this.showProfile.emit(this.image.userId);
   }
 
   onDeleteClick() {
