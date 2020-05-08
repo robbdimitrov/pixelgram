@@ -26,8 +26,6 @@ export class ProfileComponent {
     });
   }
 
-  // Data
-
   loadUser(userId: number) {
     this.apiClient.getUser(userId, true).subscribe(
       (data) => {

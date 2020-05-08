@@ -30,15 +30,11 @@ export class FeedComponent implements AfterViewInit {
     });
   }
 
-  // Component lifecycle
-
   ngAfterViewInit() {
     if (!this.isSingleImageMode) {
       this.loadNextPage();
     }
   }
-
-  // Data
 
   loadNextPage() {
     const req = (this.userId ?
@@ -70,8 +66,6 @@ export class FeedComponent implements AfterViewInit {
   count() {
     return this.pagination.count();
   }
-
-  // Actions
 
   onLike(imageId: number) {
     this.apiClient.likeImage(imageId).subscribe();
