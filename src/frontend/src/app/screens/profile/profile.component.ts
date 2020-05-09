@@ -19,9 +19,8 @@ export class ProfileComponent {
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute) {
     this.route.params.subscribe((params) => {
-      const id = params.id;
-      if (!this.user || id !== this.user.id) {
-        this.loadUser(id);
+      if (!this.user || params.userId !== this.user.id) {
+        this.loadUser(params.userId);
       }
     });
   }

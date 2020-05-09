@@ -10,7 +10,7 @@ import { ThumbnailComponent } from './thumbnail/thumbnail.component';
 
 export const routes: Routes = [
   {
-    path: 'user/:id',
+    path: 'users/:userId',
     component: ProfileComponent,
     canActivate: [AuthGuard]
   },

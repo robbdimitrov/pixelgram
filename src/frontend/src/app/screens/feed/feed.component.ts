@@ -20,10 +20,9 @@ export class FeedComponent implements AfterViewInit {
               private route: ActivatedRoute,
               private location: Location) {
     this.route.params.subscribe((params) => {
-      if (params.id) {
-        const id = params.id;
+      if (params.imageId) {
         this.isSingleImageMode = true;
-        this.loadImage(id);
+        this.loadImage(params.imageId);
       } else if (params.userId) {
         this.userId = params.userId;
       }
