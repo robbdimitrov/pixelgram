@@ -1,9 +1,9 @@
 <div class="component">
   <div class="header">
-    <a [routerLink]="['/user', user.id]" *ngIf="user">
+    <a [routerLink]="['/users', user.id]" *ngIf="user">
       <img class="avatar" [src]="user.avatar | image">
     </a>
-    <a [routerLink]="['/user', user.id]" class="bold username" *ngIf="user">
+    <a [routerLink]="['/users', user.id]" class="bold username" *ngIf="user">
       {{user.username}}
     </a>
 

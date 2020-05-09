@@ -61,12 +61,8 @@ class DbClient {
     return new Promise((resolve, reject) => {
       const query =
         `SELECT id, name, username, email, avatar, bio,
-        (
-          SELECT count(*) FROM images WHERE images.user_id = users.id
-        ) AS images,
-        (
-          SELECT count(*) FROM likes WHERE likes.user_id = users.id
-        ) AS likes,
+        (SELECT count(*) FROM images WHERE user_id = users.id) AS images,
+        (SELECT count(*) FROM likes WHERE user_id = id) AS likes,
         time_format(created) AS created
         FROM users WHERE id = $1`;
 
@@ -118,10 +114,8 @@ class DbClient {
       const query =
         `SELECT id, user_id, filename, description,
         (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
-        EXISTS (
-          SELECT 1 FROM likes
-          WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS liked,
+        EXISTS (SELECT 1 FROM likes
+        WHERE image_id = id AND likes.user_id = $1) AS liked,
         time_format(created) AS created
         FROM images
         ORDER BY images.created DESC
@@ -138,10 +132,8 @@ class DbClient {
       const query =
         `SELECT id, user_id, filename, description,
         (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
-        EXISTS (
-          SELECT 1 FROM likes
-          WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS liked,
+        EXISTS (SELECT 1 FROM likes
+        WHERE image_id = id AND likes.user_id = $1) AS liked,
         time_format(created) AS created
         FROM images WHERE user_id = $2
         ORDER BY images.created DESC
@@ -158,10 +150,11 @@ class DbClient {
       const query =
         `SELECT id, images.user_id, filename, description,
         (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
-        (likes.user_id = $1) AS liked,
+        EXISTS (SELECT 1 FROM likes
+        WHERE image_id = id AND likes.user_id = $1) AS liked,
         time_format(images.created) AS created
         FROM images
-        INNER JOIN likes on images.id = likes.image_id
+        INNER JOIN likes ON images.id = likes.image_id
         WHERE likes.user_id = $2
         ORDER BY likes.created DESC
         LIMIT $3 OFFSET $4`;
@@ -177,10 +170,8 @@ class DbClient {
       const query =
         `SELECT id, user_id, filename, description,
         (SELECT count(*) FROM likes WHERE image_id = id) AS likes,
-        EXISTS (
-          SELECT 1 FROM likes
-          WHERE likes.image_id = images.id AND likes.user_id = $1
-        ) AS liked,
+        EXISTS (SELECT 1 FROM likes
+        WHERE image_id = id AND likes.user_id = $1) AS liked,
         time_format(created) AS created
         FROM images WHERE id = $2`;
 

@@ -13,12 +13,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'image/:id',
+    path: 'images/:imageId',
     component: FeedComponent,
     canActivate: [AuthGuard]
   },
   {
-    path: 'user/:userId/likes',
+    path: 'users/:userId/likes',
     component: FeedComponent,
     canActivate: [AuthGuard]
   }

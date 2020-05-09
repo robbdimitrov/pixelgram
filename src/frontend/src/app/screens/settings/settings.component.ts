@@ -22,7 +22,7 @@ export class SettingsComponent {
 
   onLikedPostsClick() {
     const userId = this.session.userId();
-    this.router.navigate([`/user/${userId}/likes`]);
+    this.router.navigate([`/users/${userId}/likes`]);
   }
 
   onLogoutClick() {

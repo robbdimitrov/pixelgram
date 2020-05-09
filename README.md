@@ -78,7 +78,7 @@ $ kubectl apply -f ./k8s -n pixelgram
 Enable port forwarding
 
 ```sh
-$ kubectl port-forward service/frontend 8080:8080 -n pixelgram
+$ kubectl port-forward service/frontend 8080 -n pixelgram
 ```
 
 Open the frontend [here](http://localhost:8080/).
