@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { Image } from '../../models/image.model';
 import { APIClient } from '../../services/api-client.service';
@@ -16,18 +16,14 @@ export class ProfileComponent {
   user: User;
 
   constructor(private apiClient: APIClient,
-              private router: Router,
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute) {
     this.route.params.subscribe((params) => {
-      const id = params.id;
-      if (!this.user || id !== this.user.id) {
-        this.loadUser(id);
+      if (!this.user || params.userId !== this.user.id) {
+        this.loadUser(params.userId);
       }
     });
   }
-
-  // Data
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId, true).subscribe(
@@ -41,7 +37,7 @@ export class ProfileComponent {
   }
 
   loadNextPage() {
-    this.apiClient.getImagesByUser(this.user.id, this.pagination.page).subscribe(
+    this.apiClient.getImages(this.user.id, this.pagination.page).subscribe(
       (data) => {
         const images = data.filter((image) => {
           return !(this.pagination.data.some((value) => image.id === value.id));
@@ -60,21 +56,7 @@ export class ProfileComponent {
     return this.pagination.count();
   }
 
-  // Actions
-
-  onOpenSettings() {
-    this.router.navigate(['/account/settings']);
-  }
-
-  onOpenEditProfile() {
-    this.router.navigate(['/account/edit']);
-  }
-
   onNextClick() {
     this.loadNextPage();
-  }
-
-  onOpenImage(imageId: number) {
-    this.router.navigate(['/image', imageId]);
   }
 }

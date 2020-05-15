@@ -7,7 +7,7 @@ export class HeaderInterceptor implements HttpInterceptor {
     if (isImageUpload(req) || !req.body) {
       return next.handle(req);
     }
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = { 'content-type': 'application/json' };
     const result = req.clone({ setHeaders: headers });
     return next.handle(result);
   }

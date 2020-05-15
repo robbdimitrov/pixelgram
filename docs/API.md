@@ -2,18 +2,20 @@
 
 ## Table of contents
 
-* [Sessions](#sessions)
-  * [Login](#login)
-  * [Logout](#logout)
 * [Users](#users)
   * [Create user](#create-user)
   * [Get user](#get-user)
   * [Update user](#update-user)
   * [Get user's images](#get-users-images)
   * [Get user's likes](#get-users-likes)
+* [Sessions](#sessions)
+  * [Login](#login)
+  * [Logout](#logout)
 * [Images](#images)
-  * [Get feed](#get-feed)
   * [Create image](#create-image)
+  * [Get feed](#get-feed)
+  * [Get images](#get-images)
+  * [Get liked images](#get-liked-images)
   * [Get image](#get-image)
   * [Delete image](#delete-image)
   * [Like image](#like-image)
@@ -21,48 +23,6 @@
 * [Image assets](#image-assets)
   * [Upload image](#upload-image)
   * [Load image asset](#load-image-asset)
-* [Errors](#errors)
-
-## Sessions
-
-### Login
-
-Sets an `SID` cookie with the session id.
-
-```
-POST /sessions
-```
-
-Body parameters:
-
-```
-email: string
-password: string
-```
-
-Response:
-
-```json
-{
-  "id": 10,
-  "name": "Clark Kent",
-  "username": "superman",
-  "email": "clark.kent@dailyplanet.com",
-  "avatar": "d1d99db3ac32052b9dd66cb5914508dd",
-  "bio": "Kryptonian hero",
-  "likes": 2,
-  "images": 10,
-  "created": "2017-11-15T10:05:28Z"
-}
-```
-
-### Logout
-
-The active session is taken from the `SID` cookie.
-
-```
-DELETE /sessions
-```
 
 ## Users
 
@@ -201,6 +161,39 @@ Response:
 }
 ```
 
+## Sessions
+
+### Login
+
+Sets an `session` cookie with the session id.
+
+```
+POST /sessions
+```
+
+Body parameters:
+
+```
+email: string
+password: string
+```
+
+Response:
+
+```json
+{
+  "id": 10
+}
+```
+
+### Logout
+
+The active session is taken from the `session` cookie.
+
+```
+DELETE /sessions
+```
+
 ## Images
 
 ### Create image
@@ -240,7 +233,55 @@ Response:
       "userId": 10,
       "filename": "6710497b36573655ed145f1bc1e01052",
       "description": "Some image description",
-      "likes": 0,
+      "likes": 3,
+      "liked": false,
+      "created": "2017-11-13T14:57:19Z"
+    }
+  ]
+}
+```
+
+### Get images
+
+```
+GET /users/<userId>/images
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "userId": 10,
+      "filename": "6710497b36573655ed145f1bc1e01052",
+      "description": "Some image description",
+      "likes": 3,
+      "liked": false,
+      "created": "2017-11-13T14:57:19Z"
+    }
+  ]
+}
+```
+
+### Get liked images
+
+```
+GET /users/<userId>/likes
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "userId": 10,
+      "filename": "6710497b36573655ed145f1bc1e01052",
+      "description": "Some image description",
+      "likes": 3,
       "liked": false,
       "created": "2017-11-13T14:57:19Z"
     }
@@ -268,7 +309,7 @@ Response:
   "userId": 10,
   "filename": "6710497b36573655ed145f1bc1e01052",
   "description": "Some image description",
-  "likes": 0,
+  "likes": 3,
   "liked": false,
   "created": "2017-11-13T14:57:19Z"
 }
@@ -352,14 +393,4 @@ Response:
 
 ```
 The image data
-```
-
-## Errors
-
-Errors contain the message describing the error.
-
-```json
-{
-  "message": "Incorrect email or password."
-}
 ```

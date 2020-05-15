@@ -1,3 +1,5 @@
+const printLog = require('../shared/logger');
+
 class ImageController {
   constructor(dbClient) {
     this.dbClient = dbClient;
@@ -18,61 +20,65 @@ class ImageController {
       .then((result) => {
         res.status(201).send(result);
       }).catch((error) => {
+        printLog(`Creating image failed: ${error}`);
         res.status(400).send({
-          message: error.message
+          message: 'Bad Request'
+        });
+      });
+  }
+
+  getFeed(req, res) {
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 0;
+    const currentUserId = req.userId;
+
+    this.dbClient.getFeed(page, limit, currentUserId)
+      .then((result) => {
+        res.status(200).send({
+          items: result
+        });
+      }).catch((error) => {
+        printLog(`Getting images failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }
 
   getImages(req, res) {
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const page = parseInt(req.query.page, 10) || 0;
-    const currentUserId = req.userId;
-
-    this.dbClient.getImages(page, limit, currentUserId)
-      .then((result) => {
-        res.status(200).send({
-          items: result
-        });
-      }).catch((error) => {
-        res.status(400).send({
-          message: error.message
-        });
-      });
-  }
-
-  getImagesByUser(req, res) {
     const userId = req.params.userId;
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
-    this.dbClient.getImagesByUser(userId, page, limit, currentUserId)
+    this.dbClient.getImages(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result
         });
       }).catch((error) => {
-        res.status(400).send({
-          message: error.message
+        printLog(`Getting images failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }
 
-  getImagesLikedByUser(req, res) {
+  getLikedImages(req, res) {
     const userId = req.params.userId;
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
     const currentUserId = req.userId;
 
-    this.dbClient.getImagesLikedByUser(userId, page, limit, currentUserId)
+    this.dbClient.getLikedImages(userId, page, limit, currentUserId)
       .then((result) => {
         res.status(200).send({
           items: result
         });
       }).catch((error) => {
-        res.status(400).send({
-          message: error.message
+        printLog(`Getting images failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }
@@ -87,12 +93,13 @@ class ImageController {
           res.status(200).send(result);
         } else {
           res.status(404).send({
-            message: 'Image not found.'
+            message: 'Not Found'
           });
         }
       }).catch((error) => {
-        res.status(400).send({
-          message: error.message
+        printLog(`Getting image failed: ${error}`);
+        res.status(404).send({
+          message: 'Not Found'
         });
       });
   }
@@ -105,8 +112,9 @@ class ImageController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        res.status(400).send({
-          message: error.message
+        printLog(`Deleting image failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }
@@ -119,8 +127,9 @@ class ImageController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        res.status(400).send({
-          message: error.message
+        printLog(`Liking image failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }
@@ -133,8 +142,9 @@ class ImageController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        res.status(400).send({
-          message: error.message
+        printLog(`Unliking image failed: ${error}`);
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }

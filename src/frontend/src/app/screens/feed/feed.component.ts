@@ -1,5 +1,5 @@
 import { Component, AfterViewInit } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { APIClient } from '../../services/api-client.service';
@@ -16,22 +16,18 @@ export class FeedComponent implements AfterViewInit {
   userId?: number;
 
   constructor(private apiClient: APIClient,
-              private router: Router,
               private pagination: PaginationService<Image>,
               private route: ActivatedRoute,
               private location: Location) {
     this.route.params.subscribe((params) => {
-      if (params.id) {
-        const id = params.id;
+      if (params.imageId) {
         this.isSingleImageMode = true;
-        this.loadImage(id);
+        this.loadImage(params.imageId);
       } else if (params.userId) {
         this.userId = params.userId;
       }
     });
   }
-
-  // Component lifecycle
 
   ngAfterViewInit() {
     if (!this.isSingleImageMode) {
@@ -39,11 +35,9 @@ export class FeedComponent implements AfterViewInit {
     }
   }
 
-  // Data
-
   loadNextPage() {
     const req = (this.userId ?
-      this.apiClient.getImagesLikedByUser(this.userId, this.pagination.page) :
+      this.apiClient.getLikedImages(this.userId, this.pagination.page) :
       this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe(
@@ -72,18 +66,12 @@ export class FeedComponent implements AfterViewInit {
     return this.pagination.count();
   }
 
-  // Actions
-
   onLike(imageId: number) {
     this.apiClient.likeImage(imageId).subscribe();
   }
 
   onUnlike(imageId: number) {
     this.apiClient.unlikeImage(imageId).subscribe();
-  }
-
-  onShowProfile(userId: number) {
-    this.router.navigate(['/user', userId]);
   }
 
   onNextClick() {

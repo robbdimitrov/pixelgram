@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 
 import { mapImage, mapUser } from '../shared/utils/mappers';
-import { environment } from '../../environments/environment';
 import { CacheService } from './cache.service';
 
 @Injectable()
@@ -11,26 +10,11 @@ export class APIClient {
   constructor(private http: HttpClient,
               private cache: CacheService) {}
 
-  // Private
-
   private url(path: string) {
-    return `/api/${path}`;
+    return `/api${path}`;
   }
 
-  // Session
-
-  loginUser(email: string, password: string) {
-    const url = this.url('/sessions');
-    const body = { email, password };
-    return this.http.post(url, body);
-  }
-
-  logoutUser() {
-    const url = this.url('/sessions');
-    return this.http.delete(url);
-  }
-
-  // User
+  // Users
 
   createUser(name: string, username: string, email: string, password: string) {
     const url = this.url('/users');
@@ -68,7 +52,20 @@ export class APIClient {
     return this.http.put(url, body);
   }
 
-  // Image
+  // Sessions
+
+  loginUser(email: string, password: string) {
+    const url = this.url('/sessions');
+    const body = { email, password };
+    return this.http.post(url, body);
+  }
+
+  logoutUser() {
+    const url = this.url('/sessions');
+    return this.http.delete(url);
+  }
+
+  // Images
 
   createImage(filename: string, description: string) {
     const url = this.url('/images');
@@ -76,25 +73,25 @@ export class APIClient {
     return this.http.post(url, body);
   }
 
-  getImages(url: string) {
+  getFeed(page: number) {
+    const url = this.url(`/images?page=${page}`);
     return this.http.get(url).pipe(
       map((res: any) => res.items.map((item) => mapImage(item)))
     );
   }
 
-  getFeed(page: number) {
-    const url = this.url(`/images?page=${page}`);
-    return this.getImages(url);
-  }
-
-  getImagesByUser(userId: number, page: number) {
+  getImages(userId: number, page: number) {
     const url = this.url(`/users/${userId}/images?page=${page}`);
-    return this.getImages(url);
+    return this.http.get(url).pipe(
+      map((res: any) => res.items.map((item) => mapImage(item)))
+    );
   }
 
-  getImagesLikedByUser(userId: number, page: number) {
+  getLikedImages(userId: number, page: number) {
     const url = this.url(`/users/${userId}/likes?page=${page}`);
-    return this.getImages(url);
+    return this.http.get(url).pipe(
+      map((res: any) => res.items.map((item) => mapImage(item)))
+    );
   }
 
   getImage(imageId: number) {

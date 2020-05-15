@@ -1,12 +1,11 @@
 <div class="component">
   <div class="header">
-    <img
-      class="avatar"
-      [src]="!user ? '' : user.avatar | image"
-      (click)="onProfileClick()"
-    >
-
-    <span class="bold" (click)="onProfileClick()">{{user ? user.username : ''}}</span>
+    <a [routerLink]="['/users', user.id]" *ngIf="user">
+      <img class="avatar" [src]="user.avatar | image">
+    </a>
+    <a [routerLink]="['/users', user.id]" class="bold username" *ngIf="user">
+      {{user.username}}
+    </a>
 
     <button
       *ngIf="isOwnedByCurrentUser()"
@@ -40,8 +39,10 @@
   </div>
 
   <div class="content">
-    <span class="bold name" *ngIf="isDescriptionPresent()">{{user ? user.name : ''}}</span>
-    <p>{{image.description}}</p>
+    <span class="bold name" *ngIf="user && isDescriptionPresent()">
+      {{user.name}}
+    </span>
+    <p class="description">{{image.description}}</p>
     <span class="small date">{{image.created | relativedate}}</span>
   </div>
 </div>

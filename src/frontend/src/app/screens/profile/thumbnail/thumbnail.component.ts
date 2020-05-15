@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 import { Image } from '../../../models/image.model';
 
@@ -9,9 +9,4 @@ import { Image } from '../../../models/image.model';
 })
 export class ThumbnailComponent {
   @Input() image: Image;
-  @Output() openImage = new EventEmitter<number>();
-
-  onClick() {
-    this.openImage.emit(this.image.id);
-  }
 }

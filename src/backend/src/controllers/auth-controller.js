@@ -1,6 +1,7 @@
 const { generateKey, validatePassword } = require('../shared/crypto');
+const printLog = require('../shared/logger');
 
-class SessionController {
+class AuthController {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
@@ -18,10 +19,11 @@ class SessionController {
       return this.createSessionWithId(user.id);
     }).then((session) => {
       this.createCookie(res, session.id);
-      return this.dbClient.getUser(session.userId);
-    }).then((result) => {
-      res.status(200).send(result);
+      res.status(200).send({
+        id: session.userId
+      });
     }).catch((error) => {
+      printLog(`Creating session failed: ${error}`);
       res.status(401).send({
         message: error.message
       });
@@ -29,20 +31,16 @@ class SessionController {
   }
 
   validateSession(req, res, next) {
-    const sessionId = req.cookies['SID'];
+    const sessionId = req.cookies['session'];
 
     if (!sessionId) {
       return res.status(401).send({
-        message: 'Missing session cookie.'
+        message: 'Unauthorized'
       });
     }
 
     this.dbClient.getSession(sessionId)
       .then((session) => {
-        if (!session) {
-          throw new Error('Session doesn\'t exist.');
-        }
-
         req.sessionId = session.id;
         req.userId = session.userId.toString();
 
@@ -50,28 +48,28 @@ class SessionController {
 
         next();
       }).catch((error) => {
-        res.clearCookie('SID');
+        printLog(`Getting session failed: ${error}`);
+        res.clearCookie('session');
         res.status(401).send({
-          message: error.message
+          message: 'Unauthorized'
         });
       });
   }
 
   deleteSession(req, res) {
-    const sessionId = req.cookies['SID'];
+    const sessionId = req.cookies['session'];
 
     this.dbClient.deleteSession(sessionId)
       .then(() => {
-        res.clearCookie('SID');
+        res.clearCookie('session');
         res.sendStatus(204);
       }).catch((error) => {
+        printLog(`Deleting session failed: ${error}`);
         res.status(500).send({
-          message: error.message
+          message: 'Internal Server Error'
         });
       });
   }
-
-  // Private
 
   loginUser(email, password) {
     return new Promise((resolve, reject) => {
@@ -85,7 +83,9 @@ class SessionController {
           }
           resolve(user);
         });
-      }).catch((error) => reject(error));
+      }).catch((error) => {
+        reject(error);
+      });
     });
   }
 
@@ -94,14 +94,20 @@ class SessionController {
       generateKey().then((sessionId) => {
         this.dbClient.createSession(sessionId, userId)
           .then((session) => resolve(session))
-          .catch((error) => reject(error));
-      }).catch((error) => reject(error));
+          .catch((error) => {
+            printLog(`Creating session failed: ${error}`);
+            reject(error);
+          });
+      }).catch((error) => {
+        printLog(`Generating session id failed: ${error}`);
+        reject(error);
+      });
     });
   }
 
   createCookie(res, sessionId) {
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
-    res.cookie('SID', sessionId, {
+    res.cookie('session', sessionId, {
       sameSite: 'strict',
       maxAge: oneWeek,
       httpOnly: true
@@ -109,4 +115,4 @@ class SessionController {
   }
 }
 
-module.exports = SessionController;
+module.exports = AuthController;

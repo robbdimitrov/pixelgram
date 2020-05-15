@@ -1,9 +1,7 @@
 <img src="docs/img/logo.png" alt="Pixelgram Logo" width="400"/>
 
-Pixelgram is an image-sharing application allowing the creation of users and images. 
-Sessions are stored in the database with a random session id and are exchanged 
-with the frontend through [HttpOnly](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) session cookies.
-The frontend includes dark mode using [CSS variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties).
+**Pixelgram** is an image-sharing application where users can create, 
+browse and like images.
 
 ## Table of contents
 
@@ -11,7 +9,10 @@ The frontend includes dark mode using [CSS variables](https://developer.mozilla.
 - [Screenshots](#screenshots)
 - [Setup](#setup)
   - [Clone the repository](#clone-the-repository)
-  - [Build and run](#build-and-run)
+  - [Build the images](#build-the-images)
+  - [Create deployments](#create-deployments)
+- [Access the frontend](#access-the-frontend)
+- [Cleanup](#cleanup)
 - [API](#api)
 - [License](#license)
 
@@ -40,34 +41,60 @@ $ git clone git@github.com:robbdimitrov/pixelgram.git
 $ cd pixelgram
 ```
 
-### Build and run
+### Build the images
 
-Build images
+Build all the images
 
 ```sh
 $ make
 ```
 
-Run containers
+Or build specific images
 
 ```sh
-$ kubectl apply -f k8s
+$ make backend
+$ make database
+$ make frontend
 ```
+
+### Create namespace
+
+Create namespace for the k8s resources
+
+```sh
+$ kubectl create namespace pixelgram
+```
+
+### Create deployments
+
+Create deployments and volumes
+
+```sh
+$ kubectl apply -f ./k8s -n pixelgram
+```
+
+## Access the frontend
 
 Enable port forwarding
 
 ```sh
-$ kubectl port-forward service/frontend 4000
+$ kubectl port-forward service/frontend 8080 -n pixelgram
 ```
 
-Open the front-end [here](http://localhost:4000/).
+Open the frontend [here](http://localhost:8080/).
 
-### Cleanup
+## Cleanup
 
-Remove all resources
+Delete all resources
 
 ```sh
-$ kubectl delete -f k8s
+$ kubectl delete -f ./k8s -n pixelgram
+```
+
+Delete the namespace
+
+```sh
+$ kubectl delete namespace pixelgram
 ```
 
 ## API

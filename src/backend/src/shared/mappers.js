@@ -6,9 +6,17 @@ function mapUser(user) {
     email: user.email,
     avatar: user.avatar,
     bio: user.bio,
-    likes: +user.likes,
     images: +user.images,
+    likes: +user.likes,
     created: user.created
+  };
+}
+
+function mapSession(session) {
+  return {
+    id: session.id,
+    userId: session.user_id,
+    created: session.created
   };
 }
 
@@ -24,16 +32,8 @@ function mapImage(image) {
   };
 }
 
-function mapSession(session) {
-  return {
-    id: session.id,
-    userId: session.user_id,
-    created: session.created
-  };
-}
-
 module.exports = {
   mapUser,
-  mapImage,
-  mapSession
+  mapSession,
+  mapImage
 };
