@@ -1,16 +1,16 @@
 const Router = require('express').Router;
 
-module.exports = function ({session, user, image, upload}) {
+module.exports = function ({auth, image, upload, user}) {
   const router = Router();
-
-  // Sessions
-  router.post('/sessions', (req, res) => session.createSession(req, res));
-  router.delete('/sessions', (req, res) => session.deleteSession(req, res));
 
   // Users
   router.post('/users', (req, res) => user.createUser(req, res));
   router.get('/users/:userId', (req, res) => user.getUser(req, res));
   router.put('/users/:userId', (req, res) => user.updateUser(req, res));
+
+  // Sessions
+  router.post('/sessions', (req, res) => auth.createSession(req, res));
+  router.delete('/sessions', (req, res) => auth.deleteSession(req, res));
 
   // Images
   router.post('/images', (req, res) => image.createImage(req, res));

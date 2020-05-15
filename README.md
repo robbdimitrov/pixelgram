@@ -52,9 +52,9 @@ $ make
 Or build specific images
 
 ```sh
-$ make frontend
 $ make backend
 $ make database
+$ make frontend
 ```
 
 ### Create namespace

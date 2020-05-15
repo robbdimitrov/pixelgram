@@ -14,6 +14,14 @@ CREATE TABLE users (
   created timestamp NOT NULL DEFAULT now()
 );
 
+-- Sessions
+
+CREATE TABLE sessions (
+  id varchar(255) PRIMARY KEY,
+  user_id integer REFERENCES users ON DELETE CASCADE,
+  created timestamp NOT NULL DEFAULT now()
+);
+
 -- Images
 
 CREATE TABLE images (
@@ -29,14 +37,6 @@ CREATE TABLE likes (
   user_id integer REFERENCES users ON DELETE CASCADE,
   created timestamp NOT NULL DEFAULT now(),
   UNIQUE(image_id, user_id)
-);
-
--- Sessions
-
-CREATE TABLE sessions (
-  id varchar(255) PRIMARY KEY,
-  user_id integer REFERENCES users ON DELETE CASCADE,
-  created timestamp NOT NULL DEFAULT now()
 );
 
 -- Utils

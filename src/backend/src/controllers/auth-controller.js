@@ -1,7 +1,7 @@
 const { generateKey, validatePassword } = require('../shared/crypto');
 const printLog = require('../shared/logger');
 
-class SessionController {
+class AuthController {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
@@ -71,8 +71,6 @@ class SessionController {
       });
   }
 
-  // Private
-
   loginUser(email, password) {
     return new Promise((resolve, reject) => {
       this.dbClient.getUserWithEmail(email).then((user) => {
@@ -117,4 +115,4 @@ class SessionController {
   }
 }
 
-module.exports = SessionController;
+module.exports = AuthController;

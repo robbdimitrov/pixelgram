@@ -15,7 +15,6 @@ const server = http.createServer(app);
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-// Stop server, close database connection
 function shutdown() {
   printLog('Server is shutting down...');
   setTimeout(() => {

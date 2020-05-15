@@ -1,13 +1,9 @@
-// Light
-
 :root {
   --text-color: #333333;
   --background-color: #ffffff;
   --detail-color: #e1f4f3;
   --control-color: #706c61;
 }
-
-// Dark
 
 @media(prefers-color-scheme: dark) {
   :root {

@@ -5,24 +5,18 @@ const authGuard = require('./middlewares/auth-guard');
 const cookieParser = require('./middlewares/cookie-parser');
 const printLog = require('./shared/logger');
 
+const AuthController = require('./controllers/auth-controller');
 const ImageController = require('./controllers/image-controller');
-const SessionController = require('./controllers/session-controller');
-const UserController = require('./controllers/user-controller');
 const UploadController = require('./controllers/upload-controller');
+const UserController = require('./controllers/user-controller');
 const router = require('./router');
 
 function configureRoutes(app, imageDir, controllers) {
-  // Middleware
   app.use(cookieParser);
-  app.use(authGuard(controllers.session));
-
-  // Router
+  app.use(authGuard(controllers.auth));
   app.use(router(controllers));
-
-  // Static
   app.use('/uploads', express.static(imageDir));
 
-  // Not found
   app.use((req, res, next) => {
     res.status(404).send({
       message: 'Not Found'
@@ -42,10 +36,10 @@ module.exports = function (dbClient, imageDir) {
   });
 
   const controllers = {
-    session: new SessionController(dbClient),
-    user: new UserController(dbClient),
+    auth: new AuthController(dbClient),
     image: new ImageController(dbClient),
-    upload: new UploadController(imageDir)
+    upload: new UploadController(imageDir),
+    user: new UserController(dbClient)
   };
 
   configureRoutes(app, imageDir, controllers);
