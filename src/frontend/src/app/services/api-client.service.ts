@@ -10,26 +10,11 @@ export class APIClient {
   constructor(private http: HttpClient,
               private cache: CacheService) {}
 
-  // Private
-
   private url(path: string) {
     return `/api${path}`;
   }
 
-  // Session
-
-  loginUser(email: string, password: string) {
-    const url = this.url('/sessions');
-    const body = { email, password };
-    return this.http.post(url, body);
-  }
-
-  logoutUser() {
-    const url = this.url('/sessions');
-    return this.http.delete(url);
-  }
-
-  // User
+  // Users
 
   createUser(name: string, username: string, email: string, password: string) {
     const url = this.url('/users');
@@ -67,7 +52,20 @@ export class APIClient {
     return this.http.put(url, body);
   }
 
-  // Image
+  // Sessions
+
+  loginUser(email: string, password: string) {
+    const url = this.url('/sessions');
+    const body = { email, password };
+    return this.http.post(url, body);
+  }
+
+  logoutUser() {
+    const url = this.url('/sessions');
+    return this.http.delete(url);
+  }
+
+  // Images
 
   createImage(filename: string, description: string) {
     const url = this.url('/images');

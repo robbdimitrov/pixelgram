@@ -16,11 +16,11 @@ function isAllowed(req) {
   return false;
 }
 
-module.exports = function (sessionController) {
+module.exports = function (controller) {
   return function (req, res, next) {
     if (isAllowed(req)) {
       return next();
     }
-    sessionController.validateSession(req, res, next);
+    controller.validateSession(req, res, next);
   };
 };

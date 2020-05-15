@@ -2,15 +2,15 @@
 
 ## Table of contents
 
-* [Sessions](#sessions)
-  * [Login](#login)
-  * [Logout](#logout)
 * [Users](#users)
   * [Create user](#create-user)
   * [Get user](#get-user)
   * [Update user](#update-user)
   * [Get user's images](#get-users-images)
   * [Get user's likes](#get-users-likes)
+* [Sessions](#sessions)
+  * [Login](#login)
+  * [Logout](#logout)
 * [Images](#images)
   * [Create image](#create-image)
   * [Get feed](#get-feed)
@@ -23,40 +23,6 @@
 * [Image assets](#image-assets)
   * [Upload image](#upload-image)
   * [Load image asset](#load-image-asset)
-* [Errors](#errors)
-
-## Sessions
-
-### Login
-
-Sets an `session` cookie with the session id.
-
-```
-POST /sessions
-```
-
-Body parameters:
-
-```
-email: string
-password: string
-```
-
-Response:
-
-```json
-{
-  "id": 10
-}
-```
-
-### Logout
-
-The active session is taken from the `session` cookie.
-
-```
-DELETE /sessions
-```
 
 ## Users
 
@@ -193,6 +159,39 @@ Response:
     }
   ]
 }
+```
+
+## Sessions
+
+### Login
+
+Sets an `session` cookie with the session id.
+
+```
+POST /sessions
+```
+
+Body parameters:
+
+```
+email: string
+password: string
+```
+
+Response:
+
+```json
+{
+  "id": 10
+}
+```
+
+### Logout
+
+The active session is taken from the `session` cookie.
+
+```
+DELETE /sessions
 ```
 
 ## Images
@@ -394,14 +393,4 @@ Response:
 
 ```
 The image data
-```
-
-## Errors
-
-Errors contain the message describing the error.
-
-```json
-{
-  "message": "Incorrect email or password."
-}
 ```

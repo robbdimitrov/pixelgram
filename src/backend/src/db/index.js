@@ -15,9 +15,7 @@ class DbClient {
     this.pool.end(callback);
   }
 
-  //
   // Users
-  //
 
   createUser(name, username, email, password) {
     return new Promise((resolve, reject) => {
@@ -93,9 +91,42 @@ class DbClient {
     });
   }
 
-  //
+  // Sessions
+
+  createSession(sessionId, userId) {
+    return new Promise((resolve, reject) => {
+      const query =
+        `INSERT INTO sessions (id, user_id) VALUES ($1, $2)
+        RETURNING id, user_id, created`;
+
+      this.pool.query(query, [sessionId, userId])
+        .then((result) => resolve(mapSession(result.rows[0])))
+        .catch((error) => reject(error));
+    });
+  }
+
+  getSession(sessionId) {
+    return new Promise((resolve, reject) => {
+      const query =
+        'SELECT id, user_id FROM sessions WHERE id = $1';
+
+      this.pool.query(query, [sessionId])
+        .then((result) => resolve(mapSession(result.rows[0])))
+        .catch((error) => reject(error));
+    });
+  }
+
+  deleteSession(sessionId) {
+    return new Promise((resolve, reject) => {
+      const query = 'DELETE FROM sessions WHERE id = $1';
+
+      this.pool.query(query, [sessionId])
+        .then(() => resolve())
+        .catch((error) => reject(error));
+    });
+  }
+
   // Images
-  //
 
   createImage(userId, filename, description) {
     return new Promise((resolve, reject) => {
@@ -206,43 +237,6 @@ class DbClient {
       const query = 'DELETE FROM likes WHERE user_id = $1 AND image_id = $2';
 
       this.pool.query(query, [userId, imageId])
-        .then(() => resolve())
-        .catch((error) => reject(error));
-    });
-  }
-
-  //
-  // Sessions
-  //
-
-  createSession(sessionId, userId) {
-    return new Promise((resolve, reject) => {
-      const query =
-        `INSERT INTO sessions (id, user_id) VALUES ($1, $2)
-        RETURNING id, user_id, created`;
-
-      this.pool.query(query, [sessionId, userId])
-        .then((result) => resolve(mapSession(result.rows[0])))
-        .catch((error) => reject(error));
-    });
-  }
-
-  getSession(sessionId) {
-    return new Promise((resolve, reject) => {
-      const query =
-        'SELECT id, user_id FROM sessions WHERE id = $1';
-
-      this.pool.query(query, [sessionId])
-        .then((result) => resolve(mapSession(result.rows[0])))
-        .catch((error) => reject(error));
-    });
-  }
-
-  deleteSession(sessionId) {
-    return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM sessions WHERE id = $1';
-
-      this.pool.query(query, [sessionId])
         .then(() => resolve())
         .catch((error) => reject(error));
     });
