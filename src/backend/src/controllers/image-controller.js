@@ -6,8 +6,6 @@ class ImageController {
   }
 
   createImage(req, res) {
-    const userId = req.userId;
-
     const { filename, description } = req.body;
 
     if (!filename) {
@@ -16,7 +14,7 @@ class ImageController {
       });
     }
 
-    this.dbClient.createImage(userId, filename, description)
+    this.dbClient.createImage(req.userId, filename, description)
       .then((result) => {
         res.status(201).send(result);
       }).catch((error) => {
@@ -30,9 +28,8 @@ class ImageController {
   getFeed(req, res) {
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
-    const currentUserId = req.userId;
 
-    this.dbClient.getFeed(page, limit, currentUserId)
+    this.dbClient.getFeed(page, limit, req.userId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -49,9 +46,8 @@ class ImageController {
     const userId = req.params.userId;
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
-    const currentUserId = req.userId;
 
-    this.dbClient.getImages(userId, page, limit, currentUserId)
+    this.dbClient.getImages(userId, page, limit, req.userId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -68,9 +64,8 @@ class ImageController {
     const userId = req.params.userId;
     const limit = parseInt(req.query.limit, 10) || 10;
     const page = parseInt(req.query.page, 10) || 0;
-    const currentUserId = req.userId;
 
-    this.dbClient.getLikedImages(userId, page, limit, currentUserId)
+    this.dbClient.getLikedImages(userId, page, limit, req.userId)
       .then((result) => {
         res.status(200).send({
           items: result
@@ -85,9 +80,8 @@ class ImageController {
 
   getImage(req, res) {
     const imageId = req.params.imageId;
-    const currentUserId = req.userId;
 
-    this.dbClient.getImage(imageId, currentUserId)
+    this.dbClient.getImage(imageId, req.userId)
       .then((result) => {
         if (result) {
           res.status(200).send(result);
@@ -105,10 +99,9 @@ class ImageController {
   }
 
   deleteImage(req, res) {
-    const userId = req.userId;
     const imageId = req.params.imageId;
 
-    this.dbClient.deleteImage(imageId, userId)
+    this.dbClient.deleteImage(imageId, req.userId)
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
@@ -120,10 +113,9 @@ class ImageController {
   }
 
   likeImage(req, res) {
-    const userId = req.userId;
     const imageId = req.params.imageId;
 
-    this.dbClient.likeImage(imageId, userId)
+    this.dbClient.likeImage(imageId, req.userId)
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
@@ -135,10 +127,9 @@ class ImageController {
   }
 
   unlikeImage(req, res) {
-    const userId = req.userId;
     const imageId = req.params.imageId;
 
-    this.dbClient.unlikeImage(imageId, userId)
+    this.dbClient.unlikeImage(imageId, req.userId)
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {

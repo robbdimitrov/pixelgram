@@ -1,6 +1,5 @@
 const { Pool } = require('pg');
 
-const { generateHash } = require('../shared/crypto');
 const { mapUser, mapImage, mapSession } = require('../shared/mappers');
 
 class DbClient {
@@ -23,11 +22,7 @@ class DbClient {
         `INSERT INTO users (name, username, email, password)
         VALUES ($1, $2, $3, $4) RETURNING id`;
 
-      generateHash(password)
-        .then((hash) => {
-          const values = [name, username, email, hash];
-          return this.pool.query(query, values);
-        })
+      this.pool.query(query, [name, username, email, password])
         .then((result) => resolve(result.rows[0]))
         .catch((error) => reject(error));
     });

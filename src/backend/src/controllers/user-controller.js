@@ -22,15 +22,16 @@ class UserController {
       });
     }
 
-    this.dbClient.createUser(name, username, email, password)
-      .then((result) => {
-        res.status(201).send(result);
-      }).catch((error) => {
-        printLog(`Creating user failed: ${error}`);
-        res.status(400).send({
-          message: 'User with this username or email already exists.'
-        });
+    generateHash(password).then((hash) => {
+      return this.dbClient.createUser(name, username, email, hash);
+    }).then((result) => {
+      res.status(201).send(result);
+    }).catch((error) => {
+      printLog(`Creating user failed: ${error}`);
+      res.status(400).send({
+        message: 'User with this username or email already exists.'
       });
+    });
   }
 
   getUser(req, res) {
@@ -96,7 +97,7 @@ class UserController {
   updatePassword(req, res) {
     const userId = req.params.userId;
 
-    if (req.body.password && !req.body.oldPassword) {
+    if (!req.body.oldPassword) {
       return res.status(400).send({
         message: 'Both password and the current password are required.'
       });
@@ -114,6 +115,7 @@ class UserController {
     }).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
+      printLog(`Updating user failed: ${error}`);
       res.status(400).send({
         message: error.message
       });
