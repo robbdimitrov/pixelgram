@@ -65,22 +65,22 @@ class DbClient {
     });
   }
 
-  updateUser(userId, updates) {
+  updateUser(userId, name, username, email, avatar, bio) {
     return new Promise((resolve, reject) => {
-      let query = 'UPDATE users SET ';
-      const changes = [];
-      const values = [];
+      let query = `UPDATE users SET name = $1, username = $2,
+        email = $3, avatar = $4, bio = $5 WHERE id = $6`;
 
-      for (const [key, value] of Object.entries(updates)) {
-        values.push(value);
-        changes.push(`${key} = $${values.length}`);
-      }
+      this.pool.query(query, [name, username, email, avatar, bio, userId])
+        .then(() => resolve())
+        .catch((error) => reject(error));
+    });
+  }
 
-      values.push(userId);
-      query += changes.join(', ');
-      query += ` WHERE id = $${values.length}`;
+  updatePassword(userId, password) {
+    return new Promise((resolve, reject) => {
+      let query = 'UPDATE users SET password = $1 WHERE id = $2';
 
-      this.pool.query(query, values)
+      this.pool.query(query, [password, userId])
         .then(() => resolve())
         .catch((error) => reject(error));
     });
@@ -180,7 +180,7 @@ class DbClient {
         WHERE image_id = id AND likes.user_id = $1) AS liked,
         time_format(images.created) AS created
         FROM images
-        INNER JOIN likes ON images.id = likes.image_id
+        INNER JOIN likes ON image_id = id
         WHERE likes.user_id = $2
         ORDER BY likes.created DESC
         LIMIT $3 OFFSET $4`;

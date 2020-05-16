@@ -1,4 +1,4 @@
-const { isValidEmail, castObject } = require('../shared/utils');
+const { isValidEmail } = require('../shared/utils');
 const { generateHash, validatePassword } = require('../shared/crypto');
 const printLog = require('../shared/logger');
 
@@ -63,35 +63,31 @@ class UserController {
       });
     }
 
-    if (Object.keys(req.body).length === 0) {
-      return res.sendStatus(304);
-    }
-
     if (req.body.password) {
       return this.updatePassword(req, res);
     }
 
-    if (req.body.email && !isValidEmail(req.body.email)) {
+    const { name, username, email, avatar, bio } = req.body;
+
+    if (!isValidEmail(email)) {
       return res.status(400).send({
         message: 'Invalid email address.'
       });
     }
 
-    const allowedKeys = ['name', 'username', 'email', 'avatar', 'bio'];
-    const updates = castObject(req.body, allowedKeys);
+    this.dbClient.updateUser(userId, name, username, email, avatar, bio)
+      .then(() => {
+        res.sendStatus(204);
+      }).catch((error) => {
+        printLog(`Updating user failed: ${error}`);
 
-    this.dbClient.updateUser(userId, updates).then(() => {
-      res.sendStatus(204);
-    }).catch((error) => {
-      printLog(`Updating user failed: ${error}`);
+        let message = 'Bad Request';
+        if (/email|username/.test(error.message)) {
+          message = 'This username or email is already in use.';
+        }
 
-      let message = 'Bad Request';
-      if (/email|username/.test(error.message)) {
-        message = 'This username or email is already in use.';
-      }
-
-      res.status(400).send({ message });
-    });
+        res.status(400).send({ message });
+      });
   }
 
   updatePassword(req, res) {
@@ -111,7 +107,7 @@ class UserController {
       }
       return generateHash(req.body.password);
     }).then((hash) => {
-      return this.dbClient.updateUser(userId, { password: hash });
+      return this.dbClient.updatePassword(userId, hash);
     }).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
