@@ -15,7 +15,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'account/edit',
+    path: 'settings/account',
     component: EditProfileComponent,
     canActivate: [AuthGuard]
   }

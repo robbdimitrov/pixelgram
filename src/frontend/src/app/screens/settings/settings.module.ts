@@ -8,12 +8,12 @@ import { SharedModule } from '../../shared/shared.module';
 
 export const routes: Routes = [
   {
-    path: 'account/settings',
+    path: 'settings',
     component: SettingsComponent,
     canActivate: [AuthGuard]
   },
   {
-    path: 'account/change-password',
+    path: 'settings/password',
     component: ChangePasswordComponent,
     canActivate: [AuthGuard]
   }

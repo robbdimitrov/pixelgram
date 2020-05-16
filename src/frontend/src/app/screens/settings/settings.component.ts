@@ -16,13 +16,8 @@ export class SettingsComponent {
               private cache: CacheService,
               private session: Session) {}
 
-  onChangePasswordClick() {
-    this.router.navigate(['account/change-password']);
-  }
-
-  onLikedPostsClick() {
-    const userId = this.session.userId();
-    this.router.navigate([`/users/${userId}/likes`]);
+  userId() {
+    return this.session.userId();
   }
 
   onLogoutClick() {

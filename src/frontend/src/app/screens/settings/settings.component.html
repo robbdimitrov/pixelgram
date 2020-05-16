@@ -2,18 +2,22 @@
   <h1 class="title">Settings</h1>
 
   <ul>
-    <li class="underlined" (click)="onChangePasswordClick()">
-      <span>Change Password</span>
-      <span class="disclosure">
-          <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
-      </span>
+    <li class="underlined">
+      <a routerLink="/settings/password">
+        <span>Change Password</span>
+        <span class="disclosure">
+            <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
+        </span>
+      </a>
     </li>
 
-    <li class="underlined" (click)="onLikedPostsClick()">
-      <span>Posts you've liked</span>
-      <span class="disclosure icon">
-        <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
-      </span>
+    <li class="underlined">
+      <a [routerLink]="['/users', userId(), '/likes']">
+        <span>Posts you've liked</span>
+        <span class="disclosure icon">
+          <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
+        </span>
+      </a>
     </li>
 
     <li class="underlined" (click)="onLogoutClick()">
