@@ -34,9 +34,9 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   onSubmit() {
     const userId = this.session.userId();
 
-    const updateClosure = (avatar?: string) => {
+    const updateClosure = () => {
       this.apiClient.updateUser(userId, this.user.name, this.user.username,
-        this.user.email, this.user.bio, avatar).subscribe(
+        this.user.email, this.user.bio, this.user.avatar).subscribe(
           () => this.location.back(),
           (error) => window.alert(error.message)
         );
@@ -44,8 +44,9 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
 
     if (this.selectedFile) {
       this.apiClient.uploadImage(this.selectedFile).subscribe(
-        (data: any) => updateClosure(data.filename),
-        (error) => window.alert(error.message)
+        (data: any) => this.user.avatar = data.filename,
+        (error) => window.alert(error.message),
+        () => updateClosure()
       );
     } else {
       updateClosure();

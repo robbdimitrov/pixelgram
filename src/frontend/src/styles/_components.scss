@@ -12,6 +12,8 @@
   text-align: center;
 
   &:not(:disabled) {
+    cursor: pointer;
+
     &:hover, &:focus {
       filter: brightness(1.75);
     }
@@ -28,6 +30,10 @@
   &.active {
     opacity: 0.8;
   }
+}
+
+button.icon {
+  cursor: pointer;
 }
 
 button[type=submit] {
@@ -65,6 +71,7 @@ button[type=submit] {
     align-items: center;
     margin-left: $spacing-small;
     margin-right: $spacing-small;
+    cursor: pointer;
   }
 }
 

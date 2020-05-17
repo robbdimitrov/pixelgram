@@ -3,7 +3,7 @@
 
   <ul>
     <li class="underlined">
-      <a routerLink="/settings/password">
+      <a routerLink="/settings/password" class="item">
         <span>Change Password</span>
         <span class="disclosure">
             <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
@@ -12,16 +12,18 @@
     </li>
 
     <li class="underlined">
-      <a [routerLink]="['/users', userId(), '/likes']">
-        <span>Posts you've liked</span>
+      <a [routerLink]="['/users', userId(), 'likes']" class="item">
+        <span>Liked images</span>
         <span class="disclosure icon">
           <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
         </span>
       </a>
     </li>
 
-    <li class="underlined" (click)="onLogoutClick()">
-      <span>Logout</span>
+    <li class="underlined">
+      <div class="item" (click)="onLogoutClick()">
+        <span>Logout</span>
+      </div>
     </li>
   </ul>
 </div>

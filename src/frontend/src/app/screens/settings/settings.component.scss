@@ -6,20 +6,19 @@ ul {
   margin-right: $spacing-small / 2;
 }
 
-li {
-  list-style: none;
-  height: $icon-button-width;
-  vertical-align: middle;
+.item {
   display: flex;
-  justify-content: space-between;
+  height: $icon-button-width;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
 
   span {
-    margin-top: auto;
-    margin-bottom: auto;
+    flex-grow: 1;
   }
 
   .disclosure {
-    min-width: $spacing-small;
     font-size: $text-size-button;
+    flex-grow: 0;
   }
 }
