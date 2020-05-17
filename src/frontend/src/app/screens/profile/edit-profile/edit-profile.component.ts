@@ -36,7 +36,7 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
 
     const updateClosure = () => {
       this.apiClient.updateUser(userId, this.user.name, this.user.username,
-        this.user.email, this.user.bio, this.user.avatar).subscribe(
+        this.user.email, this.user.avatar, this.user.bio).subscribe(
           () => this.location.back(),
           (error) => window.alert(error.message)
         );

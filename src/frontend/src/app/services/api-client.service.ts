@@ -35,9 +35,9 @@ export class APIClient {
   }
 
   updateUser(userId: number, name: string, username: string,
-             email: string, bio: string, avatar: string) {
+             email: string, avatar: string, bio: string) {
     const url = this.url(`/users/${userId}`);
-    const body: any = { name, username, email, bio, avatar };
+    const body: any = { name, username, email, avatar, bio };
     return this.http.put(url, body);
   }
 
