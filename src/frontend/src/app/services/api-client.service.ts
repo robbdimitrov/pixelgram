@@ -10,20 +10,16 @@ export class APIClient {
   constructor(private http: HttpClient,
               private cache: CacheService) {}
 
-  private url(path: string) {
-    return `/api${path}`;
-  }
-
   // Users
 
   createUser(name: string, username: string, email: string, password: string) {
-    const url = this.url('/users');
+    const url = '/api/users';
     const body = { name, username, email, password };
     return this.http.post(url, body);
   }
 
   getUser(userId: number, clearCache = false) {
-    const url = this.url(`/users/${userId}`);
+    const url = `/api/users/${userId}`;
 
     if (clearCache) {
       this.cache.delete(url);
@@ -36,13 +32,13 @@ export class APIClient {
 
   updateUser(userId: number, name: string, username: string,
              email: string, avatar: string, bio: string) {
-    const url = this.url(`/users/${userId}`);
+    const url = `/api/users/${userId}`;
     const body: any = { name, username, email, avatar, bio };
     return this.http.put(url, body);
   }
 
   changePassword(userId: number, oldPassword: string, password: string) {
-    const url = this.url(`/users/${userId}`);
+    const url = `/api/users/${userId}`;
     const body = { password, oldPassword };
     return this.http.put(url, body);
   }
@@ -50,74 +46,71 @@ export class APIClient {
   // Sessions
 
   loginUser(email: string, password: string) {
-    const url = this.url('/sessions');
+    const url = '/api/sessions';
     const body = { email, password };
     return this.http.post(url, body);
   }
 
   logoutUser() {
-    const url = this.url('/sessions');
+    const url = '/api/sessions';
     return this.http.delete(url);
   }
 
   // Images
 
   createImage(filename: string, description: string) {
-    const url = this.url('/images');
+    const url = '/api/images';
     const body = { filename, description };
     return this.http.post(url, body);
   }
 
   getFeed(page: number) {
-    const url = this.url(`/images?page=${page}`);
+    const url = `/api/images?page=${page}`;
     return this.http.get(url).pipe(
       map((res: any) => res.items.map((item) => mapImage(item)))
     );
   }
 
   getImages(userId: number, page: number) {
-    const url = this.url(`/users/${userId}/images?page=${page}`);
+    const url = `/api/users/${userId}/images?page=${page}`;
     return this.http.get(url).pipe(
       map((res: any) => res.items.map((item) => mapImage(item)))
     );
   }
 
   getLikedImages(userId: number, page: number) {
-    const url = this.url(`/users/${userId}/likes?page=${page}`);
+    const url = `/api/users/${userId}/likes?page=${page}`;
     return this.http.get(url).pipe(
       map((res: any) => res.items.map((item) => mapImage(item)))
     );
   }
 
   getImage(imageId: number) {
-    const url = this.url(`/images/${imageId}`);
-
+    const url = `/api/images/${imageId}`;
     return this.http.get(url).pipe(
       map((res: any) => mapImage(res))
     );
   }
 
   deleteImage(imageId: number) {
-    const url = this.url(`/images/${imageId}`);
+    const url = `/api/images/${imageId}`;
     return this.http.delete(url);
   }
 
   uploadImage(file: File) {
-    const url = this.url(`/uploads`);
-
+    const url = `/api/uploads`;
     const formData = new FormData();
     formData.append('image', file, file.name);
-
     return this.http.post(url, formData);
   }
 
   likeImage(imageId: number) {
-    const url = this.url(`/images/${imageId}/likes`);
+    const url = `/api/images/${imageId}/likes`;
     return this.http.post(url, {});
   }
 
   unlikeImage(imageId: number) {
-    const url = this.url(`/images/${imageId}/likes`);
+    const url = `/api/images/${imageId}/likes`;
     return this.http.delete(url);
   }
 }
