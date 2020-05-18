@@ -48,8 +48,8 @@ class UserController {
         }
       }).catch((error) => {
         printLog(`Getting user failed: ${error}`);
-        res.status(400).send({
-          message: 'Bad Request'
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }

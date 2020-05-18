@@ -60,8 +60,13 @@ class DbClient {
         FROM users WHERE id = $1`;
 
       this.pool.query(query, [userId])
-        .then((result) => resolve(mapUser(result.rows[0])))
-        .catch((error) => reject(error));
+        .then((result) => {
+          if (result.rows.length) {
+            resolve(mapUser(result.rows[0]));
+          } else {
+            resolve(undefined);
+          }
+        }).catch((error) => reject(error));
     });
   }
 
@@ -106,8 +111,13 @@ class DbClient {
         'SELECT id, user_id FROM sessions WHERE id = $1';
 
       this.pool.query(query, [sessionId])
-        .then((result) => resolve(mapSession(result.rows[0])))
-        .catch((error) => reject(error));
+        .then((result) => {
+          if (result.rows.length) {
+            resolve(mapSession(result.rows[0]));
+          } else {
+            resolve(undefined);
+          }
+        }).catch((error) => reject(error));
     });
   }
 
@@ -202,8 +212,13 @@ class DbClient {
         FROM images WHERE id = $2`;
 
       this.pool.query(query, [currentUserId, imageId])
-        .then((result) => resolve(mapImage(result.rows[0])))
-        .catch((error) => reject(error));
+        .then((result) => {
+          if (result.rows.length) {
+            resolve(mapImage(result.rows[0]));
+          } else {
+            resolve(undefined);
+          }
+        }).catch((error) => reject(error));
     });
   }
 

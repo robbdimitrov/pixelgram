@@ -10,7 +10,7 @@ import { SignupModule } from './screens/signup/signup.module';
 import { SettingsModule } from './screens/settings/settings.module';
 import { ImageUploadModule } from './screens/image-upload/image-upload.module';
 import { ProfileModule } from './screens/profile/profile.module';
-import { NotFoundComponent } from './shared/components/not-found/not-found.component';
+import { NotFoundModule } from './screens/not-found/not-found.module';
 import { IconLibrary } from './shared/icon-library.service';
 
 export const routes: Routes = [
@@ -21,7 +21,7 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    component: NotFoundComponent
+    redirectTo: '/404'
   }
 ];
 
@@ -38,7 +38,8 @@ export const routes: Routes = [
     SignupModule,
     SettingsModule,
     ImageUploadModule,
-    ProfileModule
+    ProfileModule,
+    NotFoundModule
   ],
   bootstrap: [AppComponent]
 })

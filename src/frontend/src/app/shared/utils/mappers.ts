@@ -1,28 +1,28 @@
 import { User } from '../../models/user.model';
 import { Image } from '../../models/image.model';
 
-export function mapUser(object: any) {
+export function mapUser(user: any) {
   return new User(
-    object.id,
-    object.name,
-    object.username,
-    object.email,
-    object.avatar,
-    object.bio,
-    object.images,
-    object.likes,
-    new Date(object.created)
+    user.id,
+    user.name,
+    user.username,
+    user.email,
+    user.avatar,
+    user.bio,
+    user.images,
+    user.likes,
+    new Date(user.created)
   );
 }
 
-export function mapImage(object: any) {
+export function mapImage(image: any) {
   return new Image(
-    object.id,
-    object.userId,
-    object.filename,
-    object.description,
-    object.likes,
-    object.liked,
-    new Date(object.created)
+    image.id,
+    image.userId,
+    image.filename,
+    image.description,
+    image.likes,
+    image.liked,
+    new Date(image.created)
   );
 }

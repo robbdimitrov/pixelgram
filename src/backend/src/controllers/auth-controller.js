@@ -40,18 +40,21 @@ class AuthController {
     }
 
     this.dbClient.getSession(sessionId)
-      .then((session) => {
-        req.sessionId = session.id;
-        req.userId = session.userId.toString();
-
-        this.createCookie(res, sessionId);
-
-        next();
+      .then((result) => {
+        if (result) {
+          req.userId = result.userId.toString();
+          this.createCookie(res, result.id);
+          next();
+        } else {
+          res.clearCookie('session');
+          return res.status(401).send({
+            message: 'Unauthorized'
+          });
+        }
       }).catch((error) => {
         printLog(`Getting session failed: ${error}`);
-        res.clearCookie('session');
-        res.status(401).send({
-          message: 'Unauthorized'
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }
@@ -92,14 +95,11 @@ class AuthController {
   createSessionWithId(userId) {
     return new Promise((resolve, reject) => {
       generateKey().then((sessionId) => {
-        this.dbClient.createSession(sessionId, userId)
-          .then((session) => resolve(session))
-          .catch((error) => {
-            printLog(`Creating session failed: ${error}`);
-            reject(error);
-          });
+        return this.dbClient.createSession(sessionId, userId);
+      }).then((result) => {
+        resolve(result);
       }).catch((error) => {
-        printLog(`Generating session id failed: ${error}`);
+        printLog(`Creating session failed: ${error}`);
         reject(error);
       });
     });

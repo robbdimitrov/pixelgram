@@ -92,8 +92,8 @@ class ImageController {
         }
       }).catch((error) => {
         printLog(`Getting image failed: ${error}`);
-        res.status(404).send({
-          message: 'Not Found'
+        res.status(500).send({
+          message: 'Internal Server Error'
         });
       });
   }

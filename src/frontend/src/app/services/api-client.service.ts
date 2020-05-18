@@ -20,11 +20,9 @@ export class APIClient {
 
   getUser(userId: number, clearCache = false) {
     const url = `/api/users/${userId}`;
-
     if (clearCache) {
       this.cache.delete(url);
     }
-
     return this.http.get(url).pipe(
       map((res: any) => mapUser(res))
     );
