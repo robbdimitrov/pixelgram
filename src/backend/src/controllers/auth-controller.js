@@ -15,17 +15,32 @@ class AuthController {
       });
     }
 
-    this.loginUser(email, password).then((user) => {
-      return this.createSessionWithId(user.id);
+    this.dbClient.getUserWithEmail(email).then((user) => {
+      if (!user) {
+        return Promise.resolve();
+      }
+      req.userId = user.id;
+      return validatePassword(password, user.password);
+    }).then((valid) => {
+      if (!valid) {
+        return Promise.resolve();
+      }
+      return this.dbClient.createSession(generateKey(), req.userId);
     }).then((session) => {
-      this.createCookie(res, session.id);
-      res.status(200).send({
-        id: session.userId
-      });
+      if (session) {
+        this.createCookie(res, session.id);
+        res.status(200).send({
+          id: session.userId
+        });
+      } else {
+        res.status(401).send({
+          message: 'Incorrect email or password.'
+        });
+      }
     }).catch((error) => {
       printLog(`Creating session failed: ${error}`);
-      res.status(401).send({
-        message: error.message
+      res.status(500).send({
+        message: 'Internal Server Error'
       });
     });
   }
@@ -72,37 +87,6 @@ class AuthController {
           message: 'Internal Server Error'
         });
       });
-  }
-
-  loginUser(email, password) {
-    return new Promise((resolve, reject) => {
-      this.dbClient.getUserWithEmail(email).then((user) => {
-        if (!user) {
-          return reject(new Error('Incorrect email or password.'));
-        }
-        validatePassword(password, user.password).then((valid) => {
-          if (!valid) {
-            return reject(new Error('Incorrect email or password.'));
-          }
-          resolve(user);
-        });
-      }).catch((error) => {
-        reject(error);
-      });
-    });
-  }
-
-  createSessionWithId(userId) {
-    return new Promise((resolve, reject) => {
-      generateKey().then((sessionId) => {
-        return this.dbClient.createSession(sessionId, userId);
-      }).then((result) => {
-        resolve(result);
-      }).catch((error) => {
-        printLog(`Creating session failed: ${error}`);
-        reject(error);
-      });
-    });
   }
 
   createCookie(res, sessionId) {

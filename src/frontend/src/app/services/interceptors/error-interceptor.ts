@@ -26,11 +26,13 @@ export class ErrorInterceptor implements HttpInterceptor {
 
   private handleError(error: HttpErrorResponse) {
     if (error.status === 401) {
-      this.apiClient.logoutUser().subscribe(() => {
-        this.cache.clear();
-        this.session.clear();
-        this.router.navigate(['/login']);
-      });
+      if (this.session.userId()) {
+        this.apiClient.logoutUser().subscribe(() => {
+          this.cache.clear();
+          this.session.clear();
+          this.router.navigate(['/login']);
+        });
+      }
     } else if (error.status === 404) {
       this.router.navigate(['/404']);
     }

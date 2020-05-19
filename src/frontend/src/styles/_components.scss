@@ -52,7 +52,7 @@ button[type=submit] {
 
 // Dropdown
 
-.dropdown-options {
+.dropdown {
   z-index: 1;
   width: $dropdown-width;
   border: $border-width-regular solid var(--control-color);
@@ -158,7 +158,7 @@ a {
   }
 }
 
-.component, .dropdown-options {
+.component, .dropdown {
   background-color: var(--background-color);
 }
 

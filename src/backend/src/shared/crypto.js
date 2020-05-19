@@ -3,29 +3,15 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
 function generateKey() {
-  return new Promise((resolve, reject) => {
-    crypto.randomBytes(21, (error, buffer) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(buffer.toString('base64'));
-    });
-  });
+  const buffer = crypto.randomBytes(21);
+  return buffer.toString('base64');
 }
 
 function generateHash(password) {
   return new Promise((resolve, reject) => {
-    bcrypt.genSalt(12, (error, salt) => {
-      if (error) {
-        return reject(error);
-      }
-      bcrypt.hash(password, salt, (error, hash) => {
-        if (error) {
-          return reject(error);
-        }
-        resolve(hash);
-      });
-    });
+    bcrypt.hash(password, 12)
+      .then((hash) => resolve(hash))
+      .catch((error) => reject(error));
   });
 }
 

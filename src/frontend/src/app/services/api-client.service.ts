@@ -95,13 +95,6 @@ export class APIClient {
     return this.http.delete(url);
   }
 
-  uploadImage(file: File) {
-    const url = `/api/uploads`;
-    const formData = new FormData();
-    formData.append('image', file, file.name);
-    return this.http.post(url, formData);
-  }
-
   likeImage(imageId: number) {
     const url = `/api/images/${imageId}/likes`;
     return this.http.post(url, {});
@@ -110,5 +103,14 @@ export class APIClient {
   unlikeImage(imageId: number) {
     const url = `/api/images/${imageId}/likes`;
     return this.http.delete(url);
+  }
+
+  // Upload
+
+  uploadImage(file: File) {
+    const url = `/api/uploads`;
+    const formData = new FormData();
+    formData.append('image', file, file.name);
+    return this.http.post(url, formData);
   }
 }
