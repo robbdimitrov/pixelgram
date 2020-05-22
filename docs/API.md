@@ -52,7 +52,7 @@ Response:
 ### Get user
 
 ```
-GET /users/<userId>
+GET /users/:userId
 ```
 
 Path parameters:
@@ -80,7 +80,7 @@ Response:
 ### Update user
 
 ```
-PUT /users/<userId>
+PUT /users/:userId
 ```
 
 Path parameters:
@@ -104,7 +104,7 @@ bio: string (optional)
 ### Get user's images
 
 ```
-GET /users/<userId>/images
+GET /users/:userId/images
 ```
 
 Path parameters:
@@ -134,7 +134,7 @@ Response:
 ### Get user's likes
 
 ```
-GET /users/<userId>/likes
+GET /users/:userId/likes
 ```
 
 Path parameters:
@@ -244,7 +244,7 @@ Response:
 ### Get images
 
 ```
-GET /users/<userId>/images
+GET /users/:userId/images
 ```
 
 Response:
@@ -268,7 +268,7 @@ Response:
 ### Get liked images
 
 ```
-GET /users/<userId>/likes
+GET /users/:userId/likes
 ```
 
 Response:
@@ -292,7 +292,7 @@ Response:
 ### Get image
 
 ```
-GET /images/<imageId>
+GET /images/:imageId
 ```
 
 Path parameters:
@@ -318,7 +318,7 @@ Response:
 ### Delete image
 
 ```
-DELETE /images/<imageId>
+DELETE /images/:imageId
 ```
 
 Path parameters:
@@ -330,7 +330,7 @@ imageId - id of the image
 ### Like image
 
 ```
-POST /images/<imageId>/likes
+POST /images/:imageId/likes
 ```
 
 Path parameters:
@@ -342,7 +342,7 @@ imageId - id of the image
 ### Unlike image
 
 ```
-DELETE /images/<imageId>/likes
+DELETE /images/:imageId/likes
 ```
 
 Path parameters:
@@ -380,7 +380,7 @@ Response:
 ### Load image asset
 
 ```
-GET /uploads/<filename>
+GET /uploads/:filename
 ```
 
 Path parameters:
