@@ -20,8 +20,7 @@ export const routes: Routes = [
   },
   {
     path: 'upload',
-    redirectTo: '/upload/select',
-    pathMatch: 'full'
+    redirectTo: '/upload/select'
   },
 ];
 

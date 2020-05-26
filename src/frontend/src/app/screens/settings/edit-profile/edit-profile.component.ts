@@ -1,7 +1,7 @@
 import {
   Component, AfterViewInit, AfterViewChecked, ChangeDetectorRef
 } from '@angular/core';
-import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { APIClient } from '../../../services/api-client.service';
 import { User } from '../../../models/user.model';
@@ -18,7 +18,7 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   user: User;
 
   constructor(private apiClient: APIClient,
-              private location: Location,
+              private router: Router,
               private session: Session,
               private changeDetector: ChangeDetectorRef) {}
 
@@ -37,7 +37,7 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
     const updateClosure = () => {
       this.apiClient.updateUser(userId, this.user.name, this.user.username,
         this.user.email, this.user.avatar, this.user.bio).subscribe(
-          () => this.location.back(),
+          () => this.router.navigate(['/settings']),
           (error) => window.alert(error.message)
         );
     };
@@ -72,7 +72,7 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe(
-      (data) => this.user = data,
+      (value) => this.user = value,
       (error) => console.error(`Loading user failed: ${error.message}`)
     );
   }

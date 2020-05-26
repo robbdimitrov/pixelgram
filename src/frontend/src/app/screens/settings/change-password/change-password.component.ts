@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { APIClient } from '../../../services/api-client.service';
 import { Session } from '../../../services/session.service';
@@ -19,13 +19,13 @@ export class ChangePasswordComponent {
 
   constructor(private apiClient: APIClient,
               private session: Session,
-              private location: Location) {}
+              private router: Router) {}
 
   onSubmit() {
     const userId = this.session.userId();
     this.apiClient.changePassword(userId, this.oldPasswordValue,
       this.passwordValue).subscribe(
-        () => this.location.back(),
+        () => this.router.navigate(['/settings']),
         (error) => window.alert(error.message)
       );
   }

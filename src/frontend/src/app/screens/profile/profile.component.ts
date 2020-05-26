@@ -27,8 +27,8 @@ export class ProfileComponent {
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId, true).subscribe(
-      (data) => {
-        this.user = data;
+      (value) => {
+        this.user = value;
         this.pagination.reset();
         this.loadNextPage();
       },
@@ -38,9 +38,9 @@ export class ProfileComponent {
 
   loadNextPage() {
     this.apiClient.getImages(this.user.id, this.pagination.page).subscribe(
-      (data) => {
-        const images = data.filter((image) => {
-          return !(this.pagination.data.some((value) => image.id === value.id));
+      (value) => {
+        const images = value.filter((image) => {
+          return !(this.pagination.data.some((item) => image.id === item.id));
         });
         this.pagination.update(images);
       },

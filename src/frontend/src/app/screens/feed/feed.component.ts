@@ -1,6 +1,5 @@
-import { Component, AfterViewInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
+import { Component } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { APIClient } from '../../services/api-client.service';
 import { Image } from '../../models/image.model';
@@ -11,28 +10,21 @@ import { PaginationService } from '../../services/pagination.service';
   styleUrls: ['feed.component.scss'],
   providers: [PaginationService]
 })
-export class FeedComponent implements AfterViewInit {
-  isSingleImageMode = false;
+export class FeedComponent {
   userId?: number;
 
   constructor(private apiClient: APIClient,
               private pagination: PaginationService<Image>,
-              private route: ActivatedRoute,
-              private location: Location) {
+              private router: Router,
+              private route: ActivatedRoute) {
     this.route.params.subscribe((params) => {
       if (params.imageId) {
-        this.isSingleImageMode = true;
         this.loadImage(params.imageId);
-      } else if (params.userId) {
+      } else {
         this.userId = params.userId;
+        this.loadNextPage();
       }
     });
-  }
-
-  ngAfterViewInit() {
-    if (!this.isSingleImageMode) {
-      this.loadNextPage();
-    }
   }
 
   loadNextPage() {
@@ -41,9 +33,9 @@ export class FeedComponent implements AfterViewInit {
       this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe(
-      (data) => {
-        const images = data.filter((image) => {
-          return !(this.pagination.data.some((value) => image.id === value.id));
+      (value) => {
+        const images = value.filter((image) => {
+          return !(this.pagination.data.some((item) => image.id === item.id));
         });
         this.pagination.update(images);
       },
@@ -53,7 +45,7 @@ export class FeedComponent implements AfterViewInit {
 
   loadImage(imageId: number) {
     this.apiClient.getImage(imageId).subscribe(
-      (data) => this.pagination.update([data]),
+      (value) => this.pagination.update([value]),
       (error) => console.error(`Loading image failed: ${error.message}`)
     );
   }
@@ -80,14 +72,9 @@ export class FeedComponent implements AfterViewInit {
 
   onDeleteAction(image: Image) {
     this.pagination.remove(image);
-
     this.apiClient.deleteImage(image.id).subscribe(
-      (data) => {
-        if (this.isSingleImageMode && this.pagination.count() === 0) {
-          this.location.back();
-        }
-      },
-      (error) => console.error('Deleting image failed.')
+      () => this.router.navigate([`/users/${image.userId}`]),
+      (error) => console.error(`Deleting image failed: ${error.message}`)
     );
   }
 }
