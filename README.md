@@ -3,32 +3,19 @@
 **Pixelgram** is an image-sharing application where users can create, 
 browse and like images.
 
-## Table of contents
-
-- [Stack](#stack)
-- [Screenshots](#screenshots)
-- [Setup](#setup)
-  - [Clone the repository](#clone-the-repository)
-  - [Build the images](#build-the-images)
-  - [Create deployments](#create-deployments)
-- [Access the frontend](#access-the-frontend)
-- [Cleanup](#cleanup)
-- [API](#api)
-- [License](#license)
-
-## Stack
-
-- Angular
-- Express
-- PostgreSQL
-- Docker
-- Kubernetes
-
 ## Screenshots
 
-| Feed | Profile |
-| --- | --- |
-| [![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png) |
+Feed | Profile
+--- | ---
+[![Screenshot of feed screen](/docs/img/01_feed.png)](/docs/img/01_feed.png) | [![Screenshot of profile screen](/docs/img/02_profile.png)](/docs/img/02_profile.png)
+
+## Architecture
+
+Service | Language | Description
+--- | --- | ---
+[backend](/src/backend) | Python | Backend of the app, responsible for users, posts and authentication.
+[database](/src/database) | SQL | PostgreSQL database with tables, relationships and functions.
+[frontend](/src/frontend) | TypeScript | Angular frontend of the app.
 
 ## Setup
 
