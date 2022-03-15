@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const bcrypt = require('bcryptjs');
+const argon2 = require('argon2');
 
 function generateKey() {
   const buffer = crypto.randomBytes(21);
@@ -8,23 +8,15 @@ function generateKey() {
 }
 
 function generateHash(password) {
-  return new Promise((resolve, reject) => {
-    bcrypt.hash(password, 12)
-      .then((hash) => resolve(hash))
-      .catch((error) => reject(error));
-  });
+  return argon2.hash(password);
 }
 
-function validatePassword(password, passwordHash) {
-  return new Promise((resolve, reject) => {
-    bcrypt.compare(password, passwordHash)
-      .then((result) => resolve(result))
-      .catch((error) => reject(error));
-  });
+function verifyPassword(password, passwordHash) {
+  return argon2.verify(passwordHash, password);
 }
 
 module.exports = {
   generateKey,
   generateHash,
-  validatePassword
+  verifyPassword
 };

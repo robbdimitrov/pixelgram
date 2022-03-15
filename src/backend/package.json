@@ -8,7 +8,7 @@
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "argon2": "^0.28.5",
     "express": "^4.17.3",
     "helmet": "^5.0.2",
     "multer": "^1.4.4",

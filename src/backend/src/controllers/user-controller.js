@@ -1,5 +1,5 @@
-const { isValidEmail } = require('../shared/utils');
-const { generateHash, validatePassword } = require('../shared/crypto');
+const {isValidEmail} = require('../shared/utils');
+const {generateHash, verifyPassword} = require('../shared/crypto');
 const printLog = require('../shared/logger');
 
 class UserController {
@@ -100,7 +100,7 @@ class UserController {
     }
 
     this.dbClient.getUserWithId(userId).then((user) => {
-      return validatePassword(req.body.oldPassword, user.password);
+      return verifyPassword(req.body.oldPassword, user.password);
     }).then((valid) => {
       if (!valid) {
         throw new Error('Wrong password. Enter the correct current password.');

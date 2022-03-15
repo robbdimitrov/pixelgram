@@ -1,4 +1,4 @@
-const { generateKey, validatePassword } = require('../shared/crypto');
+const {generateKey, verifyPassword} = require('../shared/crypto');
 const printLog = require('../shared/logger');
 
 class AuthController {
@@ -20,7 +20,7 @@ class AuthController {
         return Promise.resolve();
       }
       req.userId = user.id;
-      return validatePassword(password, user.password);
+      return verifyPassword(password, user.password);
     }).then((valid) => {
       if (!valid) {
         return Promise.resolve();
