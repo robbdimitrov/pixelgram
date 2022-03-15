@@ -9,6 +9,4 @@ dist
 node_modules
 
 # Editors
-.idea
-*.iml
 .vscode
