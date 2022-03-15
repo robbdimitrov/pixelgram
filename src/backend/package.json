@@ -3,6 +3,7 @@
   "author": "Robert Dimitrov",
   "license": "MIT",
   "private": true,
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "lint": "eslint src/**/*.js"

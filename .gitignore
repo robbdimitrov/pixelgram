@@ -1,9 +1,10 @@
-# OS metadata
+# System files
 .DS_Store
 Thumbs.db
 
-#Build
+# Build
 dist
+.angular/
 
 # Dependency directory
 node_modules
