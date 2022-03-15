@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import {Component} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 
-import { Image } from '../../models/image.model';
-import { APIClient } from '../../services/api-client.service';
-import { PaginationService } from '../../services/pagination.service';
-import { User } from '../../models/user.model';
+import {Image} from '../../models/image.model';
+import {APIClient} from '../../services/api-client.service';
+import {PaginationService} from '../../services/pagination.service';
+import {User} from '../../models/user.model';
 
 @Component({
   selector: 'app-profile',

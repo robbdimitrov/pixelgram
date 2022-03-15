@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import {Component} from '@angular/core';
+import {Router} from '@angular/router';
 
-import { ImageUploadService } from '../image-upload.service';
-import { APIClient } from '../../../services/api-client.service';
+import {ImageUploadService} from '../image-upload.service';
+import {APIClient} from '../../../services/api-client.service';
 
 @Component({
   selector: 'app-image-create',

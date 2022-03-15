@@ -1,7 +1,7 @@
-import { Component, Input } from '@angular/core';
+import {Component, Input} from '@angular/core';
 
-import { User } from '../../../models/user.model';
-import { Session } from '../../../services/session.service';
+import {User} from '../../../models/user.model';
+import {Session} from '../../../services/session.service';
 
 @Component({
   selector: 'app-profile-header',

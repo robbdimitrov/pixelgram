@@ -1,15 +1,15 @@
-import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {NgModule} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {RouterModule} from '@angular/router';
+import {CommonModule} from '@angular/common';
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 
-import { NavbarComponent } from './components/navbar.component';
-import { ImagePipe } from './pipes/image.pipe';
-import { UserPipe } from './pipes/user.pipe';
-import { AuthGuard } from './auth-guard.service';
-import { RelativeDatePipe } from './pipes/relative-date.pipe';
-import { IconLibrary } from './icon-library.service';
+import {NavbarComponent} from './components/navbar.component';
+import {ImagePipe} from './pipes/image.pipe';
+import {UserPipe} from './pipes/user.pipe';
+import {AuthGuard} from './auth-guard.service';
+import {RelativeDatePipe} from './pipes/relative-date.pipe';
+import {IconLibrary} from './icon-library.service';
 
 @NgModule({
   declarations: [

@@ -1,7 +1,7 @@
 const allowed = [
-  { method: 'POST', path: '/sessions' },
-  { method: 'DELETE', path: '/sessions' },
-  { method: 'POST', path: '/users' }
+  {method: 'POST', path: '/sessions'},
+  {method: 'DELETE', path: '/sessions'},
+  {method: 'POST', path: '/users'}
 ];
 
 function isAllowed(req) {

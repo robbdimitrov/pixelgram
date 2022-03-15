@@ -1,11 +1,11 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import {NgModule} from '@angular/core';
+import {RouterModule, Routes} from '@angular/router';
 
-import { SettingsComponent } from './settings.component';
-import { EditProfileComponent } from './edit-profile/edit-profile.component';
-import { ChangePasswordComponent } from './change-password/change-password.component';
-import { AuthGuard } from '../../shared/auth-guard.service';
-import { SharedModule } from '../../shared/shared.module';
+import {SettingsComponent} from './settings.component';
+import {EditProfileComponent} from './edit-profile/edit-profile.component';
+import {ChangePasswordComponent} from './change-password/change-password.component';
+import {AuthGuard} from '../../shared/auth-guard.service';
+import {SharedModule} from '../../shared/shared.module';
 
 export const routes: Routes = [
   {

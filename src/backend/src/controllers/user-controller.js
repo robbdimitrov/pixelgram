@@ -8,7 +8,7 @@ class UserController {
   }
 
   createUser(req, res) {
-    const { name, username, email, password } = req.body;
+    const {name, username, email, password} = req.body;
 
     if (!name || !username || !email || !password) {
       return res.status(400).send({
@@ -67,7 +67,7 @@ class UserController {
       return this.updatePassword(req, res);
     }
 
-    const { name, username, email, avatar, bio } = req.body;
+    const {name, username, email, avatar, bio} = req.body;
 
     if (!isValidEmail(email)) {
       return res.status(400).send({
@@ -86,7 +86,7 @@ class UserController {
           message = 'This username or email is already in use.';
         }
 
-        res.status(400).send({ message });
+        res.status(400).send({message});
       });
   }
 

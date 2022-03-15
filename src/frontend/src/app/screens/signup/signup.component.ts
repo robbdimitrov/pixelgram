@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
 
-import { APIClient } from '../../services/api-client.service';
-import { Session } from '../../services/session.service';
+import {APIClient} from '../../services/api-client.service';
+import {Session} from '../../services/session.service';
 
 @Component({
   selector: 'app-signup',

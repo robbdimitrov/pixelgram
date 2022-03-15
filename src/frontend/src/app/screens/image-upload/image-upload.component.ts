@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import {Component} from '@angular/core';
+import {Router} from '@angular/router';
 
-import { ImageUploadService } from './image-upload.service';
+import {ImageUploadService} from './image-upload.service';
 
 @Component({
   selector: 'app-upload',

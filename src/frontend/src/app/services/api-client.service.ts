@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {map} from 'rxjs/operators';
 
-import { mapImage, mapUser } from '../shared/utils/mappers';
-import { CacheService } from './cache.service';
+import {mapImage, mapUser} from '../shared/utils/mappers';
+import {CacheService} from './cache.service';
 
 @Injectable()
 export class APIClient {
@@ -14,7 +14,7 @@ export class APIClient {
 
   createUser(name: string, username: string, email: string, password: string) {
     const url = '/api/users';
-    const body = { name, username, email, password };
+    const body = {name, username, email, password};
     return this.http.post(url, body);
   }
 
@@ -31,13 +31,13 @@ export class APIClient {
   updateUser(userId: number, name: string, username: string,
              email: string, avatar: string, bio: string) {
     const url = `/api/users/${userId}`;
-    const body: any = { name, username, email, avatar, bio };
+    const body: any = {name, username, email, avatar, bio};
     return this.http.put(url, body);
   }
 
   changePassword(userId: number, oldPassword: string, password: string) {
     const url = `/api/users/${userId}`;
-    const body = { password, oldPassword };
+    const body = {password, oldPassword};
     return this.http.put(url, body);
   }
 
@@ -45,7 +45,7 @@ export class APIClient {
 
   loginUser(email: string, password: string) {
     const url = '/api/sessions';
-    const body = { email, password };
+    const body = {email, password};
     return this.http.post(url, body);
   }
 
@@ -58,7 +58,7 @@ export class APIClient {
 
   createImage(filename: string, description: string) {
     const url = '/api/images';
-    const body = { filename, description };
+    const body = {filename, description};
     return this.http.post(url, body);
   }
 

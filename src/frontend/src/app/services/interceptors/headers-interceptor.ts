@@ -1,5 +1,5 @@
-import { HttpInterceptor, HttpRequest, HttpHandler } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import {HttpInterceptor, HttpRequest, HttpHandler} from '@angular/common/http';
+import {Injectable} from '@angular/core';
 
 @Injectable()
 export class HeaderInterceptor implements HttpInterceptor {
@@ -7,8 +7,8 @@ export class HeaderInterceptor implements HttpInterceptor {
     if (isImageUpload(req) || !req.body) {
       return next.handle(req);
     }
-    const headers = { 'content-type': 'application/json' };
-    const result = req.clone({ setHeaders: headers });
+    const headers = {'content-type': 'application/json'};
+    const result = req.clone({setHeaders: headers});
     return next.handle(result);
   }
 }

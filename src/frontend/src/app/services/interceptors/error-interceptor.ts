@@ -1,15 +1,15 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {
   HttpInterceptor, HttpHandler, HttpRequest, HttpErrorResponse
 } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { catchError } from 'rxjs/operators';
+import {Router} from '@angular/router';
+import {catchError} from 'rxjs/operators';
 
-import { APIClient } from '../api-client.service';
-import { Session } from '../session.service';
-import { throwError } from 'rxjs';
+import {APIClient} from '../api-client.service';
+import {Session} from '../session.service';
+import {throwError} from 'rxjs';
 
-import { CacheService } from '../cache.service';
+import {CacheService} from '../cache.service';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {

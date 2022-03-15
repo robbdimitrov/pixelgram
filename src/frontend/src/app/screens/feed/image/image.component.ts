@@ -1,9 +1,9 @@
-import { Component, Input, Output } from '@angular/core';
-import { EventEmitter } from '@angular/core';
+import {Component, Input, Output} from '@angular/core';
+import {EventEmitter} from '@angular/core';
 
-import { Image } from '../../../models/image.model';
-import { User } from '../../../models/user.model';
-import { Session } from '../../../services/session.service';
+import {Image} from '../../../models/image.model';
+import {User} from '../../../models/user.model';
+import {Session} from '../../../services/session.service';
 
 @Component({
   selector: 'app-image',

@@ -6,7 +6,7 @@ class ImageController {
   }
 
   createImage(req, res) {
-    const { filename, description } = req.body;
+    const {filename, description} = req.body;
 
     if (!filename) {
       return res.status(400).send({

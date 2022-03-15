@@ -1,11 +1,11 @@
 import {
   Component, AfterViewInit, AfterViewChecked, ChangeDetectorRef
 } from '@angular/core';
-import { Router } from '@angular/router';
+import {Router} from '@angular/router';
 
-import { APIClient } from '../../../services/api-client.service';
-import { User } from '../../../models/user.model';
-import { Session } from '../../../services/session.service';
+import {APIClient} from '../../../services/api-client.service';
+import {User} from '../../../models/user.model';
+import {Session} from '../../../services/session.service';
 
 @Component({
   selector: 'app-edit-profile',

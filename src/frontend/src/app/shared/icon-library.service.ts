@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
+import {Injectable} from '@angular/core';
+import {FaIconLibrary} from '@fortawesome/angular-fontawesome';
 import {
   faChevronDown, faHeart,
   faCog, faChevronRight,

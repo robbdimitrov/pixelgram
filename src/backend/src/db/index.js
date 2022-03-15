@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
+const {Pool} = require('pg');
 
-const { mapUser, mapImage, mapSession } = require('../shared/mappers');
+const {mapUser, mapImage, mapSession} = require('../shared/mappers');
 
 class DbClient {
   constructor(dbUrl) {

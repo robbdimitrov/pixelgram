@@ -1,5 +1,5 @@
-import { User } from '../../models/user.model';
-import { Image } from '../../models/image.model';
+import {User} from '../../models/user.model';
+import {Image} from '../../models/image.model';
 
 export function mapUser(user: any) {
   return new User(

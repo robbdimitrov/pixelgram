@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {Component} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 
-import { APIClient } from '../../services/api-client.service';
-import { Image } from '../../models/image.model';
-import { PaginationService } from '../../services/pagination.service';
+import {APIClient} from '../../services/api-client.service';
+import {Image} from '../../models/image.model';
+import {PaginationService} from '../../services/pagination.service';
 
 @Component({
   templateUrl: './feed.component.html',
