@@ -17,7 +17,7 @@ function configureRoutes(app, imageDir, controllers) {
   app.use(router(controllers));
   app.use('/uploads', express.static(imageDir));
 
-  app.use((_req, res, next) => {
+  app.use((_req, res, _next) => {
     res.status(404).send({
       message: 'Not Found'
     });

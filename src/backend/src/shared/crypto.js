@@ -3,8 +3,7 @@ const crypto = require('crypto');
 const argon2 = require('argon2');
 
 function generateKey() {
-  const buffer = crypto.randomBytes(21);
-  return buffer.toString('base64');
+  return crypto.randomBytes(21).toString('base64');
 }
 
 function generateHash(password) {

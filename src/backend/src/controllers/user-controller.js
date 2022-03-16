@@ -1,6 +1,6 @@
 const {isValidEmail} = require('../shared/utils');
 const {generateHash, verifyPassword} = require('../shared/crypto');
-const {logInfo} = require('../shared/logger');
+const {logInfo, logError} = require('../shared/logger');
 
 class UserController {
   constructor(dbClient) {
@@ -8,18 +8,17 @@ class UserController {
   }
 
   createUser(req, res) {
-    logInfo('START createUser');
     const {name, username, email, password} = req.body;
 
     if (!name || !username || !email || !password) {
-      logInfo('Creating user failed: Missing field');
+      logError('Creating user failed: Missing field');
       return res.status(400).send({
         message: 'Name, username, email and password are required.'
       });
     }
 
     if (!isValidEmail(email)) {
-      logInfo('Creating user failed: Invalid email address');
+      logError('Creating user failed: Invalid email address');
       return res.status(400).send({
         message: 'Invalid email address.'
       });
@@ -31,7 +30,7 @@ class UserController {
       logInfo('Successfully created user');
       res.status(201).send(result);
     }).catch((error) => {
-      logInfo(`Creating user failed: ${error}`);
+      logError(`Creating user failed: ${error}`);
       res.status(400).send({
         message: 'User with this username or email already exists.'
       });
@@ -44,14 +43,16 @@ class UserController {
     this.dbClient.getUser(userId)
       .then((result) => {
         if (result) {
+          logInfo('Successfully fetched user');
           res.status(200).send(result);
         } else {
+          logError('Getting user failed: Not Found');
           res.status(404).send({
             message: 'Not Found'
           });
         }
       }).catch((error) => {
-        logInfo(`Getting user failed: ${error}`);
+        logError(`Getting user failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -62,6 +63,7 @@ class UserController {
     const userId = req.params.userId;
 
     if (userId !== req.userId) {
+      logError('Updating user failed: Forbidden');
       return res.status(403).send({
         message: 'Forbidden'
       });
@@ -74,6 +76,7 @@ class UserController {
     const {name, username, email, avatar, bio} = req.body;
 
     if (!isValidEmail(email)) {
+      logError('Updating user failed: Invalid email address');
       return res.status(400).send({
         message: 'Invalid email address.'
       });
@@ -81,9 +84,10 @@ class UserController {
 
     this.dbClient.updateUser(userId, name, username, email, avatar, bio)
       .then(() => {
+        logInfo('Successfully updated user');
         res.sendStatus(204);
       }).catch((error) => {
-        logInfo(`Updating user failed: ${error}`);
+        logError(`Updating user failed: ${error}`);
 
         let message = 'Bad Request';
         if (/email|username/.test(error.message)) {
@@ -98,6 +102,7 @@ class UserController {
     const userId = req.params.userId;
 
     if (!req.body.oldPassword) {
+      logError('Updating password failed: Missing current password');
       return res.status(400).send({
         message: 'Both password and the current password are required.'
       });
@@ -111,11 +116,12 @@ class UserController {
       }
       return generateHash(req.body.password);
     }).then((hash) => {
+      logInfo('Successfully updated password');
       return this.dbClient.updatePassword(userId, hash);
     }).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
-      logInfo(`Updating user failed: ${error}`);
+      logError(`Updating password failed: ${error}`);
       res.status(400).send({
         message: error.message
       });

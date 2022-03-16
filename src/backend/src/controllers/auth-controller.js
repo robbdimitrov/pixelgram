@@ -1,5 +1,5 @@
 const {generateKey, verifyPassword} = require('../shared/crypto');
-const {logInfo} = require('../shared/logger');
+const {logInfo, logError} = require('../shared/logger');
 
 class AuthController {
   constructor(dbClient) {
@@ -10,6 +10,7 @@ class AuthController {
     const {email, password} = req.body;
 
     if (!email || !password) {
+      logError('Creating session failed: Missing email or password');
       return res.status(400).send({
         message: 'Email and password are required.'
       });
@@ -28,17 +29,19 @@ class AuthController {
       return this.dbClient.createSession(generateKey(), req.userId);
     }).then((session) => {
       if (session) {
+        logInfo('Successfully created session');
         this.createCookie(res, session.id);
         res.status(200).send({
           id: session.userId
         });
       } else {
+        logError('Creating session failed: Incorrect email or password');
         res.status(401).send({
           message: 'Incorrect email or password.'
         });
       }
     }).catch((error) => {
-      logInfo(`Creating session failed: ${error}`);
+      logError(`Creating session failed: ${error}`);
       res.status(500).send({
         message: 'Internal Server Error'
       });
@@ -57,17 +60,19 @@ class AuthController {
     this.dbClient.getSession(sessionId)
       .then((result) => {
         if (result) {
+          logInfo('Successfully validated session');
           req.userId = result.userId.toString();
           this.createCookie(res, result.id);
           next();
         } else {
+          logError('Validating session failed: Unauthorized');
           res.clearCookie('session');
           return res.status(401).send({
             message: 'Unauthorized'
           });
         }
       }).catch((error) => {
-        logInfo(`Getting session failed: ${error}`);
+        logError(`Validating session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -79,10 +84,11 @@ class AuthController {
 
     this.dbClient.deleteSession(sessionId)
       .then(() => {
+        logInfo('Successfully deleted session');
         res.clearCookie('session');
         res.sendStatus(204);
       }).catch((error) => {
-        logInfo(`Deleting session failed: ${error}`);
+        logError(`Deleting session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
