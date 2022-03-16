@@ -1,6 +1,6 @@
 const {isValidEmail} = require('../shared/utils');
 const {generateHash, verifyPassword} = require('../shared/crypto');
-const printLog = require('../shared/logger');
+const {logInfo} = require('../shared/logger');
 
 class UserController {
   constructor(dbClient) {
@@ -8,15 +8,18 @@ class UserController {
   }
 
   createUser(req, res) {
+    logInfo('START createUser');
     const {name, username, email, password} = req.body;
 
     if (!name || !username || !email || !password) {
+      logInfo('Creating user failed: Missing field');
       return res.status(400).send({
         message: 'Name, username, email and password are required.'
       });
     }
 
     if (!isValidEmail(email)) {
+      logInfo('Creating user failed: Invalid email address');
       return res.status(400).send({
         message: 'Invalid email address.'
       });
@@ -25,9 +28,10 @@ class UserController {
     generateHash(password).then((hash) => {
       return this.dbClient.createUser(name, username, email, hash);
     }).then((result) => {
+      logInfo('Successfully created user');
       res.status(201).send(result);
     }).catch((error) => {
-      printLog(`Creating user failed: ${error}`);
+      logInfo(`Creating user failed: ${error}`);
       res.status(400).send({
         message: 'User with this username or email already exists.'
       });
@@ -47,7 +51,7 @@ class UserController {
           });
         }
       }).catch((error) => {
-        printLog(`Getting user failed: ${error}`);
+        logInfo(`Getting user failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -79,7 +83,7 @@ class UserController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        printLog(`Updating user failed: ${error}`);
+        logInfo(`Updating user failed: ${error}`);
 
         let message = 'Bad Request';
         if (/email|username/.test(error.message)) {
@@ -111,7 +115,7 @@ class UserController {
     }).then(() => {
       res.sendStatus(204);
     }).catch((error) => {
-      printLog(`Updating user failed: ${error}`);
+      logInfo(`Updating user failed: ${error}`);
       res.status(400).send({
         message: error.message
       });

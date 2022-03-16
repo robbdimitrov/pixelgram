@@ -1,5 +1,5 @@
 const {generateKey, verifyPassword} = require('../shared/crypto');
-const printLog = require('../shared/logger');
+const {logInfo} = require('../shared/logger');
 
 class AuthController {
   constructor(dbClient) {
@@ -38,7 +38,7 @@ class AuthController {
         });
       }
     }).catch((error) => {
-      printLog(`Creating session failed: ${error}`);
+      logInfo(`Creating session failed: ${error}`);
       res.status(500).send({
         message: 'Internal Server Error'
       });
@@ -67,7 +67,7 @@ class AuthController {
           });
         }
       }).catch((error) => {
-        printLog(`Getting session failed: ${error}`);
+        logInfo(`Getting session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -82,7 +82,7 @@ class AuthController {
         res.clearCookie('session');
         res.sendStatus(204);
       }).catch((error) => {
-        printLog(`Deleting session failed: ${error}`);
+        logInfo(`Deleting session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });

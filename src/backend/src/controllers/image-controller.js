@@ -1,4 +1,4 @@
-const printLog = require('../shared/logger');
+const {logInfo} = require('../shared/logger');
 
 class ImageController {
   constructor(dbClient) {
@@ -18,7 +18,7 @@ class ImageController {
       .then((result) => {
         res.status(201).send(result);
       }).catch((error) => {
-        printLog(`Creating image failed: ${error}`);
+        logInfo(`Creating image failed: ${error}`);
         res.status(400).send({
           message: 'Bad Request'
         });
@@ -35,7 +35,7 @@ class ImageController {
           items: result
         });
       }).catch((error) => {
-        printLog(`Getting images failed: ${error}`);
+        logInfo(`Getting images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -53,7 +53,7 @@ class ImageController {
           items: result
         });
       }).catch((error) => {
-        printLog(`Getting images failed: ${error}`);
+        logInfo(`Getting images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -71,7 +71,7 @@ class ImageController {
           items: result
         });
       }).catch((error) => {
-        printLog(`Getting images failed: ${error}`);
+        logInfo(`Getting images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -91,7 +91,7 @@ class ImageController {
           });
         }
       }).catch((error) => {
-        printLog(`Getting image failed: ${error}`);
+        logInfo(`Getting image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -105,7 +105,7 @@ class ImageController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        printLog(`Deleting image failed: ${error}`);
+        logInfo(`Deleting image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -119,7 +119,7 @@ class ImageController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        printLog(`Liking image failed: ${error}`);
+        logInfo(`Liking image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
@@ -133,7 +133,7 @@ class ImageController {
       .then(() => {
         res.sendStatus(204);
       }).catch((error) => {
-        printLog(`Unliking image failed: ${error}`);
+        logInfo(`Unliking image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
         });
