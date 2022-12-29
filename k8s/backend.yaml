@@ -29,8 +29,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: pixelgram/backend
-        imagePullPolicy: Never
+        image: localhost:5000/pixelgram/backend
         ports:
         - containerPort: 8080
         resources:

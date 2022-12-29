@@ -29,8 +29,7 @@ spec:
     spec:
       containers:
       - name: database
-        image: pixelgram/database
-        imagePullPolicy: IfNotPresent
+        image: localhost:5000/pixelgram/database
         ports:
         - containerPort: 5432
         env:
