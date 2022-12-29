@@ -11,14 +11,16 @@ import {ImageUploadService} from './image-upload.service';
 export class ImageUploadComponent {
   imagePreview: string;
 
-  constructor(private router: Router,
-              private uploadService: ImageUploadService) {}
+  constructor(
+    private router: Router,
+    private uploadService: ImageUploadService
+  ) {}
 
-  onChange(files: File[]) {
-    const file = files[0];
-    if (!file) {
+  onChange(files: FileList | null) {
+    if (!files || files.length === 0) {
       return;
     }
+    const file = files[0];
     this.uploadService.setSelectedFile(file);
     this.getImagePreview(file);
   }

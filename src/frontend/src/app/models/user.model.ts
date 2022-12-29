@@ -1,3 +1,15 @@
+export interface UserDto {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  avatar: string;
+  bio: string;
+  images: number;
+  likes: number;
+  created: string;
+}
+
 export class User {
   constructor(
     public id: number,

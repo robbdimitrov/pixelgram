@@ -1,17 +1,17 @@
 import {
-  HttpInterceptor, HttpRequest, HttpHandler, HttpResponse
+  HttpInterceptor, HttpRequest, HttpHandler, HttpResponse, HttpEvent
 } from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {tap, share} from 'rxjs/operators';
-import {of} from 'rxjs';
+import {share} from 'rxjs/operators';
+import {Observable, of} from 'rxjs';
 
-import {CacheService} from '../cache.service';
+import {HttpCacheService} from '../http-cache.service';
 
 @Injectable()
 export class CacheInterceptor implements HttpInterceptor {
-  constructor(private cache: CacheService) {}
+  constructor(private cache: HttpCacheService) {}
 
-  intercept(req: HttpRequest<any>, next: HttpHandler) {
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (!isCacheable(req)) {
       return next.handle(req);
     }
@@ -20,21 +20,14 @@ export class CacheInterceptor implements HttpInterceptor {
 
   private sendCache(url: string) {
     const response = this.cache.get(url);
-    if (response instanceof HttpResponse) {
+    if (response instanceof HttpResponse<any>) {
       return of(response);
     }
     return response;
   }
 
   private sendRequest(req: HttpRequest<any>, next: HttpHandler) {
-    const result = next.handle(req).pipe(
-      tap((event) => {
-        if (event instanceof HttpResponse) {
-          this.cache.set(req.url, event);
-        }
-      }),
-      share()
-    );
+    const result = next.handle(req).pipe(share());
     this.cache.set(req.url, result);
     return result;
   }

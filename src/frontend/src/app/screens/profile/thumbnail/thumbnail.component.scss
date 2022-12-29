@@ -1,11 +1,11 @@
 @import '../../../../styles/variables';
 
-$margin: ($spacing-small / $big-component-width) * 100%;
+$margin: calc($spacing-small / $big-component-width) * 100%;
 $image-side: 50% - $margin;
 
 .frame {
   display: inline-block;
   width: $image-side;
   padding-top: $image-side;
-  margin: $margin / 2;
+  margin: calc($margin / 2);
 }

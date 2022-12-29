@@ -2,8 +2,12 @@ import {Injectable} from '@angular/core';
 
 @Injectable()
 export class Session {
-  userId() {
-    return +localStorage.getItem('userId');
+  userId(): number | null {
+    const value = localStorage.getItem('userId');
+    if (value) {
+      return +value;
+    }
+    return null;
   }
 
   setUserId(userId: number) {

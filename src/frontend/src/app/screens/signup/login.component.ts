@@ -36,12 +36,12 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
-    this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-      (data: any) => {
+    this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe({
+      next: (data) => {
         this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
-      (error) => window.alert(error.message)
-    );
+      error: (error) => window.alert(error.message)
+    });
   }
 }

@@ -13,15 +13,17 @@ import {PaginationService} from '../../services/pagination.service';
 export class FeedComponent {
   userId?: number;
 
-  constructor(private apiClient: APIClient,
-              private pagination: PaginationService<Image>,
-              private router: Router,
-              private route: ActivatedRoute) {
+  constructor(
+    private apiClient: APIClient,
+    private pagination: PaginationService<Image>,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
     this.route.params.subscribe((params) => {
-      if (params.imageId) {
-        this.loadImage(params.imageId);
+      if (params['imageId']) {
+        this.loadImage(params['imageId']);
       } else {
-        this.userId = params.userId;
+        this.userId = params['userId'];
         this.loadNextPage();
       }
     });
@@ -32,15 +34,15 @@ export class FeedComponent {
       this.apiClient.getLikedImages(this.userId, this.pagination.page) :
       this.apiClient.getFeed(this.pagination.page));
 
-    req.subscribe(
-      (value) => {
+    req.subscribe({
+      next: (value) => {
         const images = value.filter((image) => {
           return !(this.pagination.data.some((item) => image.id === item.id));
         });
         this.pagination.update(images);
       },
-      (error) => console.error(`Error loading images: ${error.message}`)
-    );
+      error: (error) => console.error(`Error loading images: ${error.message}`)
+    });
   }
 
   loadImage(imageId: number) {
@@ -72,9 +74,9 @@ export class FeedComponent {
 
   onDeleteAction(image: Image) {
     this.pagination.remove(image);
-    this.apiClient.deleteImage(image.id).subscribe(
-      () => this.router.navigate([`/users/${image.userId}`]),
-      (error) => console.error(`Deleting image failed: ${error.message}`)
-    );
+    this.apiClient.deleteImage(image.id).subscribe({
+      next: () => this.router.navigate([`/users/${image.userId}`]),
+      error: (error) => console.error(`Deleting image failed: ${error.message}`)
+    });
   }
 }

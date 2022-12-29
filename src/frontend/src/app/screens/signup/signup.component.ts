@@ -39,16 +39,16 @@ export class SignupComponent implements OnInit {
 
   onSubmit() {
     this.apiClient.createUser(this.nameValue, this.usernameValue,
-      this.emailValue, this.passwordValue).subscribe(
-        () => {
+      this.emailValue, this.passwordValue).subscribe({
+        next: () => {
           this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-            (data: any) => {
+            (data) => {
               this.session.setUserId(data.id);
               this.router.navigate(['/']);
             }
           );
         },
-        (error) => window.alert(error.message)
-      );
+        error: (error) => window.alert(error.message)
+    });
   }
 }

@@ -1,14 +1,16 @@
+import {HttpEvent} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
 
 @Injectable()
-export class CacheService {
-  private cache = new Map<string, any>();
+export class HttpCacheService {
+  private cache = new Map<string, Observable<HttpEvent<any>>>();
 
   get(key: string) {
     return this.cache.get(key);
   }
 
-  set(key: string, value: any) {
+  set(key: string, value: Observable<HttpEvent<any>>) {
     this.cache.set(key, value);
   }
 

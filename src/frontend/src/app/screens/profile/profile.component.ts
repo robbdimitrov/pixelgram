@@ -13,39 +13,45 @@ import {User} from '../../models/user.model';
   providers: [PaginationService]
 })
 export class ProfileComponent {
-  user: User;
+  user?: User;
 
-  constructor(private apiClient: APIClient,
-              private pagination: PaginationService<Image>,
-              private route: ActivatedRoute) {
+  constructor(
+    private apiClient: APIClient,
+    private pagination: PaginationService<Image>,
+    private route: ActivatedRoute
+  ) {
     this.route.params.subscribe((params) => {
-      if (!this.user || params.userId !== this.user.id) {
-        this.loadUser(params.userId);
+      if (!this.user || params['userId'] !== this.user.id) {
+        this.loadUser(params['userId']);
       }
     });
   }
 
   loadUser(userId: number) {
-    this.apiClient.getUser(userId, true).subscribe(
-      (value) => {
+    this.apiClient.getUser(userId, true).subscribe({
+      next: (value) => {
         this.user = value;
         this.pagination.reset();
         this.loadNextPage();
       },
-      (error) => console.error(`Loading user failed: ${error.message}`)
-    );
+      error: (error) => console.error(`Loading user failed: ${error.message}`)
+    });
   }
 
   loadNextPage() {
-    this.apiClient.getImages(this.user.id, this.pagination.page).subscribe(
-      (value) => {
+    if (!this.user) {
+      return;
+    }
+
+    this.apiClient.getImages(this.user.id, this.pagination.page).subscribe({
+      next: (value) => {
         const images = value.filter((image) => {
           return !(this.pagination.data.some((item) => image.id === item.id));
         });
         this.pagination.update(images);
       },
-      (error) => console.error(`Error loading images: ${error.message}`)
-    );
+      error: (error) => console.error(`Error loading images: ${error.message}`)
+    });
   }
 
   images() {

@@ -1,3 +1,21 @@
+export interface ImageDto {
+  id: number;
+  userId: number;
+  filename: string;
+  description: string;
+  likes: number;
+  liked: boolean;
+  created: string;
+}
+
+export interface ImagesDto {
+  items: ImageDto[];
+}
+
+export interface ImageFilenameDto {
+  filename: string;
+}
+
 export class Image {
   constructor(
     public id: number,

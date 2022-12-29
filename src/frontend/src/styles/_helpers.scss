@@ -1,5 +1,5 @@
 @function rem($pixels, $browser-context: 16) {
-  @return ($pixels / $browser-context) * 1rem;
+  @return calc($pixels / $browser-context) * 1rem;
 }
 
 // Quickly center any element within its parent.

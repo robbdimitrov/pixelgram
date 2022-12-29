@@ -15,7 +15,7 @@ export class ImageComponent {
   @Output() unlike = new EventEmitter<number>();
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
-  @Input() user: User;
+  @Input() user: User | null;
   optionsOpened = false;
 
   constructor(private session: Session) {}

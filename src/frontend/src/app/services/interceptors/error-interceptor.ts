@@ -9,14 +9,16 @@ import {APIClient} from '../api-client.service';
 import {Session} from '../session.service';
 import {throwError} from 'rxjs';
 
-import {CacheService} from '../cache.service';
+import {HttpCacheService} from '../http-cache.service';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
-  constructor(private apiClient: APIClient,
-              private session: Session,
-              private cache: CacheService,
-              private router: Router) {}
+  constructor(
+    private apiClient: APIClient,
+    private session: Session,
+    private cache: HttpCacheService,
+    private router: Router
+  ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
     return next.handle(req).pipe(

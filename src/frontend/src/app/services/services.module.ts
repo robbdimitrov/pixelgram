@@ -2,7 +2,7 @@ import {NgModule} from '@angular/core';
 import {HttpClientModule} from '@angular/common/http';
 
 import {APIClient} from './api-client.service';
-import {CacheService} from './cache.service';
+import {HttpCacheService} from './http-cache.service';
 import {interceptors} from './interceptors';
 import {Session} from './session.service';
 
@@ -12,7 +12,7 @@ import {Session} from './session.service';
   ],
   providers: [
     APIClient,
-    CacheService,
+    HttpCacheService,
     interceptors,
     Session
   ]

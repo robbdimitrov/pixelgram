@@ -1,7 +1,7 @@
-import {User} from '../../models/user.model';
-import {Image} from '../../models/image.model';
+import {User, UserDto} from '../../models/user.model';
+import {Image, ImageDto} from '../../models/image.model';
 
-export function mapUser(user: any) {
+export function mapUser(user: UserDto): User {
   return new User(
     user.id,
     user.name,
@@ -15,7 +15,7 @@ export function mapUser(user: any) {
   );
 }
 
-export function mapImage(image: any) {
+export function mapImage(image: ImageDto): Image {
   return new Image(
     image.id,
     image.userId,

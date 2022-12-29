@@ -1,12 +1,12 @@
 import {Pipe, PipeTransform} from '@angular/core';
 
-import * as quartzite from 'quartzite';
+import {dateString}  from 'quartzite';
 
 @Pipe({
   name: 'relativedate'
 })
 export class RelativeDatePipe implements PipeTransform {
   transform(value: Date): string {
-    return quartzite.dateString(value);
+    return dateString(value);
   }
 }

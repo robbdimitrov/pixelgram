@@ -11,7 +11,7 @@ import {APIClient} from '../../../services/api-client.service';
 })
 export class ImageCreateComponent {
   imageDescription: string;
-  imagePreview: string;
+  imagePreview: string = '';
 
   constructor(private router: Router,
               private apiClient: APIClient,
@@ -20,7 +20,7 @@ export class ImageCreateComponent {
   }
 
   hasSelectedFile(): boolean {
-    return this.imagePreview && this.imagePreview.length !== 0;
+    return this.imagePreview.length !== 0;
   }
 
   getImagePreview(file: File) {
@@ -38,14 +38,13 @@ export class ImageCreateComponent {
   onSubmitClick() {
     const selectedFile = this.uploadService.selectedFile();
 
-    this.apiClient.uploadImage(selectedFile).subscribe(
-      (data: any) => {
+    this.apiClient.uploadImage(selectedFile).subscribe({
+      next: (data) => {
         const imageDescription = this.imageDescription || '';
-        this.apiClient.createImage(data.filename, imageDescription).subscribe(
-          () => this.router.navigate(['/'])
-        );
+        this.apiClient.createImage(data.filename, imageDescription)
+          .subscribe(() => this.router.navigate(['/']));
       },
-      (error) => console.error(`Error creating image: ${error.message}`)
-    );
+      error: (error) => console.error(`Error creating image: ${error.message}`)
+    });
   }
 }

@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, ElementRef} from '@angular/core';
 import {Router} from '@angular/router';
 
 import {APIClient} from '../../../services/api-client.service';
@@ -23,6 +23,10 @@ export class ChangePasswordComponent {
 
   onSubmit() {
     const userId = this.session.userId();
+    if (!userId) {
+      return;
+    }
+
     this.apiClient.changePassword(userId, this.oldPasswordValue,
       this.passwordValue).subscribe(
         () => this.router.navigate(['/settings']),
@@ -30,7 +34,7 @@ export class ChangePasswordComponent {
       );
   }
 
-  onVisibilityToggle(element) {
+  onVisibilityToggle(element: HTMLInputElement) {
     if (element.name === 'old-password') {
       this.toggleOldPasswordVisibility();
     } else if (element.name === 'password') {
