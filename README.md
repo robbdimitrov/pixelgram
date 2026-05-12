@@ -35,10 +35,6 @@ For the kind cluster created by the deploy script:
 kind delete cluster --name pixelgram
 ```
 
-## API
-
-The API documentation is available [here](/API.md).
-
 ## License
 
 Licensed under the [MIT](LICENSE) License.
