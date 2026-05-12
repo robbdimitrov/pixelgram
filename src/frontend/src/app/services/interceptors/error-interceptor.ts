@@ -38,6 +38,6 @@ export class ErrorInterceptor implements HttpInterceptor {
     } else if (error.status === 404) {
       this.router.navigate(['/not-found']);
     }
-    return throwError(error.error);
+    return throwError(() => error.error);
   }
 }

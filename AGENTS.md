@@ -79,3 +79,4 @@ The backend reads `PORT` (defaults to `8080`).
 - **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
 - **Database init**: `schema.sql` is copied to `/docker-entrypoint-initdb.d/` in the Postgres image and automatically runs on first container start.
 - **No CI/CD, no pre-commit hooks** exist in this repo.
+- **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.

@@ -27,65 +27,12 @@ kubectl port-forward service/frontend 8080:8080 -n pixelgram
 
 Open the frontend at [http://localhost:8080](http://localhost:8080).
 
-## Manual setup
-
-If you prefer to manage your own cluster or registry, follow the steps below.
-
-### Build the images
-
-Build all the images
-
-```sh
-make
-```
-
-Or build specific images
-
-```sh
-make backend
-make database
-make frontend
-```
-
-### Create namespace
-
-Create namespace for the k8s resources
-
-```sh
-kubectl create namespace pixelgram
-```
-
-### Create deployments
-
-Create deployments and volumes
-
-```sh
-kubectl apply -f ./k8s -n pixelgram
-```
-
-## Access the frontend
-
-Enable port forwarding
-
-```sh
-kubectl port-forward service/frontend 8080:8080 -n pixelgram
-```
-
-Open the frontend [here](http://localhost:8080/).
-
 ## Cleanup
 
 For the kind cluster created by the deploy script:
 
 ```sh
 kind delete cluster --name pixelgram
-```
-
-For manual deployments, delete all resources and the namespace:
-
-```sh
-kubectl delete -f ./k8s -n pixelgram
-kubectl delete namespace pixelgram
 ```
 
 ## API

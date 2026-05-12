@@ -1,7 +1,7 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 
-import {AuthGuard} from '../../shared/auth-guard.service';
+import {authGuard} from '../../shared/auth-guard.service';
 import {SharedModule} from '../../shared/shared.module';
 import {ImageUploadComponent} from './image-upload.component';
 import {ImageCreateComponent} from './image-create/image-create.component';
@@ -11,12 +11,12 @@ export const routes: Routes = [
   {
     path: 'upload/select',
     component: ImageUploadComponent,
-    canActivate: [AuthGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'upload/post',
     component: ImageCreateComponent,
-    canActivate: [AuthGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'upload',

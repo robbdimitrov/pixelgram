@@ -4,24 +4,24 @@ import {RouterModule, Routes} from '@angular/router';
 import {SettingsComponent} from './settings.component';
 import {EditProfileComponent} from './edit-profile/edit-profile.component';
 import {ChangePasswordComponent} from './change-password/change-password.component';
-import {AuthGuard} from '../../shared/auth-guard.service';
+import {authGuard} from '../../shared/auth-guard.service';
 import {SharedModule} from '../../shared/shared.module';
 
 export const routes: Routes = [
   {
     path: 'settings',
     component: SettingsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'settings/profile',
     component: EditProfileComponent,
-    canActivate: [AuthGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'settings/password',
     component: ChangePasswordComponent,
-    canActivate: [AuthGuard]
+    canActivate: [authGuard]
   }
 ];
 

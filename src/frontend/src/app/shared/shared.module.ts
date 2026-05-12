@@ -7,7 +7,6 @@ import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {NavbarComponent} from './components/navbar.component';
 import {ImagePipe} from './pipes/image.pipe';
 import {UserPipe} from './pipes/user.pipe';
-import {AuthGuard} from './auth-guard.service';
 import {RelativeDatePipe} from './pipes/relative-date.pipe';
 import {IconLibrary} from './icon-library.service';
 
@@ -19,7 +18,6 @@ import {IconLibrary} from './icon-library.service';
     RelativeDatePipe
   ],
   providers: [
-    AuthGuard,
     IconLibrary
   ],
   imports: [
