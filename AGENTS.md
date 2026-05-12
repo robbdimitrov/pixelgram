@@ -1,0 +1,81 @@
+# AGENTS.md
+
+## Architecture
+
+Three independent services, deployed via Kubernetes:
+- `src/backend` — Express API (Node.js, JavaScript)
+- `src/database` — PostgreSQL schema (auto-runs `schema.sql` on container init)
+- `src/frontend` — Angular 15 SPA (TypeScript, SCSS)
+
+Each service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
+
+## Commands
+
+### Build (Docker images)
+
+```sh
+make              # build all: backend, database, frontend
+make backend      # build only the backend image
+make database     # build only the database image
+make frontend     # build only the frontend image
+```
+
+Images are tagged `localhost:5000/pixelgram/<service>`.
+
+### Deploy
+
+```sh
+kubectl create namespace pixelgram
+kubectl apply -f ./k8s -n pixelgram
+kubectl port-forward service/frontend 8080 -n pixelgram   # access at localhost:8080
+```
+
+### Cleanup
+
+```sh
+kubectl delete -f ./k8s -n pixelgram
+kubectl delete namespace pixelgram
+```
+
+### Lint
+
+```sh
+# Backend (from src/backend)
+npm run lint          # eslint src/**/*.js
+
+# Frontend (from src/frontend)
+npm run lint          # ng lint (ESLint with @angular-eslint)
+```
+
+### Frontend dev server (not Docker)
+
+```sh
+cd src/frontend && npm start
+# Proxies /api → localhost:8080 (backend must be running separately)
+```
+
+### Frontend tests
+
+```sh
+cd src/frontend && ng test   # Karma/Jasmine
+```
+
+There is no backend test script defined.
+
+## Environment variables (backend)
+
+Set in `k8s/backend.yaml`:
+- `DATABASE_URL` — PostgreSQL connection string
+- `IMAGE_DIR` — path for uploaded image storage
+- `SECRET` — used for session signing
+
+The backend reads `PORT` (defaults to `8080`).
+
+## Key conventions
+
+- **Auth**: session-based via a `session` cookie (not JWT). Auth middleware is applied before routes.
+- **Password hashing**: `argon2` (not bcrypt).
+- **Image uploads**: must upload the file first (`POST /uploads`, multipart/form-data, <1MB), then create the image record (`POST /images` with the returned filename).
+- **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
+- **Database init**: `schema.sql` is copied to `/docker-entrypoint-initdb.d/` in the Postgres image and automatically runs on first container start.
+- **No CI/CD, no pre-commit hooks** exist in this repo.

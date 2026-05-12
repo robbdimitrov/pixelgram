@@ -11,16 +11,25 @@ Service | Language | Description
 [database](/src/database) | SQL | PostgreSQL database with tables, relationships and functions.
 [frontend](/src/frontend) | TypeScript | Angular frontend of the app.
 
-## Setup
+## Quickstart (Kind cluster)
 
-### Clone the repository
-
-Clone the repository to your filesystem
+The easiest way to run the app locally is with the deploy script. It creates a kind cluster with a local registry, builds all images, and deploys everything into the `pixelgram` namespace.
 
 ```sh
-git clone git@github.com:robbdimitrov/pixelgram.git
-cd pixelgram
+./scripts/deploy.sh
 ```
+
+Then forward the frontend service:
+
+```sh
+kubectl port-forward service/frontend 8080:8080 -n pixelgram
+```
+
+Open the frontend at [http://localhost:8080](http://localhost:8080).
+
+## Manual setup
+
+If you prefer to manage your own cluster or registry, follow the steps below.
 
 ### Build the images
 
@@ -59,22 +68,23 @@ kubectl apply -f ./k8s -n pixelgram
 Enable port forwarding
 
 ```sh
-kubectl port-forward service/frontend 8080 -n pixelgram
+kubectl port-forward service/frontend 8080:8080 -n pixelgram
 ```
 
 Open the frontend [here](http://localhost:8080/).
 
 ## Cleanup
 
-Delete all resources
+For the kind cluster created by the deploy script:
+
+```sh
+kind delete cluster --name pixelgram
+```
+
+For manual deployments, delete all resources and the namespace:
 
 ```sh
 kubectl delete -f ./k8s -n pixelgram
-```
-
-Delete the namespace
-
-```sh
 kubectl delete namespace pixelgram
 ```
 
