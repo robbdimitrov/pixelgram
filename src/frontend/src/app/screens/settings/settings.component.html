@@ -1,29 +1,49 @@
-<div class="container full-width">
-  <h1 class="title">Settings</h1>
+<div class="max-w-md mx-auto my-6 sm:my-10">
+  <div class="glass-card w-full rounded-3xl border border-white/25 shadow-xl p-6 sm:p-8 flex flex-col gap-5">
+    <div class="text-center sm:text-left mb-2">
+      <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Settings</h1>
+      <p class="text-xs text-base-content/50 mt-1">Manage your account settings, security and activity.</p>
+    </div>
 
-  <ul>
-    <li class="underlined">
-      <a routerLink="/settings/password" class="item">
-        <span>Change Password</span>
-        <span class="disclosure">
-            <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
-        </span>
-      </a>
-    </li>
+    <ul class="flex flex-col gap-3">
+      <li>
+        <a 
+          routerLink="/settings/profile" 
+          class="flex items-center justify-between p-4 rounded-2xl bg-base-200/40 border border-base-300/30 hover:bg-base-200/80 hover:border-primary/20 hover:scale-[1.01] transition-all duration-300 font-bold text-sm text-base-content"
+        >
+          <span class="flex items-center gap-2">Edit Profile</span>
+          <fa-icon [icon]="['fas', 'chevron-right']" class="text-xs opacity-55"></fa-icon>
+        </a>
+      </li>
 
-    <li class="underlined">
-      <a [routerLink]="['/users', userId(), 'likes']" class="item">
-        <span>Liked images</span>
-        <span class="disclosure icon">
-          <fa-icon [icon]="['fas', 'chevron-right']"></fa-icon>
-        </span>
-      </a>
-    </li>
+      <li>
+        <a 
+          routerLink="/settings/password" 
+          class="flex items-center justify-between p-4 rounded-2xl bg-base-200/40 border border-base-300/30 hover:bg-base-200/80 hover:border-primary/20 hover:scale-[1.01] transition-all duration-300 font-bold text-sm text-base-content"
+        >
+          <span class="flex items-center gap-2">Change Password</span>
+          <fa-icon [icon]="['fas', 'chevron-right']" class="text-xs opacity-55"></fa-icon>
+        </a>
+      </li>
 
-    <li class="underlined">
-      <div class="item" (click)="onLogoutClick()">
-        <span>Logout</span>
-      </div>
-    </li>
-  </ul>
+      <li>
+        <a 
+          [routerLink]="['/users', userId(), 'likes']" 
+          class="flex items-center justify-between p-4 rounded-2xl bg-base-200/40 border border-base-300/30 hover:bg-base-200/80 hover:border-primary/20 hover:scale-[1.01] transition-all duration-300 font-bold text-sm text-base-content"
+        >
+          <span class="flex items-center gap-2">Liked Images</span>
+          <fa-icon [icon]="['fas', 'chevron-right']" class="text-xs opacity-55"></fa-icon>
+        </a>
+      </li>
+
+      <li class="mt-4">
+        <button 
+          (click)="onLogoutClick()" 
+          class="w-full btn btn-error btn-outline rounded-2xl font-bold py-3.5 hover:scale-[1.01] active:scale-[0.99] transition-transform"
+        >
+          Logout Account
+        </button>
+      </li>
+    </ul>
+  </div>
 </div>

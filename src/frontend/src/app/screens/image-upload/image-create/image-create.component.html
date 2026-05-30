@@ -1,24 +1,32 @@
-<div class="container full-width">
-  <h1 class="title">New Post</h1>
-
-  <div class="section">
-    <div class="frame">
-      <img *ngIf="imagePreview" [src]="imagePreview">
-    </div>
-
-    <textarea
-      placeholder="Write a description..."
-      maxlength="160"
-      [(ngModel)]="imageDescription"
-    >
-    </textarea>
+<div class="glass-card max-w-xl mx-auto my-8 sm:my-16 p-6 sm:p-8 rounded-3xl border border-white/25 shadow-xl flex flex-col gap-5">
+  <div class="text-center sm:text-left mb-2">
+    <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Add Caption</h1>
+    <p class="text-xs text-base-content/50 mt-1">Provide a creative description for your upload.</p>
   </div>
 
-  <button
-    class="button centered"
-    (click)="onSubmitClick()"
-    [disabled]="!hasSelectedFile()"
-  >
-    Share
-  </button>
+  <div class="flex flex-col sm:flex-row gap-5 items-stretch">
+    <!-- Image Preview Thumbnail -->
+    <div class="w-full sm:w-28 h-28 aspect-square rounded-2xl overflow-hidden border border-base-300 bg-base-300/10 shadow-sm shrink-0 flex items-center justify-center">
+      <img class="w-full h-full object-cover" *ngIf="imagePreview" [src]="imagePreview" alt="Upload preview">
+    </div>
+
+    <!-- Description textarea -->
+    <textarea
+      name="description"
+      [(ngModel)]="imageDescription"
+      class="textarea textarea-bordered rounded-2xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 flex-grow text-sm py-3 px-4 resize-none h-28"
+      placeholder="Write an inspiring caption here..."
+      maxlength="160"
+    ></textarea>
+  </div>
+
+  <div class="flex justify-end mt-2">
+    <button
+      class="btn btn-primary rounded-xl px-8 shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-105 active:scale-95 font-black uppercase tracking-wider text-xs"
+      (click)="onSubmitClick()"
+      [disabled]="!hasSelectedFile()"
+    >
+      Share Post
+    </button>
+  </div>
 </div>

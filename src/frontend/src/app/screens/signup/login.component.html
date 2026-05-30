@@ -1,49 +1,59 @@
-<div class="container full-width">
-  <h1 class="title">Log In</h1>
+<div class="max-w-md mx-auto my-8 sm:my-16 glass-card p-6 sm:p-8 rounded-3xl shadow-xl border border-white/20 flex flex-col">
+  <div class="text-center mb-6">
+    <h1 class="text-3xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">Welcome Back</h1>
+    <p class="text-base-content/60 text-sm">
+      Log in to your PixelGram account to connect with the community and share creative work.
+    </p>
+  </div>
 
-  <p class="description centered">
-    Log in to your account to post amazing images and catch up with the community
-  </p>
-
-  <form (ngSubmit)="onSubmit()" #form="ngForm">
-    <div class="form-group">
-      <label for="email">Email</label>
+  <form (ngSubmit)="onSubmit()" #form="ngForm" class="space-y-5">
+    <div class="form-control">
+      <label for="email" class="label pb-1">
+        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Email Address</span>
+      </label>
       <input
         type="email"
         id="email"
         name="email"
         [(ngModel)]="emailValue"
+        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
         required
       >
     </div>
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input
-        type={{passwordFieldType}}
-        id="password"
-        name="password"
-        [(ngModel)]="passwordValue"
-        placeholder="password"
-        minlength="4"
-        maxlength="30"
-        required
-      >
-
-      <button type="button" class="button" (click)="onVisibilityToggle()">
-        {{showButtonTitle | uppercase}}
-      </button>
+    <div class="form-control">
+      <label for="password" class="label pb-1">
+        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Password</span>
+      </label>
+      <div class="relative flex items-center">
+        <input
+          [type]="passwordFieldType"
+          id="password"
+          name="password"
+          [(ngModel)]="passwordValue"
+          class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 pr-16"
+          placeholder="••••••••"
+          minlength="4"
+          maxlength="30"
+          required
+        >
+        <button type="button" class="btn btn-ghost btn-xs absolute right-3 rounded-lg text-[10px] uppercase font-black tracking-widest text-primary/90 hover:text-primary hover:bg-base-300/40" (click)="onVisibilityToggle()">
+          {{showButtonTitle}}
+        </button>
+      </div>
     </div>
 
-    <button type="submit" class="button centered" [disabled]="!form.valid">
+    <button type="submit" class="btn btn-primary w-full rounded-xl mt-2 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99]" [disabled]="!form.valid">
       Log In
     </button>
   </form>
 
-  <div class="reference">
-    <span>Don't have an accout?</span>
-    <a routerLink="/signup">Register</a>
+  <div class="divider my-6 text-xs text-base-content/30 uppercase tracking-widest">New to Pixelgram?</div>
+
+  <div class="text-center text-sm text-base-content/65">
+    Don't have an account?
+    <a routerLink="/signup" class="text-primary font-bold hover:underline transition-colors ml-1">Register</a>
   </div>
 </div>

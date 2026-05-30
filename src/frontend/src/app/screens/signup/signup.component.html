@@ -1,72 +1,89 @@
-<div class="container full-width">
-  <h1 class="title">Register</h1>
+<div class="max-w-md mx-auto my-8 sm:my-16 glass-card p-6 sm:p-8 rounded-3xl shadow-xl border border-white/20 flex flex-col">
+  <div class="text-center mb-6">
+    <h1 class="text-3xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">Create Account</h1>
+    <p class="text-base-content/60 text-sm">
+      Sign up for a PixelGram account to post your creative captures and join a growing community.
+    </p>
+  </div>
 
-  <p class="description centered">
-    Create account to post amazing images and see what the community has created
-  </p>
-
-  <form (ngSubmit)="onSubmit()" #form="ngForm">
-    <div class="form-group">
-      <label for="name">Name</label>
+  <form (ngSubmit)="onSubmit()" #form="ngForm" class="space-y-4">
+    <div class="form-control">
+      <label for="name" class="label pb-0.5">
+        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Full Name</span>
+      </label>
       <input
         type="text"
         id="name"
         name="name"
         [(ngModel)]="nameValue"
+        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
         placeholder="John Doe"
         required
       >
     </div>
 
-    <div class="form-group">
-      <label for="username">Username</label>
+    <div class="form-control">
+      <label for="username" class="label pb-0.5">
+        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Username</span>
+      </label>
       <input
         type="text"
         id="username"
         name="username"
         [(ngModel)]="usernameValue"
+        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
         placeholder="johndoe"
         required
       >
     </div>
 
-    <div class="form-group">
-      <label for="email">Email</label>
+    <div class="form-control">
+      <label for="email" class="label pb-0.5">
+        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Email Address</span>
+      </label>
       <input
         type="email"
         id="email"
         name="email"
         [(ngModel)]="emailValue"
+        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
         required
       >
     </div>
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input
-        type={{passwordFieldType}}
-        id="password"
-        name="password"
-        [(ngModel)]="passwordValue"
-        placeholder="password"
-        minlength="4"
-        maxlength="30"
-        required
-      >
-      <button type="button" class="button" (click)="onVisibilityToggle()">
-        {{showButtonTitle | uppercase}}
-      </button>
+    <div class="form-control">
+      <label for="password" class="label pb-0.5">
+        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Password</span>
+      </label>
+      <div class="relative flex items-center">
+        <input
+          [type]="passwordFieldType"
+          id="password"
+          name="password"
+          [(ngModel)]="passwordValue"
+          class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 pr-16"
+          placeholder="••••••••"
+          minlength="4"
+          maxlength="30"
+          required
+        >
+        <button type="button" class="btn btn-ghost btn-xs absolute right-3 rounded-lg text-[10px] uppercase font-black tracking-widest text-primary/90 hover:text-primary hover:bg-base-300/40" (click)="onVisibilityToggle()">
+          {{showButtonTitle}}
+        </button>
+      </div>
     </div>
 
-    <button type="submit" class="button centered" [disabled]="!form.valid">
-      Create Account
+    <button type="submit" class="btn btn-primary w-full rounded-xl mt-3 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99]" [disabled]="!form.valid">
+      Register
     </button>
   </form>
 
-  <div class="reference">
-    <span>Already have an accout?</span>
-    <a routerLink="/login">Login</a>
+  <div class="divider my-5 text-xs text-base-content/30 uppercase tracking-widest">Already have an account?</div>
+
+  <div class="text-center text-sm text-base-content/65">
+    Already have an account?
+    <a routerLink="/login" class="text-primary font-bold hover:underline transition-colors ml-1">Login</a>
   </div>
 </div>

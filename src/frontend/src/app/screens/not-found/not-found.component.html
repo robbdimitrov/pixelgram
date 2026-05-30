@@ -1,7 +1,21 @@
-<div class="container full-width">
-  <h1 class="title">Not Found</h1>
+<div class="max-w-md mx-auto my-12 sm:my-20 text-center glass-card p-8 sm:p-10 rounded-3xl border border-white/25 shadow-xl flex flex-col items-center gap-5">
+  <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  </div>
+  
+  <div>
+    <h1 class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Page Not Found</h1>
+    <p class="text-sm text-base-content/60 mt-2 px-2">
+      The creative capture or profile you are looking for doesn't exist, or has been removed.
+    </p>
+  </div>
 
-  <p class="description centered">
-    The resource can't be found.
-  </p>
+  <a 
+    routerLink="/" 
+    class="btn btn-primary rounded-xl px-8 mt-2 font-bold shadow-md shadow-primary/20 hover:scale-105 active:scale-95 transition-transform"
+  >
+    Back to Home Feed
+  </a>
 </div>

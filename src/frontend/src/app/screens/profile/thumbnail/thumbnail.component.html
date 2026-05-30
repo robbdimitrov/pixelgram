@@ -1,3 +1,12 @@
-<a [routerLink]="['/images', image.id]" class="frame">
-  <img [src]="image.filename | image">
+<a [routerLink]="['/images', image.id]" class="group relative block w-full h-full overflow-hidden rounded-2xl bg-base-300/30 border border-white/10 shadow-sm hover:shadow-md transition-all duration-500">
+  <img 
+    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" 
+    [src]="image.filename | image"
+    [alt]="image.description"
+  >
+  <!-- Hover details overlay -->
+  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 text-white font-extrabold text-sm gap-2 backdrop-blur-xs">
+    <fa-icon [icon]="['fas', 'heart']" class="text-base text-white"></fa-icon>
+    <span>{{image.likes}}</span>
+  </div>
 </a>

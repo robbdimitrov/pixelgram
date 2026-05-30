@@ -1,6 +1,6 @@
-<div class="container full-width">
-  <ul class="list">
-    <li class="bordered" *ngFor="let image of images()">
+<div class="max-w-xl mx-auto flex flex-col items-center gap-6 pb-12">
+  <div class="w-full flex flex-col gap-6">
+    <div *ngFor="let image of images()" class="w-full transition-all duration-300">
       <app-image
         [image]="image"
         [user]="image.userId | user | async"
@@ -9,15 +9,15 @@
         (deleteAction)="onDeleteAction($event)"
       >
       </app-image>
-    </li>
-  </ul>
+    </div>
+  </div>
 
   <button
     id="next"
     *ngIf="count() > 5"
-    class="button centered"
+    class="btn btn-outline btn-primary rounded-xl px-8 mt-4 hover:scale-105 active:scale-95 transition-transform font-bold"
     (click)="onNextClick()"
   >
-    Next
+    Load More
   </button>
 </div>
