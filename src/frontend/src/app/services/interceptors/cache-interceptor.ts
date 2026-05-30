@@ -18,7 +18,7 @@ export class CacheInterceptor implements HttpInterceptor {
 
   private sendCache(url: string) {
     const response = this.cache.get(url);
-    if (response instanceof HttpResponse<any>) {
+    if (response instanceof HttpResponse) {
       return of(response);
     }
     return response;
