@@ -6,50 +6,52 @@
 
   <div class="flex items-center gap-3">
     <!-- Logged in navigation -->
-    <ul *ngIf="userId()" class="flex items-center gap-0.5">
-      <li>
-        <a
-          class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
-          routerLinkActive="btn-active text-primary bg-primary/10"
-          routerLink="/feed"
-          title="Home"
-        >
-          <fa-icon [icon]="['fas', 'home']"></fa-icon>
-        </a>
-      </li>
-
-      <li>
-        <a
-          class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
-          routerLinkActive="btn-active text-primary bg-primary/10"
-          routerLink="/upload"
-          title="Upload"
-        >
-          <fa-icon [icon]="['far', 'plus-square']"></fa-icon>
-        </a>
-      </li>
-
-      <li>
-        <a
-          class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
-          routerLinkActive="btn-active text-primary bg-primary/10"
-          [routerLink]="['/users', userId()]"
-          title="Profile"
-        >
-          <fa-icon [icon]="['fas', 'user']"></fa-icon>
-        </a>
-      </li>
-    </ul>
+    @if (userId()) {
+      <ul class="flex items-center gap-0.5">
+        <li>
+          <a
+            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
+            routerLinkActive="btn-active text-primary bg-primary/10"
+            routerLink="/feed"
+            title="Home"
+            >
+            <fa-icon [icon]="['fas', 'home']"></fa-icon>
+          </a>
+        </li>
+        <li>
+          <a
+            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
+            routerLinkActive="btn-active text-primary bg-primary/10"
+            routerLink="/upload"
+            title="Upload"
+            >
+            <fa-icon [icon]="['far', 'plus-square']"></fa-icon>
+          </a>
+        </li>
+        <li>
+          <a
+            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
+            routerLinkActive="btn-active text-primary bg-primary/10"
+            [routerLink]="['/users', userId()]"
+            title="Profile"
+            >
+            <fa-icon [icon]="['fas', 'user']"></fa-icon>
+          </a>
+        </li>
+      </ul>
+    }
 
     <!-- Logged out navigation -->
-    <ul *ngIf="!userId()" class="flex items-center gap-1.5">
-      <li>
-        <a class="btn btn-ghost btn-sm rounded-full text-xs px-3" routerLink="/login">Log In</a>
-      </li>
-      <li>
-        <a class="btn btn-primary btn-sm rounded-full text-xs px-3 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:scale-105" routerLink="/signup">Sign Up</a>
-      </li>
-    </ul>
+    @if (!userId()) {
+      <ul class="flex items-center gap-1.5">
+        <li>
+          <a class="btn btn-ghost btn-sm rounded-full text-xs px-3" routerLink="/login">Log In</a>
+        </li>
+        <li>
+          <a class="btn btn-primary btn-sm rounded-full text-xs px-3 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:scale-105" routerLink="/signup">Sign Up</a>
+        </li>
+      </ul>
+    }
 
     <!-- Divider -->
     <div class="h-6 w-[1.5px] bg-base-300/80"></div>
@@ -57,13 +59,17 @@
     <!-- Theme toggler -->
     <button (click)="toggleTheme()" class="btn btn-ghost btn-circle btn-sm text-lg hover:bg-base-200/50 transition-transform duration-300 active:scale-90" title="Toggle Theme">
       <!-- Sun icon for dark mode -->
-      <svg *ngIf="isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning fill-warning animate-spin-slow" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
-      </svg>
+      @if (isDarkMode) {
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning fill-warning animate-spin-slow" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>
+      }
       <!-- Moon icon for light mode -->
-      <svg *ngIf="!isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-      </svg>
+      @if (!isDarkMode) {
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+        </svg>
+      }
     </button>
   </div>
 </header>

@@ -1,23 +1,27 @@
 <div class="max-w-4xl mx-auto flex flex-col gap-6 pb-12">
-  <app-profile-header
-    [user]="user"
-    *ngIf="user"
-  >
-  </app-profile-header>
+  @if (user) {
+    <app-profile-header
+      [user]="user"
+      >
+    </app-profile-header>
+  }
 
   <div class="divider my-2"></div>
 
   <!-- Grid of user's posts -->
-  <div class="grid grid-cols-3 gap-2 sm:gap-4" *ngIf="images().length > 0; else elseBlock">
-    <div *ngFor="let image of images()" class="aspect-square">
-      <app-thumbnail [image]="image"></app-thumbnail>
+  @if (images().length > 0) {
+    <div class="grid grid-cols-3 gap-2 sm:gap-4">
+      @for (image of images(); track image) {
+        <div class="aspect-square">
+          <app-thumbnail [image]="image"></app-thumbnail>
+        </div>
+      }
     </div>
-  </div>
-
-  <ng-template #elseBlock>
+  } @else {
     <div class="flex flex-col items-center justify-center p-12 text-center text-base-content/50 border border-dashed border-base-300 rounded-3xl mt-6 bg-base-200/10">
       <fa-icon [icon]="['far', 'plus-square']" class="text-3xl mb-3 opacity-60"></fa-icon>
       <span class="font-semibold text-sm">No uploads yet</span>
     </div>
-  </ng-template>
+  }
+
 </div>

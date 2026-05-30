@@ -7,7 +7,9 @@
   <div class="flex flex-col sm:flex-row gap-5 items-stretch">
     <!-- Image Preview Thumbnail -->
     <div class="w-full sm:w-28 h-28 aspect-square rounded-2xl overflow-hidden border border-base-300 bg-base-300/10 shadow-sm shrink-0 flex items-center justify-center">
-      <img class="w-full h-full object-cover" *ngIf="imagePreview" [src]="imagePreview" alt="Upload preview">
+      @if (imagePreview) {
+        <img class="w-full h-full object-cover" [src]="imagePreview" alt="Upload preview">
+      }
     </div>
 
     <!-- Description textarea -->
@@ -25,7 +27,7 @@
       class="btn btn-primary rounded-xl px-8 shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-105 active:scale-95 font-black uppercase tracking-wider text-xs"
       (click)="onSubmitClick()"
       [disabled]="!hasSelectedFile()"
-    >
+      >
       Share Post
     </button>
   </div>

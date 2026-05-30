@@ -1,57 +1,66 @@
 <div class="glass-card w-full rounded-3xl shadow-lg border border-white/25 overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-white/40">
   <!-- Card Header -->
   <div class="flex items-center justify-between px-4 py-3.5 bg-base-200/20 border-b border-base-200/50 backdrop-blur-xs">
-    <div class="flex items-center gap-3" *ngIf="user">
-      <a [routerLink]="['/users', user.id]" class="relative w-9 h-9 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors duration-300">
-        <img class="w-full h-full object-cover" [src]="user.avatar | image" [alt]="user.username">
-      </a>
-      <div class="flex flex-col">
-        <a [routerLink]="['/users', user.id]" class="font-bold text-sm text-base-content hover:text-primary transition-colors">
-          {{user.username}}
+    @if (user) {
+      <div class="flex items-center gap-3">
+        <a [routerLink]="['/users', user.id]" class="relative w-9 h-9 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors duration-300">
+          <img class="w-full h-full object-cover" [src]="user.avatar | image" [alt]="user.username">
         </a>
-        <span class="text-[10px] text-base-content/50" *ngIf="user.name">{{user.name}}</span>
+        <div class="flex flex-col">
+          <a [routerLink]="['/users', user.id]" class="font-bold text-sm text-base-content hover:text-primary transition-colors">
+            {{user.username}}
+          </a>
+          @if (user.name) {
+            <span class="text-[10px] text-base-content/50">{{user.name}}</span>
+          }
+        </div>
       </div>
-    </div>
+    }
 
     <!-- Dropdown for Owned Post Actions -->
-    <div class="relative" *ngIf="isOwnedByCurrentUser()">
-      <button
-        class="btn btn-ghost btn-circle btn-sm text-base-content/50 hover:text-error hover:bg-error/10"
-        (click)="optionsOpened = !optionsOpened"
-      >
-        <fa-icon [icon]="['fas', 'chevron-down']" class="text-xs"></fa-icon>
-      </button>
-      <div *ngIf="optionsOpened" class="absolute right-0 mt-1.5 z-20 w-36 bg-base-200 border border-base-300 rounded-xl shadow-xl overflow-hidden py-1">
-        <button (click)="onDeleteClick()" class="w-full px-4 py-2 text-left text-sm font-semibold text-error hover:bg-error/10 flex items-center transition-colors">
-          Delete post
+    @if (isOwnedByCurrentUser()) {
+      <div class="relative">
+        <button
+          class="btn btn-ghost btn-circle btn-sm text-base-content/50 hover:text-error hover:bg-error/10"
+          (click)="optionsOpened = !optionsOpened"
+          >
+          <fa-icon [icon]="['fas', 'chevron-down']" class="text-xs"></fa-icon>
         </button>
+        @if (optionsOpened) {
+          <div class="absolute right-0 mt-1.5 z-20 w-36 bg-base-200 border border-base-300 rounded-xl shadow-xl overflow-hidden py-1">
+            <button (click)="onDeleteClick()" class="w-full px-4 py-2 text-left text-sm font-semibold text-error hover:bg-error/10 flex items-center transition-colors">
+              Delete post
+            </button>
+          </div>
+        }
       </div>
-    </div>
+    }
   </div>
 
   <!-- Post Image Frame -->
   <div class="relative w-full aspect-square overflow-hidden bg-base-300/10">
-    <img 
-      class="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03] cursor-pointer" 
-      [src]="image.filename | image" 
+    <img
+      class="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03] cursor-pointer"
+      [src]="image.filename | image"
       [alt]="image.description"
       (doubleclick)="onLikeClick()"
-    >
+      >
   </div>
 
   <!-- Action Bar -->
   <div class="flex items-center gap-3 px-4 pt-3.5">
-    <button 
-      class="btn btn-ghost btn-circle btn-sm hover:bg-error/10 hover:text-error transition-all group duration-300" 
-      [ngClass]="{'text-error': image.liked}" 
+    <button
+      class="btn btn-ghost btn-circle btn-sm hover:bg-error/10 hover:text-error transition-all group duration-300"
+      [ngClass]="{'text-error': image.liked}"
       (click)="onLikeClick()"
-    >
-      <div *ngIf="image.liked; else elseBlock" class="scale-110 active:scale-125 transition-transform duration-200">
-        <fa-icon [icon]="['fas', 'heart']" class="text-lg"></fa-icon>
-      </div>
-      <ng-template #elseBlock>
+      >
+      @if (image.liked) {
+        <div class="scale-110 active:scale-125 transition-transform duration-200">
+          <fa-icon [icon]="['fas', 'heart']" class="text-lg"></fa-icon>
+        </div>
+      } @else {
         <fa-icon [icon]="['far', 'heart']" class="text-lg text-base-content/60 group-hover:text-error transition-colors"></fa-icon>
-      </ng-template>
+      }
     </button>
     <span class="font-extrabold text-sm text-base-content/95">
       {{image.likes}} {{image.likes === 1 ? 'like' : 'likes'}}
@@ -60,13 +69,17 @@
 
   <!-- Card Description & Comments Content -->
   <div class="px-4 pb-4.5 pt-1.5 flex flex-col gap-1">
-    <div class="text-sm leading-relaxed" *ngIf="isDescriptionPresent()">
-      <a [routerLink]="['/users', image.userId]" class="font-bold text-base-content hover:underline mr-1.5" *ngIf="user">
-        {{user.username}}
-      </a>
-      <span class="text-base-content/85 whitespace-pre-wrap">{{image.description}}</span>
-    </div>
-    
+    @if (isDescriptionPresent()) {
+      <div class="text-sm leading-relaxed">
+        @if (user) {
+          <a [routerLink]="['/users', image.userId]" class="font-bold text-base-content hover:underline mr-1.5">
+            {{user.username}}
+          </a>
+        }
+        <span class="text-base-content/85 whitespace-pre-wrap">{{image.description}}</span>
+      </div>
+    }
+
     <!-- Upload Date -->
     <span class="text-[10px] font-semibold uppercase tracking-wider text-base-content/40 mt-1">
       {{image.created | relativedate}}

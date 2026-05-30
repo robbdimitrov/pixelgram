@@ -7,9 +7,11 @@
     </div>
 
     <!-- Image Preview Thumbnail if selected -->
-    <div *ngIf="imagePreview" class="relative w-full aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden border border-base-300 bg-base-300/10 shadow-inner flex items-center justify-center mb-6">
-      <img class="w-full h-full object-cover" [src]="imagePreview" alt="Upload preview">
-    </div>
+    @if (imagePreview) {
+      <div class="relative w-full aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden border border-base-300 bg-base-300/10 shadow-inner flex items-center justify-center mb-6">
+        <img class="w-full h-full object-cover" [src]="imagePreview" alt="Upload preview">
+      </div>
+    }
 
     <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-base-300 rounded-2xl bg-base-200/20 hover:bg-base-200/40 hover:border-primary/50 transition-all duration-300 group cursor-pointer relative">
       <label class="flex flex-col items-center justify-center gap-4 cursor-pointer w-full py-4" for="file">
@@ -29,7 +31,7 @@
         accept="image/*"
         class="hidden"
         (change)="onChange(file.files)"
-      >
+        >
     </div>
 
     <!-- Next Button -->
@@ -37,7 +39,7 @@
       class="btn btn-primary w-full rounded-xl mt-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-transform"
       (click)="onNextClick()"
       [disabled]="!imagePreview"
-    >
+      >
       Next
     </button>
   </div>

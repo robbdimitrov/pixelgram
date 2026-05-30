@@ -1,101 +1,97 @@
-<div class="glass-card max-w-xl mx-auto my-6 sm:my-10 p-6 sm:p-8 rounded-3xl border border-white/25 shadow-xl flex flex-col gap-6" *ngIf="user">
-  <!-- Back Header -->
-  <div class="flex items-center gap-3 pb-2 border-b border-base-200/40">
-    <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-base-content/60 hover:bg-base-200/50 hover:text-primary transition-colors" title="Back to Settings">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-      </svg>
-    </a>
-    <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Edit Profile</h1>
-  </div>
-
-  <form (ngSubmit)="onSubmit()" #form="ngForm" class="space-y-5">
-    <!-- Avatar Selection Center -->
-    <div class="flex flex-col items-center gap-2 mb-4">
-      <label 
-        for="file" 
-        class="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 hover:border-primary hover:scale-[1.02] transition-all duration-300 shadow-md group cursor-pointer block"
-        title="Change Avatar"
-      >
-        <img class="w-full h-full object-cover" [src]="imagePreview || (user.avatar | image)" alt="Profile avatar">
-        <!-- Change overlay -->
-        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity duration-300">
-          Change
+@if (user) {
+  <div class="glass-card max-w-xl mx-auto my-6 sm:my-10 p-6 sm:p-8 rounded-3xl border border-white/25 shadow-xl flex flex-col gap-6">
+    <!-- Back Header -->
+    <div class="flex items-center gap-3 pb-2 border-b border-base-200/40">
+      <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-base-content/60 hover:bg-base-200/50 hover:text-primary transition-colors" title="Back to Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </a>
+      <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Edit Profile</h1>
+    </div>
+    <form (ngSubmit)="onSubmit()" #form="ngForm" class="space-y-5">
+      <!-- Avatar Selection Center -->
+      <div class="flex flex-col items-center gap-2 mb-4">
+        <label
+          for="file"
+          class="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 hover:border-primary hover:scale-[1.02] transition-all duration-300 shadow-md group cursor-pointer block"
+          title="Change Avatar"
+          >
+          <img class="w-full h-full object-cover" [src]="imagePreview || (user.avatar | image)" alt="Profile avatar">
+          <!-- Change overlay -->
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity duration-300">
+            Change
+          </div>
+        </label>
+        <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
+        <span class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Tap avatar to change</span>
+      </div>
+      <!-- Form Fields -->
+      <div class="space-y-4">
+        <div class="form-control">
+          <label for="name" class="label pb-0.5">
+            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Full Name</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            [(ngModel)]="user.name"
+            class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+            placeholder="Enter your name"
+            required
+            >
         </div>
-      </label>
-      <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
-      <span class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Tap avatar to change</span>
-    </div>
-
-    <!-- Form Fields -->
-    <div class="space-y-4">
-      <div class="form-control">
-        <label for="name" class="label pb-0.5">
-          <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Full Name</span>
-        </label>
-        <input 
-          type="text" 
-          id="name" 
-          name="name" 
-          [(ngModel)]="user.name" 
-          class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
-          placeholder="Enter your name"
-          required
+        <div class="form-control">
+          <label for="username" class="label pb-0.5">
+            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Username</span>
+          </label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            [(ngModel)]="user.username"
+            class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+            placeholder="Enter username"
+            required
+            >
+        </div>
+        <div class="form-control">
+          <label for="bio" class="label pb-0.5">
+            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Bio</span>
+          </label>
+          <textarea
+            id="bio"
+            name="bio"
+            [(ngModel)]="user.bio"
+            class="textarea textarea-bordered rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 w-full h-24 text-sm py-2 px-3 resize-none"
+            placeholder="Tell people about yourself..."
+            maxlength="160"
+          ></textarea>
+        </div>
+        <div class="form-control">
+          <label for="email" class="label pb-0.5">
+            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Email Address</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="user.email"
+            class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+            placeholder="Enter email"
+            required
+            >
+        </div>
+      </div>
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn btn-primary w-full rounded-xl mt-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99]"
+        [disabled]="!form.valid"
         >
-      </div>
-
-      <div class="form-control">
-        <label for="username" class="label pb-0.5">
-          <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Username</span>
-        </label>
-        <input 
-          type="text" 
-          id="username" 
-          name="username" 
-          [(ngModel)]="user.username" 
-          class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
-          placeholder="Enter username" 
-          required
-        >
-      </div>
-
-      <div class="form-control">
-        <label for="bio" class="label pb-0.5">
-          <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Bio</span>
-        </label>
-        <textarea 
-          id="bio" 
-          name="bio" 
-          [(ngModel)]="user.bio" 
-          class="textarea textarea-bordered rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 w-full h-24 text-sm py-2 px-3 resize-none"
-          placeholder="Tell people about yourself..."
-          maxlength="160"
-        ></textarea>
-      </div>
-
-      <div class="form-control">
-        <label for="email" class="label pb-0.5">
-          <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Email Address</span>
-        </label>
-        <input 
-          type="email" 
-          id="email" 
-          name="email" 
-          [(ngModel)]="user.email" 
-          class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
-          placeholder="Enter email" 
-          required
-        >
-      </div>
-    </div>
-
-    <!-- Submit Button -->
-    <button 
-      type="submit" 
-      class="btn btn-primary w-full rounded-xl mt-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99]" 
-      [disabled]="!form.valid"
-    >
-      Save Profile Details
-    </button>
-  </form>
-</div>
+        Save Profile Details
+      </button>
+    </form>
+  </div>
+}

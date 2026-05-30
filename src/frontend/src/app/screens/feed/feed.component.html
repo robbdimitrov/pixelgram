@@ -1,23 +1,26 @@
 <div class="max-w-xl mx-auto flex flex-col items-center gap-6 pb-12">
   <div class="w-full flex flex-col gap-6">
-    <div *ngFor="let image of images()" class="w-full transition-all duration-300">
-      <app-image
-        [image]="image"
-        [user]="image.userId | user | async"
-        (like)="onLike($event)"
-        (unlike)="onUnlike($event)"
-        (deleteAction)="onDeleteAction($event)"
-      >
-      </app-image>
-    </div>
+    @for (image of images(); track image) {
+      <div class="w-full transition-all duration-300">
+        <app-image
+          [image]="image"
+          [user]="image.userId | user | async"
+          (like)="onLike($event)"
+          (unlike)="onUnlike($event)"
+          (deleteAction)="onDeleteAction($event)"
+          >
+        </app-image>
+      </div>
+    }
   </div>
 
-  <button
-    id="next"
-    *ngIf="count() > 5"
-    class="btn btn-outline btn-primary rounded-xl px-8 mt-4 hover:scale-105 active:scale-95 transition-transform font-bold"
-    (click)="onNextClick()"
-  >
-    Load More
-  </button>
+  @if (count() > 5) {
+    <button
+      id="next"
+      class="btn btn-outline btn-primary rounded-xl px-8 mt-4 hover:scale-105 active:scale-95 transition-transform font-bold"
+      (click)="onNextClick()"
+      >
+      Load More
+    </button>
+  }
 </div>
