@@ -72,10 +72,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "pixelgram:build:production"
+              "buildTarget": "pixelgram:build:production"
             },
             "development": {
-              "browserTarget": "pixelgram:build:development"
+              "buildTarget": "pixelgram:build:development"
             }
           },
           "options": {
@@ -86,7 +86,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "pixelgram:build"
+            "buildTarget": "pixelgram:build"
           }
         },
         "test": {
