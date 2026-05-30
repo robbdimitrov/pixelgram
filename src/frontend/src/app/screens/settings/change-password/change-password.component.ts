@@ -5,8 +5,9 @@ import {APIClient} from '../../../services/api-client.service';
 import {Session} from '../../../services/session.service';
 
 @Component({
-  selector: 'app-change-password',
-  templateUrl: './change-password.component.html'
+    selector: 'app-change-password',
+    templateUrl: './change-password.component.html',
+    standalone: false
 })
 export class ChangePasswordComponent {
   oldPasswordValue = '';

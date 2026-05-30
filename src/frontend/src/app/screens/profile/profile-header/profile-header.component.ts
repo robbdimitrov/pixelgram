@@ -4,9 +4,10 @@ import {User} from '../../../models/user.model';
 import {Session} from '../../../services/session.service';
 
 @Component({
-  selector: 'app-profile-header',
-  templateUrl: './profile-header.component.html',
-  styleUrls: ['./profile-header.component.scss']
+    selector: 'app-profile-header',
+    templateUrl: './profile-header.component.html',
+    styleUrls: ['./profile-header.component.scss'],
+    standalone: false
 })
 export class ProfileHeaderComponent {
   @Input() user: User;

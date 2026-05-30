@@ -5,8 +5,9 @@ import {APIClient} from '../../services/api-client.service';
 import {Session} from '../../services/session.service';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html'
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    standalone: false
 })
 export class LoginComponent implements OnInit {
   emailValue = '';

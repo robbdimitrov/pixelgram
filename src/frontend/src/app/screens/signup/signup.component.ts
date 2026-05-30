@@ -5,8 +5,9 @@ import {APIClient} from '../../services/api-client.service';
 import {Session} from '../../services/session.service';
 
 @Component({
-  selector: 'app-signup',
-  templateUrl: './signup.component.html'
+    selector: 'app-signup',
+    templateUrl: './signup.component.html',
+    standalone: false
 })
 export class SignupComponent implements OnInit {
   nameValue = '';

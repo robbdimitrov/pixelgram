@@ -3,7 +3,8 @@ import {Pipe, PipeTransform} from '@angular/core';
 import {APIClient} from '../../services/api-client.service';
 
 @Pipe({
-  name: 'user'
+    name: 'user',
+    standalone: false
 })
 export class UserPipe implements PipeTransform {
   constructor(private apiClient: APIClient) {}

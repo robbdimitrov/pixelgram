@@ -5,9 +5,10 @@ import {ImageUploadService} from '../image-upload.service';
 import {APIClient} from '../../../services/api-client.service';
 
 @Component({
-  selector: 'app-image-create',
-  templateUrl: './image-create.component.html',
-  styleUrls: ['./image-create.component.scss']
+    selector: 'app-image-create',
+    templateUrl: './image-create.component.html',
+    styleUrls: ['./image-create.component.scss'],
+    standalone: false
 })
 export class ImageCreateComponent {
   imageDescription: string;

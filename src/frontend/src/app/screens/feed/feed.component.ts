@@ -6,9 +6,10 @@ import {Image} from '../../models/image.model';
 import {PaginationService} from '../../services/pagination.service';
 
 @Component({
-  templateUrl: './feed.component.html',
-  styleUrls: ['feed.component.scss'],
-  providers: [PaginationService]
+    templateUrl: './feed.component.html',
+    styleUrls: ['feed.component.scss'],
+    providers: [PaginationService],
+    standalone: false
 })
 export class FeedComponent {
   userId?: number;
