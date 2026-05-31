@@ -38,7 +38,7 @@
             name="name"
             #name="ngModel"
             [(ngModel)]="user.name"
-            class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+            appFormInput
             placeholder="Enter your name"
             required
             >
@@ -56,7 +56,7 @@
             name="username"
             #username="ngModel"
             [(ngModel)]="user.username"
-            class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+            appFormInput
             placeholder="Enter username"
             required
             >
@@ -72,7 +72,8 @@
             id="bio"
             name="bio"
             [(ngModel)]="user.bio"
-            class="textarea textarea-bordered h-24 w-full resize-none rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+            class="h-24"
+            appFormTextarea
             placeholder="Tell people about yourself..."
             maxlength="160"
           ></textarea>
@@ -87,7 +88,7 @@
             name="email"
             #email="ngModel"
             [(ngModel)]="user.email"
-            class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+            appFormInput
             placeholder="Enter email"
             pattern="[^@]+@[^@]+\.[^@]+"
             required
@@ -105,7 +106,8 @@
       </div>
       <button
         type="submit"
-        class="btn mt-6 h-12 min-h-12 w-full rounded-full border-0 bg-slate-950 font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600"
+        class="mt-6 w-full"
+        appPrimaryAction
         [disabled]="!form.valid"
         >
         Save Profile Details

@@ -24,7 +24,7 @@
         name="email"
         #email="ngModel"
         [(ngModel)]="emailValue"
-        class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+        appFormInput
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
         required
@@ -51,7 +51,8 @@
           name="password"
           #password="ngModel"
           [(ngModel)]="passwordValue"
-          class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 pr-20 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+          class="pr-20"
+          appFormInput
           placeholder="Password"
           minlength="4"
           maxlength="30"
@@ -72,7 +73,7 @@
       }
     </div>
 
-    <button type="submit" class="btn h-12 min-h-12 w-full rounded-full border-0 bg-slate-950 text-base font-extrabold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600" [disabled]="!form.valid">
+    <button type="submit" class="w-full text-base font-extrabold" appPrimaryAction [disabled]="!form.valid">
       Log In
     </button>
   </form>

@@ -13,6 +13,7 @@ import {
   LucideSquarePlus,
   LucideSun,
   LucideMoon,
+  LucideMonitor,
   LucideArrowLeft,
   LucideTriangleAlert
 } from '@lucide/angular';
@@ -21,13 +22,21 @@ import {NavbarComponent} from './components/navbar.component';
 import {ImagePipe} from './pipes/image.pipe';
 import {UserPipe} from './pipes/user.pipe';
 import {RelativeDatePipe} from './pipes/relative-date.pipe';
+import {
+  FormInputStyleDirective,
+  FormTextareaStyleDirective,
+  PrimaryActionStyleDirective
+} from './directives/form-control-style.directive';
 
 @NgModule({
   declarations: [
     NavbarComponent,
     ImagePipe,
     UserPipe,
-    RelativeDatePipe
+    RelativeDatePipe,
+    FormInputStyleDirective,
+    FormTextareaStyleDirective,
+    PrimaryActionStyleDirective
   ],
   imports: [
     CommonModule,
@@ -43,6 +52,7 @@ import {RelativeDatePipe} from './pipes/relative-date.pipe';
     LucideSquarePlus,
     LucideSun,
     LucideMoon,
+    LucideMonitor,
     LucideArrowLeft,
     LucideTriangleAlert
   ],
@@ -60,12 +70,16 @@ import {RelativeDatePipe} from './pipes/relative-date.pipe';
     LucideSquarePlus,
     LucideSun,
     LucideMoon,
+    LucideMonitor,
     LucideArrowLeft,
     LucideTriangleAlert,
     NavbarComponent,
     ImagePipe,
     UserPipe,
-    RelativeDatePipe
+    RelativeDatePipe,
+    FormInputStyleDirective,
+    FormTextareaStyleDirective,
+    PrimaryActionStyleDirective
   ]
 })
 export class SharedModule {}

@@ -14,7 +14,8 @@
     <textarea
       name="description"
       [(ngModel)]="imageDescription"
-      class="textarea textarea-bordered h-28 flex-grow resize-none rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 transition-colors focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+      class="h-28 flex-grow"
+      appFormTextarea
       placeholder="Write an inspiring caption here..."
       maxlength="160"
     ></textarea>
@@ -22,7 +23,8 @@
 
   <div class="flex justify-end mt-2">
     <button
-      class="btn h-12 min-h-12 rounded-full border-0 bg-slate-950 px-8 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600"
+      class="px-8 text-xs font-black uppercase tracking-wider"
+      appPrimaryAction
       (click)="onSubmitClick()"
       [disabled]="!hasSelectedFile()"
       >
