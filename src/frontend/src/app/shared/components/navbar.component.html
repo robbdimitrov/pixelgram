@@ -9,7 +9,7 @@
   <nav class="flex shrink-0 items-center gap-1 rounded-full bg-slate-950/5 p-1 leading-none dark:bg-white/10 sm:gap-2 sm:p-1.5" aria-label="Primary navigation">
     @if (userId()) {
       <a
-        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white sm:h-11 sm:w-11"
         routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
         routerLink="/feed"
         title="Home"
@@ -19,7 +19,7 @@
       </a>
 
       <a
-        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white sm:h-11 sm:w-11"
         routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
         routerLink="/upload"
         title="Upload"
@@ -29,7 +29,7 @@
       </a>
 
       <a
-        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white sm:h-11 sm:w-11"
         routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
         [routerLink]="['/users', userId()]"
         title="Profile"
@@ -48,7 +48,7 @@
     <div class="relative">
       <button
         type="button"
-        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white sm:h-11 sm:w-11"
         (click)="isThemeMenuOpen = !isThemeMenuOpen"
         [title]="themeTitle()"
         [attr.aria-label]="themeTitle()"

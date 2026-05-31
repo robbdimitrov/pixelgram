@@ -12,6 +12,7 @@ import {PaginationService} from '../../services/pagination.service';
 })
 export class FeedComponent {
   userId?: number;
+  hasLoaded = false;
 
   constructor(
     private apiClient: APIClient,
@@ -40,16 +41,26 @@ export class FeedComponent {
           return !(this.pagination.data.some((item) => image.id === item.id));
         });
         this.pagination.update(images);
+        this.hasLoaded = true;
       },
-      error: (error) => console.error(`Error loading images: ${error.message}`)
+      error: (error) => {
+        this.hasLoaded = true;
+        console.error(`Error loading images: ${error.message}`);
+      }
     });
   }
 
   loadImage(imageId: number) {
-    this.apiClient.getImage(imageId).subscribe(
-      (value) => this.pagination.update([value]),
-      (error) => console.error(`Loading image failed: ${error.message}`)
-    );
+    this.apiClient.getImage(imageId).subscribe({
+      next: (value) => {
+        this.pagination.update([value]);
+        this.hasLoaded = true;
+      },
+      error: (error) => {
+        this.hasLoaded = true;
+        console.error(`Loading image failed: ${error.message}`);
+      }
+    });
   }
 
   images() {
@@ -58,6 +69,10 @@ export class FeedComponent {
 
   count() {
     return this.pagination.count();
+  }
+
+  isEmpty() {
+    return this.hasLoaded && this.count() === 0;
   }
 
   onLike(imageId: number) {
