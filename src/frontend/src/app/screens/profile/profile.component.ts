@@ -4,6 +4,7 @@ import {ActivatedRoute} from '@angular/router';
 import {Image} from '../../models/image.model';
 import {APIClient} from '../../services/api-client.service';
 import {PaginationService} from '../../services/pagination.service';
+import {Session} from '../../services/session.service';
 import {User} from '../../models/user.model';
 
 @Component({
@@ -14,11 +15,13 @@ import {User} from '../../models/user.model';
 })
 export class ProfileComponent {
   user?: User;
+  hasLoadedImages = false;
 
   constructor(
     private apiClient: APIClient,
     private pagination: PaginationService<Image>,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private session: Session
   ) {
     this.route.params.subscribe((params) => {
       if (!this.user || params['userId'] !== this.user.id) {
@@ -31,6 +34,7 @@ export class ProfileComponent {
     this.apiClient.getUser(userId, true).subscribe({
       next: (value) => {
         this.user = value;
+        this.hasLoadedImages = false;
         this.pagination.reset();
         this.loadNextPage();
       },
@@ -49,8 +53,12 @@ export class ProfileComponent {
           return !(this.pagination.data.some((item) => image.id === item.id));
         });
         this.pagination.update(images);
+        this.hasLoadedImages = true;
       },
-      error: (error) => console.error(`Error loading images: ${error.message}`)
+      error: (error) => {
+        this.hasLoadedImages = true;
+        console.error(`Error loading images: ${error.message}`);
+      }
     });
   }
 
@@ -60,6 +68,18 @@ export class ProfileComponent {
 
   count() {
     return this.pagination.count();
+  }
+
+  isEmpty() {
+    return this.hasLoadedImages && this.count() === 0;
+  }
+
+  isCurrentUser() {
+    if (!this.user) {
+      return false;
+    }
+
+    return this.session.userId() === this.user.id;
   }
 
   onNextClick() {

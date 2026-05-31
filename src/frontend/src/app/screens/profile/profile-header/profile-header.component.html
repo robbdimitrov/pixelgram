@@ -41,6 +41,14 @@
           <p class="whitespace-pre-wrap text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             {{user.bio}}
           </p>
+        } @else {
+          <p class="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            @if (isCurrentUser()) {
+              Add a short bio so people know what you like to share.
+            } @else {
+              No bio yet.
+            }
+          </p>
         }
       </div>
     </div>

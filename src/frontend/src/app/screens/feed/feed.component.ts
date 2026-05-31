@@ -79,6 +79,22 @@ export class FeedComponent {
     return this.hasLoaded && this.count() === 0;
   }
 
+  isLikesPage() {
+    return this.userId !== undefined;
+  }
+
+  emptyStateTitle() {
+    return this.isLikesPage() ? 'No liked posts yet' : 'No posts yet';
+  }
+
+  emptyStateDescription() {
+    if (this.isLikesPage()) {
+      return 'Liked photos will appear here so they are easy to find again.';
+    }
+
+    return 'Your feed is empty. Upload the first photo to start filling PixelGram.';
+  }
+
   onLike(imageId: number) {
     this.apiClient.likeImage(imageId).subscribe();
   }

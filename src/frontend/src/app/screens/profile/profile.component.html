@@ -16,10 +16,34 @@
         </div>
       }
     </div>
-  } @else {
-    <div class="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 p-12 text-center text-slate-500 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-400">
-      <svg lucideSquarePlus class="mb-3 h-8 w-8"></svg>
-      <span class="text-sm font-semibold">No uploads yet</span>
+  } @else if (isEmpty()) {
+    <div class="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-slate-950 dark:border-white/15 dark:bg-slate-950/70 dark:text-white sm:p-12">
+      <div class="grid h-14 w-14 place-items-center rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+        <svg lucideCamera class="h-6 w-6"></svg>
+      </div>
+      <h2 class="mt-5 text-xl font-black">No uploads yet</h2>
+      <p class="mt-2 max-w-sm text-sm leading-6 text-slate-600 dark:text-slate-300">
+        @if (isCurrentUser()) {
+          Your profile is ready. Share your first photo to start building your grid.
+        } @else {
+          This profile has not shared any photos yet.
+        }
+      </p>
+      @if (isCurrentUser()) {
+        <a
+          routerLink="/upload"
+          class="btn mt-6 h-12 min-h-12 rounded-full border-0 bg-slate-950 px-6 font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+        >
+          Upload Photo
+        </a>
+      } @else {
+        <a
+          routerLink="/feed"
+          class="btn btn-outline mt-6 h-12 min-h-12 rounded-full border-slate-300 px-6 font-bold text-slate-900 hover:border-slate-950 hover:bg-slate-950 hover:text-white dark:border-white/20 dark:text-white dark:hover:border-white dark:hover:bg-white dark:hover:text-slate-950"
+        >
+          Browse Feed
+        </a>
+      }
     </div>
   }
 
