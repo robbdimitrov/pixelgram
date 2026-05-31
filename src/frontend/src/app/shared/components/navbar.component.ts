@@ -1,25 +1,38 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
 import {Session} from '../../services/session.service';
 
 @Component({
     selector: 'app-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: ['./navbar.component.scss'],
     standalone: false
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   isDarkMode = false;
+  private systemThemeQuery?: MediaQueryList;
+  private readonly systemThemeListener = (event: MediaQueryListEvent) => {
+    if (!localStorage.getItem('theme')) {
+      this.isDarkMode = event.matches;
+      this.applyTheme();
+    }
+  };
 
-  constructor(private session: Session) {}
+  constructor(private session: Session, public router: Router) {}
 
   ngOnInit() {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       this.isDarkMode = savedTheme === 'dark';
     } else {
-      this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.isDarkMode = this.systemThemeQuery.matches;
+      this.systemThemeQuery.addEventListener('change', this.systemThemeListener);
     }
     this.applyTheme();
+  }
+
+  ngOnDestroy() {
+    this.systemThemeQuery?.removeEventListener('change', this.systemThemeListener);
   }
 
   toggleTheme() {
@@ -40,5 +53,17 @@ export class NavbarComponent implements OnInit {
 
   userId() {
     return this.session.userId();
+  }
+
+  isSignupRoute() {
+    return this.router.url.startsWith('/signup');
+  }
+
+  authNavRoute() {
+    return this.isSignupRoute() ? '/login' : '/signup';
+  }
+
+  authNavTitle() {
+    return this.isSignupRoute() ? 'Log In' : 'Sign Up';
   }
 }

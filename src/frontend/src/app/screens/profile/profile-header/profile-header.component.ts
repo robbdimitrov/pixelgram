@@ -6,7 +6,6 @@ import {Session} from '../../../services/session.service';
 @Component({
     selector: 'app-profile-header',
     templateUrl: './profile-header.component.html',
-    styleUrls: ['./profile-header.component.scss'],
     standalone: false
 })
 export class ProfileHeaderComponent {

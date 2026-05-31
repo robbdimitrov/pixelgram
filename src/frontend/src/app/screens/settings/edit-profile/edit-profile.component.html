@@ -1,11 +1,9 @@
 @if (user) {
-  <div class="glass-card max-w-xl mx-auto my-6 sm:my-10 p-6 sm:p-8 rounded-3xl border border-white/25 shadow-xl flex flex-col gap-6">
+  <div class="card glass mx-auto my-6 flex max-w-xl flex-col gap-6 rounded-3xl border border-base-300/40 bg-base-100/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl sm:my-10 sm:p-8">
     <!-- Back Header -->
     <div class="flex items-center gap-3 pb-2 border-b border-base-200/40">
       <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-base-content/60 hover:bg-base-200/50 hover:text-primary transition-colors" title="Back to Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
+        <svg lucideArrowLeft class="h-5 w-5"></svg>
       </a>
       <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Edit Profile</h1>
     </div>

@@ -1,61 +1,68 @@
-<div class="max-w-md mx-auto my-8 sm:my-16 glass-card p-6 sm:p-8 rounded-3xl shadow-xl border border-white/20 flex flex-col">
-  <div class="text-center mb-6">
-    <h1 class="text-3xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">Create Account</h1>
-    <p class="text-base-content/60 text-sm">
-      Sign up for a PixelGram account to post your creative captures and join a growing community.
+<section class="mx-auto mt-10 grid w-full max-w-md gap-7 rounded-[1.75rem] border border-slate-200 bg-white/90 p-6 text-slate-950 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90 dark:text-white dark:shadow-black/35 sm:mt-16 sm:max-w-lg sm:p-8">
+  <div>
+    <span class="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Join PixelGram</span>
+    <h1 class="mt-3 text-4xl font-extrabold leading-tight tracking-normal text-slate-950 dark:text-white sm:text-[2.75rem]">Create your account</h1>
+    <p class="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">
+      Start a photo journal, publish your best moments, and make your profile yours.
     </p>
   </div>
 
-  <form (ngSubmit)="onSubmit()" #form="ngForm" class="space-y-4">
-    <div class="form-control">
-      <label for="name" class="label pb-0.5">
-        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Full Name</span>
+  <form (ngSubmit)="onSubmit()" #form="ngForm" class="grid gap-4">
+    @if (errorMessage) {
+      <div class="rounded-2xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+        {{ errorMessage }}
+      </div>
+    }
+
+    <div class="form-control grid gap-2.5">
+      <label for="name" class="label p-0">
+        <span class="label-text text-xs font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">Full Name</span>
       </label>
       <input
         type="text"
         id="name"
         name="name"
         [(ngModel)]="nameValue"
-        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+        class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
         placeholder="John Doe"
         required
       >
     </div>
 
-    <div class="form-control">
-      <label for="username" class="label pb-0.5">
-        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Username</span>
+    <div class="form-control grid gap-2.5">
+      <label for="username" class="label p-0">
+        <span class="label-text text-xs font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">Username</span>
       </label>
       <input
         type="text"
         id="username"
         name="username"
         [(ngModel)]="usernameValue"
-        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+        class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
         placeholder="johndoe"
         required
       >
     </div>
 
-    <div class="form-control">
-      <label for="email" class="label pb-0.5">
-        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Email Address</span>
+    <div class="form-control grid gap-2.5">
+      <label for="email" class="label p-0">
+        <span class="label-text text-xs font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">Email Address</span>
       </label>
       <input
         type="email"
         id="email"
         name="email"
         [(ngModel)]="emailValue"
-        class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+        class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
         required
       >
     </div>
 
-    <div class="form-control">
-      <label for="password" class="label pb-0.5">
-        <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Password</span>
+    <div class="form-control grid gap-2.5">
+      <label for="password" class="label p-0">
+        <span class="label-text text-xs font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">Password</span>
       </label>
       <div class="relative flex items-center">
         <input
@@ -63,27 +70,28 @@
           id="password"
           name="password"
           [(ngModel)]="passwordValue"
-          class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 pr-16"
-          placeholder="••••••••"
+          class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 pr-20 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
+          placeholder="Password"
           minlength="4"
           maxlength="30"
           required
         >
-        <button type="button" class="btn btn-ghost btn-xs absolute right-3 rounded-lg text-[10px] uppercase font-black tracking-widest text-primary/90 hover:text-primary hover:bg-base-300/40" (click)="onVisibilityToggle()">
+        <button type="button" class="btn btn-ghost absolute right-1.5 h-10 min-h-10 rounded-full px-4 text-sm font-extrabold text-slate-950 hover:bg-slate-100 dark:text-white dark:hover:bg-white/10" (click)="onVisibilityToggle()">
           {{showButtonTitle}}
         </button>
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary w-full rounded-xl mt-3 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99]" [disabled]="!form.valid">
-      Register
+    <button type="submit" class="btn mt-2 h-12 min-h-12 w-full rounded-full border-0 bg-slate-950 text-base font-extrabold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600" [disabled]="!form.valid">
+      Create Account
     </button>
   </form>
 
-  <div class="divider my-5 text-xs text-base-content/30 uppercase tracking-widest">Already have an account?</div>
-
-  <div class="text-center text-sm text-base-content/65">
-    Already have an account?
-    <a routerLink="/login" class="text-primary font-bold hover:underline transition-colors ml-1">Login</a>
+  <div class="grid gap-3 border-t border-slate-200 pt-6 text-center dark:border-white/10">
+    <span class="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Already registered?</span>
+    <p class="text-sm text-slate-600 dark:text-slate-300">
+      Already have an account?
+      <a routerLink="/login" class="ml-1 font-extrabold text-slate-950 hover:text-primary dark:text-white dark:hover:text-primary">Log in</a>
+    </p>
   </div>
-</div>
+</section>

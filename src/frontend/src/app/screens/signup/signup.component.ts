@@ -14,6 +14,7 @@ export class SignupComponent implements OnInit {
   usernameValue = '';
   emailValue = '';
   passwordValue = '';
+  errorMessage = '';
 
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
@@ -39,6 +40,7 @@ export class SignupComponent implements OnInit {
   }
 
   onSubmit() {
+    this.errorMessage = '';
     this.apiClient.createUser(this.nameValue, this.usernameValue,
       this.emailValue, this.passwordValue).subscribe({
         next: () => {
@@ -49,7 +51,9 @@ export class SignupComponent implements OnInit {
             }
           );
         },
-        error: (error) => window.alert(error.message)
+        error: (error) => {
+          this.errorMessage = error.message || 'Could not create account. Please try again.';
+        }
     });
   }
 }

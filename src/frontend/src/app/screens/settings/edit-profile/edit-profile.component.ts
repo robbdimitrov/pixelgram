@@ -10,7 +10,6 @@ import {Session} from '../../../services/session.service';
 @Component({
     selector: 'app-edit-profile',
     templateUrl: './edit-profile.component.html',
-    styleUrls: ['./edit-profile.component.scss'],
     standalone: false
 })
 export class EditProfileComponent implements AfterViewInit, AfterViewChecked {

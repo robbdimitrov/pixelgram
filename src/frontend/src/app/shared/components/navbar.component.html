@@ -1,77 +1,62 @@
-<header class="glass-panel sticky top-4 z-50 flex items-center justify-between px-6 py-2 rounded-full shadow-lg mt-4 mb-8 max-w-2xl mx-auto">
-  <a class="flex items-center gap-2 transition-transform duration-300 hover:scale-105 active:scale-95 ml-1" routerLink="/">
-    <svg lucideCamera class="w-5 h-5 text-primary animate-pulse"></svg>
-    <span class="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">PixelGram</span>
+<header class="sticky top-3 z-50 mx-auto flex min-h-[4.25rem] max-w-5xl items-center justify-between gap-3 rounded-full border border-white/70 bg-white/85 px-4 py-2.5 text-slate-950 shadow-xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:shadow-black/30 sm:top-5 sm:min-h-[4.5rem] sm:px-5">
+  <a class="flex min-w-0 items-center gap-3 no-underline transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99]" routerLink="/" aria-label="PixelGram home">
+    <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-slate-950 text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-950 sm:h-[3.25rem] sm:w-[3.25rem]">
+      <svg lucideCamera class="h-5 w-5 sm:h-6 sm:w-6"></svg>
+    </span>
+    <span class="truncate text-2xl font-extrabold tracking-normal sm:text-[1.7rem]">PixelGram</span>
   </a>
 
-  <div class="flex items-center gap-3">
-    <!-- Logged in navigation -->
+  <nav class="flex shrink-0 items-center gap-2 rounded-full bg-slate-950/5 p-1.5 leading-none dark:bg-white/10" aria-label="Primary navigation">
     @if (userId()) {
-      <ul class="flex items-center gap-0.5">
-        <li>
-          <a
-            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary flex items-center justify-center"
-            routerLinkActive="btn-active text-primary bg-primary/10"
-            routerLink="/feed"
-            title="Home"
-          >
-            <svg lucideHome class="w-4.5 h-4.5"></svg>
-          </a>
-        </li>
+      <a
+        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
+        routerLink="/feed"
+        title="Home"
+        aria-label="Home"
+      >
+        <svg lucideHome class="h-5 w-5 block"></svg>
+      </a>
 
-        <li>
-          <a
-            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary flex items-center justify-center"
-            routerLinkActive="btn-active text-primary bg-primary/10"
-            routerLink="/upload"
-            title="Upload"
-          >
-            <svg lucideSquarePlus class="w-4.5 h-4.5"></svg>
-          </a>
-        </li>
+      <a
+        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
+        routerLink="/upload"
+        title="Upload"
+        aria-label="Upload"
+      >
+        <svg lucideSquarePlus class="h-5 w-5 block"></svg>
+      </a>
 
-        <li>
-          <a
-            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary flex items-center justify-center"
-            routerLinkActive="btn-active text-primary bg-primary/10"
-            [routerLink]="['/users', userId()]"
-            title="Profile"
-          >
-            <svg lucideUser class="w-4.5 h-4.5"></svg>
-          </a>
-        </li>
-      </ul>
+      <a
+        class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+        routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
+        [routerLink]="['/users', userId()]"
+        title="Profile"
+        aria-label="Profile"
+      >
+        <svg lucideUser class="h-5 w-5 block"></svg>
+      </a>
+    } @else {
+      <a class="btn flex h-11 min-h-11 items-center justify-center rounded-full border-0 bg-slate-950 px-5 pb-0.5 text-base font-extrabold leading-none text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 sm:px-6" [routerLink]="authNavRoute()">
+        <span class="leading-none">{{ authNavTitle() }}</span>
+      </a>
     }
 
-    <!-- Logged out navigation -->
-    @if (!userId()) {
-      <ul class="flex items-center gap-1.5">
-        <li>
-          <a class="btn btn-ghost btn-sm rounded-full text-xs px-3" routerLink="/login">Log In</a>
-        </li>
-        <li>
-          <a class="btn btn-primary btn-sm rounded-full text-xs px-3 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:scale-105" routerLink="/signup">Sign Up</a>
-        </li>
-      </ul>
-    }
+    <span class="mx-1 h-8 w-px bg-slate-950/10 dark:bg-white/15" aria-hidden="true"></span>
 
-    <!-- Divider -->
-    <div class="h-6 w-[1.5px] bg-base-300/80"></div>
-
-    <!-- Theme toggler -->
-    <button (click)="toggleTheme()" class="btn btn-ghost btn-circle btn-sm text-lg hover:bg-base-200/50 transition-transform duration-300 active:scale-90" title="Toggle Theme">
-      <!-- Sun icon for dark mode -->
+    <button
+      type="button"
+      class="btn btn-ghost btn-circle grid h-11 min-h-11 w-11 place-items-center p-0 text-slate-700 hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
+      (click)="toggleTheme()"
+      [title]="isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'"
+      [attr.aria-label]="isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'"
+    >
       @if (isDarkMode) {
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning fill-warning animate-spin-slow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
-        </svg>
-      }
-      <!-- Moon icon for light mode -->
-      @if (!isDarkMode) {
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-        </svg>
+        <svg lucideSun class="h-5 w-5 block"></svg>
+      } @else {
+        <svg lucideMoon class="h-5 w-5 block"></svg>
       }
     </button>
-  </div>
+  </nav>
 </header>

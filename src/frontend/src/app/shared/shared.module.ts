@@ -10,7 +10,11 @@ import {
   LucideHeart,
   LucideChevronDown,
   LucideChevronRight,
-  LucideSquarePlus
+  LucideSquarePlus,
+  LucideSun,
+  LucideMoon,
+  LucideArrowLeft,
+  LucideTriangleAlert
 } from '@lucide/angular';
 
 import {NavbarComponent} from './components/navbar.component';
@@ -36,7 +40,11 @@ import {RelativeDatePipe} from './pipes/relative-date.pipe';
     LucideHeart,
     LucideChevronDown,
     LucideChevronRight,
-    LucideSquarePlus
+    LucideSquarePlus,
+    LucideSun,
+    LucideMoon,
+    LucideArrowLeft,
+    LucideTriangleAlert
   ],
   exports: [
     CommonModule,
@@ -50,6 +58,10 @@ import {RelativeDatePipe} from './pipes/relative-date.pipe';
     LucideChevronDown,
     LucideChevronRight,
     LucideSquarePlus,
+    LucideSun,
+    LucideMoon,
+    LucideArrowLeft,
+    LucideTriangleAlert,
     NavbarComponent,
     ImagePipe,
     UserPipe,

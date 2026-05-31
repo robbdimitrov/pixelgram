@@ -8,7 +8,6 @@ import {Session} from '../../../services/session.service';
 @Component({
     selector: 'app-image',
     templateUrl: './image.component.html',
-    styleUrls: ['./image.component.scss'],
     standalone: false
 })
 export class ImageComponent {

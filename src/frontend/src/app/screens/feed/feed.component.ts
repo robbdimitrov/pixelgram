@@ -7,7 +7,6 @@ import {PaginationService} from '../../services/pagination.service';
 
 @Component({
     templateUrl: './feed.component.html',
-    styleUrls: ['feed.component.scss'],
     providers: [PaginationService],
     standalone: false
 })

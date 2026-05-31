@@ -1,5 +1,5 @@
 @if (user) {
-  <div class="glass-card w-full rounded-3xl p-6 sm:p-8 shadow-md border border-white/25 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
+  <div class="card glass flex w-full flex-col items-center gap-6 rounded-3xl border border-base-300/40 bg-base-100/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl md:flex-row md:items-start md:gap-8 sm:p-8">
     <!-- Avatar Column -->
     <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-primary/20 shadow-lg shrink-0">
       <img class="w-full h-full object-cover" [src]="user.avatar | image" [alt]="user.username">
