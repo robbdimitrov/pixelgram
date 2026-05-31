@@ -24,7 +24,7 @@
           class="btn btn-ghost btn-circle btn-sm text-base-content/50 hover:text-error hover:bg-error/10"
           (click)="optionsOpened = !optionsOpened"
           >
-          <fa-icon [icon]="['fas', 'chevron-down']" class="text-xs"></fa-icon>
+          <svg lucideChevronDown class="w-3.5 h-3.5"></svg>
         </button>
         @if (optionsOpened) {
           <div class="absolute right-0 mt-1.5 z-20 w-36 bg-base-200 border border-base-300 rounded-xl shadow-xl overflow-hidden py-1">
@@ -56,10 +56,10 @@
       >
       @if (image.liked) {
         <div class="scale-110 active:scale-125 transition-transform duration-200">
-          <fa-icon [icon]="['fas', 'heart']" class="text-lg"></fa-icon>
+          <svg lucideHeart class="w-5 h-5 fill-current text-error"></svg>
         </div>
       } @else {
-        <fa-icon [icon]="['far', 'heart']" class="text-lg text-base-content/60 group-hover:text-error transition-colors"></fa-icon>
+        <svg lucideHeart class="w-5 h-5 text-base-content/60 group-hover:text-error transition-colors"></svg>
       }
     </button>
     <span class="font-extrabold text-sm text-base-content/95">

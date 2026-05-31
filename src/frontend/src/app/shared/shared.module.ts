@@ -2,13 +2,21 @@ import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {CommonModule} from '@angular/common';
-import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import {
+  LucideHome,
+  LucideCamera,
+  LucideUser,
+  LucideSettings,
+  LucideHeart,
+  LucideChevronDown,
+  LucideChevronRight,
+  LucideSquarePlus
+} from '@lucide/angular';
 
 import {NavbarComponent} from './components/navbar.component';
 import {ImagePipe} from './pipes/image.pipe';
 import {UserPipe} from './pipes/user.pipe';
 import {RelativeDatePipe} from './pipes/relative-date.pipe';
-import {IconLibrary} from './icon-library.service';
 
 @NgModule({
   declarations: [
@@ -17,20 +25,31 @@ import {IconLibrary} from './icon-library.service';
     UserPipe,
     RelativeDatePipe
   ],
-  providers: [
-    IconLibrary
-  ],
   imports: [
     CommonModule,
     FormsModule,
     RouterModule,
-    FontAwesomeModule
+    LucideHome,
+    LucideCamera,
+    LucideUser,
+    LucideSettings,
+    LucideHeart,
+    LucideChevronDown,
+    LucideChevronRight,
+    LucideSquarePlus
   ],
   exports: [
     CommonModule,
     FormsModule,
     RouterModule,
-    FontAwesomeModule,
+    LucideHome,
+    LucideCamera,
+    LucideUser,
+    LucideSettings,
+    LucideHeart,
+    LucideChevronDown,
+    LucideChevronRight,
+    LucideSquarePlus,
     NavbarComponent,
     ImagePipe,
     UserPipe,

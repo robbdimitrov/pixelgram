@@ -1,6 +1,6 @@
 <header class="glass-panel sticky top-4 z-50 flex items-center justify-between px-6 py-2 rounded-full shadow-lg mt-4 mb-8 max-w-2xl mx-auto">
   <a class="flex items-center gap-2 transition-transform duration-300 hover:scale-105 active:scale-95 ml-1" routerLink="/">
-    <fa-icon [icon]="['fas', 'camera-retro']" class="text-xl text-primary animate-pulse"></fa-icon>
+    <svg lucideCamera class="w-5 h-5 text-primary animate-pulse"></svg>
     <span class="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">PixelGram</span>
   </a>
 
@@ -10,32 +10,34 @@
       <ul class="flex items-center gap-0.5">
         <li>
           <a
-            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
+            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary flex items-center justify-center"
             routerLinkActive="btn-active text-primary bg-primary/10"
             routerLink="/feed"
             title="Home"
-            >
-            <fa-icon [icon]="['fas', 'home']"></fa-icon>
+          >
+            <svg lucideHome class="w-4.5 h-4.5"></svg>
           </a>
         </li>
+
         <li>
           <a
-            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
+            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary flex items-center justify-center"
             routerLinkActive="btn-active text-primary bg-primary/10"
             routerLink="/upload"
             title="Upload"
-            >
-            <fa-icon [icon]="['far', 'plus-square']"></fa-icon>
+          >
+            <svg lucideSquarePlus class="w-4.5 h-4.5"></svg>
           </a>
         </li>
+
         <li>
           <a
-            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary"
+            class="btn btn-ghost btn-circle btn-sm text-base hover:bg-base-200/50 hover:text-primary flex items-center justify-center"
             routerLinkActive="btn-active text-primary bg-primary/10"
             [routerLink]="['/users', userId()]"
             title="Profile"
-            >
-            <fa-icon [icon]="['fas', 'user']"></fa-icon>
+          >
+            <svg lucideUser class="w-4.5 h-4.5"></svg>
           </a>
         </li>
       </ul>
