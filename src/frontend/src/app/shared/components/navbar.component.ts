@@ -31,8 +31,4 @@ export class NavbarComponent {
   authNavRoute() {
     return this.isSignupRoute() ? '/login' : '/signup';
   }
-
-  authNavTitle() {
-    return this.isSignupRoute() ? 'Log In' : 'Sign Up';
-  }
 }
