@@ -41,10 +41,17 @@ spec:
             memory: 100Mi
             cpu: 200m
         env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: postgres-password
+        - name: POSTGRES_DB
+          value: pixelgram
         - name: DATABASE_URL
-          value: postgresql://postgres:kubernetes@database:5432/pixelgram
-        - name: SECRET
-          value: 7f40a8c2c68f47ef7b896586b012ae34
+          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
         - name: IMAGE_DIR
           value: /data/images
         volumeMounts:

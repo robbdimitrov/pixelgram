@@ -35,7 +35,10 @@ spec:
         - containerPort: 5432
         env:
         - name: POSTGRES_PASSWORD
-          value: kubernetes
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: postgres-password
         - name: POSTGRES_DB
           value: pixelgram
         volumeMounts:

@@ -1,6 +1,4 @@
-import {
-  Component, AfterViewInit, AfterViewChecked, ChangeDetectorRef
-} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 
 import {APIClient} from '../../../services/api-client.service';
@@ -12,7 +10,7 @@ import {Session} from '../../../services/session.service';
     templateUrl: './edit-profile.component.html',
     standalone: false
 })
-export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
+export class EditProfileComponent implements OnInit {
   selectedFile: File | null = null;
   imagePreview = '';
   user?: User;
@@ -21,19 +19,14 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   constructor(
     private apiClient: APIClient,
     private router: Router,
-    private session: Session,
-    private changeDetector: ChangeDetectorRef
+    private session: Session
   ) {}
 
-  ngAfterViewInit() {
+  ngOnInit() {
     const userId = this.session.userId();
     if (userId) {
       this.loadUser(userId);
     }
-  }
-
-  ngAfterViewChecked() {
-    this.changeDetector.detectChanges();
   }
 
   onSubmit() {

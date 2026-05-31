@@ -96,11 +96,21 @@ export class FeedComponent {
   }
 
   onLike(imageId: number) {
-    this.apiClient.likeImage(imageId).subscribe();
+    this.apiClient.likeImage(imageId).subscribe({
+      error: (error) => {
+        this.revertLike(imageId, false);
+        console.error(`Liking image failed: ${error.message}`);
+      }
+    });
   }
 
   onUnlike(imageId: number) {
-    this.apiClient.unlikeImage(imageId).subscribe();
+    this.apiClient.unlikeImage(imageId).subscribe({
+      error: (error) => {
+        this.revertLike(imageId, true);
+        console.error(`Unliking image failed: ${error.message}`);
+      }
+    });
   }
 
   onNextClick() {
@@ -117,5 +127,15 @@ export class FeedComponent {
       },
       error: (error) => console.error(`Deleting image failed: ${error.message}`)
     });
+  }
+
+  private revertLike(imageId: number, liked: boolean) {
+    const image = this.pagination.data.find((item) => item.id === imageId);
+    if (!image) {
+      return;
+    }
+
+    image.liked = liked;
+    image.likes += liked ? 1 : -1;
   }
 }
