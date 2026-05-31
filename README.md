@@ -26,13 +26,9 @@ The easiest way to run the app locally is with the deploy script. It creates a k
 ./scripts/deploy.sh
 ```
 
-Then forward the frontend service:
+The deploy script automatically starts a background port-forward for the frontend service.
 
-```sh
-kubectl port-forward service/frontend 8080:8080 -n pixelgram
-```
-
-Open the frontend at [http://localhost:8080](http://localhost:8080).
+Open the frontend at [http://pixelgram.localhost:8080](http://pixelgram.localhost:8080).
 
 ## Frontend development
 
