@@ -17,7 +17,7 @@
     }
 
     @if (isOwnedByCurrentUser()) {
-      <div class="relative">
+      <div #optionsMenu class="relative">
         <button
           class="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-error/10 hover:text-error dark:text-slate-400"
           (click)="optionsOpened = !optionsOpened"

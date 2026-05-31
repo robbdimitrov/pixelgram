@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, ElementRef, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {Session} from '../../services/session.service';
 
@@ -22,7 +22,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   };
 
-  constructor(private session: Session, public router: Router) {}
+  constructor(private session: Session, public router: Router, private elementRef: ElementRef<HTMLElement>) {}
+
+  @HostListener('document:click', ['$event.target'])
+  closeMenusOnOutsideClick(target: EventTarget | null) {
+    if (target instanceof Node && this.elementRef.nativeElement.contains(target)) {
+      return;
+    }
+
+    this.isThemeMenuOpen = false;
+  }
 
   ngOnInit() {
     this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
