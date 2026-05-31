@@ -32,7 +32,7 @@ Bring the whole Angular frontend onto the quieter PixelGram visual direction whi
    - Keep disabled submit states legible in light and dark mode.
    - Reuse the same validation pattern across login/signup first, then settings forms.
 
-5. Refactor repeated auth/form markup. **Not started**
+5. Refactor repeated auth/form markup. **Done**
    - Look for repeated long class strings in login/signup and settings forms.
    - Prefer small presentational Angular components only if they make templates simpler.
    - Do not introduce custom SCSS just to reduce class length.
@@ -42,7 +42,7 @@ Bring the whole Angular frontend onto the quieter PixelGram visual direction whi
    - Ensure brand, auth action, and theme toggle fit without crowding.
    - Keep one auth action visible on logged-out auth pages.
 
-7. Consider a 3-state theme control. **Not started**
+7. Consider a 3-state theme control. **Done**
    - Current behavior is system default until user toggles, then persisted light/dark.
    - Decide whether the app needs explicit `System`, `Light`, and `Dark`.
    - If implemented, keep the UI compact and accessible.
@@ -69,3 +69,6 @@ Bring the whole Angular frontend onto the quieter PixelGram visual direction whi
 - 2026-05-31: Tightened mobile navbar spacing by using a compact logo on small widths and keeping the auth action/theme toggle visible.
 - 2026-05-31: Removed `quartzite` from the relative date pipe and set the frontend TypeScript target to `ES2022`; `npm run lint` and `npm run build` pass without the previous build warnings.
 - 2026-05-31: Disallowed-pattern search passes for `style="`, `styleUrls`, `<svg xmlns`, `fonts.googleapis`, `@import url`, `card glass`, `bg-gradient-to-r`, and `text-transparent`.
+- 2026-05-31: Added shared form-control styling directives for repeated input, textarea, and primary action utility classes.
+- 2026-05-31: Replaced the two-state theme toggle with compact `System`, `Light`, and `Dark` theme choices.
+- 2026-05-31: Screenshot audit is still open because the workspace has no Playwright, Puppeteer, or Chromium available; Safari is installed but not wired to repo automation.
