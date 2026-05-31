@@ -30,6 +30,7 @@ spec:
       containers:
       - name: frontend
         image: localhost:5000/pixelgram/frontend
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         resources:
