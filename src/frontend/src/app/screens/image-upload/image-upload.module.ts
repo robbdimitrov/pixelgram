@@ -4,37 +4,30 @@ import {RouterModule, Routes} from '@angular/router';
 import {authGuard} from '../../shared/auth-guard.service';
 import {SharedModule} from '../../shared/shared.module';
 import {ImageUploadComponent} from './image-upload.component';
-import {ImageCreateComponent} from './image-create/image-create.component';
-import {ImageUploadService} from './image-upload.service';
 
 export const routes: Routes = [
   {
-    path: 'upload/select',
+    path: 'upload',
     component: ImageUploadComponent,
     canActivate: [authGuard]
   },
   {
-    path: 'upload/post',
-    component: ImageCreateComponent,
-    canActivate: [authGuard]
+    path: 'upload/select',
+    redirectTo: '/upload'
   },
   {
-    path: 'upload',
-    redirectTo: '/upload/select'
-  },
+    path: 'upload/post',
+    redirectTo: '/upload'
+  }
 ];
 
 @NgModule({
   declarations: [
-    ImageUploadComponent,
-    ImageCreateComponent
+    ImageUploadComponent
   ],
   imports: [
     SharedModule,
     RouterModule.forChild(routes)
-  ],
-  providers: [
-    ImageUploadService
   ]
 })
 export class ImageUploadModule {}

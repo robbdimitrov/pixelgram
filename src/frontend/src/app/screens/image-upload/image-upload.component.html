@@ -1,44 +1,80 @@
-<div class="max-w-xl mx-auto my-8 sm:my-16">
-  <div class="rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white sm:p-8">
-    <div class="text-center mb-8">
-      <h1 class="text-2xl font-black text-slate-950 dark:text-white">Upload Photo</h1>
-      <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">Share your captured moments with the community</p>
-    </div>
-
-    @if (imagePreview) {
-      <div class="relative mb-6 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner dark:border-white/10 dark:bg-slate-900 sm:aspect-[4/3]">
-        <img class="w-full h-full object-cover" [src]="imagePreview" alt="Upload preview">
-      </div>
-    }
-
-    <div class="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 transition-colors hover:border-slate-500 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:hover:border-white/30 dark:hover:bg-white/10">
-      <label class="flex flex-col items-center justify-center gap-4 cursor-pointer w-full py-4" for="file">
-        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-xl text-white transition-transform duration-300 group-hover:scale-105 dark:bg-white dark:text-slate-950">
-          <svg lucideSquarePlus class="w-5 h-5"></svg>
-        </div>
-        <div class="flex flex-col items-center text-center">
-          <span class="text-base font-extrabold text-slate-950 dark:text-white">{{ imagePreview ? 'Select Different Photo' : 'Select photo file' }}</span>
-          <span class="mt-1 text-xs text-slate-500 dark:text-slate-400">JPG, PNG, GIF or WEBP (Max 1MB)</span>
-        </div>
-        <span class="btn btn-sm mt-2 rounded-full border-0 bg-slate-950 px-5 font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">Browse File</span>
-      </label>
-      <input
-        type="file"
-        id="file"
-        #file
-        accept="image/*"
-        class="hidden"
-        (change)="onChange(file.files)"
-        >
-    </div>
-
-    <button
-      class="mt-6 w-full"
-      appPrimaryAction
-      (click)="onNextClick()"
-      [disabled]="!imagePreview"
+<div class="mx-auto my-8 max-w-4xl sm:my-16">
+  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white">
+    <div class="flex min-h-14 items-center justify-between border-b border-slate-200 px-4 dark:border-white/10 sm:px-6">
+      <h1 class="text-base font-black">Create new post</h1>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm rounded-full text-xs font-black uppercase tracking-wider text-slate-950 disabled:text-slate-400 dark:text-white dark:disabled:text-slate-600"
+        (click)="onSubmitClick()"
+        [disabled]="!canShare()"
       >
-      Next
-    </button>
+        {{ isSubmitting ? 'Sharing...' : 'Share' }}
+      </button>
+    </div>
+
+    <div class="grid min-h-[32rem] md:grid-cols-[minmax(0,1fr)_21rem]">
+      <div
+        class="relative flex min-h-80 items-center justify-center bg-slate-50 transition-colors dark:bg-slate-900"
+        [ngClass]="{'bg-slate-100 dark:bg-white/10': isDragging}"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        @if (imagePreview) {
+          <img class="h-full max-h-[42rem] w-full object-contain" [src]="imagePreview" alt="Upload preview">
+          <button
+            type="button"
+            class="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-slate-950 shadow-lg shadow-slate-900/10 transition-colors hover:bg-white dark:bg-slate-950/90 dark:text-white dark:hover:bg-slate-950"
+            (click)="file.click()"
+          >
+            Change photo
+          </button>
+        } @else {
+          <label class="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-4 p-8 text-center" for="file">
+            <span class="grid h-16 w-16 place-items-center rounded-full bg-slate-950 text-white shadow-md shadow-slate-900/15 dark:bg-white dark:text-slate-950">
+              <svg lucideSquarePlus class="h-7 w-7"></svg>
+            </span>
+            <span class="text-xl font-black">Drag photos here</span>
+            <span class="text-sm text-slate-500 dark:text-slate-400">JPG, PNG, GIF or WEBP under 1MB</span>
+            <span class="btn btn-sm rounded-full border-0 bg-slate-950 px-5 font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">Select from computer</span>
+          </label>
+        }
+
+        <input
+          type="file"
+          id="file"
+          #file
+          accept="image/*"
+          class="hidden"
+          (change)="onChange(file.files)"
+        >
+      </div>
+
+      <div class="flex flex-col border-t border-slate-200 dark:border-white/10 md:border-l md:border-t-0">
+        <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/10">
+          <span class="text-sm font-black">Caption</span>
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ imageDescription.length }}/{{ maxDescriptionLength }}</span>
+        </div>
+
+        <textarea
+          name="description"
+          [(ngModel)]="imageDescription"
+          class="min-h-44 flex-1 border-0 shadow-none focus:outline-none focus:ring-0"
+          appFormTextarea
+          placeholder="Write a caption..."
+          [maxlength]="maxDescriptionLength"
+        ></textarea>
+
+        @if (errorMessage) {
+          <div class="mx-4 mb-4 rounded-2xl bg-error/10 px-4 py-3 text-sm font-bold text-error">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <div class="border-t border-slate-200 p-4 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400">
+          Your post will appear in the feed after the image finishes uploading.
+        </div>
+      </div>
+    </div>
   </div>
 </div>
