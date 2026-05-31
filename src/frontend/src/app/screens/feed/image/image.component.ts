@@ -11,6 +11,7 @@ import {Session} from '../../../services/session.service';
     standalone: false
 })
 export class ImageComponent {
+  private readonly fallbackImage = '/assets/placeholder.svg';
   @ViewChild('optionsMenu') private optionsMenu?: ElementRef<HTMLElement>;
 
   @Output() like = new EventEmitter<number>();
@@ -47,6 +48,15 @@ export class ImageComponent {
 
   isDescriptionPresent() {
     return this.image.description.length > 0;
+  }
+
+  onImageError(event: Event) {
+    const imageElement = event.target as HTMLImageElement;
+    if (imageElement.src.endsWith(this.fallbackImage)) {
+      return;
+    }
+
+    imageElement.src = this.fallbackImage;
   }
 
   onDeleteClick() {
