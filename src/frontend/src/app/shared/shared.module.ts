@@ -24,6 +24,7 @@ import {EmptyStateComponent} from './components/empty-state.component';
 import {ImagePipe} from './pipes/image.pipe';
 import {UserPipe} from './pipes/user.pipe';
 import {RelativeDatePipe} from './pipes/relative-date.pipe';
+import {PluralizePipe} from './pipes/pluralize.pipe';
 import {
   FormInputStyleDirective,
   FormTextareaStyleDirective,
@@ -37,6 +38,7 @@ import {
     ImagePipe,
     UserPipe,
     RelativeDatePipe,
+    PluralizePipe,
     FormInputStyleDirective,
     FormTextareaStyleDirective,
     PrimaryActionStyleDirective
@@ -83,6 +85,7 @@ import {
     ImagePipe,
     UserPipe,
     RelativeDatePipe,
+    PluralizePipe,
     FormInputStyleDirective,
     FormTextareaStyleDirective,
     PrimaryActionStyleDirective

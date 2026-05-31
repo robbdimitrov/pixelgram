@@ -55,7 +55,7 @@
         }
       </button>
       <span class="text-base font-extrabold leading-none text-slate-900 dark:text-slate-100">
-        {{image.likes}} {{image.likes === 1 ? 'like' : 'likes'}}
+        {{image.likes}} {{image.likes | pluralize:'like'}}
       </span>
     </div>
 

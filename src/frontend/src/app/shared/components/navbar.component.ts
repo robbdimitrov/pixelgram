@@ -27,8 +27,4 @@ export class NavbarComponent {
   isSignupRoute() {
     return this.router.url.startsWith('/signup');
   }
-
-  authNavRoute() {
-    return this.isSignupRoute() ? '/login' : '/signup';
-  }
 }

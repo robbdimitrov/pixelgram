@@ -28,13 +28,13 @@
 
       <div class="flex items-center justify-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300 md:justify-start">
         <span>
-          <strong class="font-black text-slate-950 dark:text-white">{{user.images}}</strong> posts
+          <strong class="font-black text-slate-950 dark:text-white">{{user.images}}</strong> {{user.images | pluralize:'post'}}
         </span>
         <a
           [routerLink]="['/users', user.id, 'likes']"
           class="transition-colors hover:text-slate-950 dark:hover:text-white"
           >
-          <strong class="font-black text-slate-950 dark:text-white">{{user.likes}}</strong> likes
+          <strong class="font-black text-slate-950 dark:text-white">{{user.likes}}</strong> {{user.likes | pluralize:'like'}}
         </a>
       </div>
     </div>
