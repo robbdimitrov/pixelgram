@@ -1,4 +1,4 @@
-<div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
+<div class="w-full rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
   <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-6 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:pr-20">
     @if (user) {
       <div class="flex items-center gap-3">
@@ -17,21 +17,15 @@
     }
 
     @if (isOwnedByCurrentUser()) {
-      <div #optionsMenu class="absolute right-5 top-1/2 -translate-y-1/2 sm:right-6">
-        <button
-          class="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-error/10 hover:text-error dark:text-slate-400"
-          (click)="optionsOpened = !optionsOpened"
-          >
-          <svg lucideChevronDown class="h-5 w-5"></svg>
-        </button>
-        @if (optionsOpened) {
-          <div class="absolute right-0 z-20 mt-1.5 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-slate-900">
-            <button (click)="onDeleteClick()" class="w-full px-4 py-2 text-left text-sm font-semibold text-error hover:bg-error/10 flex items-center transition-colors">
-              Delete post
-            </button>
-          </div>
-        }
-      </div>
+      <button
+        type="button"
+        class="absolute right-5 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-error/10 hover:text-error dark:text-slate-400 sm:right-6"
+        title="Delete post"
+        aria-label="Delete post"
+        (click)="confirmDeleteOpened = true"
+        >
+        <svg lucideTrash2 class="h-5 w-5"></svg>
+      </button>
     }
   </div>
 
@@ -81,3 +75,38 @@
     </span>
   </div>
 </div>
+
+@if (confirmDeleteOpened) {
+  <div class="modal modal-open">
+    <div class="modal-box max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl dark:border-white/10 dark:bg-slate-950 dark:text-white">
+      <div class="grid gap-3">
+        <h3 class="text-xl font-black">Delete post?</h3>
+        <p class="text-sm leading-6 text-slate-600 dark:text-slate-300">
+          This will permanently remove this photo from your profile and feed.
+        </p>
+      </div>
+      <div class="modal-action mt-6">
+        <button
+          type="button"
+          class="btn h-11 min-h-11 rounded-full px-5 font-bold"
+          (click)="confirmDeleteOpened = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-error h-11 min-h-11 rounded-full px-5 font-bold text-white"
+          (click)="onDeleteClick()"
+        >
+          Delete post
+        </button>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="modal-backdrop"
+      aria-label="Cancel delete"
+      (click)="confirmDeleteOpened = false"
+    ></button>
+  </div>
+}

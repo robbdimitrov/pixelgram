@@ -117,9 +117,20 @@ export class FeedComponent {
   }
 
   onUnlike(imageId: number) {
+    const image = this.pagination.data.find((item) => item.id === imageId);
+    if (this.isLikesPage() && image) {
+      this.pagination.remove(image);
+    }
+
     this.apiClient.unlikeImage(imageId).subscribe({
       error: (error) => {
-        this.revertLike(imageId, true);
+        if (this.isLikesPage() && image) {
+          image.liked = true;
+          image.likes += 1;
+          this.pagination.update([image]);
+        } else {
+          this.revertLike(imageId, true);
+        }
         console.error(`Unliking image failed: ${error.message}`);
       }
     });

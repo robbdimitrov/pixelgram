@@ -1,4 +1,4 @@
-import {Component, ElementRef, HostListener, Input, Output, ViewChild} from '@angular/core';
+import {Component, Input, Output} from '@angular/core';
 import {EventEmitter} from '@angular/core';
 
 import {Image} from '../../../models/image.model';
@@ -12,25 +12,15 @@ import {Session} from '../../../services/session.service';
 })
 export class ImageComponent {
   private readonly fallbackImage = '/assets/placeholder.svg';
-  @ViewChild('optionsMenu') private optionsMenu?: ElementRef<HTMLElement>;
 
   @Output() like = new EventEmitter<number>();
   @Output() unlike = new EventEmitter<number>();
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User | null;
-  optionsOpened = false;
+  confirmDeleteOpened = false;
 
   constructor(private session: Session) {}
-
-  @HostListener('document:click', ['$event.target'])
-  closeOptionsOnOutsideClick(target: EventTarget | null) {
-    if (target instanceof Node && this.optionsMenu?.nativeElement.contains(target)) {
-      return;
-    }
-
-    this.optionsOpened = false;
-  }
 
   onLikeClick() {
     this.image.liked = !this.image.liked;
@@ -60,6 +50,7 @@ export class ImageComponent {
   }
 
   onDeleteClick() {
+    this.confirmDeleteOpened = false;
     this.deleteAction.emit(this.image);
   }
 }

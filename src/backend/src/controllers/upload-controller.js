@@ -41,7 +41,7 @@ module.exports = function (imageDir, dbClient) {
     handleUploadError: (error, res) => {
       if (error instanceof multer.MulterError) {
         const message = error.code === 'LIMIT_FILE_SIZE'
-          ? 'Choose an image under 1MB.'
+          ? 'Could not resize this image enough. Try a smaller image.'
           : 'Could not process upload.';
         const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
 

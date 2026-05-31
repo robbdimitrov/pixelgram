@@ -6,6 +6,7 @@ const OUTPUT_TYPE = 'image/jpeg';
 
 export const supportedUploadMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 export const maxUploadSizeBytes = 1024 * 1024;
+const RESIZED_TARGET_BYTES = 900 * 1024;
 
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -77,7 +78,7 @@ export async function resizeImageForUpload(file: File): Promise<File> {
     throw new Error('Choose a JPEG, PNG, GIF, or WEBP image.');
   }
 
-  if (file.size <= maxUploadSizeBytes) {
+  if (file.size <= RESIZED_TARGET_BYTES) {
     return file;
   }
 
@@ -90,7 +91,7 @@ export async function resizeImageForUpload(file: File): Promise<File> {
 
     while (quality >= MIN_QUALITY) {
       const blob = await canvasToBlob(canvas, quality);
-      if (blob.size <= maxUploadSizeBytes) {
+      if (blob.size <= RESIZED_TARGET_BYTES) {
         return new File([blob], resizedFileName(file.name), {
           type: OUTPUT_TYPE,
           lastModified: Date.now()

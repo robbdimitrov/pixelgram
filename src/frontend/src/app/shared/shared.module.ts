@@ -15,7 +15,8 @@ import {
   LucideMoon,
   LucideMonitor,
   LucideArrowLeft,
-  LucideTriangleAlert
+  LucideTriangleAlert,
+  LucideTrash2
 } from '@lucide/angular';
 
 import {NavbarComponent} from './components/navbar.component';
@@ -56,7 +57,8 @@ import {
     LucideMoon,
     LucideMonitor,
     LucideArrowLeft,
-    LucideTriangleAlert
+    LucideTriangleAlert,
+    LucideTrash2
   ],
   exports: [
     CommonModule,
@@ -75,6 +77,7 @@ import {
     LucideMonitor,
     LucideArrowLeft,
     LucideTriangleAlert,
+    LucideTrash2,
     NavbarComponent,
     EmptyStateComponent,
     ImagePipe,
