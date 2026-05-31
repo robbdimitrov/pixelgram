@@ -23,7 +23,15 @@ module.exports = function ({auth, image, upload, user}) {
   router.delete('/images/:imageId/likes', (req, res) => image.unlikeImage(req, res));
 
   // Upload
-  router.post('/uploads', upload.uploader, (req, res) => upload.createFile(req, res));
+  router.post('/uploads', (req, res, next) => {
+    upload.uploader(req, res, (error) => {
+      if (error) {
+        return upload.handleUploadError(error, res);
+      }
+
+      return next();
+    });
+  }, (req, res) => upload.createFile(req, res));
 
   return router;
 };

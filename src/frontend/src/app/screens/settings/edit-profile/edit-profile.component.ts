@@ -4,6 +4,11 @@ import {Router} from '@angular/router';
 import {APIClient} from '../../../services/api-client.service';
 import {User} from '../../../models/user.model';
 import {Session} from '../../../services/session.service';
+import {
+  maxUploadSizeBytes,
+  resizeImageForUpload,
+  supportedUploadMimeTypes
+} from '../../../shared/utils/image-resizer';
 
 @Component({
     selector: 'app-edit-profile',
@@ -11,6 +16,9 @@ import {Session} from '../../../services/session.service';
     standalone: false
 })
 export class EditProfileComponent implements OnInit {
+  readonly maxFileSizeBytes = maxUploadSizeBytes;
+  readonly supportedMimeTypes = supportedUploadMimeTypes;
+
   selectedFile: File | null = null;
   imagePreview = '';
   user?: User;
@@ -51,7 +59,8 @@ export class EditProfileComponent implements OnInit {
     if (this.selectedFile) {
       this.apiClient.uploadImage(this.selectedFile).subscribe({
         next: (data) => this.user!.avatar = data.filename,
-        error: (error) => this.errorMessage = error.message || 'Could not upload avatar. Please try again.',
+        error: (error) => this.errorMessage = error.error?.message ||
+          error.message || 'Could not upload avatar. Please try again.',
         complete: () => updateClosure()
       });
     } else {
@@ -59,12 +68,25 @@ export class EditProfileComponent implements OnInit {
     }
   }
 
-  onChange(files: FileList | null) {
+  async onChange(files: FileList | null) {
     if (!files || files.length === 0) {
       return;
     }
-    this.selectedFile = files[0];
-    this.loadImagePreview(this.selectedFile);
+    const file = files[0];
+    this.errorMessage = '';
+
+    try {
+      this.selectedFile = await resizeImageForUpload(file);
+      this.loadImagePreview(this.selectedFile);
+    } catch (error) {
+      this.clearSelectedFile();
+      this.errorMessage = error instanceof Error ? error.message : 'Could not prepare avatar.';
+    }
+  }
+
+  clearSelectedFile() {
+    this.selectedFile = null;
+    this.imagePreview = '';
   }
 
   loadImagePreview(file: File) {

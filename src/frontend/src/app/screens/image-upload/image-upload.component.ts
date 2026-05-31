@@ -3,6 +3,11 @@ import {Router} from '@angular/router';
 import {concatMap, finalize} from 'rxjs/operators';
 
 import {APIClient} from '../../services/api-client.service';
+import {
+  maxUploadSizeBytes,
+  resizeImageForUpload,
+  supportedUploadMimeTypes
+} from '../../shared/utils/image-resizer';
 
 @Component({
     selector: 'app-upload',
@@ -11,8 +16,8 @@ import {APIClient} from '../../services/api-client.service';
 })
 export class ImageUploadComponent {
   readonly maxDescriptionLength = 160;
-  readonly maxFileSizeBytes = 1024 * 1024;
-  readonly supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  readonly maxFileSizeBytes = maxUploadSizeBytes;
+  readonly supportedMimeTypes = supportedUploadMimeTypes;
 
   imageDescription = '';
   imagePreview = '';
@@ -46,24 +51,19 @@ export class ImageUploadComponent {
     this.selectFile(event.dataTransfer?.files.item(0));
   }
 
-  private selectFile(file?: File | null) {
+  private async selectFile(file?: File | null) {
     this.errorMessage = '';
     if (!file) {
       return;
     }
-    if (!this.supportedMimeTypes.includes(file.type)) {
-      this.clearSelection();
-      this.errorMessage = 'Choose a JPEG, PNG, GIF, or WEBP image.';
-      return;
-    }
-    if (file.size > this.maxFileSizeBytes) {
-      this.clearSelection();
-      this.errorMessage = 'Choose an image under 1MB.';
-      return;
-    }
 
-    this.selectedFile = file;
-    this.getImagePreview(file);
+    try {
+      this.selectedFile = await resizeImageForUpload(file);
+      this.getImagePreview(this.selectedFile);
+    } catch (error) {
+      this.clearSelection();
+      this.errorMessage = error instanceof Error ? error.message : 'Could not prepare image.';
+    }
   }
 
   getImagePreview(file?: File) {
@@ -101,7 +101,8 @@ export class ImageUploadComponent {
       finalize(() => this.isSubmitting = false)
     ).subscribe({
       next: () => this.router.navigate(['/']),
-      error: (error) => this.errorMessage = error.message || 'Could not share this post. Please try again.'
+      error: (error) => this.errorMessage = error.error?.message ||
+        error.message || 'Could not share this post. Please try again.'
     });
   }
 }

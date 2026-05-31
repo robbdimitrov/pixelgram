@@ -38,6 +38,20 @@ module.exports = function (imageDir, dbClient) {
 
   return {
     uploader: upload.single('image'),
+    handleUploadError: (error, res) => {
+      if (error instanceof multer.MulterError) {
+        const message = error.code === 'LIMIT_FILE_SIZE'
+          ? 'Choose an image under 1MB.'
+          : 'Could not process upload.';
+        const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+
+        return res.status(status).send({message});
+      }
+
+      return res.status(400).send({
+        message: 'Could not process upload.'
+      });
+    },
     createFile: (req, res) => {
       if (!req.file) {
         return res.status(400).send({

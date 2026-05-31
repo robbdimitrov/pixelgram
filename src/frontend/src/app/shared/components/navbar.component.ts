@@ -6,6 +6,9 @@ import {ThemeService} from '../../services/theme.service';
 @Component({
     selector: 'app-navbar',
     templateUrl: './navbar.component.html',
+    host: {
+      class: 'sticky top-4 z-30 block sm:top-6'
+    },
     standalone: false
 })
 export class NavbarComponent {
