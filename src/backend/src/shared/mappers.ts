@@ -1,4 +1,6 @@
-function mapUser(user) {
+import { User, Session, Image } from "../types";
+
+function mapUser(user: any) {
   return {
     id: user.id,
     name: user.name,
@@ -12,7 +14,7 @@ function mapUser(user) {
   };
 }
 
-function mapSession(session) {
+function mapSession(session: any) {
   return {
     id: session.id,
     userId: session.user_id,
@@ -21,7 +23,7 @@ function mapSession(session) {
   };
 }
 
-function mapImage(image) {
+function mapImage(image: any) {
   return {
     id: image.id,
     userId: image.user_id,
@@ -33,7 +35,7 @@ function mapImage(image) {
   };
 }
 
-module.exports = {
+export {
   mapUser,
   mapSession,
   mapImage

@@ -1,5 +1,7 @@
-const multer = require('multer');
-const fs = require('fs/promises');
+import multer from 'multer';
+import fs from 'fs/promises';
+import { Request, Response } from 'express';
+import DbClient from "../db";
 
 const signatures = [
   {bytes: [0xff, 0xd8, 0xff]},
@@ -8,16 +10,16 @@ const signatures = [
   {bytes: [0x52, 0x49, 0x46, 0x46], offset: 0, secondary: {bytes: [0x57, 0x45, 0x42, 0x50], offset: 8}}
 ];
 
-function hasBytes(buffer, bytes, offset = 0) {
+function hasBytes(buffer: Buffer, bytes: number[], offset: number = 0) {
   if (buffer.length < offset + bytes.length) {
     return false;
   }
 
-  return bytes.every((byte, index) => buffer[offset + index] === byte);
+  return bytes.every((byte: number, index: number) => buffer[offset + index] === byte);
 }
 
-function isImage(buffer) {
-  return signatures.some((signature) => {
+function isImage(buffer: Buffer) {
+  return signatures.some((signature: { bytes: number[], offset?: number, secondary?: { bytes: number[], offset: number } }) => {
     if (!hasBytes(buffer, signature.bytes, signature.offset)) {
       return false;
     }
@@ -27,7 +29,7 @@ function isImage(buffer) {
   });
 }
 
-module.exports = function (imageDir, dbClient) {
+export default function (imageDir: string, dbClient: DbClient) {
   const upload = multer({
     dest: imageDir,
     limits: {
@@ -38,7 +40,7 @@ module.exports = function (imageDir, dbClient) {
 
   return {
     uploader: upload.single('image'),
-    handleUploadError: (error, res) => {
+    handleUploadError: (error: any, res: Response) => {
       if (error instanceof multer.MulterError) {
         const message = error.code === 'LIMIT_FILE_SIZE'
           ? 'Could not resize this image enough. Try a smaller image.'
@@ -52,25 +54,26 @@ module.exports = function (imageDir, dbClient) {
         message: 'Could not process upload.'
       });
     },
-    createFile: (req, res) => {
-      if (!req.file) {
+    createFile: (req: Request, res: Response) => {
+      const file = req.file;
+      if (!file) {
         return res.status(400).send({
           message: 'File missing from request.'
         });
       }
 
-      fs.readFile(req.file.path).then((file) => {
-        if (!isImage(file)) {
-          return fs.unlink(req.file.path).catch(() => undefined).then(() => {
+      fs.readFile(file.path).then((fileBuffer: Buffer) => {
+        if (!isImage(fileBuffer)) {
+          return fs.unlink(file.path).catch(() => undefined).then(() => {
             res.status(400).send({
               message: 'Only image uploads are allowed.'
             });
           });
         }
 
-        return dbClient.createUpload(req.userId, req.file.filename).then(() => {
+        return dbClient.createUpload(req.userId!, file.filename).then(() => {
           res.status(201).send({
-            filename: req.file.filename
+            filename: file.filename
           });
         });
       }).catch(() => {

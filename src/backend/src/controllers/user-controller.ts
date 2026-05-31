@@ -1,17 +1,22 @@
-const {isValidEmail} = require('../shared/utils');
-const {generateHash, verifyPassword} = require('../shared/crypto');
-const {logInfo, logError} = require('../shared/logger');
+import { isValidEmail } from '../shared/utils';
+import { generateHash, verifyPassword } from '../shared/crypto';
+import { logInfo, logError } from '../shared/logger';
+import { Request, Response } from 'express';
+import DbClient from "../db";
+import { User, Session, Image } from "../types";
 
-function isUniqueViolation(error) {
+function isUniqueViolation(error: any) {
   return error.code === '23505';
 }
 
 class UserController {
-  constructor(dbClient) {
+  dbClient: DbClient;
+  loginFailures: Map<string, { count: number, timeout: NodeJS.Timeout, resetAt?: number }> = new Map();
+  constructor(dbClient: DbClient) {
     this.dbClient = dbClient;
   }
 
-  createUser(req, res) {
+  createUser(req: Request, res: Response) {
     const name = req.body.name?.trim();
     const username = req.body.username?.trim();
     const email = req.body.email?.trim().toLowerCase();
@@ -31,12 +36,12 @@ class UserController {
       });
     }
 
-    generateHash(password).then((hash) => {
+    generateHash(password).then((hash: string) => {
       return this.dbClient.createUser(name, username, email, hash);
-    }).then((result) => {
+    }).then((result: User) => {
       logInfo('Successfully created user');
       res.status(201).send(result);
-    }).catch((error) => {
+    }).catch((error: any) => {
       logError(`Creating user failed: ${error}`);
 
       if (isUniqueViolation(error)) {
@@ -51,11 +56,11 @@ class UserController {
     });
   }
 
-  getUser(req, res) {
-    const userId = req.params.userId;
+  getUser(req: Request, res: Response) {
+    const userId = req.params.userId as string;
 
     this.dbClient.getUser(userId)
-      .then((result) => {
+      .then((result: User) => {
         if (result) {
           logInfo('Successfully fetched user');
           res.status(200).send(result);
@@ -65,7 +70,7 @@ class UserController {
             message: 'Not Found'
           });
         }
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Getting user failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -73,10 +78,10 @@ class UserController {
       });
   }
 
-  updateUser(req, res) {
-    const userId = req.params.userId;
+  updateUser(req: Request, res: Response) {
+    const userId = req.params.userId as string;
 
-    if (userId !== req.userId) {
+    if (userId !== req.userId!) {
       logError('Updating user failed: Forbidden');
       return res.status(403).send({
         message: 'Forbidden'
@@ -103,7 +108,7 @@ class UserController {
       .then(() => {
         logInfo('Successfully updated user');
         res.sendStatus(204);
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Updating user failed: ${error}`);
 
         let message = 'Bad Request';
@@ -115,8 +120,8 @@ class UserController {
       });
   }
 
-  updatePassword(req, res) {
-    const userId = req.params.userId;
+  updatePassword(req: Request, res: Response) {
+    const userId = req.params.userId as string;
 
     if (!req.body.oldPassword) {
       logError('Updating password failed: Missing current password');
@@ -125,19 +130,19 @@ class UserController {
       });
     }
 
-    this.dbClient.getUserWithId(userId).then((user) => {
+    this.dbClient.getUserWithId(userId).then((user: User) => {
       return verifyPassword(req.body.oldPassword, user.password);
-    }).then((valid) => {
+    }).then((valid: boolean) => {
       if (!valid) {
         throw new Error('Wrong password. Enter the correct current password.');
       }
       return generateHash(req.body.password);
-    }).then((hash) => {
+    }).then((hash: string) => {
       logInfo('Successfully updated password');
       return this.dbClient.updatePassword(userId, hash);
     }).then(() => {
       res.sendStatus(204);
-    }).catch((error) => {
+    }).catch((error: any) => {
       logError(`Updating password failed: ${error}`);
       res.status(400).send({
         message: error.message
@@ -146,4 +151,4 @@ class UserController {
   }
 }
 
-module.exports = UserController;
+export default UserController;

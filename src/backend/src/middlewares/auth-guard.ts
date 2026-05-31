@@ -1,10 +1,12 @@
+import { Request, Response, NextFunction } from 'express';
+
 const allowed = [
   {method: 'POST', path: '/sessions'},
   {method: 'DELETE', path: '/sessions'},
   {method: 'POST', path: '/users'}
 ];
 
-function isAllowed(req) {
+function isAllowed(req: Request) {
   if (req.method === 'OPTIONS') {
     return true;
   }
@@ -16,8 +18,8 @@ function isAllowed(req) {
   return false;
 }
 
-module.exports = function (controller) {
-  return function (req, res, next) {
+export default function (controller: any) {
+  return function (req: Request, res: Response, next: NextFunction) {
     if (isAllowed(req)) {
       return next();
     }

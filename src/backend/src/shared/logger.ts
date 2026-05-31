@@ -1,12 +1,12 @@
-function logInfo(message) {
+function logInfo(message: string) {
   console.log(`${new Date().toISOString()} ${message}`);
 }
 
-function logError(message) {
+function logError(message: string) {
   console.error(`${new Date().toISOString()} ${message}`);
 }
 
-module.exports = {
+export {
   logInfo,
   logError
 };

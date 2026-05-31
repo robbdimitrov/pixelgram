@@ -1,9 +1,9 @@
-function isValidEmail(email) {
+function isValidEmail(email: string) {
   const regex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   return regex.test(email);
 }
 
-function parsePagination(query) {
+function parsePagination(query: any) {
   const limit = query.limit === undefined ? 10 : Number(query.limit);
   const page = query.page === undefined ? 0 : Number(query.page);
 
@@ -17,7 +17,7 @@ function parsePagination(query) {
   };
 }
 
-module.exports = {
+export {
   isValidEmail,
   parsePagination
 };

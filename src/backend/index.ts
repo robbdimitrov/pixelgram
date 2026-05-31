@@ -1,13 +1,12 @@
-const http = require('http')
+import http from 'http';
 
-const createApp = require('./src');
-const DbClient = require('./src/db');
-const {logInfo} = require('./src/shared/logger');
+import createApp from './src';
+import DbClient from './src/db';
+import { logInfo } from './src/shared/logger';
 
 const port = process.env.PORT || '8080';
 const dbUrl = process.env.DATABASE_URL;
-const imageDir = process.env.IMAGE_DIR;
-
+const imageDir = process.env.IMAGE_DIR || '';
 const dbClient = new DbClient(dbUrl);
 const app = createApp(dbClient, imageDir);
 const server = http.createServer(app);

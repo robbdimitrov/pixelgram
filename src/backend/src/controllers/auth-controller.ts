@@ -1,5 +1,8 @@
-const {generateKey, verifyPassword} = require('../shared/crypto');
-const {logInfo, logError} = require('../shared/logger');
+import { generateKey, verifyPassword } from '../shared/crypto';
+import { logInfo, logError } from '../shared/logger';
+import { Request, Response, NextFunction } from 'express';
+import DbClient from "../db";
+import { User, Session, Image } from "../types";
 
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
 const rateLimitWindow = 15 * 60 * 1000;
@@ -9,20 +12,22 @@ function getExpiresAt() {
   return new Date(Date.now() + oneWeek);
 }
 
-function normalizeEmail(email) {
+function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
 class AuthController {
-  constructor(dbClient) {
+  dbClient: DbClient;
+  loginFailures: Map<string, { count: number, resetAt?: number }> = new Map();
+  constructor(dbClient: DbClient) {
     this.dbClient = dbClient;
     this.loginFailures = new Map();
   }
 
-  isRateLimited(key) {
+  isRateLimited(key: string) {
     const now = Date.now();
     const failure = this.loginFailures.get(key);
-    if (!failure || failure.resetAt <= now) {
+    if (!failure || (failure.resetAt || 0) <= now) {
       this.loginFailures.delete(key);
       return false;
     }
@@ -30,11 +35,11 @@ class AuthController {
     return failure.count >= maxLoginFailures;
   }
 
-  recordLoginFailure(key) {
+  recordLoginFailure(key: string) {
     const now = Date.now();
     const failure = this.loginFailures.get(key);
 
-    if (!failure || failure.resetAt <= now) {
+    if (!failure || (failure.resetAt || 0) <= now) {
       this.loginFailures.set(key, {
         count: 1,
         resetAt: now + rateLimitWindow
@@ -45,11 +50,11 @@ class AuthController {
     failure.count += 1;
   }
 
-  clearLoginFailures(keys) {
-    keys.forEach((key) => this.loginFailures.delete(key));
+  clearLoginFailures(keys: string[]) {
+    keys.forEach((key: string) => this.loginFailures.delete(key));
   }
 
-  createSession(req, res) {
+  createSession(req: Request, res: Response) {
     const {password} = req.body;
     const email = typeof req.body.email === 'string' ?
       normalizeEmail(req.body.email) :
@@ -63,7 +68,7 @@ class AuthController {
       });
     }
 
-    if (rateLimitKeys.some((key) => this.isRateLimited(key))) {
+    if (rateLimitKeys.some((key: string) => this.isRateLimited(key))) {
       logError('Creating session failed: Rate limited');
       return res.status(429).send({
         message: 'Incorrect email or password.'
@@ -72,18 +77,18 @@ class AuthController {
 
     this.dbClient.deleteExpiredSessions().then(() => {
       return this.dbClient.getUserWithEmail(email);
-    }).then((user) => {
+    }).then((user: User) => {
       if (!user) {
-        return Promise.resolve();
+        return Promise.resolve(false);
       }
-      req.userId = user.id;
+      req.userId! = user.id;
       return verifyPassword(password, user.password);
-    }).then((valid) => {
+    }).then((valid: boolean) => {
       if (!valid) {
         return Promise.resolve();
       }
-      return this.dbClient.createSession(generateKey(), req.userId, getExpiresAt());
-    }).then((session) => {
+      return this.dbClient.createSession(generateKey(), req.userId!, getExpiresAt());
+    }).then((session: Session) => {
       if (session) {
         logInfo('Successfully created session');
         this.clearLoginFailures(rateLimitKeys);
@@ -93,12 +98,12 @@ class AuthController {
         });
       } else {
         logError('Creating session failed: Incorrect email or password');
-        rateLimitKeys.forEach((key) => this.recordLoginFailure(key));
+        rateLimitKeys.forEach((key: string) => this.recordLoginFailure(key));
         res.status(401).send({
           message: 'Incorrect email or password.'
         });
       }
-    }).catch((error) => {
+    }).catch((error: any) => {
       logError(`Creating session failed: ${error}`);
       res.status(500).send({
         message: 'Internal Server Error'
@@ -106,7 +111,7 @@ class AuthController {
     });
   }
 
-  validateSession(req, res, next) {
+  validateSession(req: Request, res: Response, next: NextFunction) {
     const sessionId = req.cookies['session'];
 
     if (!sessionId) {
@@ -116,12 +121,12 @@ class AuthController {
     }
 
     this.dbClient.getSession(sessionId)
-      .then((result) => {
+      .then((result: any) => {
         if (result) {
           logInfo('Successfully validated session');
-          req.userId = result.userId.toString();
+          req.userId! = result.userId.toString();
           return this.dbClient.refreshSession(result.id, getExpiresAt())
-            .then((session) => {
+            .then((session: Session) => {
               if (!session) {
                 res.clearCookie('session');
                 return res.status(401).send({
@@ -139,7 +144,7 @@ class AuthController {
             message: 'Unauthorized'
           });
         }
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Validating session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -147,7 +152,7 @@ class AuthController {
       });
   }
 
-  deleteSession(req, res) {
+  deleteSession(req: Request, res: Response) {
     const sessionId = req.cookies['session'];
 
     this.dbClient.deleteSession(sessionId)
@@ -155,7 +160,7 @@ class AuthController {
         logInfo('Successfully deleted session');
         res.clearCookie('session');
         res.sendStatus(204);
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Deleting session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -163,7 +168,7 @@ class AuthController {
       });
   }
 
-  createCookie(res, sessionId) {
+  createCookie(res: Response, sessionId: string) {
     res.cookie('session', sessionId, {
       sameSite: 'strict',
       maxAge: oneWeek,
@@ -172,4 +177,4 @@ class AuthController {
   }
 }
 
-module.exports = AuthController;
+export default AuthController;

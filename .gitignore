@@ -12,3 +12,16 @@ node_modules
 # Editors
 .vscode
 .antigravitycli
+.idea/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/

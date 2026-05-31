@@ -1,12 +1,17 @@
-const {logInfo, logError} = require('../shared/logger');
-const {parsePagination} = require('../shared/utils');
+import { logInfo, logError } from '../shared/logger';
+import { parsePagination } from '../shared/utils';
+import { Request, Response } from 'express';
+import DbClient from "../db";
+import { User, Session, Image } from "../types";
 
 class ImageController {
-  constructor(dbClient) {
+  dbClient: DbClient;
+  loginFailures: Map<string, { count: number, timeout: NodeJS.Timeout, resetAt?: number }> = new Map();
+  constructor(dbClient: DbClient) {
     this.dbClient = dbClient;
   }
 
-  createImage(req, res) {
+  createImage(req: Request, res: Response) {
     const {filename, description} = req.body;
 
     if (!filename) {
@@ -16,8 +21,8 @@ class ImageController {
       });
     }
 
-    this.dbClient.createImage(req.userId, filename, description)
-      .then((result) => {
+    this.dbClient.createImage(req.userId!, filename, description)
+      .then((result: any) => {
         if (!result) {
           logError('Creating image failed: Upload not found');
           return res.status(400).send({
@@ -27,7 +32,7 @@ class ImageController {
 
         logInfo('Successfully created image');
         res.status(201).send(result);
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Creating image failed: ${error}`);
         res.status(400).send({
           message: 'Bad Request'
@@ -35,7 +40,7 @@ class ImageController {
       });
   }
 
-  getFeed(req, res) {
+  getFeed(req: Request, res: Response) {
     const pagination = parsePagination(req.query);
 
     if (!pagination) {
@@ -44,13 +49,13 @@ class ImageController {
       });
     }
 
-    this.dbClient.getFeed(pagination.page, pagination.limit, req.userId)
-      .then((result) => {
+    this.dbClient.getFeed(pagination.page, pagination.limit, req.userId!)
+      .then((result: any) => {
         logInfo('Successfully fetched feed');
         res.status(200).send({
           items: result
         });
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Getting feed failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -58,8 +63,8 @@ class ImageController {
       });
   }
 
-  getImages(req, res) {
-    const userId = req.params.userId;
+  getImages(req: Request, res: Response) {
+    const userId = req.params.userId as string;
     const pagination = parsePagination(req.query);
 
     if (!pagination) {
@@ -68,13 +73,13 @@ class ImageController {
       });
     }
 
-    this.dbClient.getImages(userId, pagination.page, pagination.limit, req.userId)
-      .then((result) => {
+    this.dbClient.getImages(userId, pagination.page, pagination.limit, req.userId!)
+      .then((result: any) => {
         logInfo('Successfully fetched images');
         res.status(200).send({
           items: result
         });
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Getting images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -82,8 +87,8 @@ class ImageController {
       });
   }
 
-  getLikedImages(req, res) {
-    const userId = req.params.userId;
+  getLikedImages(req: Request, res: Response) {
+    const userId = req.params.userId as string;
     const pagination = parsePagination(req.query);
 
     if (!pagination) {
@@ -92,13 +97,13 @@ class ImageController {
       });
     }
 
-    this.dbClient.getLikedImages(userId, pagination.page, pagination.limit, req.userId)
-      .then((result) => {
+    this.dbClient.getLikedImages(userId, pagination.page, pagination.limit, req.userId!)
+      .then((result: any) => {
         logInfo('Successfully fetched liked images');
         res.status(200).send({
           items: result
         });
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Getting liked images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -106,11 +111,11 @@ class ImageController {
       });
   }
 
-  getImage(req, res) {
-    const imageId = req.params.imageId;
+  getImage(req: Request, res: Response) {
+    const imageId = req.params.imageId as string;
 
-    this.dbClient.getImage(imageId, req.userId)
-      .then((result) => {
+    this.dbClient.getImage(imageId, req.userId!)
+      .then((result: any) => {
         if (result) {
           logInfo('Successfully fetched image');
           res.status(200).send(result);
@@ -120,7 +125,7 @@ class ImageController {
             message: 'Not Found'
           });
         }
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Getting image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -128,17 +133,17 @@ class ImageController {
       });
   }
 
-  deleteImage(req, res) {
-    const imageId = req.params.imageId;
+  deleteImage(req: Request, res: Response) {
+    const imageId = req.params.imageId as string;
 
-    this.dbClient.deleteImage(imageId, req.userId)
-      .then((rowCount) => {
+    this.dbClient.deleteImage(imageId, req.userId!)
+      .then((rowCount: number) => {
         if (rowCount) {
           logInfo('Successfully deleted image');
           return res.sendStatus(204);
         }
 
-        return this.dbClient.getImage(imageId, req.userId).then((image) => {
+        return this.dbClient.getImage(imageId, req.userId!).then((image: Image) => {
           if (image) {
             logError('Deleting image failed: Forbidden');
             return res.status(403).send({
@@ -151,7 +156,7 @@ class ImageController {
             message: 'Not Found'
           });
         });
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Deleting image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -159,18 +164,18 @@ class ImageController {
       });
   }
 
-  likeImage(req, res) {
-    const imageId = req.params.imageId;
+  likeImage(req: Request, res: Response) {
+    const imageId = req.params.imageId as string;
 
     this.dbClient.imageExists(imageId)
-      .then((exists) => {
+      .then((exists: boolean) => {
         if (!exists) {
           return false;
         }
 
-        return this.dbClient.likeImage(imageId, req.userId).then(() => true);
+        return this.dbClient.likeImage(imageId, req.userId!).then(() => true);
       })
-      .then((exists) => {
+      .then((exists: boolean) => {
         if (!exists) {
           logError('Liking image failed: Not Found');
           return res.status(404).send({
@@ -180,7 +185,7 @@ class ImageController {
 
         logInfo('Successfully liked image');
         return res.sendStatus(204);
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Liking image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -188,18 +193,18 @@ class ImageController {
       });
   }
 
-  unlikeImage(req, res) {
-    const imageId = req.params.imageId;
+  unlikeImage(req: Request, res: Response) {
+    const imageId = req.params.imageId as string;
 
     this.dbClient.imageExists(imageId)
-      .then((exists) => {
+      .then((exists: boolean) => {
         if (!exists) {
           return false;
         }
 
-        return this.dbClient.unlikeImage(imageId, req.userId).then(() => true);
+        return this.dbClient.unlikeImage(imageId, req.userId!).then(() => true);
       })
-      .then((exists) => {
+      .then((exists: boolean) => {
         if (!exists) {
           logError('Unliking image failed: Not Found');
           return res.status(404).send({
@@ -209,7 +214,7 @@ class ImageController {
 
         logInfo('Successfully unliked image');
         return res.sendStatus(204);
-      }).catch((error) => {
+      }).catch((error: any) => {
         logError(`Unliking image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -218,4 +223,4 @@ class ImageController {
   }
 }
 
-module.exports = ImageController;
+export default ImageController;

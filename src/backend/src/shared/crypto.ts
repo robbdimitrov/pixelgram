@@ -1,20 +1,20 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
-const argon2 = require('argon2');
+import argon2 from 'argon2';
 
 function generateKey() {
   return crypto.randomBytes(21).toString('base64');
 }
 
-function generateHash(password) {
+function generateHash(password: string) {
   return argon2.hash(password);
 }
 
-function verifyPassword(password, passwordHash) {
+function verifyPassword(password: string, passwordHash: any) {
   return argon2.verify(passwordHash, password);
 }
 
-module.exports = {
+export {
   generateKey,
   generateHash,
   verifyPassword
