@@ -14,6 +14,7 @@ export class FeedComponent {
   userId?: number;
   imageId?: number;
   hasLoaded = false;
+  isLoadingNextPage = false;
 
   constructor(
     private apiClient: APIClient,
@@ -35,19 +36,26 @@ export class FeedComponent {
   }
 
   loadNextPage() {
+    if (this.isLoadingNextPage) {
+      return;
+    }
+    this.isLoadingNextPage = true;
+
     const req = (this.userId ?
       this.apiClient.getLikedImages(this.userId, this.pagination.page) :
       this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe({
       next: (value) => {
+        this.isLoadingNextPage = false;
         const images = value.filter((image) => {
           return !(this.pagination.data.some((item) => image.id === item.id));
         });
-        this.pagination.update(images);
+        this.pagination.update(images, value.length);
         this.hasLoaded = true;
       },
       error: (error) => {
+        this.isLoadingNextPage = false;
         this.hasLoaded = true;
         console.error(`Error loading images: ${error.message}`);
       }
@@ -73,6 +81,10 @@ export class FeedComponent {
 
   count() {
     return this.pagination.count();
+  }
+
+  hasMore() {
+    return this.pagination.hasMore;
   }
 
   isEmpty() {

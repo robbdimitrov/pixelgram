@@ -30,4 +30,21 @@
     </div>
   }
 
+  @if (hasMore() && count() > 0) {
+    <div class="flex justify-center mt-6">
+      <button
+        id="next"
+        class="btn btn-outline btn-primary rounded-xl px-8 font-bold transition-transform hover:scale-105 active:scale-95"
+        (click)="onNextClick()"
+        [disabled]="isLoadingNextPage"
+        >
+        @if (isLoadingNextPage) {
+          <span class="loading loading-spinner"></span>
+        } @else {
+          Load More
+        }
+      </button>
+    </div>
+  }
+
 </div>

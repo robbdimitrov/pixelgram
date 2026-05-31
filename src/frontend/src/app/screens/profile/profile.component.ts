@@ -16,6 +16,7 @@ import {User} from '../../models/user.model';
 export class ProfileComponent {
   user?: User;
   hasLoadedImages = false;
+  isLoadingNextPage = false;
 
   constructor(
     private apiClient: APIClient,
@@ -43,19 +44,22 @@ export class ProfileComponent {
   }
 
   loadNextPage() {
-    if (!this.user) {
+    if (!this.user || this.isLoadingNextPage) {
       return;
     }
+    this.isLoadingNextPage = true;
 
     this.apiClient.getImages(this.user.id, this.pagination.page).subscribe({
       next: (value) => {
+        this.isLoadingNextPage = false;
         const images = value.filter((image) => {
           return !(this.pagination.data.some((item) => image.id === item.id));
         });
-        this.pagination.update(images);
+        this.pagination.update(images, value.length);
         this.hasLoadedImages = true;
       },
       error: (error) => {
+        this.isLoadingNextPage = false;
         this.hasLoadedImages = true;
         console.error(`Error loading images: ${error.message}`);
       }
@@ -68,6 +72,10 @@ export class ProfileComponent {
 
   count() {
     return this.pagination.count();
+  }
+
+  hasMore() {
+    return this.pagination.hasMore;
   }
 
   isEmpty() {

@@ -5,10 +5,12 @@ export class PaginationService<T> {
   data: Array<T> = [];
   perPage = 10;
   page = 0;
+  hasMore = true;
 
-  update(data: Array<T>) {
+  update(data: Array<T>, totalFetched: number = data.length) {
     this.data.push(...data);
-    this.updatePage();
+    this.page++;
+    this.hasMore = totalFetched === this.perPage;
   }
 
   remove(item: T) {
@@ -16,19 +18,15 @@ export class PaginationService<T> {
     if (index > -1) {
       this.data.splice(index, 1);
     }
-    this.updatePage();
   }
 
   reset() {
     this.page = 0;
     this.data = [];
+    this.hasMore = true;
   }
 
   count() {
     return this.data.length;
-  }
-
-  private updatePage() {
-    this.page = Math.floor(this.data.length / this.perPage);
   }
 }
