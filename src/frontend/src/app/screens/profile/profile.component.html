@@ -1,4 +1,4 @@
-<div class="mx-auto flex max-w-4xl flex-col gap-6 pb-12">
+<div class="mx-auto flex max-w-4xl flex-col gap-6">
   @if (user) {
     <app-profile-header
       [user]="user"
@@ -17,15 +17,17 @@
       }
     </div>
   } @else if (isEmpty()) {
-    <app-empty-state
-      class="w-full"
-      icon="camera"
-      title="No uploads yet"
-      [description]="emptyStateDescription()"
-      [actionLabel]="isCurrentUser() ? 'Share Your First Photo' : 'Browse Feed'"
-      [actionRoute]="isCurrentUser() ? '/upload' : '/feed'"
-      [actionStyle]="isCurrentUser() ? 'primary' : 'outline'"
-    ></app-empty-state>
+    <div class="mx-auto w-full max-w-xl">
+      <app-empty-state
+        class="w-full"
+        icon="camera"
+        title="No uploads yet"
+        [description]="emptyStateDescription()"
+        [actionLabel]="isCurrentUser() ? 'Share Your First Photo' : 'Browse Feed'"
+        [actionRoute]="isCurrentUser() ? '/upload' : '/feed'"
+        [actionStyle]="isCurrentUser() ? 'primary' : 'outline'"
+      ></app-empty-state>
+    </div>
   }
 
 </div>
