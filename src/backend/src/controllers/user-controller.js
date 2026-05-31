@@ -2,13 +2,20 @@ const {isValidEmail} = require('../shared/utils');
 const {generateHash, verifyPassword} = require('../shared/crypto');
 const {logInfo, logError} = require('../shared/logger');
 
+function isUniqueViolation(error) {
+  return error.code === '23505';
+}
+
 class UserController {
   constructor(dbClient) {
     this.dbClient = dbClient;
   }
 
   createUser(req, res) {
-    const {name, username, email, password} = req.body;
+    const name = req.body.name?.trim();
+    const username = req.body.username?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password;
 
     if (!name || !username || !email || !password) {
       logError('Creating user failed: Missing field');
@@ -31,8 +38,15 @@ class UserController {
       res.status(201).send(result);
     }).catch((error) => {
       logError(`Creating user failed: ${error}`);
-      res.status(400).send({
-        message: 'User with this username or email already exists.'
+
+      if (isUniqueViolation(error)) {
+        return res.status(409).send({
+          message: 'User with this username or email already exists.'
+        });
+      }
+
+      res.status(500).send({
+        message: 'Could not create user. Please try again.'
       });
     });
   }
@@ -73,7 +87,10 @@ class UserController {
       return this.updatePassword(req, res);
     }
 
-    const {name, username, email, avatar, bio} = req.body;
+    const name = req.body.name?.trim();
+    const username = req.body.username?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+    const {avatar, bio} = req.body;
 
     if (!isValidEmail(email)) {
       logError('Updating user failed: Invalid email address');
@@ -90,7 +107,7 @@ class UserController {
         logError(`Updating user failed: ${error}`);
 
         let message = 'Bad Request';
-        if (/email|username/.test(error.message)) {
+        if (isUniqueViolation(error)) {
           message = 'This username or email is already in use.';
         }
 
