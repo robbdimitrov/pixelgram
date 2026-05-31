@@ -1,4 +1,4 @@
-import {Component, ElementRef} from '@angular/core';
+import {Component} from '@angular/core';
 import {Router} from '@angular/router';
 
 import {APIClient} from '../../../services/api-client.service';
@@ -17,6 +17,7 @@ export class ChangePasswordComponent {
   passwordValue = '';
   passwordFieldType = 'password';
   passwordShowButtonTitle = 'Show';
+  errorMessage = '';
 
   constructor(private apiClient: APIClient,
               private session: Session,
@@ -28,10 +29,11 @@ export class ChangePasswordComponent {
       return;
     }
 
+    this.errorMessage = '';
     this.apiClient.changePassword(userId, this.oldPasswordValue,
       this.passwordValue).subscribe(
         () => this.router.navigate(['/settings']),
-        (error) => window.alert(error.message)
+        (error) => this.errorMessage = error.message || 'Could not update password. Please try again.'
       );
   }
 

@@ -1,4 +1,4 @@
-<div class="max-w-4xl mx-auto flex flex-col gap-6 pb-12">
+<div class="mx-auto flex max-w-4xl flex-col gap-6 pb-12">
   @if (user) {
     <app-profile-header
       [user]="user"
@@ -6,9 +6,8 @@
     </app-profile-header>
   }
 
-  <div class="divider my-2"></div>
+  <div class="h-px w-full bg-slate-200 dark:bg-white/10" aria-hidden="true"></div>
 
-  <!-- Grid of user's posts -->
   @if (images().length > 0) {
     <div class="grid grid-cols-3 gap-2 sm:gap-4">
       @for (image of images(); track image) {
@@ -18,9 +17,9 @@
       }
     </div>
   } @else {
-    <div class="flex flex-col items-center justify-center p-12 text-center text-base-content/50 border border-dashed border-base-300 rounded-3xl mt-6 bg-base-200/10">
-      <svg lucideSquarePlus class="w-8 h-8 mb-3 opacity-60"></svg>
-      <span class="font-semibold text-sm">No uploads yet</span>
+    <div class="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 p-12 text-center text-slate-500 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-400">
+      <svg lucideSquarePlus class="mb-3 h-8 w-8"></svg>
+      <span class="text-sm font-semibold">No uploads yet</span>
     </div>
   }
 

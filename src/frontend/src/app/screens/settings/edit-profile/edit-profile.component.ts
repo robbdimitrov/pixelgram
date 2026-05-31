@@ -16,6 +16,7 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
   selectedFile: File | null = null;
   imagePreview = '';
   user?: User;
+  errorMessage = '';
 
   constructor(
     private apiClient: APIClient,
@@ -46,17 +47,18 @@ export class EditProfileComponent implements AfterViewInit, AfterViewChecked {
         return;
       }
 
+      this.errorMessage = '';
       this.apiClient.updateUser(userId, this.user.name, this.user.username,
         this.user.email, this.user.avatar, this.user.bio).subscribe({
           next: () => this.router.navigate(['/settings']),
-          error: (error) => window.alert(error.message)
+          error: (error) => this.errorMessage = error.message || 'Could not update profile. Please try again.'
         });
     };
 
     if (this.selectedFile) {
       this.apiClient.uploadImage(this.selectedFile).subscribe({
         next: (data) => this.user!.avatar = data.filename,
-        error: (error) => window.alert(error.message),
+        error: (error) => this.errorMessage = error.message || 'Could not upload avatar. Please try again.',
         complete: () => updateClosure()
       });
     } else {

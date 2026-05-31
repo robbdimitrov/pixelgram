@@ -12,6 +12,7 @@ import {Session} from '../../services/session.service';
 export class LoginComponent implements OnInit {
   emailValue = '';
   passwordValue = '';
+  errorMessage = '';
 
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
@@ -37,12 +38,15 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
+    this.errorMessage = '';
     this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe({
       next: (data) => {
         this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
-      error: (error) => window.alert(error.message)
+      error: (error) => {
+        this.errorMessage = error.message || 'Could not log in. Please check your details.';
+      }
     });
   }
 }

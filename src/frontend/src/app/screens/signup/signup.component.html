@@ -22,11 +22,15 @@
         type="text"
         id="name"
         name="name"
+        #name="ngModel"
         [(ngModel)]="nameValue"
         class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
         placeholder="John Doe"
         required
       >
+      @if (name.invalid && (name.touched || form.submitted)) {
+        <p class="text-sm font-semibold text-error">Full name is required.</p>
+      }
     </div>
 
     <div class="form-control grid gap-2.5">
@@ -37,11 +41,15 @@
         type="text"
         id="username"
         name="username"
+        #username="ngModel"
         [(ngModel)]="usernameValue"
         class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
         placeholder="johndoe"
         required
       >
+      @if (username.invalid && (username.touched || form.submitted)) {
+        <p class="text-sm font-semibold text-error">Username is required.</p>
+      }
     </div>
 
     <div class="form-control grid gap-2.5">
@@ -52,12 +60,22 @@
         type="email"
         id="email"
         name="email"
+        #email="ngModel"
         [(ngModel)]="emailValue"
         class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
         required
       >
+      @if (email.invalid && (email.touched || form.submitted)) {
+        <p class="text-sm font-semibold text-error">
+          @if (email.errors?.['required']) {
+            Email is required.
+          } @else {
+            Enter a valid email address.
+          }
+        </p>
+      }
     </div>
 
     <div class="form-control grid gap-2.5">
@@ -69,6 +87,7 @@
           [type]="passwordFieldType"
           id="password"
           name="password"
+          #password="ngModel"
           [(ngModel)]="passwordValue"
           class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 pr-20 text-base text-slate-950 placeholder:text-slate-400 shadow-inner focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
           placeholder="Password"
@@ -80,6 +99,15 @@
           {{showButtonTitle}}
         </button>
       </div>
+      @if (password.invalid && (password.touched || form.submitted)) {
+        <p class="text-sm font-semibold text-error">
+          @if (password.errors?.['required']) {
+            Password is required.
+          } @else {
+            Password must be 4 to 30 characters.
+          }
+        </p>
+      }
     </div>
 
     <button type="submit" class="btn mt-2 h-12 min-h-12 w-full rounded-full border-0 bg-slate-950 text-base font-extrabold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600" [disabled]="!form.valid">

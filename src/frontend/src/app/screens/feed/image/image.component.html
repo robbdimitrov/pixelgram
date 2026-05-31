@@ -1,33 +1,31 @@
-<div class="card glass w-full overflow-hidden rounded-3xl border border-base-300/40 bg-base-100/70 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl transition-all duration-300 hover:border-primary/30 hover:shadow-primary/10">
-  <!-- Card Header -->
-  <div class="flex items-center justify-between px-4 py-3.5 bg-base-200/20 border-b border-base-200/50 backdrop-blur-xs">
+<div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
+  <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-3.5 dark:border-white/10 dark:bg-white/5">
     @if (user) {
       <div class="flex items-center gap-3">
-        <a [routerLink]="['/users', user.id]" class="relative w-9 h-9 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors duration-300">
-          <img class="w-full h-full object-cover" [src]="user.avatar | image" [alt]="user.username">
+        <a [routerLink]="['/users', user.id]" class="relative h-9 w-9 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
+          <img class="h-full w-full object-cover" [src]="user.avatar | image" [alt]="user.username">
         </a>
         <div class="flex flex-col">
-          <a [routerLink]="['/users', user.id]" class="font-bold text-sm text-base-content hover:text-primary transition-colors">
+          <a [routerLink]="['/users', user.id]" class="text-sm font-bold text-slate-950 transition-colors hover:text-primary dark:text-white">
             {{user.username}}
           </a>
           @if (user.name) {
-            <span class="text-[10px] text-base-content/50">{{user.name}}</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400">{{user.name}}</span>
           }
         </div>
       </div>
     }
 
-    <!-- Dropdown for Owned Post Actions -->
     @if (isOwnedByCurrentUser()) {
       <div class="relative">
         <button
-          class="btn btn-ghost btn-circle btn-sm text-base-content/50 hover:text-error hover:bg-error/10"
+          class="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-error/10 hover:text-error dark:text-slate-400"
           (click)="optionsOpened = !optionsOpened"
           >
           <svg lucideChevronDown class="w-3.5 h-3.5"></svg>
         </button>
         @if (optionsOpened) {
-          <div class="absolute right-0 mt-1.5 z-20 w-36 bg-base-200 border border-base-300 rounded-xl shadow-xl overflow-hidden py-1">
+          <div class="absolute right-0 z-20 mt-1.5 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-slate-900">
             <button (click)="onDeleteClick()" class="w-full px-4 py-2 text-left text-sm font-semibold text-error hover:bg-error/10 flex items-center transition-colors">
               Delete post
             </button>
@@ -37,17 +35,15 @@
     }
   </div>
 
-  <!-- Post Image Frame -->
-  <div class="relative w-full aspect-square overflow-hidden bg-base-300/10">
+  <div class="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
     <img
-      class="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03] cursor-pointer"
+      class="h-full w-full cursor-pointer object-cover transition-transform duration-700 hover:scale-[1.03]"
       [src]="image.filename | image"
       [alt]="image.description"
       (doubleclick)="onLikeClick()"
       >
   </div>
 
-  <!-- Action Bar -->
   <div class="flex items-center gap-3 px-4 pt-3.5">
     <button
       class="btn btn-ghost btn-circle btn-sm hover:bg-error/10 hover:text-error transition-all group duration-300"
@@ -59,29 +55,27 @@
           <svg lucideHeart class="w-5 h-5 fill-current text-error"></svg>
         </div>
       } @else {
-        <svg lucideHeart class="w-5 h-5 text-base-content/60 group-hover:text-error transition-colors"></svg>
+        <svg lucideHeart class="w-5 h-5 text-slate-500 transition-colors group-hover:text-error dark:text-slate-400"></svg>
       }
     </button>
-    <span class="font-extrabold text-sm text-base-content/95">
+    <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100">
       {{image.likes}} {{image.likes === 1 ? 'like' : 'likes'}}
     </span>
   </div>
 
-  <!-- Card Description & Comments Content -->
   <div class="px-4 pb-4.5 pt-1.5 flex flex-col gap-1">
     @if (isDescriptionPresent()) {
       <div class="text-sm leading-relaxed">
         @if (user) {
-          <a [routerLink]="['/users', image.userId]" class="font-bold text-base-content hover:underline mr-1.5">
+          <a [routerLink]="['/users', image.userId]" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">
             {{user.username}}
           </a>
         }
-        <span class="text-base-content/85 whitespace-pre-wrap">{{image.description}}</span>
+        <span class="whitespace-pre-wrap text-slate-700 dark:text-slate-300">{{image.description}}</span>
       </div>
     }
 
-    <!-- Upload Date -->
-    <span class="text-[10px] font-semibold uppercase tracking-wider text-base-content/40 mt-1">
+    <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
       {{image.created | relativedate}}
     </span>
   </div>

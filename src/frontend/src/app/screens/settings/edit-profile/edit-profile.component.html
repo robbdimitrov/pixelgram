@@ -1,91 +1,111 @@
 @if (user) {
-  <div class="card glass mx-auto my-6 flex max-w-xl flex-col gap-6 rounded-3xl border border-base-300/40 bg-base-100/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl sm:my-10 sm:p-8">
-    <!-- Back Header -->
-    <div class="flex items-center gap-3 pb-2 border-b border-base-200/40">
-      <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-base-content/60 hover:bg-base-200/50 hover:text-primary transition-colors" title="Back to Settings">
+  <div class="mx-auto my-6 flex max-w-xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white sm:my-10 sm:p-8">
+    <div class="flex items-center gap-3 border-b border-slate-200 pb-3 dark:border-white/10">
+      <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white" title="Back to Settings">
         <svg lucideArrowLeft class="h-5 w-5"></svg>
       </a>
-      <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Edit Profile</h1>
+      <h1 class="text-2xl font-black text-slate-950 dark:text-white">Edit Profile</h1>
     </div>
     <form (ngSubmit)="onSubmit()" #form="ngForm" class="space-y-5">
-      <!-- Avatar Selection Center -->
+      @if (errorMessage) {
+        <div class="rounded-2xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+          {{ errorMessage }}
+        </div>
+      }
+
       <div class="flex flex-col items-center gap-2 mb-4">
         <label
           for="file"
-          class="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 hover:border-primary hover:scale-[1.02] transition-all duration-300 shadow-md group cursor-pointer block"
+          class="group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full border border-slate-200 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15"
           title="Change Avatar"
           >
-          <img class="w-full h-full object-cover" [src]="imagePreview || (user.avatar | image)" alt="Profile avatar">
-          <!-- Change overlay -->
-          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity duration-300">
+          <img class="h-full w-full object-cover" [src]="imagePreview || (user.avatar | image)" alt="Profile avatar">
+          <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
             Change
           </div>
         </label>
         <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
-        <span class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Tap avatar to change</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tap avatar to change</span>
       </div>
-      <!-- Form Fields -->
       <div class="space-y-4">
         <div class="form-control">
           <label for="name" class="label pb-0.5">
-            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Full Name</span>
+            <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Full Name</span>
           </label>
           <input
             type="text"
             id="name"
             name="name"
+            #name="ngModel"
             [(ngModel)]="user.name"
-            class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+            class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
             placeholder="Enter your name"
             required
             >
+          @if (name.invalid && (name.touched || form.submitted)) {
+            <p class="mt-2 text-sm font-semibold text-error">Full name is required.</p>
+          }
         </div>
         <div class="form-control">
           <label for="username" class="label pb-0.5">
-            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Username</span>
+            <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Username</span>
           </label>
           <input
             type="text"
             id="username"
             name="username"
+            #username="ngModel"
             [(ngModel)]="user.username"
-            class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+            class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
             placeholder="Enter username"
             required
             >
+          @if (username.invalid && (username.touched || form.submitted)) {
+            <p class="mt-2 text-sm font-semibold text-error">Username is required.</p>
+          }
         </div>
         <div class="form-control">
           <label for="bio" class="label pb-0.5">
-            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Bio</span>
+            <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Bio</span>
           </label>
           <textarea
             id="bio"
             name="bio"
             [(ngModel)]="user.bio"
-            class="textarea textarea-bordered rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 w-full h-24 text-sm py-2 px-3 resize-none"
+            class="textarea textarea-bordered h-24 w-full resize-none rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
             placeholder="Tell people about yourself..."
             maxlength="160"
           ></textarea>
         </div>
         <div class="form-control">
           <label for="email" class="label pb-0.5">
-            <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Email Address</span>
+            <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Email Address</span>
           </label>
           <input
             type="email"
             id="email"
             name="email"
+            #email="ngModel"
             [(ngModel)]="user.email"
-            class="input input-bordered w-full rounded-xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300"
+            class="input input-bordered h-12 min-h-12 w-full rounded-2xl border-slate-200 bg-white px-5 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
             placeholder="Enter email"
+            pattern="[^@]+@[^@]+\.[^@]+"
             required
             >
+          @if (email.invalid && (email.touched || form.submitted)) {
+            <p class="mt-2 text-sm font-semibold text-error">
+              @if (email.errors?.['required']) {
+                Email is required.
+              } @else {
+                Enter a valid email address.
+              }
+            </p>
+          }
         </div>
       </div>
-      <!-- Submit Button -->
       <button
         type="submit"
-        class="btn btn-primary w-full rounded-xl mt-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99]"
+        class="btn mt-6 h-12 min-h-12 w-full rounded-full border-0 bg-slate-950 font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600"
         [disabled]="!form.valid"
         >
         Save Profile Details

@@ -1,22 +1,20 @@
-<div class="card glass mx-auto my-8 flex max-w-xl flex-col gap-5 rounded-3xl border border-base-300/40 bg-base-100/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl sm:my-16 sm:p-8">
+<div class="mx-auto my-8 flex max-w-xl flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white sm:my-16 sm:p-8">
   <div class="text-center sm:text-left mb-2">
-    <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Add Caption</h1>
-    <p class="text-xs text-base-content/50 mt-1">Provide a creative description for your upload.</p>
+    <h1 class="text-2xl font-black text-slate-950 dark:text-white">Add Caption</h1>
+    <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">Provide a creative description for your upload.</p>
   </div>
 
   <div class="flex flex-col sm:flex-row gap-5 items-stretch">
-    <!-- Image Preview Thumbnail -->
-    <div class="w-full sm:w-28 h-28 aspect-square rounded-2xl overflow-hidden border border-base-300 bg-base-300/10 shadow-sm shrink-0 flex items-center justify-center">
+    <div class="flex h-28 aspect-square w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm dark:border-white/10 dark:bg-slate-900 sm:w-28">
       @if (imagePreview) {
         <img class="w-full h-full object-cover" [src]="imagePreview" alt="Upload preview">
       }
     </div>
 
-    <!-- Description textarea -->
     <textarea
       name="description"
       [(ngModel)]="imageDescription"
-      class="textarea textarea-bordered rounded-2xl bg-base-200/40 border-base-300 focus:bg-base-100 focus:border-primary transition-all duration-300 flex-grow text-sm py-3 px-4 resize-none h-28"
+      class="textarea textarea-bordered h-28 flex-grow resize-none rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 transition-colors focus:border-slate-950 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white"
       placeholder="Write an inspiring caption here..."
       maxlength="160"
     ></textarea>
@@ -24,7 +22,7 @@
 
   <div class="flex justify-end mt-2">
     <button
-      class="btn btn-primary rounded-xl px-8 shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-105 active:scale-95 font-black uppercase tracking-wider text-xs"
+      class="btn h-12 min-h-12 rounded-full border-0 bg-slate-950 px-8 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-600"
       (click)="onSubmitClick()"
       [disabled]="!hasSelectedFile()"
       >
