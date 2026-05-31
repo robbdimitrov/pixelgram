@@ -93,13 +93,13 @@ class DbClient {
 
   // Sessions
 
-  createSession(sessionId, userId) {
+  createSession(sessionId, userId, expiresAt) {
     return new Promise((resolve, reject) => {
       const query =
-        `INSERT INTO sessions (id, user_id) VALUES ($1, $2)
-        RETURNING id, user_id, created`;
+        `INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)
+        RETURNING id, user_id, created, expires_at`;
 
-      this.pool.query(query, [sessionId, userId])
+      this.pool.query(query, [sessionId, userId, expiresAt])
         .then((result) => resolve(mapSession(result.rows[0])))
         .catch((error) => reject(error));
     });
@@ -108,7 +108,7 @@ class DbClient {
   getSession(sessionId) {
     return new Promise((resolve, reject) => {
       const query =
-        'SELECT id, user_id FROM sessions WHERE id = $1';
+        'SELECT id, user_id, created, expires_at FROM sessions WHERE id = $1 AND expires_at > now()';
 
       this.pool.query(query, [sessionId])
         .then((result) => {
@@ -118,6 +118,33 @@ class DbClient {
             resolve(undefined);
           }
         }).catch((error) => reject(error));
+    });
+  }
+
+  refreshSession(sessionId, expiresAt) {
+    return new Promise((resolve, reject) => {
+      const query =
+        `UPDATE sessions SET expires_at = $2 WHERE id = $1 AND expires_at > now()
+        RETURNING id, user_id, created, expires_at`;
+
+      this.pool.query(query, [sessionId, expiresAt])
+        .then((result) => {
+          if (result.rows.length) {
+            resolve(mapSession(result.rows[0]));
+          } else {
+            resolve(undefined);
+          }
+        }).catch((error) => reject(error));
+    });
+  }
+
+  deleteExpiredSessions() {
+    return new Promise((resolve, reject) => {
+      const query = 'DELETE FROM sessions WHERE expires_at <= now()';
+
+      this.pool.query(query)
+        .then(() => resolve())
+        .catch((error) => reject(error));
     });
   }
 
@@ -133,15 +160,44 @@ class DbClient {
 
   // Images
 
-  createImage(userId, filename, description) {
+  createUpload(userId, filename) {
     return new Promise((resolve, reject) => {
       const query =
-        `INSERT INTO images (user_id, filename, description)
-        VALUES ($1, $2, $3) RETURNING id`;
+        `INSERT INTO uploads (user_id, filename) VALUES ($1, $2)
+        RETURNING filename`;
 
-      this.pool.query(query, [userId, filename, description])
+      this.pool.query(query, [userId, filename])
         .then((result) => resolve(result.rows[0]))
         .catch((error) => reject(error));
+    });
+  }
+
+  createImage(userId, filename, description) {
+    return this.pool.connect().then(async (client) => {
+      try {
+        await client.query('BEGIN');
+
+        const uploadQuery =
+          `DELETE FROM uploads WHERE user_id = $1 AND filename = $2
+          RETURNING filename`;
+        const uploadResult = await client.query(uploadQuery, [userId, filename]);
+        if (!uploadResult.rows.length) {
+          await client.query('ROLLBACK');
+          return undefined;
+        }
+
+        const imageQuery =
+          `INSERT INTO images (user_id, filename, description)
+          VALUES ($1, $2, $3) RETURNING id`;
+        const imageResult = await client.query(imageQuery, [userId, filename, description]);
+        await client.query('COMMIT');
+        return imageResult.rows[0];
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
     });
   }
 
@@ -222,22 +278,35 @@ class DbClient {
     });
   }
 
+  imageExists(imageId) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT EXISTS (SELECT 1 FROM images WHERE id = $1)';
+
+      this.pool.query(query, [imageId])
+        .then((result) => resolve(result.rows[0].exists))
+        .catch((error) => reject(error));
+    });
+  }
+
   deleteImage(imageId, userId) {
     return new Promise((resolve, reject) => {
       const query = 'DELETE FROM images WHERE id = $1 AND user_id = $2';
 
       this.pool.query(query, [imageId, userId])
-        .then(() => resolve())
+        .then((result) => resolve(result.rowCount))
         .catch((error) => reject(error));
     });
   }
 
   likeImage(imageId, userId) {
     return new Promise((resolve, reject) => {
-      const query = 'INSERT INTO likes (user_id, image_id) VALUES ($1, $2)';
+      const query =
+        `INSERT INTO likes (user_id, image_id)
+        SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM images WHERE id = $2)
+        ON CONFLICT DO NOTHING`;
 
       this.pool.query(query, [userId, imageId])
-        .then(() => resolve())
+        .then((result) => resolve(result.rowCount))
         .catch((error) => reject(error));
     });
   }

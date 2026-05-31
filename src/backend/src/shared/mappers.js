@@ -16,7 +16,8 @@ function mapSession(session) {
   return {
     id: session.id,
     userId: session.user_id,
-    created: session.created
+    created: session.created,
+    expiresAt: session.expires_at
   };
 }
 

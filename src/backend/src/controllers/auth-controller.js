@@ -1,13 +1,60 @@
 const {generateKey, verifyPassword} = require('../shared/crypto');
 const {logInfo, logError} = require('../shared/logger');
 
+const oneWeek = 7 * 24 * 60 * 60 * 1000;
+const rateLimitWindow = 15 * 60 * 1000;
+const maxLoginFailures = 5;
+
+function getExpiresAt() {
+  return new Date(Date.now() + oneWeek);
+}
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
 class AuthController {
   constructor(dbClient) {
     this.dbClient = dbClient;
+    this.loginFailures = new Map();
+  }
+
+  isRateLimited(key) {
+    const now = Date.now();
+    const failure = this.loginFailures.get(key);
+    if (!failure || failure.resetAt <= now) {
+      this.loginFailures.delete(key);
+      return false;
+    }
+
+    return failure.count >= maxLoginFailures;
+  }
+
+  recordLoginFailure(key) {
+    const now = Date.now();
+    const failure = this.loginFailures.get(key);
+
+    if (!failure || failure.resetAt <= now) {
+      this.loginFailures.set(key, {
+        count: 1,
+        resetAt: now + rateLimitWindow
+      });
+      return;
+    }
+
+    failure.count += 1;
+  }
+
+  clearLoginFailures(keys) {
+    keys.forEach((key) => this.loginFailures.delete(key));
   }
 
   createSession(req, res) {
-    const {email, password} = req.body;
+    const {password} = req.body;
+    const email = typeof req.body.email === 'string' ?
+      normalizeEmail(req.body.email) :
+      undefined;
+    const rateLimitKeys = [`ip:${req.ip}`, `email:${email}`];
 
     if (!email || !password) {
       logError('Creating session failed: Missing email or password');
@@ -16,7 +63,16 @@ class AuthController {
       });
     }
 
-    this.dbClient.getUserWithEmail(email).then((user) => {
+    if (rateLimitKeys.some((key) => this.isRateLimited(key))) {
+      logError('Creating session failed: Rate limited');
+      return res.status(429).send({
+        message: 'Incorrect email or password.'
+      });
+    }
+
+    this.dbClient.deleteExpiredSessions().then(() => {
+      return this.dbClient.getUserWithEmail(email);
+    }).then((user) => {
       if (!user) {
         return Promise.resolve();
       }
@@ -26,16 +82,18 @@ class AuthController {
       if (!valid) {
         return Promise.resolve();
       }
-      return this.dbClient.createSession(generateKey(), req.userId);
+      return this.dbClient.createSession(generateKey(), req.userId, getExpiresAt());
     }).then((session) => {
       if (session) {
         logInfo('Successfully created session');
+        this.clearLoginFailures(rateLimitKeys);
         this.createCookie(res, session.id);
         res.status(200).send({
           id: session.userId
         });
       } else {
         logError('Creating session failed: Incorrect email or password');
+        rateLimitKeys.forEach((key) => this.recordLoginFailure(key));
         res.status(401).send({
           message: 'Incorrect email or password.'
         });
@@ -62,8 +120,18 @@ class AuthController {
         if (result) {
           logInfo('Successfully validated session');
           req.userId = result.userId.toString();
-          this.createCookie(res, result.id);
-          next();
+          return this.dbClient.refreshSession(result.id, getExpiresAt())
+            .then((session) => {
+              if (!session) {
+                res.clearCookie('session');
+                return res.status(401).send({
+                  message: 'Unauthorized'
+                });
+              }
+
+              this.createCookie(res, session.id);
+              next();
+            });
         } else {
           logError('Validating session failed: Unauthorized');
           res.clearCookie('session');
@@ -96,7 +164,6 @@ class AuthController {
   }
 
   createCookie(res, sessionId) {
-    const oneWeek = 7 * 24 * 60 * 60 * 1000;
     res.cookie('session', sessionId, {
       sameSite: 'strict',
       maxAge: oneWeek,

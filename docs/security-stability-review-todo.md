@@ -30,31 +30,37 @@ Fresh-session starting point:
 
 ## High Priority
 
-- [ ] Restrict uploads to real image files on the backend.
+- [x] Restrict uploads to real image files on the backend.
   - Current issue: `src/backend/src/controllers/upload-controller.js` only enforces size and file count.
   - Todo: validate MIME type by content, reject non-image payloads, and return a clear `400`.
+  - Status: done. Uploads are checked by image file signatures and invalid files are deleted.
 
-- [ ] Tie uploaded files to the authenticated user before creating image records.
+- [x] Tie uploaded files to the authenticated user before creating image records.
   - Current issue: `POST /images` accepts any client-provided `filename`.
   - Todo: persist upload ownership or issue a pending upload token, then verify ownership when creating the image row.
+  - Status: done. Pending uploads are recorded by user and consumed transactionally when creating an image.
 
-- [ ] Add server-side session expiration.
+- [x] Add server-side session expiration.
   - Current issue: cookies expire client-side, but `sessions` rows remain valid indefinitely.
   - Todo: add `expires_at`, check it in session validation, refresh or rotate sessions intentionally, and clean up expired rows.
+  - Status: done. Sessions now have `expires_at`, validation requires it, active sessions refresh, and expired rows are cleaned up during login.
 
 ## Medium Priority
 
-- [ ] Add rate limiting for login/session creation.
+- [x] Add rate limiting for login/session creation.
   - Current issue: Argon2 verification runs with no throttle.
   - Todo: rate limit by IP and account/email, and keep failure responses generic.
+  - Status: done. Failed logins are throttled in-process by IP and normalized email.
 
-- [ ] Validate and clamp pagination inputs.
+- [x] Validate and clamp pagination inputs.
   - Current issue: `limit` and `page` accept arbitrary values.
   - Todo: require non-negative page values, clamp `limit` to a small max, and return `400` for invalid input.
+  - Status: done. Pagination now requires integer `page`/`limit`, rejects invalid values, and clamps `limit` to 50.
 
-- [ ] Make like/delete behavior status-aware and idempotent.
+- [x] Make like/delete behavior status-aware and idempotent.
   - Current issue: duplicate likes can produce `500`; deletes return `204` even if no row was removed.
   - Todo: use `ON CONFLICT DO NOTHING` for likes, inspect `rowCount`, and return appropriate `404` or `403` responses.
+  - Status: done. Duplicate likes are idempotent, like/unlike return `404` for missing images, and deletes distinguish `403` from `404`.
 
 - [ ] Roll back optimistic like UI on request failure.
   - Current issue: the frontend mutates like state before the API succeeds and ignores errors.
@@ -70,9 +76,10 @@ Fresh-session starting point:
   - Current issue: `SECRET` is set in `k8s/backend.yaml` but appears unused because sessions are DB-backed.
   - Todo: remove it if not needed, or use it consistently if signed session data is introduced.
 
-- [ ] Tighten backend email validation.
+- [x] Tighten backend email validation.
   - Current issue: the regex has an unescaped dot and no end anchor.
   - Todo: use an anchored regex or a small validation helper/library.
+  - Status: done. The backend email regex is anchored and escapes the domain dot.
 
 - [ ] Remove forced change detection from edit profile.
   - Current issue: `EditProfileComponent` calls `detectChanges()` in `ngAfterViewChecked`.

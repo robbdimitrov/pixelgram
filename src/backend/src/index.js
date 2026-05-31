@@ -38,7 +38,7 @@ module.exports = function (dbClient, imageDir) {
   const controllers = {
     auth: new AuthController(dbClient),
     image: new ImageController(dbClient),
-    upload: new UploadController(imageDir),
+    upload: new UploadController(imageDir, dbClient),
     user: new UserController(dbClient)
   };
 

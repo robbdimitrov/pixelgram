@@ -1,4 +1,5 @@
 const {logInfo, logError} = require('../shared/logger');
+const {parsePagination} = require('../shared/utils');
 
 class ImageController {
   constructor(dbClient) {
@@ -17,6 +18,13 @@ class ImageController {
 
     this.dbClient.createImage(req.userId, filename, description)
       .then((result) => {
+        if (!result) {
+          logError('Creating image failed: Upload not found');
+          return res.status(400).send({
+            message: 'Upload is invalid or expired.'
+          });
+        }
+
         logInfo('Successfully created image');
         res.status(201).send(result);
       }).catch((error) => {
@@ -28,10 +36,15 @@ class ImageController {
   }
 
   getFeed(req, res) {
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const page = parseInt(req.query.page, 10) || 0;
+    const pagination = parsePagination(req.query);
 
-    this.dbClient.getFeed(page, limit, req.userId)
+    if (!pagination) {
+      return res.status(400).send({
+        message: 'Invalid pagination parameters.'
+      });
+    }
+
+    this.dbClient.getFeed(pagination.page, pagination.limit, req.userId)
       .then((result) => {
         logInfo('Successfully fetched feed');
         res.status(200).send({
@@ -47,10 +60,15 @@ class ImageController {
 
   getImages(req, res) {
     const userId = req.params.userId;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const page = parseInt(req.query.page, 10) || 0;
+    const pagination = parsePagination(req.query);
 
-    this.dbClient.getImages(userId, page, limit, req.userId)
+    if (!pagination) {
+      return res.status(400).send({
+        message: 'Invalid pagination parameters.'
+      });
+    }
+
+    this.dbClient.getImages(userId, pagination.page, pagination.limit, req.userId)
       .then((result) => {
         logInfo('Successfully fetched images');
         res.status(200).send({
@@ -66,10 +84,15 @@ class ImageController {
 
   getLikedImages(req, res) {
     const userId = req.params.userId;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const page = parseInt(req.query.page, 10) || 0;
+    const pagination = parsePagination(req.query);
 
-    this.dbClient.getLikedImages(userId, page, limit, req.userId)
+    if (!pagination) {
+      return res.status(400).send({
+        message: 'Invalid pagination parameters.'
+      });
+    }
+
+    this.dbClient.getLikedImages(userId, pagination.page, pagination.limit, req.userId)
       .then((result) => {
         logInfo('Successfully fetched liked images');
         res.status(200).send({
@@ -109,9 +132,25 @@ class ImageController {
     const imageId = req.params.imageId;
 
     this.dbClient.deleteImage(imageId, req.userId)
-      .then(() => {
-        logInfo('Successfully deleted image');
-        res.sendStatus(204);
+      .then((rowCount) => {
+        if (rowCount) {
+          logInfo('Successfully deleted image');
+          return res.sendStatus(204);
+        }
+
+        return this.dbClient.getImage(imageId, req.userId).then((image) => {
+          if (image) {
+            logError('Deleting image failed: Forbidden');
+            return res.status(403).send({
+              message: 'Forbidden'
+            });
+          }
+
+          logError('Deleting image failed: Not Found');
+          return res.status(404).send({
+            message: 'Not Found'
+          });
+        });
       }).catch((error) => {
         logError(`Deleting image failed: ${error}`);
         res.status(500).send({
@@ -123,10 +162,24 @@ class ImageController {
   likeImage(req, res) {
     const imageId = req.params.imageId;
 
-    this.dbClient.likeImage(imageId, req.userId)
-      .then(() => {
+    this.dbClient.imageExists(imageId)
+      .then((exists) => {
+        if (!exists) {
+          return false;
+        }
+
+        return this.dbClient.likeImage(imageId, req.userId).then(() => true);
+      })
+      .then((exists) => {
+        if (!exists) {
+          logError('Liking image failed: Not Found');
+          return res.status(404).send({
+            message: 'Not Found'
+          });
+        }
+
         logInfo('Successfully liked image');
-        res.sendStatus(204);
+        return res.sendStatus(204);
       }).catch((error) => {
         logError(`Liking image failed: ${error}`);
         res.status(500).send({
@@ -138,10 +191,24 @@ class ImageController {
   unlikeImage(req, res) {
     const imageId = req.params.imageId;
 
-    this.dbClient.unlikeImage(imageId, req.userId)
-      .then(() => {
+    this.dbClient.imageExists(imageId)
+      .then((exists) => {
+        if (!exists) {
+          return false;
+        }
+
+        return this.dbClient.unlikeImage(imageId, req.userId).then(() => true);
+      })
+      .then((exists) => {
+        if (!exists) {
+          logError('Unliking image failed: Not Found');
+          return res.status(404).send({
+            message: 'Not Found'
+          });
+        }
+
         logInfo('Successfully unliked image');
-        res.sendStatus(204);
+        return res.sendStatus(204);
       }).catch((error) => {
         logError(`Unliking image failed: ${error}`);
         res.status(500).send({

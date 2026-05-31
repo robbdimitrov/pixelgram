@@ -16,10 +16,17 @@ CREATE TABLE users (
 CREATE TABLE sessions (
   id varchar(255) PRIMARY KEY,
   user_id integer REFERENCES users ON DELETE CASCADE,
-  created timestamp NOT NULL DEFAULT now()
+  created timestamp NOT NULL DEFAULT now(),
+  expires_at timestamp NOT NULL
 );
 
 -- Images
+
+CREATE TABLE uploads (
+  filename varchar(255) PRIMARY KEY,
+  user_id integer REFERENCES users ON DELETE CASCADE,
+  created timestamp NOT NULL DEFAULT now()
+);
 
 CREATE TABLE images (
   id serial PRIMARY KEY,
