@@ -84,7 +84,11 @@ export class FeedComponent {
   }
 
   emptyStateTitle() {
-    return this.isLikesPage() ? 'No liked posts yet' : 'No posts yet';
+    return this.isLikesPage() ? 'No liked posts yet' : 'Ready for your first post?';
+  }
+
+  emptyStateIcon() {
+    return this.isLikesPage() ? 'heart' : 'square-plus';
   }
 
   emptyStateDescription() {
@@ -92,7 +96,15 @@ export class FeedComponent {
       return 'Liked photos will appear here so they are easy to find again.';
     }
 
-    return 'Your feed is empty. Upload the first photo to start filling PixelGram.';
+    return 'Start your PixelGram feed with a photo worth sharing.';
+  }
+
+  emptyStateActionLabel() {
+    return this.isLikesPage() ? 'Browse Feed' : 'Share Your First Photo';
+  }
+
+  emptyStateActionRoute() {
+    return this.isLikesPage() ? '/feed' : '/upload';
   }
 
   onLike(imageId: number) {

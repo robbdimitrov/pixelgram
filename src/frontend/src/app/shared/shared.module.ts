@@ -19,6 +19,7 @@ import {
 } from '@lucide/angular';
 
 import {NavbarComponent} from './components/navbar.component';
+import {EmptyStateComponent} from './components/empty-state.component';
 import {ImagePipe} from './pipes/image.pipe';
 import {UserPipe} from './pipes/user.pipe';
 import {RelativeDatePipe} from './pipes/relative-date.pipe';
@@ -31,6 +32,7 @@ import {
 @NgModule({
   declarations: [
     NavbarComponent,
+    EmptyStateComponent,
     ImagePipe,
     UserPipe,
     RelativeDatePipe,
@@ -74,6 +76,7 @@ import {
     LucideArrowLeft,
     LucideTriangleAlert,
     NavbarComponent,
+    EmptyStateComponent,
     ImagePipe,
     UserPipe,
     RelativeDatePipe,

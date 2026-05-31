@@ -82,6 +82,12 @@ export class ProfileComponent {
     return this.session.userId() === this.user.id;
   }
 
+  emptyStateDescription() {
+    return this.isCurrentUser()
+      ? 'Your profile is ready. Share your first photo to start building your grid.'
+      : 'This profile has not shared any photos yet.';
+  }
+
   onNextClick() {
     this.loadNextPage();
   }

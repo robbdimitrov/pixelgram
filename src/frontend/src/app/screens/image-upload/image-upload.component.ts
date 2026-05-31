@@ -12,6 +12,7 @@ import {APIClient} from '../../services/api-client.service';
 export class ImageUploadComponent {
   readonly maxDescriptionLength = 160;
   readonly maxFileSizeBytes = 1024 * 1024;
+  readonly supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
   imageDescription = '';
   imagePreview = '';
@@ -50,9 +51,9 @@ export class ImageUploadComponent {
     if (!file) {
       return;
     }
-    if (!file.type.startsWith('image/')) {
+    if (!this.supportedMimeTypes.includes(file.type)) {
       this.clearSelection();
-      this.errorMessage = 'Choose a valid image file.';
+      this.errorMessage = 'Choose a JPEG, PNG, GIF, or WEBP image.';
       return;
     }
     if (file.size > this.maxFileSizeBytes) {

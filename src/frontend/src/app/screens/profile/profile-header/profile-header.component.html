@@ -24,15 +24,15 @@
           </div>
         }
       </div>
-      <div class="my-0.5 flex items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300">
+      <div class="flex items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300">
         <span>
           <strong class="font-black text-slate-950 dark:text-white">{{user.images}}</strong> posts
         </span>
         <a
           [routerLink]="['/users', user.id, 'likes']"
-          class="border-b border-dashed border-slate-300 pb-0.5 transition-colors hover:border-slate-950 hover:text-slate-950 dark:border-white/20 dark:hover:border-white dark:hover:text-white"
+          class="transition-colors hover:text-slate-950 dark:hover:text-white"
           >
-          Liked posts
+          <strong class="font-black text-slate-950 dark:text-white">{{user.likes}}</strong> liked posts
         </a>
       </div>
       <div class="flex w-full max-w-xl flex-col gap-1">
