@@ -12,6 +12,7 @@ import {PaginationService} from '../../services/pagination.service';
 })
 export class FeedComponent {
   userId?: number;
+  imageId?: number;
   hasLoaded = false;
 
   constructor(
@@ -22,8 +23,11 @@ export class FeedComponent {
   ) {
     this.route.params.subscribe((params) => {
       if (params['imageId']) {
+        this.imageId = Number(params['imageId']);
+        this.userId = undefined;
         this.loadImage(params['imageId']);
       } else {
+        this.imageId = undefined;
         this.userId = params['userId'];
         this.loadNextPage();
       }
@@ -90,7 +94,11 @@ export class FeedComponent {
   onDeleteAction(image: Image) {
     this.pagination.remove(image);
     this.apiClient.deleteImage(image.id).subscribe({
-      next: () => this.router.navigate([`/users/${image.userId}`]),
+      next: () => {
+        if (this.imageId === image.id) {
+          this.router.navigate([`/users/${image.userId}`]);
+        }
+      },
       error: (error) => console.error(`Deleting image failed: ${error.message}`)
     });
   }
