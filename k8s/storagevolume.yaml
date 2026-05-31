@@ -6,17 +6,17 @@ spec:
   capacity:
     storage: 5Gi
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   hostPath:
     path: /mnt/storage
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: storage-pvc
+  name: image-storage-pvc
 spec:
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   resources:
     requests:
       storage: 5Gi
