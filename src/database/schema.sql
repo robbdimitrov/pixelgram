@@ -1,6 +1,3 @@
-CREATE DATABASE pixelgram;
-\connect pixelgram;
-
 -- Users
 
 CREATE TABLE users (

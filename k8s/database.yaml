@@ -36,6 +36,8 @@ spec:
         env:
         - name: POSTGRES_PASSWORD
           value: kubernetes
+        - name: POSTGRES_DB
+          value: pixelgram
         volumeMounts:
         - mountPath: /var/lib/postgresql/data
           name: database-storage
