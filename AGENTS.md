@@ -80,3 +80,6 @@ The backend reads `PORT` (defaults to `8080`).
 - **Database init**: `schema.sql` is copied to `/docker-entrypoint-initdb.d/` in the Postgres image and automatically runs on first container start.
 - **No CI/CD, no pre-commit hooks** exist in this repo.
 - **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
+- **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Do not add inline `style` attributes or custom component SCSS/CSS for redesign work; use Tailwind config/theme tokens when styling needs to be shared.
+- **Frontend icons**: use Lucide Angular icons for UI icons. Do not add ad hoc inline SVG icons unless Lucide cannot represent the needed symbol.
+- **Engineering quality**: use SOLID, DRY, and KISS principles. Write good code, remove needless duplication, and refactor toward simpler, clearer implementations when touching an area.
