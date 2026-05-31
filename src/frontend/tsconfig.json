@@ -17,7 +17,7 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     "strictPropertyInitialization": false,
-    "target": "es2017",
+    "target": "ES2022",
     "module": "es2020"
   },
   "angularCompilerOptions": {
