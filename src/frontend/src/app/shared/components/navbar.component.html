@@ -42,41 +42,5 @@
         <span class="leading-none">{{ authNavTitle() }}</span>
       </a>
     }
-
-    <span class="mx-0.5 h-8 w-px bg-slate-950/10 dark:bg-white/15 sm:mx-1" aria-hidden="true"></span>
-
-    <div class="relative">
-      <button
-        type="button"
-        class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white sm:h-11 sm:w-11"
-        (click)="isThemeMenuOpen = !isThemeMenuOpen"
-        [title]="themeTitle()"
-        [attr.aria-label]="themeTitle()"
-        [attr.aria-expanded]="isThemeMenuOpen"
-      >
-        @if (themePreference === 'system') {
-          <svg lucideMonitor class="block h-5 w-5"></svg>
-        } @else if (isDarkMode) {
-          <svg lucideMoon class="block h-5 w-5"></svg>
-        } @else {
-          <svg lucideSun class="block h-5 w-5"></svg>
-        }
-      </button>
-
-      @if (isThemeMenuOpen) {
-        <div class="absolute right-0 top-12 z-50 grid w-32 gap-1 rounded-2xl border border-slate-200 bg-white p-1.5 text-sm font-bold text-slate-900 shadow-xl shadow-slate-900/10 dark:border-white/10 dark:bg-slate-900 dark:text-white">
-          @for (theme of themeOptions; track theme) {
-            <button
-              type="button"
-              class="rounded-xl px-3 py-2 text-left transition-colors hover:bg-slate-100 dark:hover:bg-white/10"
-              [ngClass]="{'bg-slate-950 text-white dark:bg-white dark:text-slate-950': themeOptionActive(theme)}"
-              (click)="setThemePreference(theme)"
-            >
-              {{ themeOptionTitle(theme) }}
-            </button>
-          }
-        </div>
-      }
-    </div>
   </nav>
 </header>

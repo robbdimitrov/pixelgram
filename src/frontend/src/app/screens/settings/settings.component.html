@@ -6,6 +6,30 @@
     </div>
 
     <ul class="flex flex-col gap-3">
+      <li class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <div class="flex flex-col gap-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">Appearance</h2>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Choose how PixelGram looks on this device.</p>
+          </div>
+          <div class="grid grid-cols-3 gap-2 rounded-full bg-white p-1 dark:bg-slate-950">
+            @for (option of theme.options; track option) {
+              <button
+                type="button"
+                class="h-10 rounded-full text-xs font-black transition-colors"
+                [ngClass]="{
+                  'bg-slate-950 text-white shadow-md dark:bg-white dark:text-slate-950': theme.optionActive(option),
+                  'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white': !theme.optionActive(option)
+                }"
+                (click)="setTheme(option)"
+              >
+                {{ theme.optionTitle(option) }}
+              </button>
+            }
+          </div>
+        </div>
+      </li>
+
       <li>
         <a 
           routerLink="/settings/profile" 
@@ -22,16 +46,6 @@
           class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
         >
           <span class="flex items-center gap-2">Change Password</span>
-          <svg lucideChevronRight class="h-4 w-4 text-slate-500 dark:text-slate-400"></svg>
-        </a>
-      </li>
-
-      <li>
-        <a 
-          [routerLink]="['/users', userId(), 'likes']" 
-          class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
-        >
-          <span class="flex items-center gap-2">Liked Images</span>
           <svg lucideChevronRight class="h-4 w-4 text-slate-500 dark:text-slate-400"></svg>
         </a>
       </li>

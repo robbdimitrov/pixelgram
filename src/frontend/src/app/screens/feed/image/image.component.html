@@ -1,5 +1,5 @@
 <div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
-  <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-white/10 dark:bg-white/5 sm:px-6">
+  <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-5 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:px-6 sm:pr-20">
     @if (user) {
       <div class="flex items-center gap-3.5">
         <a [routerLink]="['/users', user.id]" class="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
@@ -17,9 +17,9 @@
     }
 
     @if (isOwnedByCurrentUser()) {
-      <div #optionsMenu class="relative -mr-1">
+      <div #optionsMenu class="absolute right-5 top-1/2 -translate-y-1/2 sm:right-6">
         <button
-          class="btn btn-ghost btn-circle min-h-11 h-11 w-11 text-slate-500 hover:bg-error/10 hover:text-error dark:text-slate-400"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-error/10 hover:text-error dark:text-slate-400"
           (click)="optionsOpened = !optionsOpened"
           >
           <svg lucideChevronDown class="h-5 w-5"></svg>
@@ -45,9 +45,9 @@
       >
   </div>
 
-  <div class="flex items-center gap-3 px-5 pt-4 sm:px-6">
+  <div class="flex items-center gap-2 px-5 pt-4 sm:px-6">
     <button
-      class="btn btn-ghost btn-circle min-h-11 h-11 w-11 hover:bg-error/10 hover:text-error transition-all group duration-300"
+      class="group -ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-error/10 hover:text-error"
       [ngClass]="{'text-error': image.liked}"
       (click)="onLikeClick()"
       >
@@ -59,7 +59,7 @@
         <svg lucideHeart class="h-6 w-6 text-slate-500 transition-colors group-hover:text-error dark:text-slate-400"></svg>
       }
     </button>
-    <span class="text-base font-extrabold leading-6 text-slate-900 dark:text-slate-100">
+    <span class="text-base font-extrabold leading-none text-slate-900 dark:text-slate-100">
       {{image.likes}} {{image.likes === 1 ? 'like' : 'likes'}}
     </span>
   </div>
