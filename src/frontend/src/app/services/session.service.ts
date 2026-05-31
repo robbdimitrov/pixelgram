@@ -1,7 +1,10 @@
 import {Injectable} from '@angular/core';
+import {ThemeService} from './theme.service';
 
 @Injectable()
 export class Session {
+  constructor(private themeService: ThemeService) {}
+
   userId(): number | null {
     const value = localStorage.getItem('userId');
     if (value) {
@@ -15,6 +18,7 @@ export class Session {
   }
 
   clear() {
-    localStorage.removeItem('userId');
+    this.themeService.setPreference('system');
+    localStorage.clear();
   }
 }
