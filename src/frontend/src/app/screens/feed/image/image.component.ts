@@ -18,8 +18,6 @@ export class ImageComponent {
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User | null;
-  confirmDeleteOpened = false;
-
   constructor(private session: Session) {}
 
   onLikeClick() {
@@ -50,7 +48,6 @@ export class ImageComponent {
   }
 
   onDeleteClick() {
-    this.confirmDeleteOpened = false;
     this.deleteAction.emit(this.image);
   }
 }
