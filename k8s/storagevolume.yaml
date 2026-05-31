@@ -17,6 +17,8 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
+  storageClassName: ""
+  volumeName: storage-pv
   resources:
     requests:
       storage: 5Gi
