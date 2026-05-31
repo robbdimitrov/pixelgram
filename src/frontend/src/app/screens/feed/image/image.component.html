@@ -1,7 +1,7 @@
 <div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
-  <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-5 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:px-6 sm:pr-20">
+  <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-6 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:pr-20">
     @if (user) {
-      <div class="flex items-center gap-3.5">
+      <div class="flex items-center gap-3">
         <a [routerLink]="['/users', user.id]" class="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
           <img class="h-full w-full object-cover" [src]="user.avatar | image" [alt]="user.username" (error)="onImageError($event)">
         </a>
@@ -45,26 +45,26 @@
       >
   </div>
 
-  <div class="flex items-center gap-2 px-5 pt-4 sm:px-6">
-    <button
-      class="group -ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-error/10 hover:text-error"
-      [ngClass]="{'text-error': image.liked}"
-      (click)="onLikeClick()"
-      >
-      @if (image.liked) {
-        <div class="scale-110 active:scale-125 transition-transform duration-200">
-          <svg lucideHeart class="h-6 w-6 fill-current text-error"></svg>
-        </div>
-      } @else {
-        <svg lucideHeart class="h-6 w-6 text-slate-500 transition-colors group-hover:text-error dark:text-slate-400"></svg>
-      }
-    </button>
-    <span class="text-base font-extrabold leading-none text-slate-900 dark:text-slate-100">
-      {{image.likes}} {{image.likes === 1 ? 'like' : 'likes'}}
-    </span>
-  </div>
+  <div class="flex flex-col gap-4 p-6">
+    <div class="flex items-center gap-2">
+      <button
+        class="group -ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-error/10 hover:text-error"
+        [ngClass]="{'text-error': image.liked}"
+        (click)="onLikeClick()"
+        >
+        @if (image.liked) {
+          <div class="scale-110 active:scale-125 transition-transform duration-200">
+            <svg lucideHeart class="h-6 w-6 fill-current text-error"></svg>
+          </div>
+        } @else {
+          <svg lucideHeart class="h-6 w-6 text-slate-500 transition-colors group-hover:text-error dark:text-slate-400"></svg>
+        }
+      </button>
+      <span class="text-base font-extrabold leading-none text-slate-900 dark:text-slate-100">
+        {{image.likes}} {{image.likes === 1 ? 'like' : 'likes'}}
+      </span>
+    </div>
 
-  <div class="flex flex-col gap-1.5 px-5 pb-5 pt-2 sm:px-6">
     @if (isDescriptionPresent()) {
       <div class="text-base leading-7">
         @if (user) {
@@ -76,7 +76,7 @@
       </div>
     }
 
-    <span class="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
       {{image.created | relativedate}}
     </span>
   </div>

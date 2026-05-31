@@ -1,8 +1,11 @@
-<div class="min-h-screen overflow-x-hidden bg-slate-50 px-4 py-4 text-slate-950 transition-colors dark:bg-slate-900 dark:text-white sm:px-6 sm:py-6">
-  <div class="mx-auto w-full max-w-5xl">
-    <app-navbar></app-navbar>
-    <main class="pb-8 pt-6 sm:pb-10 sm:pt-8">
-      <router-outlet></router-outlet>
-    </main>
+<div class="min-h-screen bg-slate-50 text-slate-950 transition-colors dark:bg-slate-900 dark:text-white">
+  <div class="fixed inset-x-0 top-0 z-50 px-4 py-6 sm:px-6">
+    <div class="mx-auto w-full max-w-5xl">
+      <app-navbar></app-navbar>
+    </div>
   </div>
+
+  <main class="mx-auto w-full max-w-5xl px-4 pb-8 pt-28 sm:px-6">
+    <router-outlet></router-outlet>
+  </main>
 </div>

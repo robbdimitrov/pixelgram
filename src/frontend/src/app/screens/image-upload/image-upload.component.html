@@ -1,6 +1,6 @@
 <div class="mx-auto max-w-5xl">
   <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-xl shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white">
-    <div class="flex min-h-16 items-center justify-between border-b border-slate-200 px-5 dark:border-white/10 sm:px-7">
+    <div class="flex min-h-16 items-center justify-between border-b border-slate-200 px-6 dark:border-white/10 sm:px-8">
       <div>
         <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">PixelGram</p>
         <h1 class="text-lg font-black leading-tight">Create new post</h1>
@@ -17,7 +17,7 @@
 
     <div class="grid min-h-[34rem] md:grid-cols-[minmax(0,1fr)_22rem]">
       <div
-        class="relative flex min-h-96 items-center justify-center bg-slate-50 p-5 transition-colors dark:bg-slate-900"
+        class="relative flex min-h-96 items-center justify-center bg-slate-50 p-6 transition-colors dark:bg-slate-900 sm:px-8"
         [ngClass]="{'bg-slate-100 dark:bg-white/10': isDragging}"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
@@ -35,13 +35,13 @@
             Change photo
           </button>
         } @else {
-          <label class="flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 p-6 text-center transition-colors hover:border-slate-400 hover:bg-white/60 dark:border-white/15 dark:hover:border-white/30 dark:hover:bg-white/5 sm:p-8" for="file">
+          <label class="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-300 p-6 text-center transition-colors hover:border-slate-400 hover:bg-white/60 dark:border-white/15 dark:hover:border-white/30 dark:hover:bg-white/5 sm:px-8" for="file">
             <span class="grid h-16 w-16 place-items-center rounded-full bg-slate-950 text-white shadow-md shadow-slate-900/15 dark:bg-white dark:text-slate-950">
               <svg lucideSquarePlus class="h-7 w-7"></svg>
             </span>
-            <span class="mt-5 text-2xl font-black leading-tight">Drop your photo here</span>
-            <span class="mt-2 max-w-xs text-sm leading-6 text-slate-500 dark:text-slate-400">Choose a JPEG, PNG, GIF, or WEBP. Large images are resized automatically.</span>
-            <span class="btn btn-sm mt-6 inline-flex min-h-10 items-center justify-center rounded-full border-0 bg-slate-950 px-5 font-bold leading-none text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">Select from computer</span>
+            <span class="text-2xl font-black leading-tight">Drop your photo here</span>
+            <span class="max-w-xs text-sm leading-6 text-slate-500 dark:text-slate-400">Choose a JPEG, PNG, GIF, or WEBP. Large images are resized automatically.</span>
+            <span class="btn btn-sm inline-flex min-h-10 items-center justify-center rounded-full border-0 bg-slate-950 px-5 font-bold leading-none text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">Select from computer</span>
           </label>
         }
 
@@ -56,10 +56,10 @@
       </div>
 
       <div class="flex flex-col border-t border-slate-200 bg-slate-50/60 dark:border-white/10 dark:bg-slate-950 md:border-l md:border-t-0">
-        <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-white/10">
-          <div>
+        <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-6 py-4 dark:border-white/10 sm:px-8">
+          <div class="grid gap-2">
             <span class="text-sm font-black">Caption</span>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Give your post a little context.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Give your post a little context.</p>
           </div>
           <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 dark:bg-white/10 dark:text-slate-400">{{ imageDescription.length }}/{{ maxDescriptionLength }}</span>
         </div>
@@ -67,18 +67,18 @@
         <textarea
           name="description"
           [(ngModel)]="imageDescription"
-          class="min-h-52 flex-1 resize-none border-0 bg-transparent px-5 py-5 text-base leading-7 text-slate-950 placeholder:text-slate-400 shadow-none outline-none focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-slate-500"
+          class="min-h-52 flex-1 resize-none border-0 bg-transparent px-6 py-5 text-base leading-7 text-slate-950 placeholder:text-slate-400 shadow-none outline-none focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-slate-500 sm:px-8"
           placeholder="Write a caption..."
           [maxlength]="maxDescriptionLength"
         ></textarea>
 
         @if (errorMessage) {
-          <div class="mx-4 mb-4 rounded-2xl bg-error/10 px-4 py-3 text-sm font-bold text-error">
+          <div class="mx-6 mb-6 rounded-2xl bg-error/10 px-4 py-3 text-sm font-bold text-error sm:mx-8">
             {{ errorMessage }}
           </div>
         }
 
-        <div class="border-t border-slate-200 px-5 py-4 text-sm leading-6 text-slate-500 dark:border-white/10 dark:text-slate-400">
+        <div class="border-t border-slate-200 px-6 py-4 text-sm leading-6 text-slate-500 dark:border-white/10 dark:text-slate-400 sm:px-8">
           Your post will publish to the feed after the image upload completes.
         </div>
       </div>

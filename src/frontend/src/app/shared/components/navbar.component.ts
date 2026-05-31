@@ -7,7 +7,7 @@ import {ThemeService} from '../../services/theme.service';
     selector: 'app-navbar',
     templateUrl: './navbar.component.html',
     host: {
-      class: 'sticky top-4 z-30 block sm:top-6'
+      class: 'block'
     },
     standalone: false
 })
