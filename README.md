@@ -43,6 +43,18 @@ Open [http://localhost:4200](http://localhost:4200). The Angular dev proxy forwa
 
 If `8080` is already used by the deployed frontend port-forward, use another backend port and a temporary proxy config.
 
+## Testing
+
+The project uses Jest for both frontend and backend unit and integration tests.
+
+```sh
+# Run backend test suite
+cd src/backend && npx jest
+
+# Run frontend test suite
+cd src/frontend && npx jest
+```
+
 ## Cleanup
 
 For the kind cluster created by the deploy script:

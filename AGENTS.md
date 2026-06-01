@@ -69,13 +69,17 @@ cd src/frontend && npm start
 
 If local `8080` is occupied by the frontend port-forward, use another backend port with a temporary Angular proxy config.
 
-### Frontend tests
+### Tests
+
+Both the frontend and backend are fully configured with Jest for unit and integration testing.
 
 ```sh
-cd src/frontend && ng test   # Karma/Jasmine
-```
+# Backend tests
+cd src/backend && npx jest
 
-There is no backend test script defined.
+# Frontend tests
+cd src/frontend && npx jest
+```
 
 ## Environment variables (backend)
 
