@@ -28,6 +28,14 @@ class UserController {
         message: 'Name, username, email and password are required.'
       });
     }
+
+    if (password.length < 8) {
+      logError('Creating user failed: Password too short');
+      return res.status(400).send({
+        message: 'Password must be at least 8 characters long.'
+      });
+    }
+
     if (!isValidEmail(email)) {
       logError('Creating user failed: Invalid email address');
       return res.status(400).send({
@@ -128,12 +136,21 @@ class UserController {
 
   updatePassword(req: Request, res: Response) {
     const userId = req.params.userId as string;
-    if (!req.body.oldPassword) {
-      logError('Updating password failed: Missing current password');
+
+    if (!req.body.oldPassword || !req.body.password) {
+      logError('Updating password failed: Missing password field');
       return res.status(400).send({
         message: 'Both password and the current password are required.'
       });
     }
+
+    if (req.body.password.length < 8) {
+      logError('Updating password failed: Password too short');
+      return res.status(400).send({
+        message: 'Password must be at least 8 characters long.'
+      });
+    }
+
     this.dbClient.getUserWithId(userId).then((user: User) => {
       return verifyPassword(req.body.oldPassword, user.password);
     }).then((valid: boolean) => {

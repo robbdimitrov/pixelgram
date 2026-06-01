@@ -57,5 +57,19 @@ describe('Auth Endpoints', () => {
       expect(res.statusCode).toEqual(409);
       expect(res.body).toHaveProperty('message', 'User with this username or email already exists.');
     });
+
+    it('should return 400 if password is too short', async () => {
+      const res = await request(app)
+        .post('/users')
+        .send({
+          name: 'Test',
+          username: 'test',
+          email: 'test@example.com',
+          password: 'short'
+        });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('message', 'Password must be at least 8 characters long.');
+    });
   });
 });

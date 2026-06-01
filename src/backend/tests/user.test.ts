@@ -77,5 +77,18 @@ describe('User Endpoints', () => {
       expect(res.statusCode).toEqual(403);
       expect(mockDbClient.updateUser).not.toHaveBeenCalled();
     });
+
+    it('should return 400 if new password is too short', async () => {
+      const res = await request(app)
+        .put('/users/1') // Logged in as user '1'
+        .set('Cookie', ['session=fake-session'])
+        .send({
+          oldPassword: 'oldpassword123',
+          password: 'short'
+        });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('message', 'Password must be at least 8 characters long.');
+    });
   });
 });
