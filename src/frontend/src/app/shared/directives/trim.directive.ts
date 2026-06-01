@@ -9,8 +9,10 @@ import { NgControl } from '@angular/forms';
 export class TrimDirective {
   constructor(@Optional() @Self() private ngControl: NgControl) {}
 
-  @HostListener('blur', ['$event.target.value'])
-  onBlur(value: string): void {
+  @HostListener('blur', ['$event.target'])
+  onBlur(target: any): void {
+    if (!target) return;
+    const value = target.value;
     if (this.ngControl && typeof value === 'string') {
       const trimmedValue = value.trim();
       if (trimmedValue !== value) {
