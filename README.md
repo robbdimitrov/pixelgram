@@ -16,11 +16,11 @@ Service | Language | Description
 - Backend: Node.js, Express, PostgreSQL, `argon2`, session cookies, `multer`
 - Frontend: Angular 21, TypeScript, Tailwind CSS, DaisyUI, Lucide Angular
 - Database: PostgreSQL schema initialized from `schema.sql`
-- Runtime: Docker images deployed to a local kind Kubernetes cluster
+- Runtime: Docker images deployed to an active Kubernetes cluster (e.g. colima/k3s)
 
 ## Quickstart
 
-The easiest way to run the app locally is with the deploy script. It creates a kind cluster with a local registry, builds all images, and deploys everything into the `pixelgram` namespace.
+The easiest way to run the app locally is with the deploy script. It builds all images, creates the `pixelgram` namespace, and deploys everything into your active Kubernetes cluster.
 
 ```sh
 ./scripts/deploy.sh
@@ -32,7 +32,7 @@ Open the frontend at [http://pixelgram.localhost:8080](http://pixelgram.localhos
 
 ## Frontend development
 
-For faster UI iteration, run the Angular dev server locally and point it at a backend running in the kind cluster.
+For faster UI iteration, run the Angular dev server locally and point it at a backend running in the cluster.
 
 ```sh
 kubectl port-forward service/backend 8080:8080 -n pixelgram
@@ -57,10 +57,11 @@ cd src/frontend && npx jest
 
 ## Cleanup
 
-For the kind cluster created by the deploy script:
+To completely remove the deployment from your cluster:
 
 ```sh
-kind delete cluster --name pixelgram
+kubectl delete -f ./k8s -n pixelgram
+kubectl delete namespace pixelgram
 ```
 
 ## License
