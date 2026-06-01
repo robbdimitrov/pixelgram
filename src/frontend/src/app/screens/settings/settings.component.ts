@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {Router} from '@angular/router';
 
 import {APIClient} from '../../services/api-client.service';
-import {HttpCacheService} from 'src/app/services/http-cache.service';
+import {HttpCacheService} from '../../services/http-cache.service';
 import {Session} from '../../services/session.service';
 import {ThemePreference, ThemeService} from '../../services/theme.service';
 

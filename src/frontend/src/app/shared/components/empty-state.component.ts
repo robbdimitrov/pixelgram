@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 
-type EmptyStateIcon = 'camera' | 'heart' | 'square-plus';
+type EmptyStateIcon = 'camera' | 'heart' | 'square-plus' | 'triangle-alert';
 
 @Component({
     selector: 'app-empty-state',
