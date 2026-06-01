@@ -17,6 +17,8 @@ metadata:
     app: pixelgram
     tier: backend
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: pixelgram

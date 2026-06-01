@@ -1,15 +1,4 @@
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: database-config
-data:
-  pg_hba.conf: |
-    local all all trust
-    host all all 127.0.0.1/32 md5
-    host all all ::1/128 md5
-    host all all all md5
----
-apiVersion: v1
 kind: Service
 metadata:
   name: database
@@ -28,6 +17,8 @@ metadata:
     app: pixelgram
     tier: database
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: pixelgram
@@ -42,9 +33,6 @@ spec:
       - name: database
         image: localhost:5000/pixelgram/database
         imagePullPolicy: IfNotPresent
-        args:
-        - -c
-        - hba_file=/etc/postgresql/pg_hba.conf
         ports:
         - containerPort: 5432
         env:
@@ -55,16 +43,33 @@ spec:
               key: postgres-password
         - name: POSTGRES_DB
           value: pixelgram
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - pixelgram
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        startupProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - pixelgram
+          failureThreshold: 30
+          periodSeconds: 2
         volumeMounts:
         - mountPath: /var/lib/postgresql/data
           name: database-storage
-        - mountPath: /etc/postgresql/pg_hba.conf
-          name: database-config
-          subPath: pg_hba.conf
       volumes:
       - name: database-storage
         persistentVolumeClaim:
           claimName: database-pvc
-      - name: database-config
-        configMap:
-          name: database-config
