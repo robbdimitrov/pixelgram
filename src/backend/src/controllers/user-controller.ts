@@ -28,7 +28,6 @@ class UserController {
         message: 'Name, username, email and password are required.'
       });
     }
-
     if (!isValidEmail(email)) {
       logError('Creating user failed: Invalid email address');
       return res.status(400).send({
@@ -97,6 +96,13 @@ class UserController {
     const email = req.body.email?.trim().toLowerCase();
     const {avatar, bio} = req.body;
 
+    if (!name || !username) {
+      logError('Updating user failed: Missing field');
+      return res.status(400).send({
+        message: 'Name and username are required.'
+      });
+    }
+
     if (!isValidEmail(email)) {
       logError('Updating user failed: Invalid email address');
       return res.status(400).send({
@@ -122,14 +128,12 @@ class UserController {
 
   updatePassword(req: Request, res: Response) {
     const userId = req.params.userId as string;
-
     if (!req.body.oldPassword) {
       logError('Updating password failed: Missing current password');
       return res.status(400).send({
         message: 'Both password and the current password are required.'
       });
     }
-
     this.dbClient.getUserWithId(userId).then((user: User) => {
       return verifyPassword(req.body.oldPassword, user.password);
     }).then((valid: boolean) => {

@@ -30,6 +30,7 @@ import {
   FormTextareaStyleDirective,
   PrimaryActionStyleDirective
 } from './directives/form-control-style.directive';
+import {TrimDirective} from './directives/trim.directive';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import {
     PluralizePipe,
     FormInputStyleDirective,
     FormTextareaStyleDirective,
-    PrimaryActionStyleDirective
+    PrimaryActionStyleDirective,
+    TrimDirective
   ],
   imports: [
     CommonModule,
@@ -88,7 +90,8 @@ import {
     PluralizePipe,
     FormInputStyleDirective,
     FormTextareaStyleDirective,
-    PrimaryActionStyleDirective
+    PrimaryActionStyleDirective,
+    TrimDirective
   ]
 })
 export class SharedModule {}

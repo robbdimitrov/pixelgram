@@ -3,6 +3,7 @@ import helmet from 'helmet';
 
 import authGuard from './middlewares/auth-guard';
 import cookieParser from './middlewares/cookie-parser';
+import trim from './middlewares/trim';
 import { logInfo } from './shared/logger';
 
 import AuthController from './controllers/auth-controller';
@@ -31,6 +32,7 @@ export default function (dbClient: DbClient, imageDir: string) {
 
   app.use(helmet());
   app.use(express.json());
+  app.use(trim);
 
   app.use((req: Request, _res: Response, next: NextFunction) => {
     logInfo(`Request ${req.method} ${req.url}`);
