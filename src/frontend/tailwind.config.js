@@ -27,6 +27,16 @@ module.exports = {
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
         'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         'glass-glow': '0 0 15px rgba(255, 51, 102, 0.2)',
+      },
+      keyframes: {
+        'like-pop': {
+          '0%': { transform: 'scale(1)' },
+          '45%': { transform: 'scale(1.18)' },
+          '100%': { transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'like-pop': 'like-pop 220ms ease-out',
       }
     },
   },

@@ -1,4 +1,4 @@
-import {Component, Input, Output} from '@angular/core';
+import {Component, Input, OnDestroy, Output} from '@angular/core';
 import {EventEmitter} from '@angular/core';
 
 import {Image} from '../../../models/image.model';
@@ -10,23 +10,36 @@ import {Session} from '../../../services/session.service';
     templateUrl: './image.component.html',
     standalone: false
 })
-export class ImageComponent {
+export class ImageComponent implements OnDestroy {
   private readonly fallbackImage = '/assets/placeholder.svg';
+  private likeAnimationTimeout?: ReturnType<typeof setTimeout>;
 
   @Output() like = new EventEmitter<number>();
   @Output() unlike = new EventEmitter<number>();
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User | null;
+  isLikeAnimating = false;
+
   constructor(private session: Session) {}
 
   onLikeClick() {
+    const wasLiked = this.image.liked;
     this.image.liked = !this.image.liked;
     this.image.likes += (this.image.liked ? 1 : -1);
     if (this.image.liked) {
+      if (!wasLiked) {
+        this.playLikeAnimation();
+      }
       this.like.emit(this.image.id);
     } else {
       this.unlike.emit(this.image.id);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.likeAnimationTimeout) {
+      clearTimeout(this.likeAnimationTimeout);
     }
   }
 
@@ -49,5 +62,19 @@ export class ImageComponent {
 
   onDeleteClick() {
     this.deleteAction.emit(this.image);
+  }
+
+  private playLikeAnimation() {
+    if (this.likeAnimationTimeout) {
+      clearTimeout(this.likeAnimationTimeout);
+    }
+
+    this.isLikeAnimating = false;
+    requestAnimationFrame(() => {
+      this.isLikeAnimating = true;
+      this.likeAnimationTimeout = setTimeout(() => {
+        this.isLikeAnimating = false;
+      }, 220);
+    });
   }
 }
