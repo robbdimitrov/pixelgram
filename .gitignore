@@ -12,6 +12,7 @@ node_modules
 # Editors
 .vscode
 .antigravitycli
+antigravity*
 .idea/
 
 # Environment files

@@ -1,7 +1,7 @@
 import { Pool, QueryResult } from 'pg';
 
 import { mapUser, mapImage, mapSession } from '../shared/mappers';
-import { User, Session, Image } from "../types";
+import { Image } from '../types';
 
 class DbClient {
   pool: Pool;

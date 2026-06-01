@@ -1,4 +1,4 @@
-import { User, Session, Image } from "../types";
+
 
 function mapUser(user: any) {
   return {

@@ -2,8 +2,8 @@ import { isValidEmail } from '../shared/utils';
 import { generateHash, verifyPassword } from '../shared/crypto';
 import { logInfo, logError } from '../shared/logger';
 import { Request, Response } from 'express';
-import DbClient from "../db";
-import { User, Session, Image } from "../types";
+import DbClient from '../db';
+import { User } from '../types';
 
 function isUniqueViolation(error: any) {
   return error.code === '23505';

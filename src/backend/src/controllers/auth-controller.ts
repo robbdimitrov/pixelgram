@@ -1,8 +1,8 @@
 import { generateKey, verifyPassword } from '../shared/crypto';
 import { logInfo, logError } from '../shared/logger';
 import { Request, Response, NextFunction } from 'express';
-import DbClient from "../db";
-import { User, Session, Image } from "../types";
+import DbClient from '../db';
+import { User, Session } from '../types';
 
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
 const rateLimitWindow = 15 * 60 * 1000;

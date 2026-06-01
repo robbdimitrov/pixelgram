@@ -1,7 +1,7 @@
 import multer from 'multer';
 import fs from 'fs/promises';
 import { Request, Response } from 'express';
-import DbClient from "../db";
+import DbClient from '../db';
 
 const signatures = [
   {bytes: [0xff, 0xd8, 0xff]},

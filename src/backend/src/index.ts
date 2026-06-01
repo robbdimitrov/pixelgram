@@ -11,7 +11,7 @@ import UploadController from './controllers/upload-controller';
 import UserController from './controllers/user-controller';
 import router from './router';
 import { Request, Response, NextFunction } from 'express';
-import DbClient from "./db";
+import DbClient from './db';
 
 function configureRoutes(app: any, imageDir: string, controllers: any) {
   app.use(cookieParser);

@@ -1,8 +1,8 @@
 import { logInfo, logError } from '../shared/logger';
 import { parsePagination } from '../shared/utils';
 import { Request, Response } from 'express';
-import DbClient from "../db";
-import { User, Session, Image } from "../types";
+import DbClient from '../db';
+import { Image } from '../types';
 
 class ImageController {
   dbClient: DbClient;
