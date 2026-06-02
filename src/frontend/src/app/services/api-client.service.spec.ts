@@ -118,4 +118,105 @@ describe('APIClient', () => {
       req.flush({ filename: 'test.jpg' });
     });
   });
+
+  describe('createUser', () => {
+    it('should POST and map user', () => {
+      service.createUser('Test', 'test', 't@t.com', 'pass').subscribe(user => {
+        expect(user.name).toBe('Test');
+      });
+      const req = httpMock.expectOne('/api/users');
+      expect(req.request.method).toBe('POST');
+      req.flush({ id: 1, name: 'Test' });
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should PUT user', () => {
+      service.updateUser(1, 'Test', 't', 't@t.com', 'a', 'b').subscribe();
+      const req = httpMock.expectOne('/api/users/1');
+      expect(req.request.method).toBe('PUT');
+      req.flush({});
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should PUT password', () => {
+      service.changePassword(1, 'old', 'new').subscribe();
+      const req = httpMock.expectOne('/api/users/1');
+      expect(req.request.method).toBe('PUT');
+      req.flush({});
+    });
+  });
+
+  describe('logoutUser', () => {
+    it('should DELETE session', () => {
+      service.logoutUser().subscribe();
+      const req = httpMock.expectOne('/api/sessions');
+      expect(req.request.method).toBe('DELETE');
+      req.flush({});
+    });
+  });
+
+  describe('getFeed', () => {
+    it('should GET feed', () => {
+      service.getFeed(1).subscribe();
+      const req = httpMock.expectOne('/api/images?page=1');
+      expect(req.request.method).toBe('GET');
+      req.flush({ items: [] });
+    });
+  });
+
+  describe('getImages', () => {
+    it('should GET user images', () => {
+      service.getImages(1, 1).subscribe();
+      const req = httpMock.expectOne('/api/users/1/images?page=1');
+      expect(req.request.method).toBe('GET');
+      req.flush({ items: [] });
+    });
+  });
+
+  describe('getLikedImages', () => {
+    it('should GET liked images', () => {
+      service.getLikedImages(1, 1).subscribe();
+      const req = httpMock.expectOne('/api/users/1/likes?page=1');
+      expect(req.request.method).toBe('GET');
+      req.flush({ items: [] });
+    });
+  });
+
+  describe('getImage', () => {
+    it('should GET image', () => {
+      service.getImage(1).subscribe();
+      const req = httpMock.expectOne('/api/images/1');
+      expect(req.request.method).toBe('GET');
+      req.flush({ id: '1' });
+    });
+  });
+
+  describe('deleteImage', () => {
+    it('should DELETE image', () => {
+      service.deleteImage(1).subscribe();
+      const req = httpMock.expectOne('/api/images/1');
+      expect(req.request.method).toBe('DELETE');
+      req.flush({});
+    });
+  });
+
+  describe('likeImage', () => {
+    it('should POST like', () => {
+      service.likeImage(1).subscribe();
+      const req = httpMock.expectOne('/api/images/1/likes');
+      expect(req.request.method).toBe('POST');
+      req.flush({});
+    });
+  });
+
+  describe('unlikeImage', () => {
+    it('should DELETE like', () => {
+      service.unlikeImage(1).subscribe();
+      const req = httpMock.expectOne('/api/images/1/likes');
+      expect(req.request.method).toBe('DELETE');
+      req.flush({});
+    });
+  });
 });

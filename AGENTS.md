@@ -71,7 +71,7 @@ If local `8080` is occupied by the frontend port-forward, use another backend po
 
 ### Tests
 
-Both the frontend and backend are fully configured with Jest for unit and integration testing.
+Both the frontend and backend are fully configured with Jest for unit and integration testing. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
 
 ```sh
 # Backend tests
