@@ -7,9 +7,9 @@ browse and like images.
 
 Service | Language | Description
 --- | --- | ---
-[backend](/src/backend) | JavaScript | Express API responsible for users, sessions, posts, likes and uploads.
-[database](/src/database) | SQL | PostgreSQL database with tables, relationships and functions.
-[frontend](/src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS, DaisyUI and Lucide icons.
+[backend](src/backend) | JavaScript | Express API responsible for users, sessions, posts, likes and uploads.
+[database](src/database) | SQL | PostgreSQL database with tables, relationships and functions.
+[frontend](src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS, DaisyUI and Lucide icons.
 
 ## Tech stack
 
@@ -48,11 +48,14 @@ If `8080` is already used by the deployed frontend port-forward, use another bac
 The project uses Jest for both frontend and backend unit and integration tests.
 
 ```sh
-# Run backend test suite
-cd src/backend && npx jest
+make test
+```
 
-# Run frontend test suite
-cd src/frontend && npx jest
+To run one suite at a time:
+
+```sh
+make test-backend
+make test-frontend
 ```
 
 ## Cleanup
