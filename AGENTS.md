@@ -3,7 +3,7 @@
 ## Architecture
 
 Three independent services, deployed via Kubernetes:
-- `src/backend` — Express API (Node.js, JavaScript)
+- `src/backend` — Express API (Node.js, TypeScript)
 - `src/database` — PostgreSQL schema (auto-runs `schema.sql` on container init)
 - `src/frontend` — Angular 21 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
@@ -47,7 +47,7 @@ kubectl delete namespace pixelgram
 
 ```sh
 # Backend (from src/backend)
-npm run lint          # eslint src/**/*.js
+npm run lint          # eslint src/**/*.ts and index.ts
 
 # Frontend (from src/frontend)
 npm run lint          # ng lint (ESLint with @angular-eslint)

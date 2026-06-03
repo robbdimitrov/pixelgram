@@ -7,14 +7,14 @@ browse and like images.
 
 Service | Language | Description
 --- | --- | ---
-[backend](src/backend) | JavaScript | Express API responsible for users, sessions, posts, likes and uploads.
+[backend](src/backend) | TypeScript | Express API responsible for users, sessions, posts, likes and uploads.
 [database](src/database) | SQL | PostgreSQL database with tables, relationships and functions.
 [frontend](src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS, DaisyUI and Lucide icons.
 
 ## Tech stack
 
-- Backend: Node.js, Express, PostgreSQL, `argon2`, session cookies, `multer`
-- Frontend: Angular 21, TypeScript, Tailwind CSS, DaisyUI, Lucide Angular
+- Backend: Node.js, TypeScript, Express, PostgreSQL, session cookies
+- Frontend: Angular 21, TypeScript, Tailwind CSS, DaisyUI, Lucide icons
 - Database: PostgreSQL schema initialized from `schema.sql`
 - Runtime: Docker images deployed to an active Kubernetes cluster (e.g. colima/k3s)
 
