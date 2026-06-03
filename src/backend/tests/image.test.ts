@@ -17,8 +17,8 @@ describe('Image Endpoints', () => {
     jest.clearAllMocks();
     
     // Mock valid session for auth guard
-    mockDbClient.getSession.mockResolvedValue({ id: 'fake-session', userId: '1' });
-    mockDbClient.refreshSession.mockResolvedValue({ id: 'fake-session', userId: '1' });
+    mockDbClient.getSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
+    mockDbClient.refreshSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
   });
 
   describe('GET /images (Feed)', () => {
@@ -30,7 +30,7 @@ describe('Image Endpoints', () => {
 
       const res = await request(app)
         .get('/images')
-        .set('Cookie', ['session=fake-session']);
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toEqual({ items: mockFeed });
@@ -53,7 +53,7 @@ describe('Image Endpoints', () => {
 
       const res = await request(app)
         .post('/images/101/likes')
-        .set('Cookie', ['session=fake-session']);
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
 
       expect(res.statusCode).toEqual(204);
       expect(mockDbClient.likeImage).toHaveBeenCalledWith('101', '1');
@@ -63,19 +63,19 @@ describe('Image Endpoints', () => {
   describe('POST /images', () => {
     it('should create an image and return 201', async () => {
       mockDbClient.createImage = jest.fn().mockResolvedValue({ id: '102', filename: 'img.jpg', description: 'desc', likes: 0, liked: false, user_id: '1' });
-      const res = await request(app).post('/images').set('Cookie', ['session=fake-session']).send({ filename: 'img.jpg', description: 'desc' });
+      const res = await request(app).post('/images').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']).send({ filename: 'img.jpg', description: 'desc' });
       expect(res.statusCode).toEqual(201);
       expect(mockDbClient.createImage).toHaveBeenCalledWith('1', 'img.jpg', 'desc');
     });
 
     it('should return 400 if filename is missing', async () => {
-      const res = await request(app).post('/images').set('Cookie', ['session=fake-session']).send({ description: 'desc' });
+      const res = await request(app).post('/images').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']).send({ description: 'desc' });
       expect(res.statusCode).toEqual(400);
     });
 
     it('should return 400 if upload not found', async () => {
       mockDbClient.createImage = jest.fn().mockResolvedValue(null);
-      const res = await request(app).post('/images').set('Cookie', ['session=fake-session']).send({ filename: 'bad.jpg' });
+      const res = await request(app).post('/images').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']).send({ filename: 'bad.jpg' });
       expect(res.statusCode).toEqual(400);
     });
   });
@@ -83,7 +83,7 @@ describe('Image Endpoints', () => {
   describe('GET /users/:userId/images', () => {
     it('should return user images', async () => {
       mockDbClient.getImages = jest.fn().mockResolvedValue([{ id: '101' }]);
-      const res = await request(app).get('/users/1/images').set('Cookie', ['session=fake-session']);
+      const res = await request(app).get('/users/1/images').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(200);
       expect(res.body).toEqual({ items: [{ id: '101' }] });
     });
@@ -92,7 +92,7 @@ describe('Image Endpoints', () => {
   describe('GET /users/:userId/likes', () => {
     it('should return liked images', async () => {
       mockDbClient.getLikedImages = jest.fn().mockResolvedValue([{ id: '102' }]);
-      const res = await request(app).get('/users/1/likes').set('Cookie', ['session=fake-session']);
+      const res = await request(app).get('/users/1/likes').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(200);
       expect(res.body).toEqual({ items: [{ id: '102' }] });
     });
@@ -101,14 +101,14 @@ describe('Image Endpoints', () => {
   describe('GET /images/:imageId', () => {
     it('should return an image', async () => {
       mockDbClient.getImage = jest.fn().mockResolvedValue({ id: '101' });
-      const res = await request(app).get('/images/101').set('Cookie', ['session=fake-session']);
+      const res = await request(app).get('/images/101').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(200);
       expect(res.body).toEqual({ id: '101' });
     });
 
     it('should return 404 if not found', async () => {
       mockDbClient.getImage = jest.fn().mockResolvedValue(null);
-      const res = await request(app).get('/images/999').set('Cookie', ['session=fake-session']);
+      const res = await request(app).get('/images/999').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(404);
     });
   });
@@ -116,7 +116,7 @@ describe('Image Endpoints', () => {
   describe('DELETE /images/:imageId', () => {
     it('should delete image and return 204', async () => {
       mockDbClient.deleteImage = jest.fn().mockResolvedValue(1);
-      const res = await request(app).delete('/images/101').set('Cookie', ['session=fake-session']);
+      const res = await request(app).delete('/images/101').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(204);
     });
   });
@@ -125,7 +125,7 @@ describe('Image Endpoints', () => {
     it('should unlike an image and return 204', async () => {
       mockDbClient.imageExists.mockResolvedValue(true);
       mockDbClient.unlikeImage = jest.fn().mockResolvedValue(1);
-      const res = await request(app).delete('/images/101/likes').set('Cookie', ['session=fake-session']);
+      const res = await request(app).delete('/images/101/likes').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(204);
     });
   });

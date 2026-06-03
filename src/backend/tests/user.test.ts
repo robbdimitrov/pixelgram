@@ -13,8 +13,8 @@ const app = createApp(mockDbClient, '/tmp');
 describe('User Endpoints', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDbClient.getSession.mockResolvedValue({ id: 'fake-session', userId: '1' });
-    mockDbClient.refreshSession.mockResolvedValue({ id: 'fake-session', userId: '1' });
+    mockDbClient.getSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
+    mockDbClient.refreshSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
   });
 
   describe('GET /users/:userId', () => {
@@ -29,7 +29,7 @@ describe('User Endpoints', () => {
 
       const res = await request(app)
         .get('/users/2')
-        .set('Cookie', ['session=fake-session']);
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toEqual(mockUser);
@@ -41,7 +41,7 @@ describe('User Endpoints', () => {
 
       const res = await request(app)
         .get('/users/999')
-        .set('Cookie', ['session=fake-session']);
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
 
       expect(res.statusCode).toEqual(404);
     });
@@ -53,7 +53,7 @@ describe('User Endpoints', () => {
 
       const res = await request(app)
         .put('/users/1') // Logged in as user '1'
-        .set('Cookie', ['session=fake-session'])
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
         .send({
           name: 'Updated Name',
           username: 'updated',
@@ -67,7 +67,7 @@ describe('User Endpoints', () => {
     it('should return 403 when updating another user profile', async () => {
       const res = await request(app)
         .put('/users/2') // Trying to update user '2' while logged in as '1'
-        .set('Cookie', ['session=fake-session'])
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
         .send({
           name: 'Hacked',
           username: 'hacked',
@@ -81,7 +81,7 @@ describe('User Endpoints', () => {
     it('should return 400 if new password is too short', async () => {
       const res = await request(app)
         .put('/users/1') // Logged in as user '1'
-        .set('Cookie', ['session=fake-session'])
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
         .send({
           oldPassword: 'oldpassword123',
           password: 'short'

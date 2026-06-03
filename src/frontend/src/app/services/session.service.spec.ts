@@ -51,7 +51,7 @@ describe('Session Service', () => {
   });
 
   describe('clear', () => {
-    it('should reset theme preference to system and clear localStorage', () => {
+    it('should reset theme preference to system and clear the session user id', () => {
       localStorage.setItem('userId', '999');
       localStorage.setItem('someOtherKey', 'value');
 
@@ -59,8 +59,7 @@ describe('Session Service', () => {
 
       expect(mockThemeService.setPreference).toHaveBeenCalledWith('system');
       expect(localStorage.getItem('userId')).toBeNull();
-      expect(localStorage.getItem('someOtherKey')).toBeNull();
-      expect(localStorage.length).toBe(0);
+      expect(localStorage.getItem('someOtherKey')).toBe('value');
     });
   });
 });

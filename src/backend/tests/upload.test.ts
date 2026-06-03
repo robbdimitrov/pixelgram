@@ -14,15 +14,15 @@ const app = createApp(mockDbClient, '/tmp');
 describe('Upload Endpoints', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDbClient.getSession.mockResolvedValue({ id: 'fake-session', userId: '1' });
-    mockDbClient.refreshSession.mockResolvedValue({ id: 'fake-session', userId: '1' });
+    mockDbClient.getSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
+    mockDbClient.refreshSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
   });
 
   describe('POST /uploads', () => {
     it('should reject if file is missing', async () => {
       const res = await request(app)
         .post('/uploads')
-        .set('Cookie', ['session=fake-session']);
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('message', 'File missing from request.');
@@ -34,7 +34,7 @@ describe('Upload Endpoints', () => {
 
       const res = await request(app)
         .post('/uploads')
-        .set('Cookie', ['session=fake-session'])
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
         .attach('image', txtBuffer, 'test.txt');
 
       expect(res.statusCode).toEqual(400);
@@ -49,7 +49,7 @@ describe('Upload Endpoints', () => {
 
       const res = await request(app)
         .post('/uploads')
-        .set('Cookie', ['session=fake-session'])
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
         .attach('image', jpegBuffer, 'test.jpg');
 
       expect(res.statusCode).toEqual(201);

@@ -7,6 +7,17 @@ import { User, Session } from '../types';
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
 const rateLimitWindow = 15 * 60 * 1000;
 const maxLoginFailures = 5;
+const sessionIdLength = 28;
+const sessionCookieBaseOptions = {
+  sameSite: 'strict' as const,
+  httpOnly: true,
+  secure: process.env.SESSION_COOKIE_SECURE === 'true',
+  path: '/'
+};
+const sessionCookieOptions = {
+  ...sessionCookieBaseOptions,
+  maxAge: oneWeek
+};
 
 function getExpiresAt() {
   return new Date(Date.now() + oneWeek);
@@ -14,6 +25,12 @@ function getExpiresAt() {
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function isValidSessionId(sessionId: any) {
+  return typeof sessionId === 'string' &&
+    sessionId.length === sessionIdLength &&
+    /^[A-Za-z0-9+/=]+$/.test(sessionId);
 }
 
 class AuthController {
@@ -120,6 +137,14 @@ class AuthController {
       });
     }
 
+    if (!isValidSessionId(sessionId)) {
+      logError('Validating session failed: Invalid session cookie');
+      this.clearSessionCookie(res);
+      return res.status(401).send({
+        message: 'Unauthorized'
+      });
+    }
+
     this.dbClient.getSession(sessionId)
       .then((result: any) => {
         if (result) {
@@ -128,7 +153,7 @@ class AuthController {
           return this.dbClient.refreshSession(result.id, getExpiresAt())
             .then((session: Session) => {
               if (!session) {
-                res.clearCookie('session');
+                this.clearSessionCookie(res);
                 return res.status(401).send({
                   message: 'Unauthorized'
                 });
@@ -139,7 +164,7 @@ class AuthController {
             });
         } else {
           logError('Validating session failed: Unauthorized');
-          res.clearCookie('session');
+          this.clearSessionCookie(res);
           return res.status(401).send({
             message: 'Unauthorized'
           });
@@ -155,10 +180,15 @@ class AuthController {
   deleteSession(req: Request, res: Response) {
     const sessionId = req.cookies['session'];
 
+    if (!isValidSessionId(sessionId)) {
+      this.clearSessionCookie(res);
+      return res.sendStatus(204);
+    }
+
     this.dbClient.deleteSession(sessionId)
       .then(() => {
         logInfo('Successfully deleted session');
-        res.clearCookie('session');
+        this.clearSessionCookie(res);
         res.sendStatus(204);
       }).catch((error: any) => {
         logError(`Deleting session failed: ${error}`);
@@ -169,11 +199,11 @@ class AuthController {
   }
 
   createCookie(res: Response, sessionId: string) {
-    res.cookie('session', sessionId, {
-      sameSite: 'strict',
-      maxAge: oneWeek,
-      httpOnly: true
-    });
+    res.cookie('session', sessionId, sessionCookieOptions);
+  }
+
+  clearSessionCookie(res: Response) {
+    res.clearCookie('session', sessionCookieBaseOptions);
   }
 }
 

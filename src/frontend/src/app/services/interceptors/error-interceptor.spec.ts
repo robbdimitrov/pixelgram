@@ -63,13 +63,33 @@ describe('ErrorInterceptor', () => {
     });
   });
 
-  it('should handle 401 error and logout if user is authenticated', (done) => {
+  it('should handle 401 error and clear local session if user is authenticated', (done) => {
     const request = new HttpRequest('GET', '/test');
     const errorResponse = new HttpErrorResponse({ status: 401, error: 'Unauthorized' });
     
     mockHandler.handle.mockReturnValue(throwError(() => errorResponse));
     mockSession.userId.mockReturnValue('123');
     mockApiClient.logoutUser.mockReturnValue(of(null));
+
+    interceptor.intercept(request, mockHandler).subscribe({
+      error: (err) => {
+        expect(err).toBe('Unauthorized');
+        expect(mockApiClient.logoutUser).toHaveBeenCalled();
+        expect(mockCache.clear).toHaveBeenCalled();
+        expect(mockSession.clear).toHaveBeenCalled();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
+        done();
+      }
+    });
+  });
+
+  it('should clear local session on 401 even if server logout fails', (done) => {
+    const request = new HttpRequest('GET', '/test');
+    const errorResponse = new HttpErrorResponse({ status: 401, error: 'Unauthorized' });
+
+    mockHandler.handle.mockReturnValue(throwError(() => errorResponse));
+    mockSession.userId.mockReturnValue('123');
+    mockApiClient.logoutUser.mockReturnValue(throwError(() => new Error('Server Error')));
 
     interceptor.intercept(request, mockHandler).subscribe({
       error: (err) => {
@@ -127,6 +147,7 @@ describe('ErrorInterceptor', () => {
       error: (err) => {
         expect(err).toBe('Server Error');
         expect(mockRouter.navigate).not.toHaveBeenCalled();
+        expect(mockSession.clear).not.toHaveBeenCalled();
         done();
       }
     });

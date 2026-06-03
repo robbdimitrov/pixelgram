@@ -3,10 +3,12 @@ import {ThemeService} from './theme.service';
 
 @Injectable()
 export class Session {
+  private readonly userIdKey = 'userId';
+
   constructor(private themeService: ThemeService) {}
 
   userId(): number | null {
-    const value = localStorage.getItem('userId');
+    const value = localStorage.getItem(this.userIdKey);
     if (value) {
       return +value;
     }
@@ -14,11 +16,11 @@ export class Session {
   }
 
   setUserId(userId: number) {
-    localStorage.setItem('userId', userId.toString());
+    localStorage.setItem(this.userIdKey, userId.toString());
   }
 
   clear() {
     this.themeService.setPreference('system');
-    localStorage.clear();
+    localStorage.removeItem(this.userIdKey);
   }
 }

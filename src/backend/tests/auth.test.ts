@@ -7,7 +7,10 @@ const mockDbClient = {
   createUser: jest.fn(),
   createSession: jest.fn(),
   getUser: jest.fn(),
-  deleteExpiredSessions: jest.fn()
+  deleteExpiredSessions: jest.fn(),
+  getSession: jest.fn(),
+  refreshSession: jest.fn(),
+  deleteSession: jest.fn()
 } as any;
 
 const app = createApp(mockDbClient, '/tmp');
@@ -31,6 +34,53 @@ describe('Auth Endpoints', () => {
 
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty('message', 'Incorrect email or password.');
+    });
+  });
+
+  describe('session validation', () => {
+    it('should not clear the session cookie when validation fails with a server error', async () => {
+      mockDbClient.getSession.mockRejectedValue(new Error('database unavailable'));
+
+      const res = await request(app)
+        .get('/images')
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
+
+      expect(res.statusCode).toEqual(500);
+      expect(res.headers['set-cookie']).toBeUndefined();
+    });
+
+    it('should clear the session cookie when the session is invalid', async () => {
+      mockDbClient.getSession.mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .get('/images')
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.headers['set-cookie']?.[0]).toContain('session=');
+      expect(res.headers['set-cookie']?.[0]).toContain('Expires=');
+    });
+
+    it('should reject malformed session cookies without hitting the database', async () => {
+      const res = await request(app)
+        .get('/images')
+        .set('Cookie', ['session=not-a-valid-session']);
+
+      expect(res.statusCode).toEqual(401);
+      expect(mockDbClient.getSession).not.toHaveBeenCalled();
+      expect(res.headers['set-cookie']?.[0]).toContain('session=');
+    });
+  });
+
+  describe('DELETE /sessions (Logout)', () => {
+    it('should clear malformed session cookies without hitting the database', async () => {
+      const res = await request(app)
+        .delete('/sessions')
+        .set('Cookie', ['session=not-a-valid-session']);
+
+      expect(res.statusCode).toEqual(204);
+      expect(mockDbClient.deleteSession).not.toHaveBeenCalled();
+      expect(res.headers['set-cookie']?.[0]).toContain('session=');
     });
   });
 
