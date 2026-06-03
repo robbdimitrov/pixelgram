@@ -18,7 +18,7 @@ function generateHash(password: string) {
   return argon2.hash(password);
 }
 
-function verifyPassword(password: string, passwordHash: any) {
+function verifyPassword(password: string, passwordHash: string) {
   return argon2.verify(passwordHash, password);
 }
 

@@ -3,10 +3,17 @@ import { generateHash, verifyPassword } from '../shared/crypto';
 import { logInfo, logError } from '../shared/logger';
 import { Request, Response } from 'express';
 import DbClient from '../db';
-import { User } from '../types';
+import { UserCredentialsRow, UserDto, UserId } from '../types';
 
-function isUniqueViolation(error: any) {
-  return error.code === '23505';
+function isUniqueViolation(error: unknown) {
+  return typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === '23505';
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Bad Request';
 }
 
 class UserController {
@@ -44,10 +51,10 @@ class UserController {
 
     generateHash(password).then((hash: string) => {
       return this.dbClient.createUser(name, username, email, hash);
-    }).then((result: User) => {
+    }).then((result: UserId) => {
       logInfo('Successfully created user');
       res.status(201).send(result);
-    }).catch((error: any) => {
+    }).catch((error: unknown) => {
       logError(`Creating user failed: ${error}`);
 
       if (isUniqueViolation(error)) {
@@ -66,7 +73,7 @@ class UserController {
     const userId = req.params.userId as string;
 
     this.dbClient.getUser(userId)
-      .then((result: User) => {
+      .then((result: UserDto | undefined) => {
         if (result) {
           logInfo('Successfully fetched user');
           res.status(200).send(result);
@@ -76,7 +83,7 @@ class UserController {
             message: 'Not Found'
           });
         }
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Getting user failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -121,7 +128,7 @@ class UserController {
       .then(() => {
         logInfo('Successfully updated user');
         res.sendStatus(204);
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Updating user failed: ${error}`);
 
         let message = 'Bad Request';
@@ -150,7 +157,11 @@ class UserController {
       });
     }
 
-    this.dbClient.getUserWithId(userId).then((user: User) => {
+    this.dbClient.getUserWithId(userId).then((user: UserCredentialsRow | undefined) => {
+      if (!user) {
+        throw new Error('User not found.');
+      }
+
       return verifyPassword(req.body.oldPassword, user.password);
     }).then((valid: boolean) => {
       if (!valid) {
@@ -164,10 +175,10 @@ class UserController {
       return this.dbClient.deleteOtherSessions(userId, req.cookies['session']);
     }).then(() => {
       res.sendStatus(204);
-    }).catch((error: any) => {
+    }).catch((error: unknown) => {
       logError(`Updating password failed: ${error}`);
       res.status(400).send({
-        message: error.message
+        message: getErrorMessage(error)
       });
     });
   }

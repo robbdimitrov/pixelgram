@@ -2,7 +2,7 @@ import { generateKey, verifyPassword } from '../shared/crypto';
 import { logInfo, logError } from '../shared/logger';
 import { Request, Response, NextFunction } from 'express';
 import DbClient from '../db';
-import { Session } from '../types';
+import { LoginFailureRow, SessionDto } from '../types';
 
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
 const rateLimitWindow = 15 * 60 * 1000;
@@ -27,7 +27,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function isValidSessionId(sessionId: any) {
+function isValidSessionId(sessionId: unknown) {
   return typeof sessionId === 'string' &&
     sessionId.length === sessionIdLength &&
     /^[A-Za-z0-9+/=]+$/.test(sessionId);
@@ -42,7 +42,7 @@ class AuthController {
   async isRateLimited(keys: string[]) {
     const now = Date.now();
     const failures = await this.dbClient.getLoginFailures(keys);
-    return failures.some((failure: any) =>
+    return failures.some((failure: LoginFailureRow) =>
       failure.count >= maxLoginFailures &&
       new Date(failure.reset_at).getTime() > now
     );
@@ -91,7 +91,7 @@ class AuthController {
       if (!user) {
         valid = false;
       } else {
-        req.userId! = user.id;
+        req.userId! = user.id.toString();
         valid = await verifyPassword(password, user.password);
       }
 
@@ -110,7 +110,7 @@ class AuthController {
       res.status(200).send({
         id: session.userId
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(`Creating session failed: ${error}`);
       res.status(500).send({
         message: 'Internal Server Error'
@@ -136,12 +136,12 @@ class AuthController {
     }
 
     this.dbClient.getSession(sessionId)
-      .then((result: any) => {
+      .then((result: SessionDto | undefined) => {
         if (result) {
           logInfo('Successfully validated session');
           req.userId! = result.userId.toString();
           return this.dbClient.refreshSession(sessionId, getExpiresAt())
-            .then((session: Session) => {
+            .then((session: SessionDto | undefined) => {
               if (!session) {
                 this.clearSessionCookie(res);
                 return res.status(401).send({
@@ -159,7 +159,7 @@ class AuthController {
             message: 'Unauthorized'
           });
         }
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Validating session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -180,7 +180,7 @@ class AuthController {
         logInfo('Successfully deleted session');
         this.clearSessionCookie(res);
         res.sendStatus(204);
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Deleting session failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'

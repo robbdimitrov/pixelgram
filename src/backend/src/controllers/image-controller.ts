@@ -2,7 +2,7 @@ import { logInfo, logError } from '../shared/logger';
 import { parsePagination } from '../shared/utils';
 import { Request, Response } from 'express';
 import DbClient from '../db';
-import { Image } from '../types';
+import { ImageDto, ImageId } from '../types';
 
 class ImageController {
   dbClient: DbClient;
@@ -22,7 +22,7 @@ class ImageController {
     }
 
     this.dbClient.createImage(req.userId!, filename, description)
-      .then((result: any) => {
+      .then((result: ImageId | undefined) => {
         if (!result) {
           logError('Creating image failed: Upload not found');
           return res.status(400).send({
@@ -32,7 +32,7 @@ class ImageController {
 
         logInfo('Successfully created image');
         res.status(201).send(result);
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Creating image failed: ${error}`);
         res.status(400).send({
           message: 'Bad Request'
@@ -50,12 +50,12 @@ class ImageController {
     }
 
     this.dbClient.getFeed(pagination.page, pagination.limit, req.userId!)
-      .then((result: any) => {
+      .then((result: ImageDto[]) => {
         logInfo('Successfully fetched feed');
         res.status(200).send({
           items: result
         });
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Getting feed failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -74,12 +74,12 @@ class ImageController {
     }
 
     this.dbClient.getImages(userId, pagination.page, pagination.limit, req.userId!)
-      .then((result: any) => {
+      .then((result: ImageDto[]) => {
         logInfo('Successfully fetched images');
         res.status(200).send({
           items: result
         });
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Getting images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -98,12 +98,12 @@ class ImageController {
     }
 
     this.dbClient.getLikedImages(userId, pagination.page, pagination.limit, req.userId!)
-      .then((result: any) => {
+      .then((result: ImageDto[]) => {
         logInfo('Successfully fetched liked images');
         res.status(200).send({
           items: result
         });
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Getting liked images failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -115,7 +115,7 @@ class ImageController {
     const imageId = req.params.imageId as string;
 
     this.dbClient.getImage(imageId, req.userId!)
-      .then((result: any) => {
+      .then((result: ImageDto | undefined) => {
         if (result) {
           logInfo('Successfully fetched image');
           res.status(200).send(result);
@@ -125,7 +125,7 @@ class ImageController {
             message: 'Not Found'
           });
         }
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Getting image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -143,7 +143,7 @@ class ImageController {
           return res.sendStatus(204);
         }
 
-        return this.dbClient.getImage(imageId, req.userId!).then((image: Image) => {
+        return this.dbClient.getImage(imageId, req.userId!).then((image: ImageDto | undefined) => {
           if (image) {
             logError('Deleting image failed: Forbidden');
             return res.status(403).send({
@@ -156,7 +156,7 @@ class ImageController {
             message: 'Not Found'
           });
         });
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Deleting image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -185,7 +185,7 @@ class ImageController {
 
         logInfo('Successfully liked image');
         return res.sendStatus(204);
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Liking image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'
@@ -214,7 +214,7 @@ class ImageController {
 
         logInfo('Successfully unliked image');
         return res.sendStatus(204);
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         logError(`Unliking image failed: ${error}`);
         res.status(500).send({
           message: 'Internal Server Error'

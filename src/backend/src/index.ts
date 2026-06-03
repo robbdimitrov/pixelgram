@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 
 import authGuard from './middlewares/auth-guard';
@@ -12,11 +12,10 @@ import AuthController from './controllers/auth-controller';
 import ImageController from './controllers/image-controller';
 import UploadController from './controllers/upload-controller';
 import UserController from './controllers/user-controller';
-import router from './router';
-import { Request, Response, NextFunction } from 'express';
+import router, { Controllers } from './router';
 import DbClient from './db';
 
-function configureRoutes(app: any, imageDir: string, controllers: any) {
+function configureRoutes(app: Express, imageDir: string, controllers: Controllers) {
   app.use(cookieParser);
   app.use(authGuard(controllers.auth));
   app.use(router(controllers));
@@ -43,10 +42,10 @@ export default function (dbClient: DbClient, imageDir: string) {
     next();
   });
 
-  const controllers = {
+  const controllers: Controllers = {
     auth: new AuthController(dbClient),
     image: new ImageController(dbClient),
-    upload: (UploadController as any)(imageDir, dbClient),
+    upload: UploadController(imageDir, dbClient),
     user: new UserController(dbClient)
   };
 

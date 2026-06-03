@@ -1,9 +1,11 @@
+import { Pagination, PaginationQuery } from '../types';
+
 function isValidEmail(email: string) {
   const regex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   return regex.test(email);
 }
 
-function parsePagination(query: any) {
+function parsePagination(query: PaginationQuery): Pagination | undefined {
   const limit = query.limit === undefined ? 10 : Number(query.limit);
   const page = query.page === undefined ? 0 : Number(query.page);
 

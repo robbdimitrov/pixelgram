@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import AuthController from '../controllers/auth-controller';
 
 const allowed = [
   {method: 'POST', path: '/sessions'},
@@ -18,7 +19,7 @@ function isAllowed(req: Request) {
   return false;
 }
 
-export default function (controller: any) {
+export default function (controller: Pick<AuthController, 'validateSession'>) {
   return function (req: Request, res: Response, next: NextFunction) {
     if (isAllowed(req)) {
       return next();

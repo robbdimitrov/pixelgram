@@ -1,6 +1,7 @@
 
+import { ImageDto, ImageRow, SessionDto, SessionRow, UserDto, UserRow } from '../types';
 
-function mapUser(user: any) {
+function mapUser(user: UserRow): UserDto {
   return {
     id: user.id,
     name: user.name,
@@ -14,7 +15,7 @@ function mapUser(user: any) {
   };
 }
 
-function mapSession(session: any) {
+function mapSession(session: SessionRow): SessionDto {
   return {
     id: session.id,
     userId: session.user_id,
@@ -23,7 +24,7 @@ function mapSession(session: any) {
   };
 }
 
-function mapImage(image: any) {
+function mapImage(image: ImageRow): ImageDto {
   return {
     id: image.id,
     userId: image.user_id,

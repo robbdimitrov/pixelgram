@@ -1,3 +1,7 @@
+export interface UserIdDto {
+  id: number;
+}
+
 export interface UserDto {
   id: number;
   name: string;

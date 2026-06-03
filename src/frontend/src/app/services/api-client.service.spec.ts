@@ -82,17 +82,11 @@ describe('APIClient', () => {
   describe('createImage', () => {
     it('should POST image data', () => {
       const mockImageRes = {
-        id: '1',
-        filename: 'img.jpg',
-        description: 'Testing',
-        likes: 0,
-        liked: false,
-        user_id: '1'
+        id: 1
       };
 
       service.createImage('img.jpg', 'Testing').subscribe(res => {
         expect(res.id).toBe(1);
-        expect(res.filename).toBe('img.jpg');
       });
 
       const req = httpMock.expectOne('/api/images');
@@ -120,13 +114,13 @@ describe('APIClient', () => {
   });
 
   describe('createUser', () => {
-    it('should POST and map user', () => {
+    it('should POST and return created user id', () => {
       service.createUser('Test', 'test', 't@t.com', 'pass').subscribe(user => {
-        expect(user.name).toBe('Test');
+        expect(user.id).toBe(1);
       });
       const req = httpMock.expectOne('/api/users');
       expect(req.request.method).toBe('POST');
-      req.flush({ id: 1, name: 'Test' });
+      req.flush({ id: 1 });
     });
   });
 

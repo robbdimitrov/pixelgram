@@ -1,7 +1,18 @@
 import { Router } from 'express';
 import { Request, Response, NextFunction } from 'express';
+import AuthController from '../controllers/auth-controller';
+import ImageController from '../controllers/image-controller';
+import { UploadController } from '../controllers/upload-controller';
+import UserController from '../controllers/user-controller';
 
-export default function ({auth, image, upload, user}: any) {
+export interface Controllers {
+  auth: AuthController;
+  image: ImageController;
+  upload: UploadController;
+  user: UserController;
+}
+
+export default function ({auth, image, upload, user}: Controllers) {
   const router = Router();
 
   // Users
@@ -25,7 +36,7 @@ export default function ({auth, image, upload, user}: any) {
 
   // Upload
   router.post('/uploads', (req: Request, res: Response, next: NextFunction) => {
-    upload.uploader(req, res, (error: any) => {
+    upload.uploader(req, res, (error?: unknown) => {
       if (error) {
         return upload.handleUploadError(error, res);
       }

@@ -1,3 +1,7 @@
+export interface ImageIdDto {
+  id: number;
+}
+
 export interface ImageDto {
   id: number;
   userId: number;

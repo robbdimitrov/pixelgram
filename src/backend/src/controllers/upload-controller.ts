@@ -1,6 +1,6 @@
 import multer from 'multer';
 import fs from 'fs/promises';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import DbClient from '../db';
 
 const signatures = [
@@ -29,7 +29,13 @@ function isImage(buffer: Buffer) {
   });
 }
 
-export default function (imageDir: string, dbClient: DbClient) {
+export interface UploadController {
+  uploader: (req: Request, res: Response, next: NextFunction) => void;
+  handleUploadError: (error: unknown, res: Response) => Response;
+  createFile: (req: Request, res: Response) => void;
+}
+
+export default function (imageDir: string, dbClient: DbClient): UploadController {
   const upload = multer({
     dest: imageDir,
     limits: {
@@ -40,7 +46,7 @@ export default function (imageDir: string, dbClient: DbClient) {
 
   return {
     uploader: upload.single('image'),
-    handleUploadError: (error: any, res: Response) => {
+    handleUploadError: (error: unknown, res: Response) => {
       if (error instanceof multer.MulterError) {
         const message = error.code === 'LIMIT_FILE_SIZE'
           ? 'Could not resize this image enough. Try a smaller image.'
