@@ -17,6 +17,7 @@ metadata:
     app: pixelgram
     tier: frontend
 spec:
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -46,19 +47,22 @@ spec:
             memory: 256Mi
             cpu: 300m
         readinessProbe:
-          tcpSocket:
+          httpGet:
+            path: /
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
         livenessProbe:
-          tcpSocket:
+          httpGet:
+            path: /
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 3
         startupProbe:
-          tcpSocket:
+          httpGet:
+            path: /
             port: 8080
           failureThreshold: 30
           periodSeconds: 2
