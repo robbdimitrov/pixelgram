@@ -1,8 +1,11 @@
-FROM node:26.2.0-alpine
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm ci
+FROM golang:1.26.4-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN npm run build
-RUN npm prune --omit=dev --omit=optional
-CMD ["node", "dist/index.js"]
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/backend ./cmd/api
+
+FROM scratch
+COPY --from=build /out/backend /backend
+EXPOSE 8080
+CMD ["/backend"]

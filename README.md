@@ -7,7 +7,7 @@ browse and like images.
 
 Service | Language | Description
 --- | --- | ---
-[backend](src/backend-go) | Go | API responsible for users, sessions, posts, likes and uploads.
+[backend](src/backend) | Go | API responsible for users, sessions, posts, likes and uploads.
 [database](src/database) | SQL | PostgreSQL database with tables, relationships and functions.
 [frontend](src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS, DaisyUI and Lucide icons.
 

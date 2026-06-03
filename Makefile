@@ -6,7 +6,7 @@ GO_MOD_CACHE ?= /tmp/pixelgram-go-mod
 
 .PHONY: backend
 backend:
-	docker build -t localhost:5000/pixelgram/backend src/backend-go
+	docker build -t localhost:5000/pixelgram/backend src/backend
 
 .PHONY: database
 database:
@@ -21,7 +21,7 @@ test: test-backend test-frontend
 
 .PHONY: test-backend
 test-backend:
-	cd src/backend-go && GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MOD_CACHE) go test ./...
+	cd src/backend && GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MOD_CACHE) go test ./...
 
 .PHONY: test-frontend
 test-frontend:
