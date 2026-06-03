@@ -11,6 +11,7 @@ import (
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
+	"pixelgram/backend/internal/users"
 )
 
 func main() {
@@ -78,6 +79,26 @@ type noopUserStore struct{}
 
 func (noopUserStore) CreateUser(string, string, string, string) (int, error) {
 	return 0, nil
+}
+
+func (noopUserStore) GetUser(string) (users.User, bool, error) {
+	return users.User{}, false, nil
+}
+
+func (noopUserStore) GetUserWithID(string) (users.UserCredentials, bool, error) {
+	return users.UserCredentials{}, false, nil
+}
+
+func (noopUserStore) UpdateUser(string, string, string, string, string, *string) (users.UpdateUserResult, error) {
+	return users.UpdateUserResult{}, nil
+}
+
+func (noopUserStore) UpdatePassword(string, string) error {
+	return nil
+}
+
+func (noopUserStore) DeleteOtherSessions(string, string) error {
+	return nil
 }
 
 type noopAuthStore struct{}

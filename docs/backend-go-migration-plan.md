@@ -129,10 +129,10 @@ Started:
 - Unit tests cover password verification, a Node-generated Argon2id hash, rehash detection, session ID validation, and Node-compatible session token hashes.
 - `internal/httpx` implements JSON response/decode helpers, origin guard, security headers, and session middleware.
 - `internal/compat` implements email and pagination helpers.
-- `internal/users` wires `POST /users` against a store interface.
+- `internal/users` wires `POST /users`, `GET /users/{userId}`, and `PUT /users/{userId}` against a store interface.
 - `internal/sessions` wires `POST /sessions` and `DELETE /sessions` against a store interface.
 - Handler tests cover the first auth/user compatibility paths.
-- `internal/store/postgres` implements the `pgx` store methods needed by user creation, login/session lookup/refresh/delete, and login failure tracking.
+- `internal/store/postgres` implements the `pgx` store methods needed by user creation/retrieval/update, password update/session cleanup, login/session lookup/refresh/delete, and login failure tracking.
 - `cmd/api` uses the PostgreSQL store when `DATABASE_URL` is set.
 - `src/backend-go/README.md` contains pickup notes for a fresh agent/context.
 
@@ -146,7 +146,6 @@ GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod
 
 Not started:
 
-- `GET /users/:userId` and `PUT /users/:userId`.
 - Upload route and static upload serving.
 - Image/feed/likes route handlers.
 - Kubernetes/Makefile cutover.

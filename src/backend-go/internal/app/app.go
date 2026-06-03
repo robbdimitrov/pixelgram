@@ -18,12 +18,14 @@ type Dependencies struct {
 	Auth     sessions.Store
 }
 
-func New(_ Config, deps Dependencies) http.Handler {
+func New(cfg Config, deps Dependencies) http.Handler {
 	mux := http.NewServeMux()
-	userHandler := users.Handler{Store: deps.Users}
+	userHandler := users.Handler{Store: deps.Users, ImageDir: cfg.ImageDir}
 	sessionHandler := sessions.Handler{Store: deps.Auth}
 
 	mux.HandleFunc("POST /users", userHandler.CreateUser)
+	mux.HandleFunc("GET /users/{userId}", userHandler.GetUser)
+	mux.HandleFunc("PUT /users/{userId}", userHandler.UpdateUser)
 	mux.HandleFunc("POST /sessions", sessionHandler.CreateSession)
 	mux.HandleFunc("DELETE /sessions", sessionHandler.DeleteSession)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -7,8 +7,8 @@ This is the parallel Go rewrite of `src/backend`. The TypeScript backend remains
 - Scaffold exists under `src/backend-go`.
 - Password hashing/session helper work has started and has unit tests.
 - HTTP middleware foundation exists with tests for JSON errors, origin guard, and session validation behavior.
-- `POST /users`, `POST /sessions`, and `DELETE /sessions` handlers are wired against store interfaces with tests.
-- `pgx` PostgreSQL store exists for user creation, login/session lookup/refresh/delete, and login failure tracking.
+- `POST /users`, `GET /users/{userId}`, `PUT /users/{userId}`, `POST /sessions`, and `DELETE /sessions` handlers are wired against store interfaces with tests.
+- `pgx` PostgreSQL store exists for user creation/retrieval/update, password update/session cleanup, login/session lookup/refresh/delete, and login failure tracking.
 - `cmd/api` uses PostgreSQL when `DATABASE_URL` is set and no-op stores otherwise.
 - Kubernetes and `Makefile` still point at `src/backend`.
 - Last verified commands:
@@ -56,4 +56,4 @@ Start by reading:
 
 Do not delete or replace the TypeScript backend until the Go backend passes compatibility tests and the frontend works unchanged through `/api`.
 
-Next recommended step: implement `GET /users/:userId` and `PUT /users/:userId`, including avatar/password update behavior and the matching store methods.
+Next recommended step: implement uploads, including static file serving, 1 MB multipart limit, image magic-byte validation, expired upload cleanup, and pending upload quota.

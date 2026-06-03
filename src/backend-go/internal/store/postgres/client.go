@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strconv"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store"
+	"pixelgram/backend/internal/users"
 )
 
 type Client struct {
@@ -83,6 +85,167 @@ func (c *Client) GetUserWithEmail(email string) (sessions.UserCredentials, bool,
 	}
 
 	return user, true, nil
+}
+
+func (c *Client) GetUserWithID(userID string) (users.UserCredentials, bool, error) {
+	var user users.UserCredentials
+	err := c.pool.QueryRow(
+		context.Background(),
+		`SELECT id, password FROM users WHERE id = $1`,
+		userID,
+	).Scan(&user.ID, &user.PasswordHash)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return users.UserCredentials{}, false, nil
+	}
+	if err != nil {
+		return users.UserCredentials{}, false, err
+	}
+
+	return user, true, nil
+}
+
+func (c *Client) GetUser(userID string) (users.User, bool, error) {
+	var user users.User
+	var avatar sql.NullString
+	var bio sql.NullString
+	err := c.pool.QueryRow(
+		context.Background(),
+		`SELECT id, name, username, email, avatar, bio,
+		(SELECT count(*) FROM images WHERE user_id = users.id) AS images,
+		(SELECT count(*) FROM likes WHERE user_id = id) AS likes,
+		time_format(created) AS created
+		FROM users WHERE id = $1`,
+		userID,
+	).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Username,
+		&user.Email,
+		&avatar,
+		&bio,
+		&user.Images,
+		&user.Likes,
+		&user.Created,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return users.User{}, false, nil
+	}
+	if err != nil {
+		return users.User{}, false, err
+	}
+
+	user.Avatar = nullableString(avatar)
+	user.Bio = nullableString(bio)
+	return user, true, nil
+}
+
+func (c *Client) UpdateUser(userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
+	tx, err := c.pool.Begin(context.Background())
+	if err != nil {
+		return users.UpdateUserResult{}, err
+	}
+	defer rollback(context.Background(), tx)
+
+	var oldAvatar sql.NullString
+	err = tx.QueryRow(context.Background(), `SELECT avatar FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&oldAvatar)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return users.UpdateUserResult{Updated: false}, nil
+	}
+	if err != nil {
+		return users.UpdateUserResult{}, err
+	}
+
+	if avatar != "" {
+		var avatarExists bool
+		err := tx.QueryRow(
+			context.Background(),
+			`SELECT EXISTS (
+			  SELECT 1 FROM users WHERE id = $1 AND avatar = $2
+			  UNION
+			  SELECT 1 FROM images WHERE user_id = $1 AND filename = $2
+			) AS exists`,
+			userID,
+			avatar,
+		).Scan(&avatarExists)
+		if err != nil {
+			return users.UpdateUserResult{}, err
+		}
+
+		if !avatarExists {
+			var consumed string
+			err := tx.QueryRow(
+				context.Background(),
+				`DELETE FROM uploads WHERE user_id = $1 AND filename = $2
+				RETURNING filename`,
+				userID,
+				avatar,
+			).Scan(&consumed)
+			if errors.Is(err, pgx.ErrNoRows) {
+				return users.UpdateUserResult{Updated: false}, nil
+			}
+			if err != nil {
+				return users.UpdateUserResult{}, err
+			}
+		}
+	}
+
+	_, err = tx.Exec(
+		context.Background(),
+		`UPDATE users SET name = $1, username = $2,
+		email = $3, avatar = $4, bio = $5 WHERE id = $6`,
+		name,
+		username,
+		email,
+		avatar,
+		bio,
+		userID,
+	)
+	if err != nil {
+		if uniqueViolation(err) {
+			return users.UpdateUserResult{}, store.ErrConflict
+		}
+		return users.UpdateUserResult{}, err
+	}
+
+	result := users.UpdateUserResult{Updated: true}
+	if oldAvatar.Valid && oldAvatar.String != "" && oldAvatar.String != avatar {
+		var stillUsed bool
+		err := tx.QueryRow(
+			context.Background(),
+			`SELECT EXISTS (
+			  SELECT 1 FROM images WHERE filename = $1
+			  UNION
+			  SELECT 1 FROM users WHERE avatar = $1
+			) AS exists`,
+			oldAvatar.String,
+		).Scan(&stillUsed)
+		if err != nil {
+			return users.UpdateUserResult{}, err
+		}
+		if !stillUsed {
+			result.UnusedAvatar = oldAvatar.String
+		}
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		return users.UpdateUserResult{}, err
+	}
+	return result, nil
+}
+
+func (c *Client) UpdatePassword(userID, passwordHash string) error {
+	_, err := c.pool.Exec(context.Background(), `UPDATE users SET password = $1 WHERE id = $2`, passwordHash, userID)
+	return err
+}
+
+func (c *Client) DeleteOtherSessions(userID, currentSessionID string) error {
+	_, err := c.pool.Exec(
+		context.Background(),
+		`DELETE FROM sessions WHERE user_id = $1 AND id != $2`,
+		userID,
+		c.hashSession(currentSessionID),
+	)
+	return err
 }
 
 func (c *Client) CreateSession(sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
@@ -211,4 +374,15 @@ func (c *Client) hashSession(sessionID string) string {
 func uniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}
+
+func nullableString(value sql.NullString) *string {
+	if !value.Valid {
+		return nil
+	}
+	return &value.String
+}
+
+func rollback(ctx context.Context, tx pgx.Tx) {
+	_ = tx.Rollback(ctx)
 }
