@@ -3,11 +3,13 @@
 ## Architecture
 
 Three independent services, deployed via Kubernetes:
-- `src/backend-go` — Go API (`net/http`, `pgx`)
+- `src/backend` — Go API (`net/http`, `pgx`)
 - `src/database` — PostgreSQL schema (auto-runs `schema.sql` on container init)
 - `src/frontend` — Angular 21 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
-Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces). The old `src/backend` TypeScript/Express backend is legacy/reference code after the Go migration.
+Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
+
+Services are stateless and must work correctly with multiple replicas. Keep implementations free of node-local state.
 
 ## Commands
 
@@ -50,10 +52,18 @@ kubectl delete namespace pixelgram
 
 ```sh
 # Backend
-cd src/backend-go && go fmt ./...
+cd src/backend && go fmt ./...
 
 # Frontend (from src/frontend)
 npm run lint          # ng lint (ESLint with @angular-eslint)
+```
+
+### Backend dev server (not Docker)
+
+When `DATABASE_URL` is unset, the backend automatically uses noop stores — useful for local handler testing without a real DB:
+
+```sh
+cd src/backend && go run ./cmd/api
 ```
 
 ### Frontend dev server (not Docker)
@@ -78,7 +88,7 @@ The active Go backend uses Go tests. The frontend uses Jest. Apply the 80/20 rul
 
 ```sh
 # Backend tests
-cd src/backend-go && go test ./...
+cd src/backend && go test ./...
 
 # Frontend tests
 cd src/frontend && npx jest
@@ -92,6 +102,13 @@ Set in `k8s/backend.yaml`:
 - `SESSION_HASH_SECRET` — used to hash persisted session tokens
 
 The backend reads `PORT` (defaults to `8080`).
+
+## Backend navigation
+
+- Routes: `internal/app/app.go`
+- Store interfaces: each domain package (`users/`, `images/`, `sessions/`, `uploads/`)
+- Postgres implementation: `internal/store/postgres/client.go`
+- Session auth middleware (`httpx.RequireSession`) wraps the whole mux; routes that need to be public must be handled before that layer.
 
 ## Key conventions
 
