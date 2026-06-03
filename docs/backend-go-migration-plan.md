@@ -132,6 +132,8 @@ Started:
 - `internal/users` wires `POST /users` against a store interface.
 - `internal/sessions` wires `POST /sessions` and `DELETE /sessions` against a store interface.
 - Handler tests cover the first auth/user compatibility paths.
+- `internal/store/postgres` implements the `pgx` store methods needed by user creation, login/session lookup/refresh/delete, and login failure tracking.
+- `cmd/api` uses the PostgreSQL store when `DATABASE_URL` is set.
 - `src/backend-go/README.md` contains pickup notes for a fresh agent/context.
 
 Last verified:
@@ -144,7 +146,6 @@ GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod
 
 Not started:
 
-- `pgx` store implementation.
 - `GET /users/:userId` and `PUT /users/:userId`.
 - Upload route and static upload serving.
 - Image/feed/likes route handlers.

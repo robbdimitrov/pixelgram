@@ -8,7 +8,8 @@ This is the parallel Go rewrite of `src/backend`. The TypeScript backend remains
 - Password hashing/session helper work has started and has unit tests.
 - HTTP middleware foundation exists with tests for JSON errors, origin guard, and session validation behavior.
 - `POST /users`, `POST /sessions`, and `DELETE /sessions` handlers are wired against store interfaces with tests.
-- No PostgreSQL implementation exists yet.
+- `pgx` PostgreSQL store exists for user creation, login/session lookup/refresh/delete, and login failure tracking.
+- `cmd/api` uses PostgreSQL when `DATABASE_URL` is set and no-op stores otherwise.
 - Kubernetes and `Makefile` still point at `src/backend`.
 - Last verified commands:
   - `GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod go test ./...`
@@ -55,4 +56,4 @@ Start by reading:
 
 Do not delete or replace the TypeScript backend until the Go backend passes compatibility tests and the frontend works unchanged through `/api`.
 
-Next recommended step: add the `pgx` store implementation for users/sessions and adapt `cmd/api` to use it when `DATABASE_URL` is set.
+Next recommended step: implement `GET /users/:userId` and `PUT /users/:userId`, including avatar/password update behavior and the matching store methods.

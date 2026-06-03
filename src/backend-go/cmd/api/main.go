@@ -1,25 +1,30 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"pixelgram/backend/internal/app"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/sessions"
-	"time"
+	"pixelgram/backend/internal/store/postgres"
 )
 
 func main() {
 	port := getenv("PORT", "8080")
+	deps, closeDeps, err := dependencies()
+	if err != nil {
+		slog.Error("failed to initialize dependencies", "error", err)
+		os.Exit(1)
+	}
+	defer closeDeps()
+
 	handler := app.New(app.Config{
 		ImageDir: getenv("IMAGE_DIR", "/tmp"),
-	}, app.Dependencies{
-		Sessions: noopSessionStore{},
-		Users:    noopUserStore{},
-		Auth:     noopAuthStore{},
-	})
+	}, deps)
 
 	addr := ":" + port
 	slog.Info("starting backend", "addr", addr)
@@ -27,6 +32,28 @@ func main() {
 		slog.Error("backend stopped", "error", err)
 		os.Exit(1)
 	}
+}
+
+func dependencies() (app.Dependencies, func(), error) {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return app.Dependencies{
+			Sessions: noopSessionStore{},
+			Users:    noopUserStore{},
+			Auth:     noopAuthStore{},
+		}, func() {}, nil
+	}
+
+	client, err := postgres.New(context.Background(), databaseURL, os.Getenv("SESSION_HASH_SECRET"))
+	if err != nil {
+		return app.Dependencies{}, func() {}, err
+	}
+
+	return app.Dependencies{
+		Sessions: client,
+		Users:    client,
+		Auth:     client,
+	}, client.Close, nil
 }
 
 func getenv(key, fallback string) string {
