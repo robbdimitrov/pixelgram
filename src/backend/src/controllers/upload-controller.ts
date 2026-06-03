@@ -2,6 +2,7 @@ import multer from 'multer';
 import fs from 'fs/promises';
 import { NextFunction, Request, Response } from 'express';
 import DbClient from '../db';
+import { deleteUploadFile, deleteUploadFiles } from '../shared/files';
 
 const signatures = [
   {bytes: [0xff, 0xd8, 0xff]},
@@ -77,14 +78,29 @@ export default function (imageDir: string, dbClient: DbClient): UploadController
           });
         }
 
-        return dbClient.createUpload(req.userId!, file.filename).then(() => {
-          res.status(201).send({
-            filename: file.filename
+        return dbClient.deleteExpiredUploads()
+          .then((filenames: string[]) => deleteUploadFiles(imageDir, filenames))
+          .then(() => dbClient.hasPendingUploadCapacity(req.userId!))
+          .then((hasCapacity: boolean) => {
+            if (!hasCapacity) {
+              return deleteUploadFile(imageDir, file.filename).then(() => {
+                res.status(429).send({
+                  message: 'Too many pending uploads. Create posts with existing uploads or try again later.'
+                });
+              });
+            }
+
+            return dbClient.createUpload(req.userId!, file.filename).then(() => {
+              res.status(201).send({
+                filename: file.filename
+              });
+            });
           });
-        });
       }).catch(() => {
-        res.status(400).send({
-          message: 'Could not process upload.'
+        deleteUploadFile(imageDir, file.filename).then(() => {
+          res.status(400).send({
+            message: 'Could not process upload.'
+          });
         });
       });
     }

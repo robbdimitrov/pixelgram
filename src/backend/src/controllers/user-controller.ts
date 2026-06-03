@@ -2,8 +2,9 @@ import { isValidEmail } from '../shared/utils';
 import { generateHash, verifyPassword } from '../shared/crypto';
 import { logInfo, logError } from '../shared/logger';
 import { Request, Response } from 'express';
-import DbClient from '../db';
+import DbClient, { UserUpdateResult } from '../db';
 import { UserCredentialsRow, UserDto, UserId } from '../types';
+import { deleteUploadFile } from '../shared/files';
 
 function isUniqueViolation(error: unknown) {
   return typeof error === 'object' &&
@@ -18,8 +19,10 @@ function getErrorMessage(error: unknown) {
 
 class UserController {
   dbClient: DbClient;
-  constructor(dbClient: DbClient) {
+  imageDir: string;
+  constructor(dbClient: DbClient, imageDir: string) {
     this.dbClient = dbClient;
+    this.imageDir = imageDir;
   }
 
   createUser(req: Request, res: Response) {
@@ -125,9 +128,23 @@ class UserController {
     }
 
     this.dbClient.updateUser(userId, name, username, email, avatar, bio)
-      .then(() => {
+      .then((result: UserUpdateResult) => {
+        if (!result.updated) {
+          logError('Updating user failed: Invalid avatar');
+          return res.status(400).send({
+            message: 'Avatar upload is invalid or expired.'
+          });
+        }
+
         logInfo('Successfully updated user');
-        res.sendStatus(204);
+        return Promise.resolve(result.unusedAvatar)
+          .then((unusedAvatar: string | undefined) => {
+            if (unusedAvatar) {
+              return deleteUploadFile(this.imageDir, unusedAvatar);
+            }
+            return undefined;
+          })
+          .then(() => res.sendStatus(204));
       }).catch((error: unknown) => {
         logError(`Updating user failed: ${error}`);
 

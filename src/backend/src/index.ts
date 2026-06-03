@@ -44,9 +44,9 @@ export default function (dbClient: DbClient, imageDir: string) {
 
   const controllers: Controllers = {
     auth: new AuthController(dbClient),
-    image: new ImageController(dbClient),
+    image: new ImageController(dbClient, imageDir),
     upload: UploadController(imageDir, dbClient),
-    user: new UserController(dbClient)
+    user: new UserController(dbClient, imageDir)
   };
 
   configureRoutes(app, imageDir, controllers);

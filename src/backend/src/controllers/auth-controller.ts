@@ -11,7 +11,6 @@ const sessionIdLength = 28;
 const sessionCookieBaseOptions = {
   sameSite: 'strict' as const,
   httpOnly: true,
-  secure: process.env.SESSION_COOKIE_SECURE === 'true',
   path: '/'
 };
 const sessionCookieOptions = {

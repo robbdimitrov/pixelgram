@@ -32,6 +32,9 @@ Manual deployment:
 
 ```sh
 kubectl create namespace pixelgram
+kubectl create secret generic database-credentials -n pixelgram \
+  --from-literal=postgres-password="$(openssl rand -base64 32)" \
+  --from-literal=session-hash-secret="$(openssl rand -base64 32)"
 kubectl apply -f ./k8s -n pixelgram
 kubectl port-forward service/frontend 8080 -n pixelgram   # access at localhost:8080
 ```
@@ -86,7 +89,7 @@ cd src/frontend && npx jest
 Set in `k8s/backend.yaml`:
 - `DATABASE_URL` — PostgreSQL connection string
 - `IMAGE_DIR` — path for uploaded image storage
-- `SECRET` — used for session signing
+- `SESSION_HASH_SECRET` — used to hash persisted session tokens
 
 The backend reads `PORT` (defaults to `8080`).
 

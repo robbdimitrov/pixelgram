@@ -89,6 +89,15 @@ export class EditProfileComponent implements OnInit {
     this.imagePreview = '';
   }
 
+  removeAvatar() {
+    if (!this.user) {
+      return;
+    }
+
+    this.clearSelectedFile();
+    this.user.avatar = '';
+  }
+
   loadImagePreview(file: File) {
     if (!file) {
       this.imagePreview = '';

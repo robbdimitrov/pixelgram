@@ -5,7 +5,9 @@ import path from 'path';
 const mockDbClient = {
   getSession: jest.fn(),
   refreshSession: jest.fn(),
-  createUpload: jest.fn()
+  createUpload: jest.fn(),
+  deleteExpiredUploads: jest.fn(),
+  hasPendingUploadCapacity: jest.fn()
 } as any;
 
 // Use /tmp for mock uploads
@@ -16,6 +18,8 @@ describe('Upload Endpoints', () => {
     jest.clearAllMocks();
     mockDbClient.getSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
     mockDbClient.refreshSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
+    mockDbClient.deleteExpiredUploads.mockResolvedValue([]);
+    mockDbClient.hasPendingUploadCapacity.mockResolvedValue(true);
   });
 
   describe('POST /uploads', () => {
@@ -55,6 +59,19 @@ describe('Upload Endpoints', () => {
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('filename');
       expect(mockDbClient.createUpload).toHaveBeenCalled();
+    });
+
+    it('should reject when pending upload quota is exhausted', async () => {
+      const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0x00, 0x00, 0x00]);
+      mockDbClient.hasPendingUploadCapacity.mockResolvedValue(false);
+
+      const res = await request(app)
+        .post('/uploads')
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
+        .attach('image', jpegBuffer, 'test.jpg');
+
+      expect(res.statusCode).toEqual(429);
+      expect(mockDbClient.createUpload).not.toHaveBeenCalled();
     });
   });
 });

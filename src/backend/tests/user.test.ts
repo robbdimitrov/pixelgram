@@ -54,7 +54,7 @@ describe('User Endpoints', () => {
 
   describe('PUT /users/:userId', () => {
     it('should update user if authorized', async () => {
-      mockDbClient.updateUser.mockResolvedValue(undefined);
+      mockDbClient.updateUser.mockResolvedValue({updated: true});
 
       const res = await request(app)
         .put('/users/1') // Logged in as user '1'
@@ -67,6 +67,23 @@ describe('User Endpoints', () => {
 
       expect(res.statusCode).toEqual(204);
       expect(mockDbClient.updateUser).toHaveBeenCalledWith('1', 'Updated Name', 'updated', 'updated@example.com', undefined, undefined);
+    });
+
+    it('should reject an avatar the user does not own', async () => {
+      mockDbClient.updateUser.mockResolvedValue({updated: false});
+
+      const res = await request(app)
+        .put('/users/1')
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
+        .send({
+          name: 'Updated Name',
+          username: 'updated',
+          email: 'updated@example.com',
+          avatar: 'other-user-upload'
+        });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('message', 'Avatar upload is invalid or expired.');
     });
 
     it('should return 403 when updating another user profile', async () => {

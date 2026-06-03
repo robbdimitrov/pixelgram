@@ -42,6 +42,32 @@ require_docker() {
   docker info >/dev/null 2>&1 || die "Docker daemon is not running. Start Docker and try again."
 }
 
+random_secret() {
+  if command -v openssl >/dev/null; then
+    openssl rand -base64 32
+    return
+  fi
+
+  local secret
+  secret="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 || true)"
+  printf '%s\n' "${secret}"
+}
+
+ensure_namespace() {
+  kubectl create namespace "${NS}" 2>/dev/null || true
+}
+
+ensure_secret() {
+  if kubectl -n "${NS}" get secret database-credentials >/dev/null 2>&1; then
+    return
+  fi
+
+  log "creating generated database/session secret"
+  kubectl -n "${NS}" create secret generic database-credentials \
+    --from-literal=postgres-password="$(random_secret)" \
+    --from-literal=session-hash-secret="$(random_secret)"
+}
+
 port_pids() {
   if command -v lsof >/dev/null; then
     lsof -nP -iTCP:"${LOCAL_PORT}" -sTCP:LISTEN -t 2>/dev/null || true
@@ -90,7 +116,8 @@ build_images() {
 
 apply_manifests() {
   log "creating namespace and applying manifests"
-  kubectl create namespace "${NS}" 2>/dev/null || true
+  ensure_namespace
+  ensure_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
 }
 

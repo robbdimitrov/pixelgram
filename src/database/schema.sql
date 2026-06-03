@@ -39,6 +39,9 @@ CREATE TABLE uploads (
   created timestamp NOT NULL DEFAULT now()
 );
 
+CREATE INDEX uploads_user_id_idx ON uploads(user_id);
+CREATE INDEX uploads_created_idx ON uploads(created);
+
 CREATE TABLE images (
   id serial PRIMARY KEY,
   user_id integer REFERENCES users ON DELETE CASCADE,

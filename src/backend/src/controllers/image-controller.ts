@@ -3,12 +3,15 @@ import { parsePagination } from '../shared/utils';
 import { Request, Response } from 'express';
 import DbClient from '../db';
 import { ImageDto, ImageId } from '../types';
+import { deleteUploadFile } from '../shared/files';
 
 class ImageController {
   dbClient: DbClient;
+  imageDir: string;
   loginFailures: Map<string, { count: number, timeout: NodeJS.Timeout, resetAt?: number }> = new Map();
-  constructor(dbClient: DbClient) {
+  constructor(dbClient: DbClient, imageDir: string) {
     this.dbClient = dbClient;
+    this.imageDir = imageDir;
   }
 
   createImage(req: Request, res: Response) {
@@ -137,10 +140,10 @@ class ImageController {
     const imageId = req.params.imageId as string;
 
     this.dbClient.deleteImage(imageId, req.userId!)
-      .then((rowCount: number) => {
-        if (rowCount) {
+      .then((filename: string | undefined) => {
+        if (filename) {
           logInfo('Successfully deleted image');
-          return res.sendStatus(204);
+          return deleteUploadFile(this.imageDir, filename).then(() => res.sendStatus(204));
         }
 
         return this.dbClient.getImage(imageId, req.userId!).then((image: ImageDto | undefined) => {

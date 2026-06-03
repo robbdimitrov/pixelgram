@@ -115,7 +115,7 @@ describe('Image Endpoints', () => {
 
   describe('DELETE /images/:imageId', () => {
     it('should delete image and return 204', async () => {
-      mockDbClient.deleteImage = jest.fn().mockResolvedValue(1);
+      mockDbClient.deleteImage = jest.fn().mockResolvedValue('image.jpg');
       const res = await request(app).delete('/images/101').set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
       expect(res.statusCode).toEqual(204);
     });

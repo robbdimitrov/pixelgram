@@ -16,6 +16,14 @@ import {
   UserRow
 } from '../types';
 
+const pendingUploadLimit = 20;
+const uploadExpiration = '1 hour';
+
+export interface UserUpdateResult {
+  updated: boolean;
+  unusedAvatar?: string;
+}
+
 class DbClient {
   pool: Pool;
   constructor(dbUrl: string | undefined) {
@@ -85,14 +93,67 @@ class DbClient {
     });
   }
 
-  updateUser(userId: string, name: string, username: string, email: string, avatar: string | null, bio: string | null): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const query = `UPDATE users SET name = $1, username = $2,
-        email = $3, avatar = $4, bio = $5 WHERE id = $6`;
+  updateUser(userId: string, name: string, username: string, email: string, avatar: string | null, bio: string | null): Promise<UserUpdateResult> {
+    return this.pool.connect().then(async (client: PoolClient) => {
+      try {
+        await client.query('BEGIN');
 
-      this.pool.query(query, [name, username, email, avatar, bio, userId])
-        .then(() => resolve(undefined))
-        .catch((error: unknown) => reject(error));
+        const userQuery = 'SELECT avatar FROM users WHERE id = $1 FOR UPDATE';
+        const userResult = await client.query<{ avatar: string | null }>(userQuery, [userId]);
+        if (!userResult.rows.length) {
+          await client.query('ROLLBACK');
+          return {updated: false};
+        }
+
+        const oldAvatar = userResult.rows[0].avatar || '';
+        const normalizedAvatar = avatar || '';
+        if (normalizedAvatar) {
+          const avatarQuery =
+            `SELECT EXISTS (
+              SELECT 1 FROM users WHERE id = $1 AND avatar = $2
+              UNION
+              SELECT 1 FROM images WHERE user_id = $1 AND filename = $2
+            ) AS exists`;
+          const avatarResult = await client.query<{ exists: boolean }>(avatarQuery, [userId, normalizedAvatar]);
+
+          if (!avatarResult.rows[0].exists) {
+            const uploadQuery =
+              `DELETE FROM uploads WHERE user_id = $1 AND filename = $2
+              RETURNING filename`;
+            const uploadResult = await client.query<UploadFilename>(uploadQuery, [userId, normalizedAvatar]);
+            if (!uploadResult.rows.length) {
+              await client.query('ROLLBACK');
+              return {updated: false};
+            }
+          }
+        }
+
+        const query = `UPDATE users SET name = $1, username = $2,
+          email = $3, avatar = $4, bio = $5 WHERE id = $6`;
+
+        await client.query(query, [name, username, email, normalizedAvatar, bio, userId]);
+        let unusedAvatar: string | undefined;
+        if (oldAvatar && oldAvatar !== normalizedAvatar) {
+          const oldAvatarQuery =
+            `SELECT EXISTS (
+              SELECT 1 FROM images WHERE filename = $1
+              UNION
+              SELECT 1 FROM users WHERE avatar = $1
+            ) AS exists`;
+          const oldAvatarResult = await client.query<{ exists: boolean }>(oldAvatarQuery, [oldAvatar]);
+          if (!oldAvatarResult.rows[0].exists) {
+            unusedAvatar = oldAvatar;
+          }
+        }
+
+        await client.query('COMMIT');
+        return {updated: true, unusedAvatar};
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
     });
   }
 
@@ -249,6 +310,36 @@ class DbClient {
     });
   }
 
+  countPendingUploads(userId: string): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT count(*) AS count FROM uploads WHERE user_id = $1';
+
+      this.pool.query<{ count: string | number }>(query, [userId])
+        .then((result: QueryResult<{ count: string | number }>) => resolve(Number(result.rows[0].count)))
+        .catch((error: unknown) => reject(error));
+    });
+  }
+
+  hasPendingUploadCapacity(userId: string): Promise<boolean> {
+    return this.countPendingUploads(userId)
+      .then((count: number) => count < pendingUploadLimit);
+  }
+
+  deleteExpiredUploads(): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      const query =
+        `DELETE FROM uploads
+        WHERE created <= now() - $1::interval
+        RETURNING filename`;
+
+      this.pool.query<UploadFilename>(query, [uploadExpiration])
+        .then((result: QueryResult<UploadFilename>) => {
+          resolve(result.rows.map((row: UploadFilename) => row.filename));
+        })
+        .catch((error: unknown) => reject(error));
+    });
+  }
+
   createImage(userId: string, filename: string, description: string): Promise<ImageId | undefined> {
     return this.pool.connect().then(async (client: PoolClient) => {
       try {
@@ -365,13 +456,26 @@ class DbClient {
     });
   }
 
-  deleteImage(imageId: string, userId: string): Promise<number> {
-    return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM images WHERE id = $1 AND user_id = $2';
+  deleteImage(imageId: string, userId: string): Promise<string | undefined> {
+    return this.pool.connect().then(async (client: PoolClient) => {
+      try {
+        await client.query('BEGIN');
 
-      this.pool.query(query, [imageId, userId])
-        .then((result: QueryResult) => resolve(result.rowCount ?? 0))
-        .catch((error: unknown) => reject(error));
+        const query = 'DELETE FROM images WHERE id = $1 AND user_id = $2 RETURNING filename';
+        const result = await client.query<UploadFilename>(query, [imageId, userId]);
+        const filename = result.rows[0]?.filename;
+        if (filename) {
+          await client.query('UPDATE users SET avatar = $1 WHERE avatar = $2', ['', filename]);
+        }
+
+        await client.query('COMMIT');
+        return filename;
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
     });
   }
 
