@@ -6,8 +6,12 @@ function generateKey() {
   return crypto.randomBytes(21).toString('base64');
 }
 
+function sessionHashSecret() {
+  return process.env.SESSION_HASH_SECRET || 'pixelgram-development-session-secret';
+}
+
 function hashToken(token: string) {
-  return crypto.createHash('sha256').update(token).digest('hex');
+  return crypto.createHmac('sha256', sessionHashSecret()).update(token).digest('hex');
 }
 
 function generateHash(password: string) {

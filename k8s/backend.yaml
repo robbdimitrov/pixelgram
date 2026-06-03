@@ -60,6 +60,11 @@ spec:
           value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
         - name: IMAGE_DIR
           value: /data/images
+        - name: SESSION_HASH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: session-hash-secret
         readinessProbe:
           tcpSocket:
             port: 8080

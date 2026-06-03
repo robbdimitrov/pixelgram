@@ -17,6 +17,16 @@ describe('crypto utilities', () => {
   });
 
   describe('hashToken', () => {
+    const originalSessionHashSecret = process.env.SESSION_HASH_SECRET;
+
+    afterEach(() => {
+      if (originalSessionHashSecret === undefined) {
+        delete process.env.SESSION_HASH_SECRET;
+      } else {
+        process.env.SESSION_HASH_SECRET = originalSessionHashSecret;
+      }
+    });
+
     it('should hash tokens deterministically without returning the original token', () => {
       const token = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA';
       const hash = hashToken(token);
@@ -24,6 +34,18 @@ describe('crypto utilities', () => {
       expect(hash).toHaveLength(64);
       expect(hash).toBe(hashToken(token));
       expect(hash).not.toBe(token);
+    });
+
+    it('should key token hashes with the session hash secret', () => {
+      const token = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+      process.env.SESSION_HASH_SECRET = 'first-secret';
+      const firstHash = hashToken(token);
+
+      process.env.SESSION_HASH_SECRET = 'second-secret';
+      const secondHash = hashToken(token);
+
+      expect(firstHash).not.toBe(secondHash);
     });
   });
 
