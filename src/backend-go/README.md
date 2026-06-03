@@ -10,6 +10,7 @@ This is the parallel Go rewrite of `src/backend`. The TypeScript backend remains
 - `POST /users`, `GET /users/{userId}`, `PUT /users/{userId}`, `POST /sessions`, and `DELETE /sessions` handlers are wired against store interfaces with tests.
 - `pgx` PostgreSQL store exists for user creation/retrieval/update, password update/session cleanup, login/session lookup/refresh/delete, and login failure tracking.
 - `POST /uploads` and authenticated `GET /uploads/<filename>` are wired, including 1 MB file limit, image signature checks, expired upload cleanup, and pending quota.
+- Image/feed/likes routes are wired with `pgx` store methods and handler tests.
 - `cmd/api` uses PostgreSQL when `DATABASE_URL` is set and no-op stores otherwise.
 - Kubernetes and `Makefile` still point at `src/backend`.
 - Last verified commands:
@@ -57,4 +58,4 @@ Start by reading:
 
 Do not delete or replace the TypeScript backend until the Go backend passes compatibility tests and the frontend works unchanged through `/api`.
 
-Next recommended step: implement image/feed/likes handlers and matching `pgx` store methods.
+Next recommended step: run the Go backend against the existing PostgreSQL schema, smoke-test through the frontend API paths, then switch `Makefile`/Docker/Kubernetes from `src/backend` to `src/backend-go`.

@@ -13,6 +13,7 @@ import (
 
 	"pixelgram/backend/internal/auth"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/images"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/users"
@@ -295,6 +296,207 @@ func (c *Client) DeleteExpiredUploads() ([]string, error) {
 	}
 
 	return filenames, rows.Err()
+}
+
+func (c *Client) CreateImage(userID, filename string, description *string) (int, bool, error) {
+	tx, err := c.pool.Begin(context.Background())
+	if err != nil {
+		return 0, false, err
+	}
+	defer rollback(context.Background(), tx)
+
+	var consumed string
+	err = tx.QueryRow(
+		context.Background(),
+		`DELETE FROM uploads WHERE user_id = $1 AND filename = $2
+		RETURNING filename`,
+		userID,
+		filename,
+	).Scan(&consumed)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, err
+	}
+
+	var id int
+	err = tx.QueryRow(
+		context.Background(),
+		`INSERT INTO images (user_id, filename, description)
+		VALUES ($1, $2, $3) RETURNING id`,
+		userID,
+		filename,
+		description,
+	).Scan(&id)
+	if err != nil {
+		return 0, false, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		return 0, false, err
+	}
+	return id, true, nil
+}
+
+func (c *Client) GetFeed(page, limit int, currentUserID string) ([]images.Image, error) {
+	return c.queryImages(
+		`SELECT id, user_id, filename, description,
+		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
+		EXISTS (SELECT 1 FROM likes
+		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		time_format(created) AS created
+		FROM images
+		ORDER BY images.created DESC
+		LIMIT $2 OFFSET $3`,
+		currentUserID,
+		limit,
+		page*limit,
+	)
+}
+
+func (c *Client) GetImages(userID string, page, limit int, currentUserID string) ([]images.Image, error) {
+	return c.queryImages(
+		`SELECT id, user_id, filename, description,
+		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
+		EXISTS (SELECT 1 FROM likes
+		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		time_format(created) AS created
+		FROM images WHERE user_id = $2
+		ORDER BY images.created DESC
+		LIMIT $3 OFFSET $4`,
+		currentUserID,
+		userID,
+		limit,
+		page*limit,
+	)
+}
+
+func (c *Client) GetLikedImages(userID string, page, limit int, currentUserID string) ([]images.Image, error) {
+	return c.queryImages(
+		`SELECT id, images.user_id, filename, description,
+		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
+		EXISTS (SELECT 1 FROM likes
+		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		time_format(images.created) AS created
+		FROM images
+		INNER JOIN likes ON image_id = id
+		WHERE likes.user_id = $2
+		ORDER BY likes.created DESC
+		LIMIT $3 OFFSET $4`,
+		currentUserID,
+		userID,
+		limit,
+		page*limit,
+	)
+}
+
+func (c *Client) GetImage(imageID, currentUserID string) (images.Image, bool, error) {
+	result, err := c.queryImages(
+		`SELECT id, user_id, filename, description,
+		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
+		EXISTS (SELECT 1 FROM likes
+		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		time_format(created) AS created
+		FROM images WHERE id = $2`,
+		currentUserID,
+		imageID,
+	)
+	if err != nil {
+		return images.Image{}, false, err
+	}
+	if len(result) == 0 {
+		return images.Image{}, false, nil
+	}
+	return result[0], true, nil
+}
+
+func (c *Client) DeleteImage(imageID, userID string) (string, bool, error) {
+	tx, err := c.pool.Begin(context.Background())
+	if err != nil {
+		return "", false, err
+	}
+	defer rollback(context.Background(), tx)
+
+	var filename string
+	err = tx.QueryRow(
+		context.Background(),
+		`DELETE FROM images WHERE id = $1 AND user_id = $2 RETURNING filename`,
+		imageID,
+		userID,
+	).Scan(&filename)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+
+	_, err = tx.Exec(context.Background(), `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename)
+	if err != nil {
+		return "", false, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		return "", false, err
+	}
+	return filename, true, nil
+}
+
+func (c *Client) ImageExists(imageID string) (bool, error) {
+	var exists bool
+	err := c.pool.QueryRow(
+		context.Background(),
+		`SELECT EXISTS (SELECT 1 FROM images WHERE id = $1)`,
+		imageID,
+	).Scan(&exists)
+	return exists, err
+}
+
+func (c *Client) LikeImage(imageID, userID string) error {
+	_, err := c.pool.Exec(
+		context.Background(),
+		`INSERT INTO likes (user_id, image_id)
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM images WHERE id = $2)
+		ON CONFLICT DO NOTHING`,
+		userID,
+		imageID,
+	)
+	return err
+}
+
+func (c *Client) UnlikeImage(imageID, userID string) error {
+	_, err := c.pool.Exec(context.Background(), `DELETE FROM likes WHERE user_id = $1 AND image_id = $2`, userID, imageID)
+	return err
+}
+
+func (c *Client) queryImages(query string, args ...any) ([]images.Image, error) {
+	rows, err := c.pool.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := []images.Image{}
+	for rows.Next() {
+		var image images.Image
+		var description sql.NullString
+		if err := rows.Scan(
+			&image.ID,
+			&image.UserID,
+			&image.Filename,
+			&description,
+			&image.Likes,
+			&image.Liked,
+			&image.Created,
+		); err != nil {
+			return nil, err
+		}
+		image.Description = nullableString(description)
+		result = append(result, image)
+	}
+
+	return result, rows.Err()
 }
 
 func (c *Client) CreateSession(sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {

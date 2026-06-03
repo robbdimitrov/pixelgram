@@ -83,7 +83,7 @@ func TestSessionMissingCookie(t *testing.T) {
 	app := New(Config{}, Dependencies{Sessions: &fakeSessionStore{}})
 
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images", nil)
+	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
 	app.ServeHTTP(res, req)
 
 	if res.Code != http.StatusUnauthorized {
@@ -96,7 +96,7 @@ func TestSessionMalformedCookieClearsWithoutStore(t *testing.T) {
 	app := New(Config{}, Dependencies{Sessions: store})
 
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images", nil)
+	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
 	req.AddCookie(&http.Cookie{Name: "session", Value: "not-a-valid-session"})
 	app.ServeHTTP(res, req)
 
@@ -115,7 +115,7 @@ func TestSessionStoreErrorDoesNotClearCookie(t *testing.T) {
 	app := New(Config{}, Dependencies{Sessions: &fakeSessionStore{getErr: errors.New("database unavailable")}})
 
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images", nil)
+	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
 	req.AddCookie(&http.Cookie{Name: "session", Value: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
 	app.ServeHTTP(res, req)
 
@@ -151,7 +151,7 @@ func TestSessionValidRefreshesCookie(t *testing.T) {
 	app := New(Config{}, Dependencies{Sessions: store})
 
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images", nil)
+	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
 	req.AddCookie(&http.Cookie{Name: "session", Value: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
 	app.ServeHTTP(res, req)
 

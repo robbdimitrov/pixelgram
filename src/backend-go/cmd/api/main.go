@@ -9,6 +9,7 @@ import (
 
 	"pixelgram/backend/internal/app"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/images"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
 	"pixelgram/backend/internal/users"
@@ -43,6 +44,7 @@ func dependencies() (app.Dependencies, func(), error) {
 			Users:    noopUserStore{},
 			Auth:     noopAuthStore{},
 			Uploads:  noopUploadStore{},
+			Images:   noopImageStore{},
 		}, func() {}, nil
 	}
 
@@ -56,6 +58,7 @@ func dependencies() (app.Dependencies, func(), error) {
 		Users:    client,
 		Auth:     client,
 		Uploads:  client,
+		Images:   client,
 	}, client.Close, nil
 }
 
@@ -148,5 +151,43 @@ func (noopUploadStore) HasPendingUploadCapacity(string) (bool, error) {
 }
 
 func (noopUploadStore) CreateUpload(string, string) error {
+	return nil
+}
+
+type noopImageStore struct{}
+
+func (noopImageStore) CreateImage(string, string, *string) (int, bool, error) {
+	return 0, false, nil
+}
+
+func (noopImageStore) GetFeed(int, int, string) ([]images.Image, error) {
+	return nil, nil
+}
+
+func (noopImageStore) GetImages(string, int, int, string) ([]images.Image, error) {
+	return nil, nil
+}
+
+func (noopImageStore) GetLikedImages(string, int, int, string) ([]images.Image, error) {
+	return nil, nil
+}
+
+func (noopImageStore) GetImage(string, string) (images.Image, bool, error) {
+	return images.Image{}, false, nil
+}
+
+func (noopImageStore) DeleteImage(string, string) (string, bool, error) {
+	return "", false, nil
+}
+
+func (noopImageStore) ImageExists(string) (bool, error) {
+	return false, nil
+}
+
+func (noopImageStore) LikeImage(string, string) error {
+	return nil
+}
+
+func (noopImageStore) UnlikeImage(string, string) error {
 	return nil
 }
