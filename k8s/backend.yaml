@@ -17,7 +17,7 @@ metadata:
     app: pixelgram
     tier: backend
 spec:
-  replicas: 2
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -66,19 +66,22 @@ spec:
               name: database-credentials
               key: session-hash-secret
         readinessProbe:
-          tcpSocket:
+          httpGet:
+            path: /health
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
         livenessProbe:
-          tcpSocket:
+          httpGet:
+            path: /health
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 3
         startupProbe:
-          tcpSocket:
+          httpGet:
+            path: /health
             port: 8080
           failureThreshold: 30
           periodSeconds: 2
@@ -89,14 +92,3 @@ spec:
       - name: image-storage
         persistentVolumeClaim:
           claimName: image-storage-pvc
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: backend
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: pixelgram
-      tier: backend
