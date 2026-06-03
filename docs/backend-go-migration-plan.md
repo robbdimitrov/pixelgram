@@ -127,6 +127,11 @@ Started:
 - `internal/auth/password.go` implements Argon2id PHC hashing, verification, and rehash checks.
 - `internal/auth/session.go` implements Node-compatible session ID generation and HMAC-SHA256 token hashing.
 - Unit tests cover password verification, a Node-generated Argon2id hash, rehash detection, session ID validation, and Node-compatible session token hashes.
+- `internal/httpx` implements JSON response/decode helpers, origin guard, security headers, and session middleware.
+- `internal/compat` implements email and pagination helpers.
+- `internal/users` wires `POST /users` against a store interface.
+- `internal/sessions` wires `POST /sessions` and `DELETE /sessions` against a store interface.
+- Handler tests cover the first auth/user compatibility paths.
 - `src/backend-go/README.md` contains pickup notes for a fresh agent/context.
 
 Last verified:
@@ -139,9 +144,10 @@ GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod
 
 Not started:
 
-- Request middleware.
-- Store interfaces and pgx implementation.
-- Route handlers.
+- `pgx` store implementation.
+- `GET /users/:userId` and `PUT /users/:userId`.
+- Upload route and static upload serving.
+- Image/feed/likes route handlers.
 - Kubernetes/Makefile cutover.
 
 ### Phase 1: Lock Current Behavior

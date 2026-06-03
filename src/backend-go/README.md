@@ -6,9 +6,13 @@ This is the parallel Go rewrite of `src/backend`. The TypeScript backend remains
 
 - Scaffold exists under `src/backend-go`.
 - Password hashing/session helper work has started and has unit tests.
-- No routes are wired yet.
+- HTTP middleware foundation exists with tests for JSON errors, origin guard, and session validation behavior.
+- `POST /users`, `POST /sessions`, and `DELETE /sessions` handlers are wired against store interfaces with tests.
+- No PostgreSQL implementation exists yet.
 - Kubernetes and `Makefile` still point at `src/backend`.
-- Last verified command: `GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod go test ./...`.
+- Last verified commands:
+  - `GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod go test ./...`
+  - `GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod go build -o /private/tmp/pixelgram-backend-go ./cmd/api`
 
 ## Compatibility Rules
 
@@ -45,7 +49,10 @@ Start by reading:
 2. This file
 3. `internal/auth/password.go`
 4. `internal/auth/session.go`
+5. `internal/httpx/middleware.go`
+6. `internal/users/handler.go`
+7. `internal/sessions/handler.go`
 
 Do not delete or replace the TypeScript backend until the Go backend passes compatibility tests and the frontend works unchanged through `/api`.
 
-Next recommended step: add `internal/httpx` and `internal/app` with JSON body limiting, malformed JSON errors, origin guard behavior, session middleware shape, and handler tests using a mock store.
+Next recommended step: add the `pgx` store implementation for users/sessions and adapt `cmd/api` to use it when `DATABASE_URL` is set.
