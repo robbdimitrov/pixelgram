@@ -79,6 +79,49 @@ describe('Auth Endpoints', () => {
       expect(res.statusCode).toEqual(403);
       expect(mockDbClient.getUserWithEmail).not.toHaveBeenCalled();
     });
+
+    it('should reject malformed origins on state-changing requests', async () => {
+      const res = await request(app)
+        .post('/sessions')
+        .set('Origin', 'not a url')
+        .send({
+          email: 'test@example.com',
+          password: 'password123'
+        });
+
+      expect(res.statusCode).toEqual(403);
+      expect(mockDbClient.getUserWithEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('JSON request body handling', () => {
+    it('should return JSON for malformed JSON request bodies', async () => {
+      const res = await request(app)
+        .post('/sessions')
+        .set('Content-Type', 'application/json')
+        .send('{"email":');
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toEqual({
+        message: 'Malformed JSON request body.'
+      });
+    });
+
+    it('should reject oversized JSON request bodies', async () => {
+      const res = await request(app)
+        .post('/sessions')
+        .send({
+          email: 'test@example.com',
+          password: 'password123',
+          padding: 'x'.repeat(110 * 1024)
+        });
+
+      expect(res.statusCode).toEqual(413);
+      expect(res.body).toEqual({
+        message: 'Request body is too large.'
+      });
+      expect(mockDbClient.getUserWithEmail).not.toHaveBeenCalled();
+    });
   });
 
   describe('session validation', () => {

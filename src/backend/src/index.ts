@@ -3,6 +3,7 @@ import helmet from 'helmet';
 
 import authGuard from './middlewares/auth-guard';
 import cookieParser from './middlewares/cookie-parser';
+import jsonErrorHandler from './middlewares/json-error-handler';
 import originGuard from './middlewares/origin-guard';
 import trim from './middlewares/trim';
 import { logInfo } from './shared/logger';
@@ -32,9 +33,10 @@ export default function (dbClient: DbClient, imageDir: string) {
   const app = express();
 
   app.use(helmet());
-  app.use(express.json());
-  app.use(trim);
   app.use(originGuard);
+  app.use(express.json({limit: '100kb'}));
+  app.use(jsonErrorHandler);
+  app.use(trim);
 
   app.use((req: Request, _res: Response, next: NextFunction) => {
     logInfo(`Request ${req.method} ${req.url}`);

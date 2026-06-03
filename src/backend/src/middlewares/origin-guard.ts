@@ -12,7 +12,7 @@ function requestOrigin(req: Request) {
     const parsed = new URL(origin);
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
-    return undefined;
+    return null;
   }
 }
 
@@ -26,6 +26,12 @@ export default function originGuard(req: Request, res: Response, next: NextFunct
   }
 
   const origin = requestOrigin(req);
+  if (origin === null) {
+    return res.status(403).send({
+      message: 'Forbidden'
+    });
+  }
+
   if (!origin || origin === expectedOrigin(req)) {
     return next();
   }
