@@ -51,13 +51,6 @@ The frontend uses Jest. The active Go backend uses Go's built-in test runner.
 make test
 ```
 
-To run one suite at a time:
-
-```sh
-make test-backend
-make test-frontend
-```
-
 ## Cleanup
 
 To completely remove the deployment from your cluster:

@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
       - name: database
-        image: localhost:5000/pixelgram/database
+        image: postgres:18.4-alpine
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5432

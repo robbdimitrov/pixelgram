@@ -33,6 +33,16 @@ spec:
         app: pixelgram
         tier: backend
     spec:
+      initContainers:
+      - name: migration
+        image: localhost:5000/pixelgram/database
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: postgres-password
       containers:
       - name: backend
         image: localhost:5000/pixelgram/backend

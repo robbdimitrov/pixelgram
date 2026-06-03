@@ -17,12 +17,8 @@ frontend:
 	docker build -t localhost:5000/pixelgram/frontend src/frontend
 
 .PHONY: test
-test: test-backend test-frontend
-
-.PHONY: test-backend
-test-backend:
-	cd src/backend && GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MOD_CACHE) go test ./...
-
-.PHONY: test-frontend
-test-frontend:
+test:
+	@echo "Testing backend..."
+	@cd src/backend && go test ./...
+	@echo "Testing frontend..."
 	cd src/frontend && npx jest

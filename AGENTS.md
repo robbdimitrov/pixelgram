@@ -2,9 +2,9 @@
 
 ## Architecture
 
-Three independent services, deployed via Kubernetes:
+Three services, deployed via Kubernetes:
 - `src/backend` — Go API (`net/http`, `pgx`)
-- `src/database` — PostgreSQL schema (auto-runs `schema.sql` on container init)
+- `src/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
 - `src/frontend` — Angular 21 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
@@ -16,9 +16,8 @@ Services are stateless and must work correctly with multiple replicas. Keep impl
 ### Build (Docker images)
 
 ```sh
-make              # build all: backend, database, frontend
+make              # build all: backend, frontend
 make backend      # build only the backend image
-make database     # build only the database image
 make frontend     # build only the frontend image
 ```
 
@@ -87,11 +86,7 @@ If local `8080` is occupied by the frontend port-forward, use another backend po
 The active Go backend uses Go tests. The frontend uses Jest. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
 
 ```sh
-# Backend tests
-cd src/backend && go test ./...
-
-# Frontend tests
-cd src/frontend && npx jest
+make test
 ```
 
 ## Environment variables (backend)
@@ -116,7 +111,7 @@ The backend reads `PORT` (defaults to `8080`).
 - **Password hashing**: Argon2id PHC hashes via `golang.org/x/crypto/argon2` (not bcrypt).
 - **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
 - **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
-- **Database init**: `schema.sql` is copied to `/docker-entrypoint-initdb.d/` in the Postgres image and automatically runs on first container start.
+- **Database migrations**: `src/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `src/database/migrations/`.
 - **No CI/CD, no pre-commit hooks** exist in this repo.
 - **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
 - **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Do not add inline `style` attributes or custom component SCSS/CSS for redesign work; use Tailwind config/theme tokens when styling needs to be shared.
