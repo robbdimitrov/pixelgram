@@ -7,13 +7,13 @@ browse and like images.
 
 Service | Language | Description
 --- | --- | ---
-[backend](src/backend) | TypeScript | Express API responsible for users, sessions, posts, likes and uploads.
+[backend](src/backend-go) | Go | API responsible for users, sessions, posts, likes and uploads.
 [database](src/database) | SQL | PostgreSQL database with tables, relationships and functions.
 [frontend](src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS, DaisyUI and Lucide icons.
 
 ## Tech stack
 
-- Backend: Node.js, TypeScript, Express, PostgreSQL, session cookies
+- Backend: Go 1.26, `net/http`, `pgx`, PostgreSQL, session cookies
 - Frontend: Angular 21, TypeScript, Tailwind CSS, DaisyUI, Lucide icons
 - Database: PostgreSQL schema initialized from `schema.sql`
 - Runtime: Docker images deployed to an active Kubernetes cluster (e.g. colima/k3s)
@@ -45,7 +45,7 @@ If `8080` is already used by the deployed frontend port-forward, use another bac
 
 ## Testing
 
-The project uses Jest for both frontend and backend unit and integration tests.
+The frontend uses Jest. The active Go backend uses Go's built-in test runner.
 
 ```sh
 make test

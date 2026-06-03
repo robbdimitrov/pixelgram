@@ -12,7 +12,8 @@ This is the parallel Go rewrite of `src/backend`. The TypeScript backend remains
 - `POST /uploads` and authenticated `GET /uploads/<filename>` are wired, including 1 MB file limit, image signature checks, expired upload cleanup, and pending quota.
 - Image/feed/likes routes are wired with `pgx` store methods and handler tests.
 - `cmd/api` uses PostgreSQL when `DATABASE_URL` is set and no-op stores otherwise.
-- Kubernetes and `Makefile` still point at `src/backend`.
+- `Makefile` points the backend build/test targets at `src/backend-go`.
+- Kubernetes still uses the same `localhost:5000/pixelgram/backend` image name.
 - Last verified commands:
   - `GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod go test ./...`
   - `GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod go build -o /private/tmp/pixelgram-backend-go ./cmd/api`

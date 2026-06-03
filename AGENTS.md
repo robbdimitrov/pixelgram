@@ -3,11 +3,11 @@
 ## Architecture
 
 Three independent services, deployed via Kubernetes:
-- `src/backend` — Express API (Node.js, TypeScript)
+- `src/backend-go` — Go API (`net/http`, `pgx`)
 - `src/database` — PostgreSQL schema (auto-runs `schema.sql` on container init)
 - `src/frontend` — Angular 21 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
-Each service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
+Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces). The old `src/backend` TypeScript/Express backend is legacy/reference code after the Go migration.
 
 ## Commands
 
@@ -49,8 +49,8 @@ kubectl delete namespace pixelgram
 ### Lint
 
 ```sh
-# Backend (from src/backend)
-npm run lint          # eslint src/**/*.ts and index.ts
+# Backend
+cd src/backend-go && go fmt ./...
 
 # Frontend (from src/frontend)
 npm run lint          # ng lint (ESLint with @angular-eslint)
@@ -74,11 +74,11 @@ If local `8080` is occupied by the frontend port-forward, use another backend po
 
 ### Tests
 
-Both the frontend and backend are fully configured with Jest for unit and integration testing. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
+The active Go backend uses Go tests. The frontend uses Jest. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
 
 ```sh
 # Backend tests
-cd src/backend && npx jest
+cd src/backend-go && go test ./...
 
 # Frontend tests
 cd src/frontend && npx jest
@@ -96,7 +96,7 @@ The backend reads `PORT` (defaults to `8080`).
 ## Key conventions
 
 - **Auth**: session-based via a `session` cookie (not JWT). Auth middleware is applied before routes.
-- **Password hashing**: `argon2` (not bcrypt).
+- **Password hashing**: Argon2id PHC hashes via `golang.org/x/crypto/argon2` (not bcrypt).
 - **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
 - **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
 - **Database init**: `schema.sql` is copied to `/docker-entrypoint-initdb.d/` in the Postgres image and automatically runs on first container start.

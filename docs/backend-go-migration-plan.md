@@ -136,6 +136,7 @@ Started:
 - `internal/uploads` wires `POST /uploads` and authenticated static upload serving, with magic-byte validation and quota behavior.
 - `internal/images` wires image creation, feed/profile/liked lists, single image, delete, like, and unlike routes.
 - `cmd/api` uses the PostgreSQL store when `DATABASE_URL` is set.
+- `Makefile` builds the backend image from `src/backend-go` and runs Go backend tests.
 - `src/backend-go/README.md` contains pickup notes for a fresh agent/context.
 
 Last verified:
@@ -149,7 +150,7 @@ GOCACHE=/private/tmp/pixelgram-go-build GOMODCACHE=/private/tmp/pixelgram-go-mod
 Not started:
 
 - End-to-end run against the live PostgreSQL schema.
-- Kubernetes/Makefile cutover.
+- Kubernetes cutover smoke test.
 
 ### Phase 1: Lock Current Behavior
 
