@@ -1,5 +1,6 @@
 import { Pool, QueryResult } from 'pg';
 
+import { hashToken } from '../shared/crypto';
 import { mapUser, mapImage, mapSession } from '../shared/mappers';
 import { Image } from '../types';
 
@@ -101,7 +102,7 @@ class DbClient {
         `INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)
         RETURNING id, user_id, created, expires_at`;
 
-      this.pool.query(query, [sessionId, userId, expiresAt])
+      this.pool.query(query, [hashToken(sessionId), userId, expiresAt])
         .then((result: QueryResult) => resolve(mapSession(result.rows[0])))
         .catch((error: any) => reject(error));
     });
@@ -112,7 +113,7 @@ class DbClient {
       const query =
         'SELECT id, user_id, created, expires_at FROM sessions WHERE id = $1 AND expires_at > now()';
 
-      this.pool.query(query, [sessionId])
+      this.pool.query(query, [hashToken(sessionId)])
         .then((result: QueryResult) => {
           if (result.rows.length) {
             resolve(mapSession(result.rows[0]));
@@ -129,7 +130,7 @@ class DbClient {
         `UPDATE sessions SET expires_at = $2 WHERE id = $1 AND expires_at > now()
         RETURNING id, user_id, created, expires_at`;
 
-      this.pool.query(query, [sessionId, expiresAt])
+      this.pool.query(query, [hashToken(sessionId), expiresAt])
         .then((result: QueryResult) => {
           if (result.rows.length) {
             resolve(mapSession(result.rows[0]));
@@ -154,7 +155,69 @@ class DbClient {
     return new Promise((resolve: any, reject: any) => {
       const query = 'DELETE FROM sessions WHERE id = $1';
 
-      this.pool.query(query, [sessionId])
+      this.pool.query(query, [hashToken(sessionId)])
+        .then(() => resolve(undefined))
+        .catch((error: any) => reject(error));
+    });
+  }
+
+  deleteOtherSessions(userId: string, currentSessionId: string): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      const query = 'DELETE FROM sessions WHERE user_id = $1 AND id != $2';
+
+      this.pool.query(query, [userId, hashToken(currentSessionId)])
+        .then(() => resolve(undefined))
+        .catch((error: any) => reject(error));
+    });
+  }
+
+  // Login rate limiting
+
+  getLoginFailures(keys: string[]): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      const query = 'SELECT key, count, reset_at FROM login_failures WHERE key = ANY($1)';
+
+      this.pool.query(query, [keys])
+        .then((result: QueryResult) => resolve(result.rows))
+        .catch((error: any) => reject(error));
+    });
+  }
+
+  recordLoginFailure(key: string, resetAt: Date): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      const query =
+        `INSERT INTO login_failures (key, count, reset_at) VALUES ($1, 1, $2)
+        ON CONFLICT (key) DO UPDATE SET
+          count = CASE
+            WHEN login_failures.reset_at <= now() THEN 1
+            ELSE login_failures.count + 1
+          END,
+          reset_at = CASE
+            WHEN login_failures.reset_at <= now() THEN EXCLUDED.reset_at
+            ELSE login_failures.reset_at
+          END`;
+
+      this.pool.query(query, [key, resetAt])
+        .then(() => resolve(undefined))
+        .catch((error: any) => reject(error));
+    });
+  }
+
+  clearLoginFailures(keys: string[]): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      const query = 'DELETE FROM login_failures WHERE key = ANY($1)';
+
+      this.pool.query(query, [keys])
+        .then(() => resolve(undefined))
+        .catch((error: any) => reject(error));
+    });
+  }
+
+  deleteExpiredLoginFailures(): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      const query = 'DELETE FROM login_failures WHERE reset_at <= now()';
+
+      this.pool.query(query)
         .then(() => resolve(undefined))
         .catch((error: any) => reject(error));
     });

@@ -11,7 +11,6 @@ function isUniqueViolation(error: any) {
 
 class UserController {
   dbClient: DbClient;
-  loginFailures: Map<string, { count: number, timeout: NodeJS.Timeout, resetAt?: number }> = new Map();
   constructor(dbClient: DbClient) {
     this.dbClient = dbClient;
   }
@@ -161,6 +160,8 @@ class UserController {
     }).then((hash: string) => {
       logInfo('Successfully updated password');
       return this.dbClient.updatePassword(userId, hash);
+    }).then(() => {
+      return this.dbClient.deleteOtherSessions(userId, req.cookies['session']);
     }).then(() => {
       res.sendStatus(204);
     }).catch((error: any) => {

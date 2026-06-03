@@ -1,11 +1,15 @@
 import request from 'supertest';
 import createApp from '../src/index';
+import { generateHash } from '../src/shared/crypto';
 
 const mockDbClient = {
   getSession: jest.fn(),
   refreshSession: jest.fn(),
   getUser: jest.fn(),
-  updateUser: jest.fn()
+  updateUser: jest.fn(),
+  getUserWithId: jest.fn(),
+  updatePassword: jest.fn(),
+  deleteOtherSessions: jest.fn()
 } as any;
 
 const app = createApp(mockDbClient, '/tmp');
@@ -15,6 +19,7 @@ describe('User Endpoints', () => {
     jest.clearAllMocks();
     mockDbClient.getSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
     mockDbClient.refreshSession.mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA', userId: '1' });
+    mockDbClient.deleteOtherSessions.mockResolvedValue(undefined);
   });
 
   describe('GET /users/:userId', () => {
@@ -89,6 +94,27 @@ describe('User Endpoints', () => {
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('message', 'Password must be at least 8 characters long.');
+    });
+
+    it('should revoke other sessions after changing password', async () => {
+      const passwordHash = await generateHash('oldpassword123');
+      mockDbClient.getUserWithId.mockResolvedValue({ id: '1', password: passwordHash });
+      mockDbClient.updatePassword.mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .put('/users/1')
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
+        .send({
+          oldPassword: 'oldpassword123',
+          password: 'newpassword123'
+        });
+
+      expect(res.statusCode).toEqual(204);
+      expect(mockDbClient.updatePassword).toHaveBeenCalled();
+      expect(mockDbClient.deleteOtherSessions).toHaveBeenCalledWith(
+        '1',
+        'AAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+      );
     });
   });
 });

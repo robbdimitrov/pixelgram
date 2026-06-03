@@ -1,4 +1,4 @@
-import { generateKey, generateHash, verifyPassword } from '../../src/shared/crypto';
+import { generateKey, hashToken, generateHash, verifyPassword } from '../../src/shared/crypto';
 
 describe('crypto utilities', () => {
   describe('generateKey', () => {
@@ -13,6 +13,17 @@ describe('crypto utilities', () => {
       const key1 = generateKey();
       const key2 = generateKey();
       expect(key1).not.toBe(key2);
+    });
+  });
+
+  describe('hashToken', () => {
+    it('should hash tokens deterministically without returning the original token', () => {
+      const token = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+      const hash = hashToken(token);
+
+      expect(hash).toHaveLength(64);
+      expect(hash).toBe(hashToken(token));
+      expect(hash).not.toBe(token);
     });
   });
 

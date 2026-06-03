@@ -6,6 +6,10 @@ function generateKey() {
   return crypto.randomBytes(21).toString('base64');
 }
 
+function hashToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 function generateHash(password: string) {
   return argon2.hash(password);
 }
@@ -16,6 +20,7 @@ function verifyPassword(password: string, passwordHash: any) {
 
 export {
   generateKey,
+  hashToken,
   generateHash,
   verifyPassword
 };

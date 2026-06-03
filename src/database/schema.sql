@@ -20,6 +20,12 @@ CREATE TABLE sessions (
   expires_at timestamp NOT NULL
 );
 
+CREATE TABLE login_failures (
+  key varchar(255) PRIMARY KEY,
+  count integer NOT NULL,
+  reset_at timestamp NOT NULL
+);
+
 -- Images
 
 CREATE TABLE uploads (

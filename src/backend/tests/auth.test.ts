@@ -8,6 +8,10 @@ const mockDbClient = {
   createSession: jest.fn(),
   getUser: jest.fn(),
   deleteExpiredSessions: jest.fn(),
+  deleteExpiredLoginFailures: jest.fn(),
+  getLoginFailures: jest.fn(),
+  recordLoginFailure: jest.fn(),
+  clearLoginFailures: jest.fn(),
   getSession: jest.fn(),
   refreshSession: jest.fn(),
   deleteSession: jest.fn()
@@ -19,6 +23,10 @@ describe('Auth Endpoints', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDbClient.deleteExpiredSessions.mockResolvedValue(undefined);
+    mockDbClient.deleteExpiredLoginFailures.mockResolvedValue(undefined);
+    mockDbClient.getLoginFailures.mockResolvedValue([]);
+    mockDbClient.recordLoginFailure.mockResolvedValue(undefined);
+    mockDbClient.clearLoginFailures.mockResolvedValue(undefined);
   });
 
   describe('POST /sessions (Login)', () => {
@@ -34,6 +42,42 @@ describe('Auth Endpoints', () => {
 
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty('message', 'Incorrect email or password.');
+      expect(mockDbClient.recordLoginFailure).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return 429 when the login identity is rate limited', async () => {
+      mockDbClient.getLoginFailures.mockResolvedValue([{
+        key: 'email:test@example.com',
+        count: 5,
+        reset_at: new Date(Date.now() + 60000)
+      }]);
+
+      const res = await request(app)
+        .post('/sessions')
+        .send({
+          email: 'test@example.com',
+          password: 'password123'
+        });
+
+      expect(res.statusCode).toEqual(429);
+      expect(mockDbClient.getUserWithEmail).not.toHaveBeenCalled();
+      expect(mockDbClient.recordLoginFailure).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('origin guard', () => {
+    it('should reject cross-origin state-changing requests', async () => {
+      const res = await request(app)
+        .post('/sessions')
+        .set('Host', 'localhost:8080')
+        .set('Origin', 'http://evil.example')
+        .send({
+          email: 'test@example.com',
+          password: 'password123'
+        });
+
+      expect(res.statusCode).toEqual(403);
+      expect(mockDbClient.getUserWithEmail).not.toHaveBeenCalled();
     });
   });
 
@@ -59,6 +103,28 @@ describe('Auth Endpoints', () => {
       expect(res.statusCode).toEqual(401);
       expect(res.headers['set-cookie']?.[0]).toContain('session=');
       expect(res.headers['set-cookie']?.[0]).toContain('Expires=');
+    });
+
+    it('should refresh using the raw session cookie value', async () => {
+      mockDbClient.getSession.mockResolvedValue({
+        id: 'hashed-session-id',
+        userId: '1'
+      });
+      mockDbClient.refreshSession.mockResolvedValue({
+        id: 'hashed-session-id',
+        userId: '1'
+      });
+      mockDbClient.getUser.mockResolvedValue({ id: '1' });
+
+      const res = await request(app)
+        .get('/users/1')
+        .set('Cookie', ['session=AAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
+
+      expect(res.statusCode).toEqual(200);
+      expect(mockDbClient.refreshSession).toHaveBeenCalledWith(
+        'AAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        expect.any(Date)
+      );
     });
 
     it('should reject malformed session cookies without hitting the database', async () => {
