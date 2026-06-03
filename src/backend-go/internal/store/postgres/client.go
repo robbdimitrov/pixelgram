@@ -248,6 +248,55 @@ func (c *Client) DeleteOtherSessions(userID, currentSessionID string) error {
 	return err
 }
 
+func (c *Client) CreateUpload(userID, filename string) error {
+	_, err := c.pool.Exec(
+		context.Background(),
+		`INSERT INTO uploads (user_id, filename) VALUES ($1, $2)`,
+		userID,
+		filename,
+	)
+	return err
+}
+
+func (c *Client) HasPendingUploadCapacity(userID string) (bool, error) {
+	var count int
+	err := c.pool.QueryRow(
+		context.Background(),
+		`SELECT count(*) AS count FROM uploads WHERE user_id = $1`,
+		userID,
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count < 20, nil
+}
+
+func (c *Client) DeleteExpiredUploads() ([]string, error) {
+	rows, err := c.pool.Query(
+		context.Background(),
+		`DELETE FROM uploads
+		WHERE created <= now() - $1::interval
+		RETURNING filename`,
+		"1 hour",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	filenames := []string{}
+	for rows.Next() {
+		var filename string
+		if err := rows.Scan(&filename); err != nil {
+			return nil, err
+		}
+		filenames = append(filenames, filename)
+	}
+
+	return filenames, rows.Err()
+}
+
 func (c *Client) CreateSession(sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
 	var session sessions.CreatedSession
 	err := c.pool.QueryRow(

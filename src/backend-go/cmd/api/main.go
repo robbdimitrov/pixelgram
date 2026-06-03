@@ -42,6 +42,7 @@ func dependencies() (app.Dependencies, func(), error) {
 			Sessions: noopSessionStore{},
 			Users:    noopUserStore{},
 			Auth:     noopAuthStore{},
+			Uploads:  noopUploadStore{},
 		}, func() {}, nil
 	}
 
@@ -54,6 +55,7 @@ func dependencies() (app.Dependencies, func(), error) {
 		Sessions: client,
 		Users:    client,
 		Auth:     client,
+		Uploads:  client,
 	}, client.Close, nil
 }
 
@@ -132,5 +134,19 @@ func (noopAuthStore) CreateSession(string, int, time.Time) (sessions.CreatedSess
 }
 
 func (noopAuthStore) DeleteSession(string) error {
+	return nil
+}
+
+type noopUploadStore struct{}
+
+func (noopUploadStore) DeleteExpiredUploads() ([]string, error) {
+	return nil, nil
+}
+
+func (noopUploadStore) HasPendingUploadCapacity(string) (bool, error) {
+	return false, nil
+}
+
+func (noopUploadStore) CreateUpload(string, string) error {
 	return nil
 }
