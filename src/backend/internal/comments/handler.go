@@ -13,7 +13,7 @@ import (
 
 type Comment struct {
 	ID       int     `json:"id"`
-	ImageID  int     `json:"imageId"`
+	PostID   int     `json:"postId"`
 	UserID   int     `json:"userId"`
 	Username string  `json:"username"`
 	Avatar   *string `json:"avatar"`
@@ -22,9 +22,9 @@ type Comment struct {
 }
 
 type Store interface {
-	CreateComment(ctx context.Context, imageID, userID, body string) (Comment, error)
-	ListComments(ctx context.Context, imageID string, page, limit int) ([]Comment, error)
-	DeleteComment(ctx context.Context, imageID, commentID, userID string) (bool, error)
+	CreateComment(ctx context.Context, postID, userID, body string) (Comment, error)
+	ListComments(ctx context.Context, postID string, page, limit int) ([]Comment, error)
+	DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error)
 }
 
 type Handler struct {
@@ -34,9 +34,9 @@ type Handler struct {
 func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	imageID := r.PathValue("imageId")
-	if !compat.ParseID(imageID) {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid image ID.")
+	postID := r.PathValue("postId")
+	if !compat.ParseID(postID) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comment, err := h.Store.CreateComment(ctx, imageID, userID, body.Body)
+	comment, err := h.Store.CreateComment(ctx, postID, userID, body.Body)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 		return
@@ -75,9 +75,9 @@ func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	imageID := r.PathValue("imageId")
-	if !compat.ParseID(imageID) {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid image ID.")
+	postID := r.PathValue("postId")
+	if !compat.ParseID(postID) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
 	pagination, ok := compat.ParsePagination(r.URL.Query())
@@ -86,7 +86,7 @@ func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := h.Store.ListComments(ctx, imageID, pagination.Page, pagination.Limit)
+	items, err := h.Store.ListComments(ctx, postID, pagination.Page, pagination.Limit)
 	if errors.Is(err, store.ErrUnavailable) {
 		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Service Unavailable")
 		return
@@ -102,14 +102,14 @@ func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 func (h Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	imageID := r.PathValue("imageId")
+	postID := r.PathValue("postId")
 	commentID := r.PathValue("commentId")
-	if !compat.ParseID(imageID) || !compat.ParseID(commentID) {
+	if !compat.ParseID(postID) || !compat.ParseID(commentID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid ID.")
 		return
 	}
 
-	found, err := h.Store.DeleteComment(ctx, imageID, commentID, userID)
+	found, err := h.Store.DeleteComment(ctx, postID, commentID, userID)
 	if errors.Is(err, store.ErrForbidden) {
 		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
 		return

@@ -29,7 +29,7 @@ type User struct {
 	Email    string  `json:"email"`
 	Avatar   *string `json:"avatar"`
 	Bio      *string `json:"bio"`
-	Images   int     `json:"images"`
+	Posts    int     `json:"posts"`
 	Likes    int     `json:"likes"`
 	Created  string  `json:"created"`
 }

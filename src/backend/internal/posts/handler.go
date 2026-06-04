@@ -1,4 +1,4 @@
-package images
+package posts
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"pixelgram/backend/internal/uploads"
 )
 
-type Image struct {
+type Post struct {
 	ID          int     `json:"id"`
 	UserID      int     `json:"userId"`
 	Filename    string  `json:"filename"`
@@ -21,15 +21,15 @@ type Image struct {
 }
 
 type Store interface {
-	CreateImage(ctx context.Context, userID, filename string, description *string) (int, bool, error)
-	GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]Image, error)
-	GetImages(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Image, error)
-	GetLikedImages(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Image, error)
-	GetImage(ctx context.Context, imageID, currentUserID string) (Image, bool, error)
-	DeleteImage(ctx context.Context, imageID, userID string) (string, bool, error)
-	ImageExists(ctx context.Context, imageID string) (bool, error)
-	LikeImage(ctx context.Context, imageID, userID string) error
-	UnlikeImage(ctx context.Context, imageID, userID string) error
+	CreatePost(ctx context.Context, userID, filename string, description *string) (int, bool, error)
+	GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]Post, error)
+	GetPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Post, error)
+	GetLikedPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Post, error)
+	GetPost(ctx context.Context, postID, currentUserID string) (Post, bool, error)
+	DeletePost(ctx context.Context, postID, userID string) (string, bool, error)
+	PostExists(ctx context.Context, postID string) (bool, error)
+	LikePost(ctx context.Context, postID, userID string) error
+	UnlikePost(ctx context.Context, postID, userID string) error
 }
 
 type Handler struct {
@@ -37,7 +37,7 @@ type Handler struct {
 	ImageDir string
 }
 
-func (h Handler) CreateImage(w http.ResponseWriter, r *http.Request) {
+func (h Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	var body struct {
@@ -48,11 +48,11 @@ func (h Handler) CreateImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body.Filename == "" {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Image filename is required.")
+		httpx.WriteMessage(w, http.StatusBadRequest, "Post filename is required.")
 		return
 	}
 
-	id, created, err := h.Store.CreateImage(ctx, userID, body.Filename, &body.Description)
+	id, created, err := h.Store.CreatePost(ctx, userID, body.Filename, &body.Description)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -74,24 +74,24 @@ func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	images, err := h.Store.GetFeed(ctx, pagination.Page, pagination.Limit, currentUserID)
+	posts, err := h.Store.GetFeed(ctx, pagination.Page, pagination.Limit, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string][]Image{"items": images})
+	httpx.WriteJSON(w, http.StatusOK, map[string][]Post{"items": posts})
 }
 
-func (h Handler) GetImages(w http.ResponseWriter, r *http.Request) {
-	h.getImageList(w, r, h.Store.GetImages)
+func (h Handler) GetPosts(w http.ResponseWriter, r *http.Request) {
+	h.getPostList(w, r, h.Store.GetPosts)
 }
 
-func (h Handler) GetLikedImages(w http.ResponseWriter, r *http.Request) {
-	h.getImageList(w, r, h.Store.GetLikedImages)
+func (h Handler) GetLikedPosts(w http.ResponseWriter, r *http.Request) {
+	h.getPostList(w, r, h.Store.GetLikedPosts)
 }
 
-func (h Handler) getImageList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, string, int, int, string) ([]Image, error)) {
+func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, string, int, int, string) ([]Post, error)) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
 	pagination, ok := compat.ParsePagination(r.URL.Query())
@@ -100,19 +100,19 @@ func (h Handler) getImageList(w http.ResponseWriter, r *http.Request, fetch func
 		return
 	}
 
-	images, err := fetch(ctx, r.PathValue("userId"), pagination.Page, pagination.Limit, currentUserID)
+	posts, err := fetch(ctx, r.PathValue("userId"), pagination.Page, pagination.Limit, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string][]Image{"items": images})
+	httpx.WriteJSON(w, http.StatusOK, map[string][]Post{"items": posts})
 }
 
-func (h Handler) GetImage(w http.ResponseWriter, r *http.Request) {
+func (h Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
-	image, found, err := h.Store.GetImage(ctx, r.PathValue("imageId"), currentUserID)
+	post, found, err := h.Store.GetPost(ctx, r.PathValue("postId"), currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -122,14 +122,14 @@ func (h Handler) GetImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, image)
+	httpx.WriteJSON(w, http.StatusOK, post)
 }
 
-func (h Handler) DeleteImage(w http.ResponseWriter, r *http.Request) {
+func (h Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	imageID := r.PathValue("imageId")
-	filename, deleted, err := h.Store.DeleteImage(ctx, imageID, userID)
+	postID := r.PathValue("postId")
+	filename, deleted, err := h.Store.DeletePost(ctx, postID, userID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -140,7 +140,7 @@ func (h Handler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, found, err := h.Store.GetImage(ctx, imageID, userID); err != nil {
+	if _, found, err := h.Store.GetPost(ctx, postID, userID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 	} else if found {
 		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
@@ -149,19 +149,19 @@ func (h Handler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h Handler) LikeImage(w http.ResponseWriter, r *http.Request) {
-	h.updateLike(w, r, h.Store.LikeImage)
+func (h Handler) LikePost(w http.ResponseWriter, r *http.Request) {
+	h.updateLike(w, r, h.Store.LikePost)
 }
 
-func (h Handler) UnlikeImage(w http.ResponseWriter, r *http.Request) {
-	h.updateLike(w, r, h.Store.UnlikeImage)
+func (h Handler) UnlikePost(w http.ResponseWriter, r *http.Request) {
+	h.updateLike(w, r, h.Store.UnlikePost)
 }
 
 func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(context.Context, string, string) error) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	imageID := r.PathValue("imageId")
-	exists, err := h.Store.ImageExists(ctx, imageID)
+	postID := r.PathValue("postId")
+	exists, err := h.Store.PostExists(ctx, postID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -171,7 +171,7 @@ func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(
 		return
 	}
 
-	if err := update(ctx, imageID, userID); err != nil {
+	if err := update(ctx, postID, userID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}

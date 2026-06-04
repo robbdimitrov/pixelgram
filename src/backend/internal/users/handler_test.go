@@ -194,7 +194,7 @@ func TestGetUser(t *testing.T) {
 			Email:    "test@example.com",
 			Avatar:   &avatar,
 			Bio:      &bio,
-			Images:   2,
+			Posts:    2,
 			Likes:    3,
 			Created:  "2026-01-01T00:00:00.000Z",
 		},

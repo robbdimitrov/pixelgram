@@ -5,7 +5,7 @@ import (
 
 	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/images"
+	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/uploads"
 	"pixelgram/backend/internal/users"
@@ -21,7 +21,7 @@ type Stores struct {
 	Users       users.Store
 	Sessions    sessions.Store
 	Uploads     uploads.Store
-	Images      images.Store
+	Posts       posts.Store
 	Comments    comments.Store
 }
 
@@ -33,7 +33,7 @@ func New(cfg Config, stores Stores) http.Handler {
 	userHandler := users.Handler{Store: stores.Users, ImageDir: cfg.ImageDir}
 	sessionHandler := sessions.Handler{Store: stores.Sessions}
 	uploadHandler := uploads.Handler{Store: stores.Uploads, ImageDir: cfg.ImageDir}
-	imageHandler := images.Handler{Store: stores.Images, ImageDir: cfg.ImageDir}
+	postHandler := posts.Handler{Store: stores.Posts, ImageDir: cfg.ImageDir}
 	commentHandler := comments.Handler{Store: stores.Comments}
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -46,17 +46,17 @@ func New(cfg Config, stores Stores) http.Handler {
 	mux.HandleFunc("DELETE /sessions", sessionHandler.DeleteSession)
 	mux.HandleFunc("POST /uploads", uploadHandler.CreateFile)
 	mux.Handle("GET /uploads/", uploads.FileServer(cfg.ImageDir))
-	mux.HandleFunc("POST /images", imageHandler.CreateImage)
-	mux.HandleFunc("GET /images", imageHandler.GetFeed)
-	mux.HandleFunc("GET /users/{userId}/images", imageHandler.GetImages)
-	mux.HandleFunc("GET /users/{userId}/likes", imageHandler.GetLikedImages)
-	mux.HandleFunc("GET /images/{imageId}", imageHandler.GetImage)
-	mux.HandleFunc("DELETE /images/{imageId}", imageHandler.DeleteImage)
-	mux.HandleFunc("POST /images/{imageId}/likes", imageHandler.LikeImage)
-	mux.HandleFunc("DELETE /images/{imageId}/likes", imageHandler.UnlikeImage)
-	mux.HandleFunc("GET /images/{imageId}/comments", commentHandler.ListComments)
-	mux.HandleFunc("POST /images/{imageId}/comments", commentHandler.CreateComment)
-	mux.HandleFunc("DELETE /images/{imageId}/comments/{commentId}", commentHandler.DeleteComment)
+	mux.HandleFunc("POST /posts", postHandler.CreatePost)
+	mux.HandleFunc("GET /posts", postHandler.GetFeed)
+	mux.HandleFunc("GET /users/{userId}/posts", postHandler.GetPosts)
+	mux.HandleFunc("GET /users/{userId}/likes", postHandler.GetLikedPosts)
+	mux.HandleFunc("GET /posts/{postId}", postHandler.GetPost)
+	mux.HandleFunc("DELETE /posts/{postId}", postHandler.DeletePost)
+	mux.HandleFunc("POST /posts/{postId}/likes", postHandler.LikePost)
+	mux.HandleFunc("DELETE /posts/{postId}/likes", postHandler.UnlikePost)
+	mux.HandleFunc("GET /posts/{postId}/comments", commentHandler.ListComments)
+	mux.HandleFunc("POST /posts/{postId}/comments", commentHandler.CreateComment)
+	mux.HandleFunc("DELETE /posts/{postId}/comments/{commentId}", commentHandler.DeleteComment)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 	})

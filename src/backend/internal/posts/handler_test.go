@@ -1,4 +1,4 @@
-package images
+package posts
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 )
 
 type fakeStore struct {
-	image          Image
-	images         []Image
+	post           Post
+	posts          []Post
 	found          bool
 	err            error
 	createdID      int
@@ -28,69 +28,69 @@ type fakeStore struct {
 	requestedLimit int
 }
 
-func (s *fakeStore) CreateImage(_ context.Context, _ string, _ string, _ *string) (int, bool, error) {
+func (s *fakeStore) CreatePost(_ context.Context, _ string, _ string, _ *string) (int, bool, error) {
 	return s.createdID, s.created, s.err
 }
 
-func (s *fakeStore) GetFeed(_ context.Context, page, limit int, _ string) ([]Image, error) {
+func (s *fakeStore) GetFeed(_ context.Context, page, limit int, _ string) ([]Post, error) {
 	s.requestedPage = page
 	s.requestedLimit = limit
-	return s.images, s.err
+	return s.posts, s.err
 }
 
-func (s *fakeStore) GetImages(_ context.Context, _ string, _ int, _ int, _ string) ([]Image, error) {
-	return s.images, s.err
+func (s *fakeStore) GetPosts(_ context.Context, _ string, _ int, _ int, _ string) ([]Post, error) {
+	return s.posts, s.err
 }
 
-func (s *fakeStore) GetLikedImages(_ context.Context, _ string, _ int, _ int, _ string) ([]Image, error) {
-	return s.images, s.err
+func (s *fakeStore) GetLikedPosts(_ context.Context, _ string, _ int, _ int, _ string) ([]Post, error) {
+	return s.posts, s.err
 }
 
-func (s *fakeStore) GetImage(_ context.Context, _ string, _ string) (Image, bool, error) {
-	return s.image, s.found, s.err
+func (s *fakeStore) GetPost(_ context.Context, _ string, _ string) (Post, bool, error) {
+	return s.post, s.found, s.err
 }
 
-func (s *fakeStore) DeleteImage(_ context.Context, _ string, _ string) (string, bool, error) {
+func (s *fakeStore) DeletePost(_ context.Context, _ string, _ string) (string, bool, error) {
 	return s.deletedFile, s.deleted, s.err
 }
 
-func (s *fakeStore) ImageExists(_ context.Context, _ string) (bool, error) {
+func (s *fakeStore) PostExists(_ context.Context, _ string) (bool, error) {
 	return s.exists, s.err
 }
 
-func (s *fakeStore) LikeImage(_ context.Context, _ string, _ string) error {
+func (s *fakeStore) LikePost(_ context.Context, _ string, _ string) error {
 	s.liked = true
 	return s.err
 }
 
-func (s *fakeStore) UnlikeImage(_ context.Context, _ string, _ string) error {
+func (s *fakeStore) UnlikePost(_ context.Context, _ string, _ string) error {
 	s.unliked = true
 	return s.err
 }
 
-func TestCreateImageMissingFilename(t *testing.T) {
+func TestCreatePostMissingFilename(t *testing.T) {
 	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/images", strings.NewReader(`{}`))
+	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(`{}`))
 	req = httpx.WithUserID(req, "1")
 
-	handler.CreateImage(res, req)
+	handler.CreatePost(res, req)
 
 	if res.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
 	}
-	if !strings.Contains(res.Body.String(), "Image filename is required.") {
+	if !strings.Contains(res.Body.String(), "Post filename is required.") {
 		t.Fatalf("body = %q", res.Body.String())
 	}
 }
 
-func TestCreateImageInvalidUpload(t *testing.T) {
+func TestCreatePostInvalidUpload(t *testing.T) {
 	handler := Handler{Store: &fakeStore{created: false}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/images", strings.NewReader(`{"filename":"upload"}`))
+	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(`{"filename":"upload"}`))
 	req = httpx.WithUserID(req, "1")
 
-	handler.CreateImage(res, req)
+	handler.CreatePost(res, req)
 
 	if res.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
@@ -100,13 +100,13 @@ func TestCreateImageInvalidUpload(t *testing.T) {
 	}
 }
 
-func TestCreateImageSuccess(t *testing.T) {
+func TestCreatePostSuccess(t *testing.T) {
 	handler := Handler{Store: &fakeStore{createdID: 8, created: true}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/images", strings.NewReader(`{"filename":"upload","description":"hi"}`))
+	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(`{"filename":"upload","description":"hi"}`))
 	req = httpx.WithUserID(req, "1")
 
-	handler.CreateImage(res, req)
+	handler.CreatePost(res, req)
 
 	if res.Code != http.StatusCreated {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusCreated)
@@ -117,10 +117,10 @@ func TestCreateImageSuccess(t *testing.T) {
 }
 
 func TestGetFeedPagination(t *testing.T) {
-	store := &fakeStore{images: []Image{{ID: 1, Filename: "a"}}}
+	store := &fakeStore{posts: []Post{{ID: 1, Filename: "a"}}}
 	handler := Handler{Store: store}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images?page=2&limit=500", nil)
+	req := httptest.NewRequest(http.MethodGet, "/posts?page=2&limit=500", nil)
 	req = httpx.WithUserID(req, "1")
 
 	handler.GetFeed(res, req)
@@ -139,7 +139,7 @@ func TestGetFeedPagination(t *testing.T) {
 func TestGetFeedInvalidPagination(t *testing.T) {
 	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images?page=-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/posts?page=-1", nil)
 	req = httpx.WithUserID(req, "1")
 
 	handler.GetFeed(res, req)
@@ -149,33 +149,33 @@ func TestGetFeedInvalidPagination(t *testing.T) {
 	}
 }
 
-func TestGetImageNotFound(t *testing.T) {
+func TestGetPostNotFound(t *testing.T) {
 	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/images/99", nil)
-	req.SetPathValue("imageId", "99")
+	req := httptest.NewRequest(http.MethodGet, "/posts/99", nil)
+	req.SetPathValue("postId", "99")
 	req = httpx.WithUserID(req, "1")
 
-	handler.GetImage(res, req)
+	handler.GetPost(res, req)
 
 	if res.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
 	}
 }
 
-func TestDeleteImageDeletesFile(t *testing.T) {
+func TestDeletePostDeletesFile(t *testing.T) {
 	dir := t.TempDir()
-	filename := "image-file"
+	filename := "post-file"
 	if err := os.WriteFile(filepath.Join(dir, filename), []byte("image"), 0o600); err != nil {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
 	handler := Handler{Store: &fakeStore{deleted: true, deletedFile: filename}, ImageDir: dir}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/images/1", nil)
-	req.SetPathValue("imageId", "1")
+	req := httptest.NewRequest(http.MethodDelete, "/posts/1", nil)
+	req.SetPathValue("postId", "1")
 	req = httpx.WithUserID(req, "1")
 
-	handler.DeleteImage(res, req)
+	handler.DeletePost(res, req)
 
 	if res.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
@@ -185,66 +185,66 @@ func TestDeleteImageDeletesFile(t *testing.T) {
 	}
 }
 
-func TestDeleteImageForbidden(t *testing.T) {
+func TestDeletePostForbidden(t *testing.T) {
 	handler := Handler{Store: &fakeStore{found: true}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/images/1", nil)
-	req.SetPathValue("imageId", "1")
+	req := httptest.NewRequest(http.MethodDelete, "/posts/1", nil)
+	req.SetPathValue("postId", "1")
 	req = httpx.WithUserID(req, "2")
 
-	handler.DeleteImage(res, req)
+	handler.DeletePost(res, req)
 
 	if res.Code != http.StatusForbidden {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusForbidden)
 	}
 }
 
-func TestLikeImageNotFound(t *testing.T) {
+func TestLikePostNotFound(t *testing.T) {
 	handler := Handler{Store: &fakeStore{exists: false}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/images/1/likes", nil)
-	req.SetPathValue("imageId", "1")
+	req := httptest.NewRequest(http.MethodPost, "/posts/1/likes", nil)
+	req.SetPathValue("postId", "1")
 	req = httpx.WithUserID(req, "2")
 
-	handler.LikeImage(res, req)
+	handler.LikePost(res, req)
 
 	if res.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
 	}
 }
 
-func TestUnlikeImageSuccess(t *testing.T) {
+func TestUnlikePostSuccess(t *testing.T) {
 	store := &fakeStore{exists: true}
 	handler := Handler{Store: store}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/images/1/likes", nil)
-	req.SetPathValue("imageId", "1")
+	req := httptest.NewRequest(http.MethodDelete, "/posts/1/likes", nil)
+	req.SetPathValue("postId", "1")
 	req = httpx.WithUserID(req, "2")
 
-	handler.UnlikeImage(res, req)
+	handler.UnlikePost(res, req)
 
 	if res.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
 	}
 	if !store.unliked {
-		t.Fatal("expected UnlikeImage store call")
+		t.Fatal("expected UnlikePost store call")
 	}
 }
 
-func TestLikeImageSuccess(t *testing.T) {
+func TestLikePostSuccess(t *testing.T) {
 	store := &fakeStore{exists: true}
 	handler := Handler{Store: store}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/images/1/likes", nil)
-	req.SetPathValue("imageId", "1")
+	req := httptest.NewRequest(http.MethodPost, "/posts/1/likes", nil)
+	req.SetPathValue("postId", "1")
 	req = httpx.WithUserID(req, "2")
 
-	handler.LikeImage(res, req)
+	handler.LikePost(res, req)
 
 	if res.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
 	}
 	if !store.liked {
-		t.Fatal("expected LikeImage store call")
+		t.Fatal("expected LikePost store call")
 	}
 }

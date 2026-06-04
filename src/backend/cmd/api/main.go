@@ -11,7 +11,7 @@ import (
 	"pixelgram/backend/internal/app"
 	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/images"
+	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
 	"pixelgram/backend/internal/users"
@@ -68,7 +68,7 @@ func openStores(databaseURL string) (app.Stores, func(), error) {
 			Users:       noopUserStore{},
 			Sessions:    noopSessionStore{},
 			Uploads:     noopUploadStore{},
-			Images:      noopImageStore{},
+			Posts:       noopPostStore{},
 			Comments:    noopCommentStore{},
 		}, func() {}, nil
 	}
@@ -83,7 +83,7 @@ func openStores(databaseURL string) (app.Stores, func(), error) {
 		Users:       client,
 		Sessions:    client,
 		Uploads:     client,
-		Images:      client,
+		Posts:       client,
 		Comments:    client,
 	}, client.Close, nil
 }
@@ -175,29 +175,29 @@ func (noopUploadStore) HasPendingUploadCapacity(_ context.Context, _ string) (bo
 }
 func (noopUploadStore) CreateUpload(_ context.Context, _, _ string) error { return nil }
 
-type noopImageStore struct{}
+type noopPostStore struct{}
 
-func (noopImageStore) CreateImage(_ context.Context, _, _ string, _ *string) (int, bool, error) {
+func (noopPostStore) CreatePost(_ context.Context, _, _ string, _ *string) (int, bool, error) {
 	return 0, false, nil
 }
-func (noopImageStore) GetFeed(_ context.Context, _, _ int, _ string) ([]images.Image, error) {
+func (noopPostStore) GetFeed(_ context.Context, _, _ int, _ string) ([]posts.Post, error) {
 	return nil, nil
 }
-func (noopImageStore) GetImages(_ context.Context, _ string, _, _ int, _ string) ([]images.Image, error) {
+func (noopPostStore) GetPosts(_ context.Context, _ string, _, _ int, _ string) ([]posts.Post, error) {
 	return nil, nil
 }
-func (noopImageStore) GetLikedImages(_ context.Context, _ string, _, _ int, _ string) ([]images.Image, error) {
+func (noopPostStore) GetLikedPosts(_ context.Context, _ string, _, _ int, _ string) ([]posts.Post, error) {
 	return nil, nil
 }
-func (noopImageStore) GetImage(_ context.Context, _, _ string) (images.Image, bool, error) {
-	return images.Image{}, false, nil
+func (noopPostStore) GetPost(_ context.Context, _, _ string) (posts.Post, bool, error) {
+	return posts.Post{}, false, nil
 }
-func (noopImageStore) DeleteImage(_ context.Context, _, _ string) (string, bool, error) {
+func (noopPostStore) DeletePost(_ context.Context, _, _ string) (string, bool, error) {
 	return "", false, nil
 }
-func (noopImageStore) ImageExists(_ context.Context, _ string) (bool, error) { return false, nil }
-func (noopImageStore) LikeImage(_ context.Context, _, _ string) error        { return nil }
-func (noopImageStore) UnlikeImage(_ context.Context, _, _ string) error      { return nil }
+func (noopPostStore) PostExists(_ context.Context, _ string) (bool, error) { return false, nil }
+func (noopPostStore) LikePost(_ context.Context, _, _ string) error        { return nil }
+func (noopPostStore) UnlikePost(_ context.Context, _, _ string) error      { return nil }
 
 type noopCommentStore struct{}
 
