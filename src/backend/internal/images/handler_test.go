@@ -1,6 +1,7 @@
 package images
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -27,42 +28,42 @@ type fakeStore struct {
 	requestedLimit int
 }
 
-func (s *fakeStore) CreateImage(string, string, *string) (int, bool, error) {
+func (s *fakeStore) CreateImage(_ context.Context, _ string, _ string, _ *string) (int, bool, error) {
 	return s.createdID, s.created, s.err
 }
 
-func (s *fakeStore) GetFeed(page, limit int, _ string) ([]Image, error) {
+func (s *fakeStore) GetFeed(_ context.Context, page, limit int, _ string) ([]Image, error) {
 	s.requestedPage = page
 	s.requestedLimit = limit
 	return s.images, s.err
 }
 
-func (s *fakeStore) GetImages(string, int, int, string) ([]Image, error) {
+func (s *fakeStore) GetImages(_ context.Context, _ string, _ int, _ int, _ string) ([]Image, error) {
 	return s.images, s.err
 }
 
-func (s *fakeStore) GetLikedImages(string, int, int, string) ([]Image, error) {
+func (s *fakeStore) GetLikedImages(_ context.Context, _ string, _ int, _ int, _ string) ([]Image, error) {
 	return s.images, s.err
 }
 
-func (s *fakeStore) GetImage(string, string) (Image, bool, error) {
+func (s *fakeStore) GetImage(_ context.Context, _ string, _ string) (Image, bool, error) {
 	return s.image, s.found, s.err
 }
 
-func (s *fakeStore) DeleteImage(string, string) (string, bool, error) {
+func (s *fakeStore) DeleteImage(_ context.Context, _ string, _ string) (string, bool, error) {
 	return s.deletedFile, s.deleted, s.err
 }
 
-func (s *fakeStore) ImageExists(string) (bool, error) {
+func (s *fakeStore) ImageExists(_ context.Context, _ string) (bool, error) {
 	return s.exists, s.err
 }
 
-func (s *fakeStore) LikeImage(string, string) error {
+func (s *fakeStore) LikeImage(_ context.Context, _ string, _ string) error {
 	s.liked = true
 	return s.err
 }
 
-func (s *fakeStore) UnlikeImage(string, string) error {
+func (s *fakeStore) UnlikeImage(_ context.Context, _ string, _ string) error {
 	s.unliked = true
 	return s.err
 }

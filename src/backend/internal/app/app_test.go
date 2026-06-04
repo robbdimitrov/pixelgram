@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +17,7 @@ type fakeSessionStore struct {
 	refreshCalls   int
 }
 
-func (store *fakeSessionStore) RefreshSession(_ string) (httpx.Session, error) {
+func (store *fakeSessionStore) RefreshSession(_ context.Context, _ string) (httpx.Session, error) {
 	store.refreshCalls++
 	return store.refreshSession, store.refreshErr
 }

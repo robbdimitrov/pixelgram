@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +29,7 @@ type fakeStore struct {
 	deletedOtherUserID string
 }
 
-func (s *fakeStore) CreateUser(name, username, email, passwordHash string) (int, error) {
+func (s *fakeStore) CreateUser(_ context.Context, name, username, email, passwordHash string) (int, error) {
 	s.created = true
 	s.name = name
 	s.username = username
@@ -37,27 +38,27 @@ func (s *fakeStore) CreateUser(name, username, email, passwordHash string) (int,
 	return s.id, s.err
 }
 
-func (s *fakeStore) GetUser(string) (User, bool, error) {
+func (s *fakeStore) GetUser(_ context.Context, _ string) (User, bool, error) {
 	return s.user, s.found, s.err
 }
 
-func (s *fakeStore) GetUserWithID(string) (UserCredentials, bool, error) {
+func (s *fakeStore) GetUserWithID(_ context.Context, _ string) (UserCredentials, bool, error) {
 	return s.credentials, s.found, s.err
 }
 
-func (s *fakeStore) UpdateUser(_, name, username, email, _ string, _ *string) (UpdateUserResult, error) {
+func (s *fakeStore) UpdateUser(_ context.Context, _, name, username, email, _ string, _ *string) (UpdateUserResult, error) {
 	s.name = name
 	s.username = username
 	s.email = email
 	return s.updated, s.err
 }
 
-func (s *fakeStore) UpdatePassword(userID, passwordHash string) error {
+func (s *fakeStore) UpdatePassword(_ context.Context, userID, passwordHash string) error {
 	s.updatedPassword = passwordHash
 	return s.err
 }
 
-func (s *fakeStore) DeleteOtherSessions(userID, _ string) error {
+func (s *fakeStore) DeleteOtherSessions(_ context.Context, userID, _ string) error {
 	s.deletedOtherUserID = userID
 	return s.err
 }

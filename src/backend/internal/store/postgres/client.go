@@ -22,6 +22,8 @@ import (
 type Client struct {
 	pool          *pgxpool.Pool
 	sessionSecret string
+	breaker       *circuitBreaker
+	retryCfg      retryConfig
 }
 
 func New(ctx context.Context, databaseURL, sessionSecret string) (*Client, error) {
@@ -43,6 +45,8 @@ func New(ctx context.Context, databaseURL, sessionSecret string) (*Client, error
 	return &Client{
 		pool:          pool,
 		sessionSecret: sessionSecret,
+		breaker:       newCircuitBreaker("postgres"),
+		retryCfg:      defaultRetryConfig(),
 	}, nil
 }
 
@@ -50,158 +54,176 @@ func (c *Client) Close() {
 	c.pool.Close()
 }
 
-func (c *Client) CreateUser(name, username, email, passwordHash string) (int, error) {
+func (c *Client) CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error) {
+	if !c.breaker.allow() {
+		return 0, store.ErrUnavailable
+	}
 	var id int
 	err := c.pool.QueryRow(
-		context.Background(),
+		ctx,
 		`INSERT INTO users (name, username, email, password)
 		VALUES ($1, $2, $3, $4) RETURNING id`,
-		name,
-		username,
-		email,
-		passwordHash,
+		name, username, email, passwordHash,
 	).Scan(&id)
 	if err != nil {
+		c.breaker.failure(err)
 		if uniqueViolation(err) {
 			return 0, store.ErrConflict
 		}
 		return 0, err
 	}
-
+	c.breaker.success()
 	return id, nil
 }
 
-func (c *Client) GetUserWithEmail(email string) (sessions.UserCredentials, bool, error) {
+func (c *Client) GetUserWithEmail(ctx context.Context, email string) (sessions.UserCredentials, bool, error) {
+	if !c.breaker.allow() {
+		return sessions.UserCredentials{}, false, store.ErrUnavailable
+	}
 	var user sessions.UserCredentials
-	err := c.pool.QueryRow(
-		context.Background(),
-		`SELECT id, password FROM users WHERE email = $1`,
-		email,
-	).Scan(&user.ID, &user.PasswordHash)
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`SELECT id, password FROM users WHERE email = $1`,
+			email,
+		).Scan(&user.ID, &user.PasswordHash)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return sessions.UserCredentials{}, false, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return sessions.UserCredentials{}, false, err
 	}
-
+	c.breaker.success()
 	return user, true, nil
 }
 
-func (c *Client) GetUserWithID(userID string) (users.UserCredentials, bool, error) {
+func (c *Client) GetUserWithID(ctx context.Context, userID string) (users.UserCredentials, bool, error) {
+	if !c.breaker.allow() {
+		return users.UserCredentials{}, false, store.ErrUnavailable
+	}
 	var user users.UserCredentials
-	err := c.pool.QueryRow(
-		context.Background(),
-		`SELECT id, password FROM users WHERE id = $1`,
-		userID,
-	).Scan(&user.ID, &user.PasswordHash)
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`SELECT id, password FROM users WHERE id = $1`,
+			userID,
+		).Scan(&user.ID, &user.PasswordHash)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return users.UserCredentials{}, false, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return users.UserCredentials{}, false, err
 	}
-
+	c.breaker.success()
 	return user, true, nil
 }
 
-func (c *Client) GetUser(userID string) (users.User, bool, error) {
+func (c *Client) GetUser(ctx context.Context, userID string) (users.User, bool, error) {
+	if !c.breaker.allow() {
+		return users.User{}, false, store.ErrUnavailable
+	}
 	var user users.User
 	var avatar sql.NullString
 	var bio sql.NullString
-	err := c.pool.QueryRow(
-		context.Background(),
-		`SELECT id, name, username, email, avatar, bio,
-		(SELECT count(*) FROM images WHERE user_id = users.id) AS images,
-		(SELECT count(*) FROM likes WHERE user_id = id) AS likes,
-		time_format(created) AS created
-		FROM users WHERE id = $1`,
-		userID,
-	).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Username,
-		&user.Email,
-		&avatar,
-		&bio,
-		&user.Images,
-		&user.Likes,
-		&user.Created,
-	)
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`SELECT id, name, username, email, avatar, bio,
+			(SELECT count(*) FROM images WHERE user_id = users.id) AS images,
+			(SELECT count(*) FROM likes WHERE user_id = id) AS likes,
+			time_format(created) AS created
+			FROM users WHERE id = $1`,
+			userID,
+		).Scan(
+			&user.ID, &user.Name, &user.Username, &user.Email,
+			&avatar, &bio, &user.Images, &user.Likes, &user.Created,
+		)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return users.User{}, false, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return users.User{}, false, err
 	}
-
+	c.breaker.success()
 	user.Avatar = nullableString(avatar)
 	user.Bio = nullableString(bio)
 	return user, true, nil
 }
 
-func (c *Client) UpdateUser(userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
-	tx, err := c.pool.Begin(context.Background())
+func (c *Client) UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
+	if !c.breaker.allow() {
+		return users.UpdateUserResult{}, store.ErrUnavailable
+	}
+	tx, err := c.pool.Begin(ctx)
 	if err != nil {
+		c.breaker.failure(err)
 		return users.UpdateUserResult{}, err
 	}
-	defer rollback(context.Background(), tx)
+	defer rollback(ctx, tx)
 
 	var oldAvatar sql.NullString
-	err = tx.QueryRow(context.Background(), `SELECT avatar FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&oldAvatar)
+	err = tx.QueryRow(ctx, `SELECT avatar FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&oldAvatar)
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return users.UpdateUserResult{Updated: false}, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return users.UpdateUserResult{}, err
 	}
 
 	if avatar != "" {
 		var avatarExists bool
 		err := tx.QueryRow(
-			context.Background(),
+			ctx,
 			`SELECT EXISTS (
 			  SELECT 1 FROM users WHERE id = $1 AND avatar = $2
 			  UNION
 			  SELECT 1 FROM images WHERE user_id = $1 AND filename = $2
 			) AS exists`,
-			userID,
-			avatar,
+			userID, avatar,
 		).Scan(&avatarExists)
 		if err != nil {
+			c.breaker.failure(err)
 			return users.UpdateUserResult{}, err
 		}
 
 		if !avatarExists {
 			var consumed string
 			err := tx.QueryRow(
-				context.Background(),
+				ctx,
 				`DELETE FROM uploads WHERE user_id = $1 AND filename = $2
 				RETURNING filename`,
-				userID,
-				avatar,
+				userID, avatar,
 			).Scan(&consumed)
 			if errors.Is(err, pgx.ErrNoRows) {
+				c.breaker.success()
 				return users.UpdateUserResult{Updated: false}, nil
 			}
 			if err != nil {
+				c.breaker.failure(err)
 				return users.UpdateUserResult{}, err
 			}
 		}
 	}
 
 	_, err = tx.Exec(
-		context.Background(),
+		ctx,
 		`UPDATE users SET name = $1, username = $2,
 		email = $3, avatar = NULLIF($4, ''), bio = NULLIF($5, '') WHERE id = $6`,
-		name,
-		username,
-		email,
-		avatar,
-		bio,
-		userID,
+		name, username, email, avatar, bio, userID,
 	)
 	if err != nil {
+		c.breaker.failure(err)
 		if uniqueViolation(err) {
 			return users.UpdateUserResult{}, store.ErrConflict
 		}
@@ -212,7 +234,7 @@ func (c *Client) UpdateUser(userID, name, username, email, avatar string, bio *s
 	if oldAvatar.Valid && oldAvatar.String != "" && oldAvatar.String != avatar {
 		var stillUsed bool
 		err := tx.QueryRow(
-			context.Background(),
+			ctx,
 			`SELECT EXISTS (
 			  SELECT 1 FROM images WHERE filename = $1
 			  UNION
@@ -221,6 +243,7 @@ func (c *Client) UpdateUser(userID, name, username, email, avatar string, bio *s
 			oldAvatar.String,
 		).Scan(&stillUsed)
 		if err != nil {
+			c.breaker.failure(err)
 			return users.UpdateUserResult{}, err
 		}
 		if !stillUsed {
@@ -228,60 +251,94 @@ func (c *Client) UpdateUser(userID, name, username, email, avatar string, bio *s
 		}
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
+		c.breaker.failure(err)
 		return users.UpdateUserResult{}, err
 	}
+	c.breaker.success()
 	return result, nil
 }
 
-func (c *Client) UpdatePassword(userID, passwordHash string) error {
-	_, err := c.pool.Exec(context.Background(), `UPDATE users SET password = $1 WHERE id = $2`, passwordHash, userID)
-	return err
-}
-
-func (c *Client) DeleteOtherSessions(userID, currentSessionID string) error {
-	_, err := c.pool.Exec(
-		context.Background(),
-		`DELETE FROM sessions WHERE user_id = $1 AND id != $2`,
-		userID,
-		c.hashSession(currentSessionID),
-	)
-	return err
-}
-
-func (c *Client) CreateUpload(userID, filename string) error {
-	_, err := c.pool.Exec(
-		context.Background(),
-		`INSERT INTO uploads (user_id, filename) VALUES ($1, $2)`,
-		userID,
-		filename,
-	)
-	return err
-}
-
-func (c *Client) HasPendingUploadCapacity(userID string) (bool, error) {
-	var count int
-	err := c.pool.QueryRow(
-		context.Background(),
-		`SELECT count(*) AS count FROM uploads WHERE user_id = $1`,
-		userID,
-	).Scan(&count)
+func (c *Client) UpdatePassword(ctx context.Context, userID, passwordHash string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `UPDATE users SET password = $1 WHERE id = $2`, passwordHash, userID)
 	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) DeleteOtherSessions(ctx context.Context, userID, currentSessionID string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(
+		ctx,
+		`DELETE FROM sessions WHERE user_id = $1 AND id != $2`,
+		userID, c.hashSession(currentSessionID),
+	)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) CreateUpload(ctx context.Context, userID, filename string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(
+		ctx,
+		`INSERT INTO uploads (user_id, filename) VALUES ($1, $2)`,
+		userID, filename,
+	)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) HasPendingUploadCapacity(ctx context.Context, userID string) (bool, error) {
+	if !c.breaker.allow() {
+		return false, store.ErrUnavailable
+	}
+	var count int
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`SELECT count(*) AS count FROM uploads WHERE user_id = $1`,
+			userID,
+		).Scan(&count)
+	})
+	if err != nil {
+		c.breaker.failure(err)
 		return false, err
 	}
-
+	c.breaker.success()
 	return count < 20, nil
 }
 
-func (c *Client) DeleteExpiredUploads() ([]string, error) {
+func (c *Client) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
+	if !c.breaker.allow() {
+		return nil, store.ErrUnavailable
+	}
 	rows, err := c.pool.Query(
-		context.Background(),
+		ctx,
 		`DELETE FROM uploads
 		WHERE created <= now() - $1::interval
 		RETURNING filename`,
 		"1 hour",
 	)
 	if err != nil {
+		c.breaker.failure(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -294,53 +351,63 @@ func (c *Client) DeleteExpiredUploads() ([]string, error) {
 		}
 		filenames = append(filenames, filename)
 	}
-
-	return filenames, rows.Err()
+	if err := rows.Err(); err != nil {
+		c.breaker.failure(err)
+		return nil, err
+	}
+	c.breaker.success()
+	return filenames, nil
 }
 
-func (c *Client) CreateImage(userID, filename string, description *string) (int, bool, error) {
-	tx, err := c.pool.Begin(context.Background())
+func (c *Client) CreateImage(ctx context.Context, userID, filename string, description *string) (int, bool, error) {
+	if !c.breaker.allow() {
+		return 0, false, store.ErrUnavailable
+	}
+	tx, err := c.pool.Begin(ctx)
 	if err != nil {
+		c.breaker.failure(err)
 		return 0, false, err
 	}
-	defer rollback(context.Background(), tx)
+	defer rollback(ctx, tx)
 
 	var consumed string
 	err = tx.QueryRow(
-		context.Background(),
+		ctx,
 		`DELETE FROM uploads WHERE user_id = $1 AND filename = $2
 		RETURNING filename`,
-		userID,
-		filename,
+		userID, filename,
 	).Scan(&consumed)
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return 0, false, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return 0, false, err
 	}
 
 	var id int
 	err = tx.QueryRow(
-		context.Background(),
+		ctx,
 		`INSERT INTO images (user_id, filename, description)
 		VALUES ($1, $2, $3) RETURNING id`,
-		userID,
-		filename,
-		description,
+		userID, filename, description,
 	).Scan(&id)
 	if err != nil {
+		c.breaker.failure(err)
 		return 0, false, err
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
+		c.breaker.failure(err)
 		return 0, false, err
 	}
+	c.breaker.success()
 	return id, true, nil
 }
 
-func (c *Client) GetFeed(page, limit int, currentUserID string) ([]images.Image, error) {
-	return c.queryImages(
+func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]images.Image, error) {
+	return c.queryImages(ctx,
 		`SELECT id, user_id, filename, description,
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
@@ -349,14 +416,12 @@ func (c *Client) GetFeed(page, limit int, currentUserID string) ([]images.Image,
 		FROM images
 		ORDER BY images.created DESC
 		LIMIT $2 OFFSET $3`,
-		currentUserID,
-		limit,
-		page*limit,
+		currentUserID, limit, page*limit,
 	)
 }
 
-func (c *Client) GetImages(userID string, page, limit int, currentUserID string) ([]images.Image, error) {
-	return c.queryImages(
+func (c *Client) GetImages(ctx context.Context, userID string, page, limit int, currentUserID string) ([]images.Image, error) {
+	return c.queryImages(ctx,
 		`SELECT id, user_id, filename, description,
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
@@ -365,15 +430,12 @@ func (c *Client) GetImages(userID string, page, limit int, currentUserID string)
 		FROM images WHERE user_id = $2
 		ORDER BY images.created DESC
 		LIMIT $3 OFFSET $4`,
-		currentUserID,
-		userID,
-		limit,
-		page*limit,
+		currentUserID, userID, limit, page*limit,
 	)
 }
 
-func (c *Client) GetLikedImages(userID string, page, limit int, currentUserID string) ([]images.Image, error) {
-	return c.queryImages(
+func (c *Client) GetLikedImages(ctx context.Context, userID string, page, limit int, currentUserID string) ([]images.Image, error) {
+	return c.queryImages(ctx,
 		`SELECT id, images.user_id, filename, description,
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
@@ -384,23 +446,19 @@ func (c *Client) GetLikedImages(userID string, page, limit int, currentUserID st
 		WHERE likes.user_id = $2
 		ORDER BY likes.created DESC
 		LIMIT $3 OFFSET $4`,
-		currentUserID,
-		userID,
-		limit,
-		page*limit,
+		currentUserID, userID, limit, page*limit,
 	)
 }
 
-func (c *Client) GetImage(imageID, currentUserID string) (images.Image, bool, error) {
-	result, err := c.queryImages(
+func (c *Client) GetImage(ctx context.Context, imageID, currentUserID string) (images.Image, bool, error) {
+	result, err := c.queryImages(ctx,
 		`SELECT id, user_id, filename, description,
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
 		WHERE image_id = id AND likes.user_id = $1) AS liked,
 		time_format(created) AS created
 		FROM images WHERE id = $2`,
-		currentUserID,
-		imageID,
+		currentUserID, imageID,
 	)
 	if err != nil {
 		return images.Image{}, false, err
@@ -411,173 +469,259 @@ func (c *Client) GetImage(imageID, currentUserID string) (images.Image, bool, er
 	return result[0], true, nil
 }
 
-func (c *Client) DeleteImage(imageID, userID string) (string, bool, error) {
-	tx, err := c.pool.Begin(context.Background())
+func (c *Client) DeleteImage(ctx context.Context, imageID, userID string) (string, bool, error) {
+	if !c.breaker.allow() {
+		return "", false, store.ErrUnavailable
+	}
+	tx, err := c.pool.Begin(ctx)
 	if err != nil {
+		c.breaker.failure(err)
 		return "", false, err
 	}
-	defer rollback(context.Background(), tx)
+	defer rollback(ctx, tx)
 
 	var filename string
 	err = tx.QueryRow(
-		context.Background(),
+		ctx,
 		`DELETE FROM images WHERE id = $1 AND user_id = $2 RETURNING filename`,
-		imageID,
-		userID,
+		imageID, userID,
 	).Scan(&filename)
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return "", false, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return "", false, err
 	}
 
-	_, err = tx.Exec(context.Background(), `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename)
+	_, err = tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename)
 	if err != nil {
+		c.breaker.failure(err)
 		return "", false, err
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
+		c.breaker.failure(err)
 		return "", false, err
 	}
+	c.breaker.success()
 	return filename, true, nil
 }
 
-func (c *Client) ImageExists(imageID string) (bool, error) {
+func (c *Client) ImageExists(ctx context.Context, imageID string) (bool, error) {
+	if !c.breaker.allow() {
+		return false, store.ErrUnavailable
+	}
 	var exists bool
-	err := c.pool.QueryRow(
-		context.Background(),
-		`SELECT EXISTS (SELECT 1 FROM images WHERE id = $1)`,
-		imageID,
-	).Scan(&exists)
-	return exists, err
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`SELECT EXISTS (SELECT 1 FROM images WHERE id = $1)`,
+			imageID,
+		).Scan(&exists)
+	})
+	if err != nil {
+		c.breaker.failure(err)
+		return false, err
+	}
+	c.breaker.success()
+	return exists, nil
 }
 
-func (c *Client) LikeImage(imageID, userID string) error {
+func (c *Client) LikeImage(ctx context.Context, imageID, userID string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
 	_, err := c.pool.Exec(
-		context.Background(),
+		ctx,
 		`INSERT INTO likes (user_id, image_id)
 		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM images WHERE id = $2)
 		ON CONFLICT DO NOTHING`,
-		userID,
-		imageID,
+		userID, imageID,
 	)
-	return err
-}
-
-func (c *Client) UnlikeImage(imageID, userID string) error {
-	_, err := c.pool.Exec(context.Background(), `DELETE FROM likes WHERE user_id = $1 AND image_id = $2`, userID, imageID)
-	return err
-}
-
-func (c *Client) queryImages(query string, args ...any) ([]images.Image, error) {
-	rows, err := c.pool.Query(context.Background(), query, args...)
 	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) UnlikeImage(ctx context.Context, imageID, userID string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `DELETE FROM likes WHERE user_id = $1 AND image_id = $2`, userID, imageID)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) queryImages(ctx context.Context, query string, args ...any) ([]images.Image, error) {
+	if !c.breaker.allow() {
+		return nil, store.ErrUnavailable
+	}
+	var result []images.Image
+	err := withRetry(ctx, c.retryCfg, func() error {
+		rows, err := c.pool.Query(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		result = []images.Image{}
+		for rows.Next() {
+			var image images.Image
+			var description sql.NullString
+			if err := rows.Scan(
+				&image.ID, &image.UserID, &image.Filename, &description,
+				&image.Likes, &image.Liked, &image.Created,
+			); err != nil {
+				return err
+			}
+			image.Description = nullableString(description)
+			result = append(result, image)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		c.breaker.failure(err)
 		return nil, err
 	}
-	defer rows.Close()
-
-	result := []images.Image{}
-	for rows.Next() {
-		var image images.Image
-		var description sql.NullString
-		if err := rows.Scan(
-			&image.ID,
-			&image.UserID,
-			&image.Filename,
-			&description,
-			&image.Likes,
-			&image.Liked,
-			&image.Created,
-		); err != nil {
-			return nil, err
-		}
-		image.Description = nullableString(description)
-		result = append(result, image)
-	}
-
-	return result, rows.Err()
+	c.breaker.success()
+	return result, nil
 }
 
-func (c *Client) CreateSession(sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
+func (c *Client) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
+	if !c.breaker.allow() {
+		return sessions.CreatedSession{}, store.ErrUnavailable
+	}
 	var session sessions.CreatedSession
 	err := c.pool.QueryRow(
-		context.Background(),
+		ctx,
 		`INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)
 		RETURNING user_id`,
-		c.hashSession(sessionID),
-		userID,
-		expiresAt,
+		c.hashSession(sessionID), userID, expiresAt,
 	).Scan(&session.UserID)
 	if err != nil {
+		c.breaker.failure(err)
 		return sessions.CreatedSession{}, err
 	}
-
+	c.breaker.success()
 	return session, nil
 }
 
-func (c *Client) RefreshSession(sessionID string) (httpx.Session, error) {
+func (c *Client) RefreshSession(ctx context.Context, sessionID string) (httpx.Session, error) {
+	if !c.breaker.allow() {
+		return httpx.Session{}, store.ErrUnavailable
+	}
 	var session httpx.Session
 	var userID int
-	err := c.pool.QueryRow(
-		context.Background(),
-		`UPDATE sessions SET expires_at = $2 WHERE id = $1 AND expires_at > now()
-		RETURNING id, user_id`,
-		c.hashSession(sessionID),
-		time.Now().Add(7*24*time.Hour),
-	).Scan(&session.ID, &userID)
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`UPDATE sessions SET expires_at = $2 WHERE id = $1 AND expires_at > now()
+			RETURNING id, user_id`,
+			c.hashSession(sessionID),
+			time.Now().Add(7*24*time.Hour),
+		).Scan(&session.ID, &userID)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
 		return httpx.Session{}, nil
 	}
 	if err != nil {
+		c.breaker.failure(err)
 		return httpx.Session{}, err
 	}
-
+	c.breaker.success()
 	session.UserID = strconv.Itoa(userID)
 	return session, nil
 }
 
-func (c *Client) DeleteExpiredSessions() error {
-	_, err := c.pool.Exec(context.Background(), `DELETE FROM sessions WHERE expires_at <= now()`)
-	return err
-}
-
-func (c *Client) DeleteSession(sessionID string) error {
-	_, err := c.pool.Exec(context.Background(), `DELETE FROM sessions WHERE id = $1`, c.hashSession(sessionID))
-	return err
-}
-
-func (c *Client) DeleteExpiredLoginFailures() error {
-	_, err := c.pool.Exec(context.Background(), `DELETE FROM login_failures WHERE reset_at <= now()`)
-	return err
-}
-
-func (c *Client) GetLoginFailures(keys []string) ([]sessions.LoginFailure, error) {
-	rows, err := c.pool.Query(
-		context.Background(),
-		`SELECT key, count, reset_at FROM login_failures WHERE key = ANY($1)`,
-		keys,
-	)
+func (c *Client) DeleteExpiredSessions(ctx context.Context) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `DELETE FROM sessions WHERE expires_at <= now()`)
 	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) DeleteSession(ctx context.Context, sessionID string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, c.hashSession(sessionID))
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) DeleteExpiredLoginFailures(ctx context.Context) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `DELETE FROM login_failures WHERE reset_at <= now()`)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) GetLoginFailures(ctx context.Context, keys []string) ([]sessions.LoginFailure, error) {
+	if !c.breaker.allow() {
+		return nil, store.ErrUnavailable
+	}
+	var failures []sessions.LoginFailure
+	err := withRetry(ctx, c.retryCfg, func() error {
+		rows, err := c.pool.Query(
+			ctx,
+			`SELECT key, count, reset_at FROM login_failures WHERE key = ANY($1)`,
+			keys,
+		)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		failures = []sessions.LoginFailure{}
+		for rows.Next() {
+			var failure sessions.LoginFailure
+			if err := rows.Scan(&failure.Key, &failure.Count, &failure.ResetAt); err != nil {
+				return err
+			}
+			failures = append(failures, failure)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		c.breaker.failure(err)
 		return nil, err
 	}
-	defer rows.Close()
-
-	failures := []sessions.LoginFailure{}
-	for rows.Next() {
-		var failure sessions.LoginFailure
-		if err := rows.Scan(&failure.Key, &failure.Count, &failure.ResetAt); err != nil {
-			return nil, err
-		}
-		failures = append(failures, failure)
-	}
-
-	return failures, rows.Err()
+	c.breaker.success()
+	return failures, nil
 }
 
-func (c *Client) RecordLoginFailure(key string, resetAt time.Time) error {
+func (c *Client) RecordLoginFailure(ctx context.Context, key string, resetAt time.Time) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
 	_, err := c.pool.Exec(
-		context.Background(),
+		ctx,
 		`INSERT INTO login_failures (key, count, reset_at) VALUES ($1, 1, $2)
 		ON CONFLICT (key) DO UPDATE SET
 		  count = CASE
@@ -588,15 +732,27 @@ func (c *Client) RecordLoginFailure(key string, resetAt time.Time) error {
 		    WHEN login_failures.reset_at <= now() THEN EXCLUDED.reset_at
 		    ELSE login_failures.reset_at
 		  END`,
-		key,
-		resetAt,
+		key, resetAt,
 	)
-	return err
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
 }
 
-func (c *Client) ClearLoginFailures(keys []string) error {
-	_, err := c.pool.Exec(context.Background(), `DELETE FROM login_failures WHERE key = ANY($1)`, keys)
-	return err
+func (c *Client) ClearLoginFailures(ctx context.Context, keys []string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `DELETE FROM login_failures WHERE key = ANY($1)`, keys)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
 }
 
 func (c *Client) hashSession(sessionID string) string {

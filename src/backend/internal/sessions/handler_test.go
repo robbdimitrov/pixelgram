@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -24,33 +25,33 @@ type fakeStore struct {
 	createdSessionUID int
 }
 
-func (s *fakeStore) DeleteExpiredSessions() error {
+func (s *fakeStore) DeleteExpiredSessions(_ context.Context) error {
 	return s.err
 }
 
-func (s *fakeStore) DeleteExpiredLoginFailures() error {
+func (s *fakeStore) DeleteExpiredLoginFailures(_ context.Context) error {
 	return s.err
 }
 
-func (s *fakeStore) GetLoginFailures([]string) ([]LoginFailure, error) {
+func (s *fakeStore) GetLoginFailures(_ context.Context, _ []string) ([]LoginFailure, error) {
 	return s.failures, s.err
 }
 
-func (s *fakeStore) RecordLoginFailure(string, time.Time) error {
+func (s *fakeStore) RecordLoginFailure(_ context.Context, _ string, _ time.Time) error {
 	s.recordedFailures++
 	return nil
 }
 
-func (s *fakeStore) ClearLoginFailures([]string) error {
+func (s *fakeStore) ClearLoginFailures(_ context.Context, _ []string) error {
 	s.clearedFailures = true
 	return nil
 }
 
-func (s *fakeStore) GetUserWithEmail(string) (UserCredentials, bool, error) {
+func (s *fakeStore) GetUserWithEmail(_ context.Context, _ string) (UserCredentials, bool, error) {
 	return s.user, s.found, s.err
 }
 
-func (s *fakeStore) CreateSession(sessionID string, userID int, _ time.Time) (CreatedSession, error) {
+func (s *fakeStore) CreateSession(_ context.Context, sessionID string, userID int, _ time.Time) (CreatedSession, error) {
 	s.createdSessionID = sessionID
 	s.createdSessionUID = userID
 	if s.session.UserID == 0 {
@@ -59,7 +60,7 @@ func (s *fakeStore) CreateSession(sessionID string, userID int, _ time.Time) (Cr
 	return s.session, s.err
 }
 
-func (s *fakeStore) DeleteSession(sessionID string) error {
+func (s *fakeStore) DeleteSession(_ context.Context, sessionID string) error {
 	s.deletedSession = sessionID
 	return s.err
 }

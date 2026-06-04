@@ -1,9 +1,8 @@
 package sessions
 
 import (
-	"net"
+	"context"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -33,14 +32,14 @@ type CreatedSession struct {
 }
 
 type Store interface {
-	DeleteExpiredSessions() error
-	DeleteExpiredLoginFailures() error
-	GetLoginFailures(keys []string) ([]LoginFailure, error)
-	RecordLoginFailure(key string, resetAt time.Time) error
-	ClearLoginFailures(keys []string) error
-	GetUserWithEmail(email string) (UserCredentials, bool, error)
-	CreateSession(sessionID string, userID int, expiresAt time.Time) (CreatedSession, error)
-	DeleteSession(sessionID string) error
+	DeleteExpiredSessions(ctx context.Context) error
+	DeleteExpiredLoginFailures(ctx context.Context) error
+	GetLoginFailures(ctx context.Context, keys []string) ([]LoginFailure, error)
+	RecordLoginFailure(ctx context.Context, key string, resetAt time.Time) error
+	ClearLoginFailures(ctx context.Context, keys []string) error
+	GetUserWithEmail(ctx context.Context, email string) (UserCredentials, bool, error)
+	CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (CreatedSession, error)
+	DeleteSession(ctx context.Context, sessionID string) error
 }
 
 type Handler struct {
@@ -48,6 +47,7 @@ type Handler struct {
 }
 
 func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var body struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -57,22 +57,22 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	email := strings.ToLower(strings.TrimSpace(body.Email))
-	rateLimitKeys := []string{"ip:" + clientIP(r), "email:" + email}
+	rateLimitKeys := []string{"ip:" + httpx.ClientIP(r), "email:" + email}
 	if email == "" || body.Password == "" {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Email and password are required.")
 		return
 	}
 
-	if err := h.Store.DeleteExpiredSessions(); err != nil {
+	if err := h.Store.DeleteExpiredSessions(ctx); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if err := h.Store.DeleteExpiredLoginFailures(); err != nil {
+	if err := h.Store.DeleteExpiredLoginFailures(ctx); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	failures, err := h.Store.GetLoginFailures(rateLimitKeys)
+	failures, err := h.Store.GetLoginFailures(ctx, rateLimitKeys)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -82,7 +82,7 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, found, err := h.Store.GetUserWithEmail(email)
+	user, found, err := h.Store.GetUserWithEmail(ctx, email)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -97,7 +97,7 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !valid {
-		recordFailures(h.Store, rateLimitKeys)
+		recordFailures(ctx, h.Store, rateLimitKeys)
 		httpx.WriteMessage(w, http.StatusUnauthorized, "Incorrect email or password.")
 		return
 	}
@@ -108,18 +108,19 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := h.Store.CreateSession(sessionID, user.ID, time.Now().Add(sessionDuration))
+	session, err := h.Store.CreateSession(ctx, sessionID, user.ID, time.Now().Add(sessionDuration))
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	_ = h.Store.ClearLoginFailures(rateLimitKeys)
+	_ = h.Store.ClearLoginFailures(ctx, rateLimitKeys)
 	httpx.SetSessionCookie(w, r, sessionID)
 	httpx.WriteJSON(w, http.StatusOK, map[string]int{"id": session.UserID})
 }
 
 func (h Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	cookie, err := r.Cookie("session")
 	if err != nil || !auth.ValidSessionID(cookie.Value) {
 		httpx.ClearSessionCookie(w, r)
@@ -127,7 +128,7 @@ func (h Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Store.DeleteSession(cookie.Value); err != nil {
+	if err := h.Store.DeleteSession(ctx, cookie.Value); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
@@ -145,26 +146,9 @@ func rateLimited(failures []LoginFailure, now time.Time) bool {
 	return false
 }
 
-func recordFailures(store Store, keys []string) {
+func recordFailures(ctx context.Context, store Store, keys []string) {
 	resetAt := time.Now().Add(rateLimitDuration)
 	for _, key := range keys {
-		_ = store.RecordLoginFailure(key, resetAt)
+		_ = store.RecordLoginFailure(ctx, key, resetAt)
 	}
-}
-
-func clientIP(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil {
-		return host
-	}
-
-	if r.RemoteAddr == "" {
-		return ""
-	}
-
-	if ip := net.ParseIP(r.RemoteAddr); ip != nil {
-		return ip.String()
-	}
-
-	return strconv.Quote(r.RemoteAddr)
 }

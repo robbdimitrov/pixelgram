@@ -2,6 +2,7 @@ package uploads
 
 import (
 	"bytes"
+	"context"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -22,15 +23,15 @@ type fakeStore struct {
 	filename    string
 }
 
-func (s *fakeStore) DeleteExpiredUploads() ([]string, error) {
+func (s *fakeStore) DeleteExpiredUploads(_ context.Context) ([]string, error) {
 	return s.expired, s.err
 }
 
-func (s *fakeStore) HasPendingUploadCapacity(string) (bool, error) {
+func (s *fakeStore) HasPendingUploadCapacity(_ context.Context, _ string) (bool, error) {
 	return s.capacity, s.err
 }
 
-func (s *fakeStore) CreateUpload(userID, filename string) error {
+func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) error {
 	s.created = true
 	s.createdUser = userID
 	s.filename = filename

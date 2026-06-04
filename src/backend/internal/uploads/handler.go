@@ -1,6 +1,7 @@
 package uploads
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -15,9 +16,9 @@ import (
 const fileLimit = 1_000_000
 
 type Store interface {
-	DeleteExpiredUploads() ([]string, error)
-	HasPendingUploadCapacity(userID string) (bool, error)
-	CreateUpload(userID, filename string) error
+	DeleteExpiredUploads(ctx context.Context) ([]string, error)
+	HasPendingUploadCapacity(ctx context.Context, userID string) (bool, error)
+	CreateUpload(ctx context.Context, userID, filename string) error
 }
 
 type Handler struct {
@@ -26,6 +27,7 @@ type Handler struct {
 }
 
 func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	filename, err := h.saveMultipartImage(r)
 	if err != nil {
@@ -50,7 +52,7 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expired, err := h.Store.DeleteExpiredUploads()
+	expired, err := h.Store.DeleteExpiredUploads(ctx)
 	if err != nil {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
@@ -58,7 +60,7 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 	}
 	deleteUploadFiles(h.ImageDir, expired)
 
-	hasCapacity, err := h.Store.HasPendingUploadCapacity(userID)
+	hasCapacity, err := h.Store.HasPendingUploadCapacity(ctx, userID)
 	if err != nil {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
@@ -70,7 +72,7 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Store.CreateUpload(userID, filename); err != nil {
+	if err := h.Store.CreateUpload(ctx, userID, filename); err != nil {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
@@ -216,4 +218,3 @@ func hasBytes(buffer, bytes []byte, offset int) bool {
 	}
 	return true
 }
-

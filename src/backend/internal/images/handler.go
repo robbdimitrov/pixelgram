@@ -1,6 +1,7 @@
 package images
 
 import (
+	"context"
 	"net/http"
 
 	"pixelgram/backend/internal/compat"
@@ -19,15 +20,15 @@ type Image struct {
 }
 
 type Store interface {
-	CreateImage(userID, filename string, description *string) (int, bool, error)
-	GetFeed(page, limit int, currentUserID string) ([]Image, error)
-	GetImages(userID string, page, limit int, currentUserID string) ([]Image, error)
-	GetLikedImages(userID string, page, limit int, currentUserID string) ([]Image, error)
-	GetImage(imageID, currentUserID string) (Image, bool, error)
-	DeleteImage(imageID, userID string) (string, bool, error)
-	ImageExists(imageID string) (bool, error)
-	LikeImage(imageID, userID string) error
-	UnlikeImage(imageID, userID string) error
+	CreateImage(ctx context.Context, userID, filename string, description *string) (int, bool, error)
+	GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]Image, error)
+	GetImages(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Image, error)
+	GetLikedImages(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Image, error)
+	GetImage(ctx context.Context, imageID, currentUserID string) (Image, bool, error)
+	DeleteImage(ctx context.Context, imageID, userID string) (string, bool, error)
+	ImageExists(ctx context.Context, imageID string) (bool, error)
+	LikeImage(ctx context.Context, imageID, userID string) error
+	UnlikeImage(ctx context.Context, imageID, userID string) error
 }
 
 type Handler struct {
@@ -36,6 +37,7 @@ type Handler struct {
 }
 
 func (h Handler) CreateImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	var body struct {
 		Filename    string `json:"filename"`
@@ -49,7 +51,7 @@ func (h Handler) CreateImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, created, err := h.Store.CreateImage(userID, body.Filename, &body.Description)
+	id, created, err := h.Store.CreateImage(ctx, userID, body.Filename, &body.Description)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -63,6 +65,7 @@ func (h Handler) CreateImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
 	pagination, ok := compat.ParsePagination(r.URL.Query())
 	if !ok {
@@ -70,7 +73,7 @@ func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	images, err := h.Store.GetFeed(pagination.Page, pagination.Limit, currentUserID)
+	images, err := h.Store.GetFeed(ctx, pagination.Page, pagination.Limit, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -87,7 +90,8 @@ func (h Handler) GetLikedImages(w http.ResponseWriter, r *http.Request) {
 	h.getImageList(w, r, h.Store.GetLikedImages)
 }
 
-func (h Handler) getImageList(w http.ResponseWriter, r *http.Request, fetch func(string, int, int, string) ([]Image, error)) {
+func (h Handler) getImageList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, string, int, int, string) ([]Image, error)) {
+	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
 	pagination, ok := compat.ParsePagination(r.URL.Query())
 	if !ok {
@@ -95,7 +99,7 @@ func (h Handler) getImageList(w http.ResponseWriter, r *http.Request, fetch func
 		return
 	}
 
-	images, err := fetch(r.PathValue("userId"), pagination.Page, pagination.Limit, currentUserID)
+	images, err := fetch(ctx, r.PathValue("userId"), pagination.Page, pagination.Limit, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -105,8 +109,9 @@ func (h Handler) getImageList(w http.ResponseWriter, r *http.Request, fetch func
 }
 
 func (h Handler) GetImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
-	image, found, err := h.Store.GetImage(r.PathValue("imageId"), currentUserID)
+	image, found, err := h.Store.GetImage(ctx, r.PathValue("imageId"), currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -120,9 +125,10 @@ func (h Handler) GetImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	imageID := r.PathValue("imageId")
-	filename, deleted, err := h.Store.DeleteImage(imageID, userID)
+	filename, deleted, err := h.Store.DeleteImage(ctx, imageID, userID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -133,7 +139,7 @@ func (h Handler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, found, err := h.Store.GetImage(imageID, userID); err != nil {
+	if _, found, err := h.Store.GetImage(ctx, imageID, userID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 	} else if found {
 		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
@@ -150,10 +156,11 @@ func (h Handler) UnlikeImage(w http.ResponseWriter, r *http.Request) {
 	h.updateLike(w, r, h.Store.UnlikeImage)
 }
 
-func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(string, string) error) {
+func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(context.Context, string, string) error) {
+	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	imageID := r.PathValue("imageId")
-	exists, err := h.Store.ImageExists(imageID)
+	exists, err := h.Store.ImageExists(ctx, imageID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -163,7 +170,7 @@ func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(
 		return
 	}
 
-	if err := update(imageID, userID); err != nil {
+	if err := update(ctx, imageID, userID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}

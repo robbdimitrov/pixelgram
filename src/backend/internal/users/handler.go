@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -13,12 +14,12 @@ import (
 )
 
 type Store interface {
-	CreateUser(name, username, email, passwordHash string) (int, error)
-	GetUser(userID string) (User, bool, error)
-	GetUserWithID(userID string) (UserCredentials, bool, error)
-	UpdateUser(userID, name, username, email, avatar string, bio *string) (UpdateUserResult, error)
-	UpdatePassword(userID, passwordHash string) error
-	DeleteOtherSessions(userID, currentSessionID string) error
+	CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error)
+	GetUser(ctx context.Context, userID string) (User, bool, error)
+	GetUserWithID(ctx context.Context, userID string) (UserCredentials, bool, error)
+	UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (UpdateUserResult, error)
+	UpdatePassword(ctx context.Context, userID, passwordHash string) error
+	DeleteOtherSessions(ctx context.Context, userID, currentSessionID string) error
 }
 
 type User struct {
@@ -49,6 +50,7 @@ type Handler struct {
 }
 
 func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var body struct {
 		Name     string `json:"name"`
 		Username string `json:"username"`
@@ -84,7 +86,7 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.Store.CreateUser(name, username, email, passwordHash)
+	id, err := h.Store.CreateUser(ctx, name, username, email, passwordHash)
 	if err != nil {
 		if errors.Is(err, store.ErrConflict) {
 			httpx.WriteMessage(w, http.StatusConflict, "User with this username or email already exists.")
@@ -99,9 +101,10 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	userID := r.PathValue("userId")
 
-	user, found, err := h.Store.GetUser(userID)
+	user, found, err := h.Store.GetUser(ctx, userID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -115,6 +118,7 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	userID := r.PathValue("userId")
 	currentUserID, _ := httpx.UserID(r)
 	if userID != currentUserID {
@@ -157,7 +161,7 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		avatar = *body.Avatar
 	}
 
-	result, err := h.Store.UpdateUser(userID, name, username, email, avatar, body.Bio)
+	result, err := h.Store.UpdateUser(ctx, userID, name, username, email, avatar, body.Bio)
 	if err != nil {
 		if errors.Is(err, store.ErrConflict) {
 			httpx.WriteMessage(w, http.StatusConflict, "This username or email is already in use.")
@@ -178,6 +182,7 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, oldPassword, password string) {
+	ctx := r.Context()
 	if oldPassword == "" || password == "" {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Both password and the current password are required.")
 		return
@@ -187,7 +192,7 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 		return
 	}
 
-	user, found, err := h.Store.GetUserWithID(userID)
+	user, found, err := h.Store.GetUserWithID(ctx, userID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -208,7 +213,7 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if err := h.Store.UpdatePassword(userID, passwordHash); err != nil {
+	if err := h.Store.UpdatePassword(ctx, userID, passwordHash); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
@@ -217,11 +222,10 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 	if cookie, err := r.Cookie("session"); err == nil {
 		currentSessionID = cookie.Value
 	}
-	if err := h.Store.DeleteOtherSessions(userID, currentSessionID); err != nil {
+	if err := h.Store.DeleteOtherSessions(ctx, userID, currentSessionID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
-
