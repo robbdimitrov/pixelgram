@@ -1,21 +1,42 @@
 package httpx
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"pixelgram/backend/internal/auth"
 )
 
 type SessionStore interface {
-	RefreshSession(sessionID string) (Session, error)
+	RefreshSession(ctx context.Context, sessionID string) (Session, error)
 }
 
 type Session struct {
 	ID     string
 	UserID string
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }
+
+func (r *statusRecorder) WriteHeader(status int) {
+	r.status = status
+	r.ResponseWriter.WriteHeader(status)
+}
+
+func (r *statusRecorder) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
 }
 
 func Chain(handler http.Handler, middleware ...func(http.Handler) http.Handler) http.Handler {
@@ -25,8 +46,39 @@ func Chain(handler http.Handler, middleware ...func(http.Handler) http.Handler) 
 	return handler
 }
 
+func RequestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.Header.Get("X-Request-ID")
+		if id == "" {
+			id = newRequestID()
+		}
+		w.Header().Set("X-Request-ID", id)
+		next.ServeHTTP(w, WithRequestID(r, id))
+	})
+}
+
+func Logger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rec := &statusRecorder{ResponseWriter: w}
+		next.ServeHTTP(rec, r)
+		if rec.status == 0 {
+			rec.status = http.StatusOK
+		}
+		slog.Info("http request",
+			"request_id", GetRequestID(r),
+			"method", r.Method,
+			"route", r.Pattern,
+			"path", r.URL.Path,
+			"status", rec.status,
+			"duration_ms", time.Since(start).Milliseconds(),
+		)
+	})
+}
+
 func SecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 		w.Header().Set("Referrer-Policy", "no-referrer")
@@ -69,13 +121,6 @@ func OriginGuard(next http.Handler) http.Handler {
 	})
 }
 
-func RequestLogger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("request", "method", r.Method, "path", r.URL.RequestURI())
-		next.ServeHTTP(w, r)
-	})
-}
-
 func RequireSession(store SessionStore) func(http.Handler) http.Handler {
 	allowed := map[string]bool{
 		http.MethodPost + " /sessions":   true,
@@ -104,7 +149,7 @@ func RequireSession(store SessionStore) func(http.Handler) http.Handler {
 				return
 			}
 
-			session, err := store.RefreshSession(cookie.Value)
+			session, err := store.RefreshSession(r.Context(), cookie.Value)
 			if err != nil {
 				WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 				return
