@@ -1,63 +1,49 @@
 # Pixelgram
 
-**Pixelgram** is an image-sharing application where users can create,
-browse and like images.
+**Pixelgram** is an image-sharing application where users can upload, browse
+and like images.
+
+## Features
+
+- **Monolithic Backend**: Single Go service handling users, sessions, images, likes and uploads, backed by PostgreSQL.
+- **Production-Ready & HA**: Fully containerized, stateless service designed for High Availability deployments on Kubernetes.
+- **Resilience**: Built-in rate limiting, circuit breaker and retry-with-backoff protecting the API and the database layer.
+- **Observability**: Structured JSON logging with request ID propagation across the request lifecycle.
+- **Modern Frontend**: Built with Angular 21, Tailwind CSS, DaisyUI and Lucide icons.
 
 ## Architecture
 
-Service | Language | Description
---- | --- | ---
-[backend](src/backend) | Go | API responsible for users, sessions, posts, likes and uploads.
-[database](src/database) | SQL | PostgreSQL database with tables, relationships and functions.
-[frontend](src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS, DaisyUI and Lucide icons.
+| Service | Language | Description |
+| --- | --- | --- |
+| [backend](/src/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
+| [database](/src/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
+| [frontend](/src/frontend) | TypeScript | Angular 21 SPA styled with Tailwind CSS and DaisyUI. |
 
-## Tech stack
+## Deploy
 
-- Backend: Go 1.26, `net/http`, `pgx`, PostgreSQL, session cookies
-- Frontend: Angular 21, TypeScript, Tailwind CSS, DaisyUI, Lucide icons
-- Database: PostgreSQL schema initialized from `schema.sql`
-- Runtime: Docker images deployed to an active Kubernetes cluster (e.g. colima/k3s)
-
-## Quickstart
-
-The easiest way to run the app locally is with the deploy script. It builds all images, creates the `pixelgram` namespace, and deploys everything into your active Kubernetes cluster.
+Deploy the application to your active Kubernetes cluster using the provided script:
 
 ```sh
 ./scripts/deploy.sh
 ```
 
-The deploy script automatically starts a background port-forward for the frontend service.
-
-Open the frontend at [http://pixelgram.localhost:8080](http://pixelgram.localhost:8080).
-
-## Frontend development
-
-For faster UI iteration, run the Angular dev server locally and point it at a backend running in the cluster.
-
-```sh
-kubectl port-forward service/backend 8080:8080 -n pixelgram
-cd src/frontend && npm start
-```
-
-Open [http://localhost:4200](http://localhost:4200). The Angular dev proxy forwards `/api` to `localhost:8080`.
-
-If `8080` is already used by the deployed frontend port-forward, use another backend port and a temporary proxy config.
-
-## Testing
-
-The frontend uses Jest. The active Go backend uses Go's built-in test runner.
-
-```sh
-make test
-```
+The script builds the Docker images, creates the Kubernetes namespace (`pixelgram` by default) and resources, waits for pods to be ready, and starts a port-forward to the frontend at http://localhost:8080/. It is idempotent and safe to re-run for updates.
 
 ## Cleanup
 
-To completely remove the deployment from your cluster:
+To remove all deployed resources and the namespace:
 
 ```sh
 kubectl delete -f ./k8s -n pixelgram
 kubectl delete namespace pixelgram
+```
+
+## Testing
+
+Run all unit tests across the frontend and backend using the provided `Makefile` target:
+
+```sh
+make test
 ```
 
 ## License
