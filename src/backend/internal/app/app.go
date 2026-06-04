@@ -11,7 +11,8 @@ import (
 )
 
 type Config struct {
-	ImageDir string
+	ImageDir    string
+	RateLimiter httpx.RateLimiterStore
 }
 
 type Stores struct {
@@ -23,6 +24,9 @@ type Stores struct {
 }
 
 func New(cfg Config, stores Stores) http.Handler {
+	if cfg.RateLimiter == nil {
+		cfg.RateLimiter = httpx.NoopRateLimiterStore{}
+	}
 	mux := http.NewServeMux()
 	userHandler := users.Handler{Store: stores.Users, ImageDir: cfg.ImageDir}
 	sessionHandler := sessions.Handler{Store: stores.Sessions}
@@ -53,9 +57,11 @@ func New(cfg Config, stores Stores) http.Handler {
 
 	return httpx.Chain(
 		mux,
+		httpx.RequestID,
+		httpx.Logger,
 		httpx.SecurityHeaders,
 		httpx.OriginGuard,
 		httpx.RequireSession(stores.SessionAuth),
-		httpx.RequestLogger,
+		httpx.RateLimit(cfg.RateLimiter),
 	)
 }

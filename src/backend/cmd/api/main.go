@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"pixelgram/backend/internal/app"
@@ -16,16 +17,24 @@ import (
 )
 
 func main() {
+	setupLogger()
+
 	port := getenv("PORT", "8080")
-	stores, closeStores, err := openStores()
+	databaseURL := os.Getenv("DATABASE_URL")
+
+	stores, closeStores, err := openStores(databaseURL)
 	if err != nil {
 		slog.Error("failed to initialize stores", "error", err)
 		os.Exit(1)
 	}
 	defer closeStores()
 
+	rateLimiter := openRateLimiter(databaseURL)
+	startRateLimiterCleanup(rateLimiter)
+
 	handler := app.New(app.Config{
-		ImageDir: getenv("IMAGE_DIR", "/tmp"),
+		ImageDir:    getenv("IMAGE_DIR", "/tmp"),
+		RateLimiter: rateLimiter,
 	}, stores)
 
 	addr := ":" + port
@@ -43,8 +52,15 @@ func main() {
 	}
 }
 
-func openStores() (app.Stores, func(), error) {
-	databaseURL := os.Getenv("DATABASE_URL")
+func setupLogger() {
+	level := slog.LevelInfo
+	if os.Getenv("LOG_LEVEL") == "debug" {
+		level = slog.LevelDebug
+	}
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
+}
+
+func openStores(databaseURL string) (app.Stores, func(), error) {
 	if databaseURL == "" {
 		return app.Stores{
 			SessionAuth: noopSessionAuthStore{},
@@ -69,6 +85,27 @@ func openStores() (app.Stores, func(), error) {
 	}, client.Close, nil
 }
 
+func openRateLimiter(databaseURL string) httpx.RateLimiterStore {
+	if databaseURL == "" {
+		return httpx.NoopRateLimiterStore{}
+	}
+	return httpx.NewPostgresRateLimiterStore(databaseURL)
+}
+
+func startRateLimiterCleanup(store httpx.RateLimiterStore) {
+	interval := time.Duration(envInt("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", 60)) * time.Minute
+	maxAge := time.Duration(envInt("RATE_LIMIT_MAX_AGE_HOURS", 24)) * time.Hour
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := store.Cleanup(context.Background(), maxAge); err != nil {
+				slog.Warn("rate limiter cleanup failed", "error", err)
+			}
+		}
+	}()
+}
+
 func getenv(key, fallback string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -77,120 +114,84 @@ func getenv(key, fallback string) string {
 	return value
 }
 
+func envInt(key string, fallback int) int {
+	n, err := strconv.Atoi(os.Getenv(key))
+	if err != nil || n <= 0 {
+		return fallback
+	}
+	return n
+}
+
+// --- noop stores for dev mode (DATABASE_URL unset) ---
+
 type noopSessionAuthStore struct{}
 
-func (noopSessionAuthStore) RefreshSession(string) (httpx.Session, error) {
+func (noopSessionAuthStore) RefreshSession(_ context.Context, _ string) (httpx.Session, error) {
 	return httpx.Session{}, nil
 }
 
 type noopUserStore struct{}
 
-func (noopUserStore) CreateUser(string, string, string, string) (int, error) {
-	return 0, nil
-}
-
-func (noopUserStore) GetUser(string) (users.User, bool, error) {
+func (noopUserStore) CreateUser(_ context.Context, _, _, _, _ string) (int, error) { return 0, nil }
+func (noopUserStore) GetUser(_ context.Context, _ string) (users.User, bool, error) {
 	return users.User{}, false, nil
 }
-
-func (noopUserStore) GetUserWithID(string) (users.UserCredentials, bool, error) {
+func (noopUserStore) GetUserWithID(_ context.Context, _ string) (users.UserCredentials, bool, error) {
 	return users.UserCredentials{}, false, nil
 }
-
-func (noopUserStore) UpdateUser(string, string, string, string, string, *string) (users.UpdateUserResult, error) {
+func (noopUserStore) UpdateUser(_ context.Context, _, _, _, _, _ string, _ *string) (users.UpdateUserResult, error) {
 	return users.UpdateUserResult{}, nil
 }
-
-func (noopUserStore) UpdatePassword(string, string) error {
-	return nil
-}
-
-func (noopUserStore) DeleteOtherSessions(string, string) error {
-	return nil
-}
+func (noopUserStore) UpdatePassword(_ context.Context, _, _ string) error      { return nil }
+func (noopUserStore) DeleteOtherSessions(_ context.Context, _, _ string) error { return nil }
 
 type noopSessionStore struct{}
 
-func (noopSessionStore) DeleteExpiredSessions() error {
-	return nil
-}
-
-func (noopSessionStore) DeleteExpiredLoginFailures() error {
-	return nil
-}
-
-func (noopSessionStore) GetLoginFailures([]string) ([]sessions.LoginFailure, error) {
+func (noopSessionStore) DeleteExpiredSessions(_ context.Context) error      { return nil }
+func (noopSessionStore) DeleteExpiredLoginFailures(_ context.Context) error { return nil }
+func (noopSessionStore) GetLoginFailures(_ context.Context, _ []string) ([]sessions.LoginFailure, error) {
 	return nil, nil
 }
-
-func (noopSessionStore) RecordLoginFailure(string, time.Time) error {
+func (noopSessionStore) RecordLoginFailure(_ context.Context, _ string, _ time.Time) error {
 	return nil
 }
-
-func (noopSessionStore) ClearLoginFailures([]string) error {
-	return nil
-}
-
-func (noopSessionStore) GetUserWithEmail(string) (sessions.UserCredentials, bool, error) {
+func (noopSessionStore) ClearLoginFailures(_ context.Context, _ []string) error { return nil }
+func (noopSessionStore) GetUserWithEmail(_ context.Context, _ string) (sessions.UserCredentials, bool, error) {
 	return sessions.UserCredentials{}, false, nil
 }
-
-func (noopSessionStore) CreateSession(string, int, time.Time) (sessions.CreatedSession, error) {
+func (noopSessionStore) CreateSession(_ context.Context, _ string, _ int, _ time.Time) (sessions.CreatedSession, error) {
 	return sessions.CreatedSession{}, nil
 }
-
-func (noopSessionStore) DeleteSession(string) error {
-	return nil
-}
+func (noopSessionStore) DeleteSession(_ context.Context, _ string) error { return nil }
 
 type noopUploadStore struct{}
 
-func (noopUploadStore) DeleteExpiredUploads() ([]string, error) {
-	return nil, nil
-}
-
-func (noopUploadStore) HasPendingUploadCapacity(string) (bool, error) {
+func (noopUploadStore) DeleteExpiredUploads(_ context.Context) ([]string, error) { return nil, nil }
+func (noopUploadStore) HasPendingUploadCapacity(_ context.Context, _ string) (bool, error) {
 	return false, nil
 }
-
-func (noopUploadStore) CreateUpload(string, string) error {
-	return nil
-}
+func (noopUploadStore) CreateUpload(_ context.Context, _, _ string) error { return nil }
 
 type noopImageStore struct{}
 
-func (noopImageStore) CreateImage(string, string, *string) (int, bool, error) {
+func (noopImageStore) CreateImage(_ context.Context, _, _ string, _ *string) (int, bool, error) {
 	return 0, false, nil
 }
-
-func (noopImageStore) GetFeed(int, int, string) ([]images.Image, error) {
+func (noopImageStore) GetFeed(_ context.Context, _, _ int, _ string) ([]images.Image, error) {
 	return nil, nil
 }
-
-func (noopImageStore) GetImages(string, int, int, string) ([]images.Image, error) {
+func (noopImageStore) GetImages(_ context.Context, _ string, _, _ int, _ string) ([]images.Image, error) {
 	return nil, nil
 }
-
-func (noopImageStore) GetLikedImages(string, int, int, string) ([]images.Image, error) {
+func (noopImageStore) GetLikedImages(_ context.Context, _ string, _, _ int, _ string) ([]images.Image, error) {
 	return nil, nil
 }
-
-func (noopImageStore) GetImage(string, string) (images.Image, bool, error) {
+func (noopImageStore) GetImage(_ context.Context, _, _ string) (images.Image, bool, error) {
 	return images.Image{}, false, nil
 }
-
-func (noopImageStore) DeleteImage(string, string) (string, bool, error) {
+func (noopImageStore) DeleteImage(_ context.Context, _, _ string) (string, bool, error) {
 	return "", false, nil
 }
-
-func (noopImageStore) ImageExists(string) (bool, error) {
-	return false, nil
-}
-
-func (noopImageStore) LikeImage(string, string) error {
-	return nil
-}
-
-func (noopImageStore) UnlikeImage(string, string) error {
-	return nil
-}
+func (noopImageStore) ImageExists(_ context.Context, _ string) (bool, error) { return false, nil }
+func (noopImageStore) LikeImage(_ context.Context, _, _ string) error        { return nil }
+func (noopImageStore) UnlikeImage(_ context.Context, _, _ string) error      { return nil }
