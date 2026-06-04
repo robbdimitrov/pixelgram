@@ -1,23 +1,23 @@
 import {Component, Input, OnDestroy, Output} from '@angular/core';
 import {EventEmitter} from '@angular/core';
 
-import {Image} from '../../../models/image.model';
+import {Post} from '../../../models/post.model';
 import {User} from '../../../models/user.model';
 import {SessionService} from '../../../services/session.service';
 
 @Component({
-    selector: 'app-image',
-    templateUrl: './image.component.html',
+    selector: 'app-post',
+    templateUrl: './post.component.html',
     standalone: false
 })
-export class ImageComponent implements OnDestroy {
+export class PostComponent implements OnDestroy {
   private readonly fallbackImage = '/assets/placeholder.svg';
   private likeAnimationTimeout?: ReturnType<typeof setTimeout>;
 
   @Output() like = new EventEmitter<number>();
   @Output() unlike = new EventEmitter<number>();
-  @Output() deleteAction = new EventEmitter<Image>();
-  @Input() image: Image;
+  @Output() deleteAction = new EventEmitter<Post>();
+  @Input() post: Post;
   @Input() user: User | null;
   @Input() singleView = false;
   isLikeAnimating = false;
@@ -25,16 +25,16 @@ export class ImageComponent implements OnDestroy {
   constructor(private session: SessionService) {}
 
   onLikeClick() {
-    const wasLiked = this.image.liked;
-    this.image.liked = !this.image.liked;
-    this.image.likes += (this.image.liked ? 1 : -1);
-    if (this.image.liked) {
+    const wasLiked = this.post.liked;
+    this.post.liked = !this.post.liked;
+    this.post.likes += (this.post.liked ? 1 : -1);
+    if (this.post.liked) {
       if (!wasLiked) {
         this.playLikeAnimation();
       }
-      this.like.emit(this.image.id);
+      this.like.emit(this.post.id);
     } else {
-      this.unlike.emit(this.image.id);
+      this.unlike.emit(this.post.id);
     }
   }
 
@@ -45,11 +45,11 @@ export class ImageComponent implements OnDestroy {
   }
 
   isOwnedByCurrentUser() {
-    return this.session.userId() === this.image.userId;
+    return this.session.userId() === this.post.userId;
   }
 
   isDescriptionPresent() {
-    return this.image.description.length > 0;
+    return this.post.description.length > 0;
   }
 
   onImageError(event: Event) {
@@ -62,7 +62,7 @@ export class ImageComponent implements OnDestroy {
   }
 
   onDeleteClick() {
-    this.deleteAction.emit(this.image);
+    this.deleteAction.emit(this.post);
   }
 
   private playLikeAnimation() {

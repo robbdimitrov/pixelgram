@@ -8,11 +8,11 @@
 
   <div class="h-px w-full bg-slate-200 dark:bg-white/10" aria-hidden="true"></div>
 
-  @if (images().length > 0) {
+  @if (posts().length > 0) {
     <div class="grid grid-cols-3 gap-2 sm:gap-4">
-      @for (image of images(); track image) {
+      @for (post of posts(); track post) {
         <div class="aspect-square">
-          <app-thumbnail [image]="image"></app-thumbnail>
+          <app-thumbnail [post]="post"></app-thumbnail>
         </div>
       }
     </div>

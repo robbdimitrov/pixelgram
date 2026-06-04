@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 
 import {APIClient} from '../../services/api-client.service';
-import {Image} from '../../models/image.model';
+import {Post} from '../../models/post.model';
 import {PaginationService} from '../../services/pagination.service';
 
 @Component({
@@ -12,23 +12,23 @@ import {PaginationService} from '../../services/pagination.service';
 })
 export class FeedComponent {
   userId?: number;
-  imageId?: number;
+  postId?: number;
   hasLoaded = false;
   isLoadingNextPage = false;
 
   constructor(
     private apiClient: APIClient,
-    private pagination: PaginationService<Image>,
+    private pagination: PaginationService<Post>,
     private router: Router,
     private route: ActivatedRoute
   ) {
     this.route.params.subscribe((params) => {
-      if (params['imageId']) {
-        this.imageId = Number(params['imageId']);
+      if (params['postId']) {
+        this.postId = Number(params['postId']);
         this.userId = undefined;
-        this.loadImage(params['imageId']);
+        this.loadPost(params['postId']);
       } else {
-        this.imageId = undefined;
+        this.postId = undefined;
         this.userId = params['userId'];
         this.loadNextPage();
       }
@@ -42,40 +42,40 @@ export class FeedComponent {
     this.isLoadingNextPage = true;
 
     const req = (this.userId ?
-      this.apiClient.getLikedImages(this.userId, this.pagination.page) :
+      this.apiClient.getLikedPosts(this.userId, this.pagination.page) :
       this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe({
       next: (value) => {
         this.isLoadingNextPage = false;
-        const images = value.filter((image) => {
-          return !(this.pagination.data.some((item) => image.id === item.id));
+        const posts = value.filter((post) => {
+          return !(this.pagination.data.some((item) => post.id === item.id));
         });
-        this.pagination.update(images, value.length);
+        this.pagination.update(posts, value.length);
         this.hasLoaded = true;
       },
       error: (error) => {
         this.isLoadingNextPage = false;
         this.hasLoaded = true;
-        console.error(`Error loading images: ${error.message}`);
+        console.error(`Error loading posts: ${error.message}`);
       }
     });
   }
 
-  loadImage(imageId: number) {
-    this.apiClient.getImage(imageId).subscribe({
+  loadPost(postId: number) {
+    this.apiClient.getPost(postId).subscribe({
       next: (value) => {
         this.pagination.update([value]);
         this.hasLoaded = true;
       },
       error: (error) => {
         this.hasLoaded = true;
-        console.error(`Loading image failed: ${error.message}`);
+        console.error(`Loading post failed: ${error.message}`);
       }
     });
   }
 
-  images() {
+  posts() {
     return this.pagination.data;
   }
 
@@ -119,31 +119,31 @@ export class FeedComponent {
     return this.isLikesPage() ? '/feed' : '/upload';
   }
 
-  onLike(imageId: number) {
-    this.apiClient.likeImage(imageId).subscribe({
+  onLike(postId: number) {
+    this.apiClient.likePost(postId).subscribe({
       error: (error) => {
-        this.revertLike(imageId, false);
-        console.error(`Liking image failed: ${error.message}`);
+        this.revertLike(postId, false);
+        console.error(`Liking post failed: ${error.message}`);
       }
     });
   }
 
-  onUnlike(imageId: number) {
-    const image = this.pagination.data.find((item) => item.id === imageId);
-    if (this.isLikesPage() && image) {
-      this.pagination.remove(image);
+  onUnlike(postId: number) {
+    const post = this.pagination.data.find((item) => item.id === postId);
+    if (this.isLikesPage() && post) {
+      this.pagination.remove(post);
     }
 
-    this.apiClient.unlikeImage(imageId).subscribe({
+    this.apiClient.unlikePost(postId).subscribe({
       error: (error) => {
-        if (this.isLikesPage() && image) {
-          image.liked = true;
-          image.likes += 1;
-          this.pagination.update([image]);
+        if (this.isLikesPage() && post) {
+          post.liked = true;
+          post.likes += 1;
+          this.pagination.update([post]);
         } else {
-          this.revertLike(imageId, true);
+          this.revertLike(postId, true);
         }
-        console.error(`Unliking image failed: ${error.message}`);
+        console.error(`Unliking post failed: ${error.message}`);
       }
     });
   }
@@ -152,25 +152,25 @@ export class FeedComponent {
     this.loadNextPage();
   }
 
-  onDeleteAction(image: Image) {
-    this.pagination.remove(image);
-    this.apiClient.deleteImage(image.id).subscribe({
+  onDeleteAction(post: Post) {
+    this.pagination.remove(post);
+    this.apiClient.deletePost(post.id).subscribe({
       next: () => {
-        if (this.imageId === image.id) {
-          this.router.navigate([`/users/${image.userId}`]);
+        if (this.postId === post.id) {
+          this.router.navigate([`/users/${post.userId}`]);
         }
       },
-      error: (error) => console.error(`Deleting image failed: ${error.message}`)
+      error: (error) => console.error(`Deleting post failed: ${error.message}`)
     });
   }
 
-  private revertLike(imageId: number, liked: boolean) {
-    const image = this.pagination.data.find((item) => item.id === imageId);
-    if (!image) {
+  private revertLike(postId: number, liked: boolean) {
+    const post = this.pagination.data.find((item) => item.id === postId);
+    if (!post) {
       return;
     }
 
-    image.liked = liked;
-    image.likes += liked ? 1 : -1;
+    post.liked = liked;
+    post.likes += liked ? 1 : -1;
   }
 }

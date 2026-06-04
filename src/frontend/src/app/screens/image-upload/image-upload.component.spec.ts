@@ -16,7 +16,7 @@ describe('ImageUploadComponent', () => {
   beforeEach(() => {
     mockApiClient = {
       uploadImage: jest.fn(),
-      createImage: jest.fn()
+      createPost: jest.fn()
     };
 
     mockRouter = {
@@ -71,19 +71,19 @@ describe('ImageUploadComponent', () => {
   });
 
   describe('onSubmitClick', () => {
-    it('should upload and create image, then navigate to home', () => {
+    it('should upload and create post, then navigate to home', () => {
       const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
       component['selectedFile'] = mockFile;
       component.imageDescription = '   My Cool Photo   '; // Test trimming
 
       mockApiClient.uploadImage.mockReturnValue(of({ filename: 'uploaded.jpg' }));
-      mockApiClient.createImage.mockReturnValue(of({ id: 1 }));
+      mockApiClient.createPost.mockReturnValue(of({ id: 1 }));
 
       component.onSubmitClick();
 
       expect(component.isSubmitting).toBe(false); // due to finalize
       expect(mockApiClient.uploadImage).toHaveBeenCalledWith(mockFile);
-      expect(mockApiClient.createImage).toHaveBeenCalledWith('uploaded.jpg', 'My Cool Photo');
+      expect(mockApiClient.createPost).toHaveBeenCalledWith('uploaded.jpg', 'My Cool Photo');
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
     });
 
@@ -97,7 +97,7 @@ describe('ImageUploadComponent', () => {
 
       expect(component.isSubmitting).toBe(false);
       expect(component.errorMessage).toBe('Upload failed');
-      expect(mockApiClient.createImage).not.toHaveBeenCalled();
+      expect(mockApiClient.createPost).not.toHaveBeenCalled();
       expect(mockRouter.navigate).not.toHaveBeenCalled();
     });
   });

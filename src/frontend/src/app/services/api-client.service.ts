@@ -3,11 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {map} from 'rxjs/operators';
 
-import {mapImage, mapUser} from '../shared/utils/mappers';
+import {mapPost, mapUser} from '../shared/utils/mappers';
 import {HttpCacheService} from './http-cache.service';
 
 import {User, UserDto, UserIdDto} from '../models/user.model';
-import {Image, ImageDto, ImageFilenameDto, ImageIdDto, ImagesDto} from '../models/image.model';
+import {Post, PostDto, ImageFilenameDto, PostIdDto, PostsDto} from '../models/post.model';
 import {Comment, CommentDto, CommentsDto} from '../models/comment.model';
 
 @Injectable()
@@ -56,79 +56,79 @@ export class APIClient {
     return this.http.delete<void>(url);
   }
 
-  // Images
+  // Posts
 
-  createImage(filename: string, description: string): Observable<ImageIdDto> {
-    const url = '/api/images';
+  createPost(filename: string, description: string): Observable<PostIdDto> {
+    const url = '/api/posts';
     const body = {filename, description};
-    return this.http.post<ImageIdDto>(url, body);
+    return this.http.post<PostIdDto>(url, body);
   }
 
-  getFeed(page: number): Observable<Image[]> {
-    const url = `/api/images?page=${page}`;
-    return this.http.get<ImagesDto>(url).pipe(
-      map((res) => res.items.map((item) => mapImage(item)))
+  getFeed(page: number): Observable<Post[]> {
+    const url = `/api/posts?page=${page}`;
+    return this.http.get<PostsDto>(url).pipe(
+      map((res) => res.items.map((item) => mapPost(item)))
     );
   }
 
-  getImages(userId: number, page: number): Observable<Image[]> {
-    const url = `/api/users/${userId}/images?page=${page}`;
-    return this.http.get<ImagesDto>(url).pipe(
-      map((res) => res.items.map((item) => mapImage(item)))
+  getPosts(userId: number, page: number): Observable<Post[]> {
+    const url = `/api/users/${userId}/posts?page=${page}`;
+    return this.http.get<PostsDto>(url).pipe(
+      map((res) => res.items.map((item) => mapPost(item)))
     );
   }
 
-  getLikedImages(userId: number, page: number): Observable<Image[]> {
+  getLikedPosts(userId: number, page: number): Observable<Post[]> {
     const url = `/api/users/${userId}/likes?page=${page}`;
-    return this.http.get<ImagesDto>(url).pipe(
-      map((res) => res.items.map((item) => mapImage(item)))
+    return this.http.get<PostsDto>(url).pipe(
+      map((res) => res.items.map((item) => mapPost(item)))
     );
   }
 
-  getImage(imageId: number): Observable<Image> {
-    const url = `/api/images/${imageId}`;
-    return this.http.get<ImageDto>(url).pipe(
-      map((res) => mapImage(res))
+  getPost(postId: number): Observable<Post> {
+    const url = `/api/posts/${postId}`;
+    return this.http.get<PostDto>(url).pipe(
+      map((res) => mapPost(res))
     );
   }
 
-  deleteImage(imageId: number): Observable<void> {
-    const url = `/api/images/${imageId}`;
+  deletePost(postId: number): Observable<void> {
+    const url = `/api/posts/${postId}`;
     return this.http.delete<void>(url);
   }
 
-  likeImage(imageId: number): Observable<void> {
-    const url = `/api/images/${imageId}/likes`;
+  likePost(postId: number): Observable<void> {
+    const url = `/api/posts/${postId}/likes`;
     return this.http.post<void>(url, {});
   }
 
-  unlikeImage(imageId: number): Observable<void> {
-    const url = `/api/images/${imageId}/likes`;
+  unlikePost(postId: number): Observable<void> {
+    const url = `/api/posts/${postId}/likes`;
     return this.http.delete<void>(url);
   }
 
   // Comments
 
-  getComments(imageId: number, page: number): Observable<Comment[]> {
-    const url = `/api/images/${imageId}/comments?page=${page}`;
+  getComments(postId: number, page: number): Observable<Comment[]> {
+    const url = `/api/posts/${postId}/comments?page=${page}`;
     return this.http.get<CommentsDto>(url).pipe(
       map((res) => res.items.map((item) => new Comment(
-        item.id, item.imageId, item.userId, item.username, item.avatar, item.body, new Date(item.created)
+        item.id, item.postId, item.userId, item.username, item.avatar, item.body, new Date(item.created)
       )))
     );
   }
 
-  createComment(imageId: number, body: string): Observable<Comment> {
-    const url = `/api/images/${imageId}/comments`;
+  createComment(postId: number, body: string): Observable<Comment> {
+    const url = `/api/posts/${postId}/comments`;
     return this.http.post<CommentDto>(url, {body}).pipe(
       map((res) => new Comment(
-        res.id, res.imageId, res.userId, res.username, res.avatar, res.body, new Date(res.created)
+        res.id, res.postId, res.userId, res.username, res.avatar, res.body, new Date(res.created)
       ))
     );
   }
 
-  deleteComment(imageId: number, commentId: number): Observable<void> {
-    const url = `/api/images/${imageId}/comments/${commentId}`;
+  deleteComment(postId: number, commentId: number): Observable<void> {
+    const url = `/api/posts/${postId}/comments/${commentId}`;
     return this.http.delete<void>(url);
   }
 

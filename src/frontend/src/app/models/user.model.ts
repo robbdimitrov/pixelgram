@@ -9,7 +9,7 @@ export interface UserDto {
   email: string;
   avatar: string | null;
   bio: string | null;
-  images: number;
+  posts: number;
   likes: number;
   created: string;
 }
@@ -22,7 +22,7 @@ export class User {
     public email: string,
     public avatar: string | null,
     public bio: string | null,
-    public images: number,
+    public posts: number,
     public likes: number,
     public created: Date
   ) {}

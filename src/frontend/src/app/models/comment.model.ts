@@ -1,6 +1,6 @@
 export interface CommentDto {
   id: number;
-  imageId: number;
+  postId: number;
   userId: number;
   username: string;
   avatar: string | null;
@@ -15,7 +15,7 @@ export interface CommentsDto {
 export class Comment {
   constructor(
     public id: number,
-    public imageId: number,
+    public postId: number,
     public userId: number,
     public username: string,
     public avatar: string | null,

@@ -11,11 +11,11 @@ describe('FeedComponent', () => {
   beforeEach(() => {
     mockApiClient = {
       getFeed: jest.fn(),
-      getLikedImages: jest.fn(),
-      getImage: jest.fn(),
-      likeImage: jest.fn(),
-      unlikeImage: jest.fn(),
-      deleteImage: jest.fn()
+      getLikedPosts: jest.fn(),
+      getPost: jest.fn(),
+      likePost: jest.fn(),
+      unlikePost: jest.fn(),
+      deletePost: jest.fn()
     };
 
     mockPagination = {
@@ -45,20 +45,20 @@ describe('FeedComponent', () => {
     component = new FeedComponent(mockApiClient, mockPagination, mockRouter, mockRoute);
 
     expect(component.userId).toBeUndefined();
-    expect(component.imageId).toBeUndefined();
+    expect(component.postId).toBeUndefined();
     expect(mockApiClient.getFeed).toHaveBeenCalledWith(1);
     expect(mockPagination.update).toHaveBeenCalled();
     expect(component.hasLoaded).toBe(true);
   });
 
-  it('should load specific image if imageId param provided', () => {
-    mockRoute.params = of({ imageId: '10' });
-    mockApiClient.getImage.mockReturnValue(of({ id: 10, filename: 'test10.jpg' }));
+  it('should load specific post if postId param provided', () => {
+    mockRoute.params = of({ postId: '10' });
+    mockApiClient.getPost.mockReturnValue(of({ id: 10, filename: 'test10.jpg' }));
 
     component = new FeedComponent(mockApiClient, mockPagination, mockRouter, mockRoute);
 
-    expect(component.imageId).toBe(10);
-    expect(mockApiClient.getImage).toHaveBeenCalledWith('10');
+    expect(component.postId).toBe(10);
+    expect(mockApiClient.getPost).toHaveBeenCalledWith('10');
   });
 
   it('should handle API errors gracefully during loadNextPage', () => {
@@ -80,31 +80,27 @@ describe('FeedComponent', () => {
     });
 
     it('should revert optimistic like on error', () => {
-      mockApiClient.likeImage.mockReturnValue(throwError(() => new Error('Failed to like')));
-      
-      // Assume the UI already updated optimistic state before calling onLike, 
-      // but the component actually doesn't optimistically update in onLike, it expects the UI to do it?
-      // Wait, let's look at the component code. It only reverts on error.
-      // So if it errors, it sets liked = false, likes -= 1
+      mockApiClient.likePost.mockReturnValue(throwError(() => new Error('Failed to like')));
+
       mockPagination.data[0].liked = true;
       mockPagination.data[0].likes = 1;
 
       component.onLike(1);
 
-      expect(mockApiClient.likeImage).toHaveBeenCalledWith(1);
+      expect(mockApiClient.likePost).toHaveBeenCalledWith(1);
       expect(mockPagination.data[0].liked).toBe(false);
       expect(mockPagination.data[0].likes).toBe(0);
     });
 
     it('should revert optimistic unlike on error', () => {
-      mockApiClient.unlikeImage.mockReturnValue(throwError(() => new Error('Failed to unlike')));
-      
+      mockApiClient.unlikePost.mockReturnValue(throwError(() => new Error('Failed to unlike')));
+
       mockPagination.data[0].liked = false;
       mockPagination.data[0].likes = 0;
 
       component.onUnlike(1);
 
-      expect(mockApiClient.unlikeImage).toHaveBeenCalledWith(1);
+      expect(mockApiClient.unlikePost).toHaveBeenCalledWith(1);
       expect(mockPagination.data[0].liked).toBe(true);
       expect(mockPagination.data[0].likes).toBe(1);
     });

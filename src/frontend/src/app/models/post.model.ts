@@ -1,8 +1,8 @@
-export interface ImageIdDto {
+export interface PostIdDto {
   id: number;
 }
 
-export interface ImageDto {
+export interface PostDto {
   id: number;
   userId: number;
   filename: string;
@@ -13,15 +13,15 @@ export interface ImageDto {
   created: string;
 }
 
-export interface ImagesDto {
-  items: ImageDto[];
+export interface PostsDto {
+  items: PostDto[];
 }
 
 export interface ImageFilenameDto {
   filename: string;
 }
 
-export class Image {
+export class Post {
   constructor(
     public id: number,
     public userId: number,

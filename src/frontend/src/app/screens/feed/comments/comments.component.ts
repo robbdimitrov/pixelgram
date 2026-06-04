@@ -12,7 +12,7 @@ import {Comment} from '../../../models/comment.model';
   standalone: false
 })
 export class CommentsComponent implements OnInit {
-  @Input() imageId: number;
+  @Input() postId: number;
 
   newCommentBody = '';
   isSubmitting = false;
@@ -54,7 +54,7 @@ export class CommentsComponent implements OnInit {
       return;
     }
     this.isSubmitting = true;
-    this.apiClient.createComment(this.imageId, body).subscribe({
+    this.apiClient.createComment(this.postId, body).subscribe({
       next: (comment) => {
         this.pagination.data = [...this.pagination.data, comment];
         this.newCommentBody = '';
@@ -69,7 +69,7 @@ export class CommentsComponent implements OnInit {
 
   onDelete(comment: Comment) {
     this.pagination.data = this.pagination.data.filter((c) => c.id !== comment.id);
-    this.apiClient.deleteComment(this.imageId, comment.id).subscribe({
+    this.apiClient.deleteComment(this.postId, comment.id).subscribe({
       error: (error) => {
         this.pagination.data = [...this.pagination.data, comment]
           .sort((a, b) => a.created.getTime() - b.created.getTime());
@@ -79,7 +79,7 @@ export class CommentsComponent implements OnInit {
   }
 
   private loadPage() {
-    this.apiClient.getComments(this.imageId, this.pagination.page).subscribe({
+    this.apiClient.getComments(this.postId, this.pagination.page).subscribe({
       next: (items) => {
         this.isLoadingMore = false;
         this.pagination.update(items, items.length);

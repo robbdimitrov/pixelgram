@@ -41,7 +41,7 @@ describe('APIClient', () => {
         username: 'testuser',
         email: 'test@test.com',
         created: '1',
-        images: 0,
+        posts: 0,
         likes: 0
       };
 
@@ -64,7 +64,7 @@ describe('APIClient', () => {
         username: 'testuser',
         email: 'test@test.com',
         created: '1',
-        images: 0,
+        posts: 0,
         likes: 0
       };
 
@@ -79,20 +79,20 @@ describe('APIClient', () => {
     });
   });
 
-  describe('createImage', () => {
-    it('should POST image data', () => {
-      const mockImageRes = {
+  describe('createPost', () => {
+    it('should POST post data', () => {
+      const mockPostRes = {
         id: 1
       };
 
-      service.createImage('img.jpg', 'Testing').subscribe(res => {
+      service.createPost('img.jpg', 'Testing').subscribe(res => {
         expect(res.id).toBe(1);
       });
 
-      const req = httpMock.expectOne('/api/images');
+      const req = httpMock.expectOne('/api/posts');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ filename: 'img.jpg', description: 'Testing' });
-      req.flush(mockImageRes);
+      req.flush(mockPostRes);
     });
   });
 
@@ -154,61 +154,61 @@ describe('APIClient', () => {
   describe('getFeed', () => {
     it('should GET feed', () => {
       service.getFeed(1).subscribe();
-      const req = httpMock.expectOne('/api/images?page=1');
+      const req = httpMock.expectOne('/api/posts?page=1');
       expect(req.request.method).toBe('GET');
       req.flush({ items: [] });
     });
   });
 
-  describe('getImages', () => {
-    it('should GET user images', () => {
-      service.getImages(1, 1).subscribe();
-      const req = httpMock.expectOne('/api/users/1/images?page=1');
+  describe('getPosts', () => {
+    it('should GET user posts', () => {
+      service.getPosts(1, 1).subscribe();
+      const req = httpMock.expectOne('/api/users/1/posts?page=1');
       expect(req.request.method).toBe('GET');
       req.flush({ items: [] });
     });
   });
 
-  describe('getLikedImages', () => {
-    it('should GET liked images', () => {
-      service.getLikedImages(1, 1).subscribe();
+  describe('getLikedPosts', () => {
+    it('should GET liked posts', () => {
+      service.getLikedPosts(1, 1).subscribe();
       const req = httpMock.expectOne('/api/users/1/likes?page=1');
       expect(req.request.method).toBe('GET');
       req.flush({ items: [] });
     });
   });
 
-  describe('getImage', () => {
-    it('should GET image', () => {
-      service.getImage(1).subscribe();
-      const req = httpMock.expectOne('/api/images/1');
+  describe('getPost', () => {
+    it('should GET post', () => {
+      service.getPost(1).subscribe();
+      const req = httpMock.expectOne('/api/posts/1');
       expect(req.request.method).toBe('GET');
       req.flush({ id: '1' });
     });
   });
 
-  describe('deleteImage', () => {
-    it('should DELETE image', () => {
-      service.deleteImage(1).subscribe();
-      const req = httpMock.expectOne('/api/images/1');
+  describe('deletePost', () => {
+    it('should DELETE post', () => {
+      service.deletePost(1).subscribe();
+      const req = httpMock.expectOne('/api/posts/1');
       expect(req.request.method).toBe('DELETE');
       req.flush({});
     });
   });
 
-  describe('likeImage', () => {
+  describe('likePost', () => {
     it('should POST like', () => {
-      service.likeImage(1).subscribe();
-      const req = httpMock.expectOne('/api/images/1/likes');
+      service.likePost(1).subscribe();
+      const req = httpMock.expectOne('/api/posts/1/likes');
       expect(req.request.method).toBe('POST');
       req.flush({});
     });
   });
 
-  describe('unlikeImage', () => {
+  describe('unlikePost', () => {
     it('should DELETE like', () => {
-      service.unlikeImage(1).subscribe();
-      const req = httpMock.expectOne('/api/images/1/likes');
+      service.unlikePost(1).subscribe();
+      const req = httpMock.expectOne('/api/posts/1/likes');
       expect(req.request.method).toBe('DELETE');
       req.flush({});
     });

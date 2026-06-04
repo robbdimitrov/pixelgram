@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 
-import {Image} from '../../../models/image.model';
+import {Post} from '../../../models/post.model';
 
 @Component({
     selector: 'app-thumbnail',
@@ -8,5 +8,5 @@ import {Image} from '../../../models/image.model';
     standalone: false
 })
 export class ThumbnailComponent {
-  @Input() image: Image;
+  @Input() post: Post;
 }

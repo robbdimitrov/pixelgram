@@ -11,17 +11,17 @@
   }
 
   <div class="flex w-full flex-col gap-6">
-    @for (image of images(); track image) {
+    @for (post of posts(); track post) {
       <div class="w-full transition-all duration-300">
-        <app-image
-          [image]="image"
-          [user]="image.userId | user | async"
-          [singleView]="!!imageId"
+        <app-post
+          [post]="post"
+          [user]="post.userId | user | async"
+          [singleView]="!!postId"
           (like)="onLike($event)"
           (unlike)="onUnlike($event)"
           (deleteAction)="onDeleteAction($event)"
           >
-        </app-image>
+        </app-post>
       </div>
     }
   </div>

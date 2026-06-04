@@ -97,7 +97,7 @@ export class ImageUploadComponent {
     const imageDescription = this.imageDescription.trim();
 
     this.apiClient.uploadImage(this.selectedFile).pipe(
-      concatMap((data) => this.apiClient.createImage(data.filename, imageDescription)),
+      concatMap((data) => this.apiClient.createPost(data.filename, imageDescription)),
       finalize(() => this.isSubmitting = false)
     ).subscribe({
       next: () => this.router.navigate(['/']),
