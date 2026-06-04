@@ -19,6 +19,7 @@ export class ImageComponent implements OnDestroy {
   @Output() deleteAction = new EventEmitter<Image>();
   @Input() image: Image;
   @Input() user: User | null;
+  @Input() singleView = false;
   isLikeAnimating = false;
 
   constructor(private session: SessionService) {}

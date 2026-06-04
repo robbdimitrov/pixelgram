@@ -64,6 +64,14 @@
       >
         {{image.likes}} {{image.likes | pluralize:'like'}}
       </span>
+      <a
+        class="group ml-2 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        [routerLink]="['/images', image.id]"
+        aria-label="View comments"
+      >
+        <svg lucideMessageCircle class="h-5 w-5"></svg>
+        {{image.comments}} {{image.comments | pluralize:'comment'}}
+      </a>
     </div>
 
     @if (isDescriptionPresent()) {
@@ -80,6 +88,12 @@
     <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
       {{image.created | relativedate}}
     </span>
+
+    @if (singleView) {
+      <div class="border-t border-slate-100 pt-4 dark:border-white/10">
+        <app-comments [imageId]="image.id"></app-comments>
+      </div>
+    }
   </div>
 </div>
 

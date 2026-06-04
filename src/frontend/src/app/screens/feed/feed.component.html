@@ -16,6 +16,7 @@
         <app-image
           [image]="image"
           [user]="image.userId | user | async"
+          [singleView]="!!imageId"
           (like)="onLike($event)"
           (unlike)="onUnlike($event)"
           (deleteAction)="onDeleteAction($event)"

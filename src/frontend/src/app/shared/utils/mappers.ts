@@ -23,6 +23,7 @@ export function mapImage(image: ImageDto): Image {
     image.description,
     image.likes,
     image.liked,
+    image.comments ?? 0,
     new Date(image.created)
   );
 }

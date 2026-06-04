@@ -4,6 +4,7 @@ import {RouterModule, Routes} from '@angular/router';
 import {authGuard} from '../../shared/auth-guard.service';
 import {FeedComponent} from './feed.component';
 import {ImageComponent} from './image/image.component';
+import {CommentsComponent} from './comments/comments.component';
 import {SharedModule} from '../../shared/shared.module';
 
 export const routes: Routes = [
@@ -27,7 +28,8 @@ export const routes: Routes = [
 @NgModule({
   declarations: [
     FeedComponent,
-    ImageComponent
+    ImageComponent,
+    CommentsComponent
   ],
   imports: [
     SharedModule,

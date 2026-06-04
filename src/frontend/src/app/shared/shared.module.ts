@@ -16,7 +16,9 @@ import {
   LucideMonitor,
   LucideArrowLeft,
   LucideTriangleAlert,
-  LucideTrash2
+  LucideTrash2,
+  LucideMessageCircle,
+  LucideSend
 } from '@lucide/angular';
 
 import {NavbarComponent} from './components/navbar.component';
@@ -62,7 +64,9 @@ import {TrimDirective} from './directives/trim.directive';
     LucideMonitor,
     LucideArrowLeft,
     LucideTriangleAlert,
-    LucideTrash2
+    LucideTrash2,
+    LucideMessageCircle,
+    LucideSend
   ],
   exports: [
     CommonModule,
@@ -82,6 +86,8 @@ import {TrimDirective} from './directives/trim.directive';
     LucideArrowLeft,
     LucideTriangleAlert,
     LucideTrash2,
+    LucideMessageCircle,
+    LucideSend,
     NavbarComponent,
     EmptyStateComponent,
     ImagePipe,

@@ -9,6 +9,7 @@ export interface ImageDto {
   description: string;
   likes: number;
   liked: boolean;
+  comments: number;
   created: string;
 }
 
@@ -28,6 +29,7 @@ export class Image {
     public description: string,
     public likes: number,
     public liked: boolean,
+    public comments: number,
     public created: Date
   ) {}
 }

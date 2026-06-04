@@ -8,6 +8,7 @@ import {HttpCacheService} from './http-cache.service';
 
 import {User, UserDto, UserIdDto} from '../models/user.model';
 import {Image, ImageDto, ImageFilenameDto, ImageIdDto, ImagesDto} from '../models/image.model';
+import {Comment, CommentDto, CommentsDto} from '../models/comment.model';
 
 @Injectable()
 export class APIClient {
@@ -103,6 +104,31 @@ export class APIClient {
 
   unlikeImage(imageId: number): Observable<void> {
     const url = `/api/images/${imageId}/likes`;
+    return this.http.delete<void>(url);
+  }
+
+  // Comments
+
+  getComments(imageId: number, page: number): Observable<Comment[]> {
+    const url = `/api/images/${imageId}/comments?page=${page}`;
+    return this.http.get<CommentsDto>(url).pipe(
+      map((res) => res.items.map((item) => new Comment(
+        item.id, item.imageId, item.userId, item.username, item.avatar, item.body, new Date(item.created)
+      )))
+    );
+  }
+
+  createComment(imageId: number, body: string): Observable<Comment> {
+    const url = `/api/images/${imageId}/comments`;
+    return this.http.post<CommentDto>(url, {body}).pipe(
+      map((res) => new Comment(
+        res.id, res.imageId, res.userId, res.username, res.avatar, res.body, new Date(res.created)
+      ))
+    );
+  }
+
+  deleteComment(imageId: number, commentId: number): Observable<void> {
+    const url = `/api/images/${imageId}/comments/${commentId}`;
     return this.http.delete<void>(url);
   }
 
