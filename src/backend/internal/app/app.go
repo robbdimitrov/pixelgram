@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/images"
 	"pixelgram/backend/internal/sessions"
@@ -21,6 +22,7 @@ type Stores struct {
 	Sessions    sessions.Store
 	Uploads     uploads.Store
 	Images      images.Store
+	Comments    comments.Store
 }
 
 func New(cfg Config, stores Stores) http.Handler {
@@ -32,6 +34,7 @@ func New(cfg Config, stores Stores) http.Handler {
 	sessionHandler := sessions.Handler{Store: stores.Sessions}
 	uploadHandler := uploads.Handler{Store: stores.Uploads, ImageDir: cfg.ImageDir}
 	imageHandler := images.Handler{Store: stores.Images, ImageDir: cfg.ImageDir}
+	commentHandler := comments.Handler{Store: stores.Comments}
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
@@ -51,6 +54,9 @@ func New(cfg Config, stores Stores) http.Handler {
 	mux.HandleFunc("DELETE /images/{imageId}", imageHandler.DeleteImage)
 	mux.HandleFunc("POST /images/{imageId}/likes", imageHandler.LikeImage)
 	mux.HandleFunc("DELETE /images/{imageId}/likes", imageHandler.UnlikeImage)
+	mux.HandleFunc("GET /images/{imageId}/comments", commentHandler.ListComments)
+	mux.HandleFunc("POST /images/{imageId}/comments", commentHandler.CreateComment)
+	mux.HandleFunc("DELETE /images/{imageId}/comments/{commentId}", commentHandler.DeleteComment)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 	})

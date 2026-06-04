@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/images"
 	"pixelgram/backend/internal/sessions"
@@ -412,6 +413,7 @@ func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID str
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
 		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		(SELECT count(*) FROM comments WHERE image_id = id) AS comments,
 		time_format(created) AS created
 		FROM images
 		ORDER BY images.created DESC
@@ -426,6 +428,7 @@ func (c *Client) GetImages(ctx context.Context, userID string, page, limit int, 
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
 		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		(SELECT count(*) FROM comments WHERE image_id = id) AS comments,
 		time_format(created) AS created
 		FROM images WHERE user_id = $2
 		ORDER BY images.created DESC
@@ -440,6 +443,7 @@ func (c *Client) GetLikedImages(ctx context.Context, userID string, page, limit 
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
 		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		(SELECT count(*) FROM comments WHERE image_id = id) AS comments,
 		time_format(images.created) AS created
 		FROM images
 		INNER JOIN likes ON image_id = id
@@ -456,6 +460,7 @@ func (c *Client) GetImage(ctx context.Context, imageID, currentUserID string) (i
 		(SELECT count(*) FROM likes WHERE image_id = id) AS likes,
 		EXISTS (SELECT 1 FROM likes
 		WHERE image_id = id AND likes.user_id = $1) AS liked,
+		(SELECT count(*) FROM comments WHERE image_id = id) AS comments,
 		time_format(created) AS created
 		FROM images WHERE id = $2`,
 		currentUserID, imageID,
@@ -561,6 +566,119 @@ func (c *Client) UnlikeImage(ctx context.Context, imageID, userID string) error 
 	return nil
 }
 
+func (c *Client) CreateComment(ctx context.Context, imageID, userID, body string) (comments.Comment, error) {
+	if !c.breaker.allow() {
+		return comments.Comment{}, store.ErrUnavailable
+	}
+	var comment comments.Comment
+	var avatar sql.NullString
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`INSERT INTO comments (image_id, user_id, body)
+			SELECT $1, $2, $3 WHERE EXISTS (SELECT 1 FROM images WHERE id = $1)
+			RETURNING id, image_id, user_id,
+			(SELECT username FROM users WHERE id = $2),
+			(SELECT avatar FROM users WHERE id = $2),
+			body, time_format(created)`,
+			imageID, userID, body,
+		).Scan(&comment.ID, &comment.ImageID, &comment.UserID,
+			&comment.Username, &avatar, &comment.Body, &comment.Created)
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.success()
+		return comments.Comment{}, store.ErrNotFound
+	}
+	if err != nil {
+		c.breaker.failure(err)
+		return comments.Comment{}, err
+	}
+	c.breaker.success()
+	comment.Avatar = nullableString(avatar)
+	return comment, nil
+}
+
+func (c *Client) ListComments(ctx context.Context, imageID string, page, limit int) ([]comments.Comment, error) {
+	if !c.breaker.allow() {
+		return nil, store.ErrUnavailable
+	}
+	var result []comments.Comment
+	err := withRetry(ctx, c.retryCfg, func() error {
+		rows, err := c.pool.Query(
+			ctx,
+			`SELECT c.id, c.image_id, c.user_id, u.username, u.avatar, c.body, time_format(c.created)
+			FROM comments c
+			JOIN users u ON u.id = c.user_id
+			WHERE c.image_id = $1
+			ORDER BY c.created ASC
+			LIMIT $2 OFFSET $3`,
+			imageID, limit, page*limit,
+		)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		result = []comments.Comment{}
+		for rows.Next() {
+			var comment comments.Comment
+			var avatar sql.NullString
+			if err := rows.Scan(
+				&comment.ID, &comment.ImageID, &comment.UserID,
+				&comment.Username, &avatar, &comment.Body, &comment.Created,
+			); err != nil {
+				return err
+			}
+			comment.Avatar = nullableString(avatar)
+			result = append(result, comment)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		c.breaker.failure(err)
+		return nil, err
+	}
+	c.breaker.success()
+	return result, nil
+}
+
+func (c *Client) DeleteComment(ctx context.Context, imageID, commentID, userID string) (bool, error) {
+	if !c.breaker.allow() {
+		return false, store.ErrUnavailable
+	}
+	// Atomically delete only if the comment belongs to this image and this user.
+	var deletedID int
+	err := c.pool.QueryRow(
+		ctx,
+		`DELETE FROM comments WHERE id = $1 AND image_id = $2 AND user_id = $3 RETURNING id`,
+		commentID, imageID, userID,
+	).Scan(&deletedID)
+	if err == nil {
+		c.breaker.success()
+		return true, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		c.breaker.failure(err)
+		return false, err
+	}
+	// Nothing deleted — distinguish not found from forbidden.
+	var exists bool
+	err = c.pool.QueryRow(
+		ctx,
+		`SELECT EXISTS(SELECT 1 FROM comments WHERE id = $1 AND image_id = $2)`,
+		commentID, imageID,
+	).Scan(&exists)
+	if err != nil {
+		c.breaker.failure(err)
+		return false, err
+	}
+	c.breaker.success()
+	if exists {
+		return true, store.ErrForbidden
+	}
+	return false, nil
+}
+
 func (c *Client) queryImages(ctx context.Context, query string, args ...any) ([]images.Image, error) {
 	if !c.breaker.allow() {
 		return nil, store.ErrUnavailable
@@ -579,7 +697,7 @@ func (c *Client) queryImages(ctx context.Context, query string, args ...any) ([]
 			var description sql.NullString
 			if err := rows.Scan(
 				&image.ID, &image.UserID, &image.Filename, &description,
-				&image.Likes, &image.Liked, &image.Created,
+				&image.Likes, &image.Liked, &image.Comments, &image.Created,
 			); err != nil {
 				return err
 			}

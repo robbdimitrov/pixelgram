@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"pixelgram/backend/internal/app"
+	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/images"
 	"pixelgram/backend/internal/sessions"
@@ -68,6 +69,7 @@ func openStores(databaseURL string) (app.Stores, func(), error) {
 			Sessions:    noopSessionStore{},
 			Uploads:     noopUploadStore{},
 			Images:      noopImageStore{},
+			Comments:    noopCommentStore{},
 		}, func() {}, nil
 	}
 
@@ -82,6 +84,7 @@ func openStores(databaseURL string) (app.Stores, func(), error) {
 		Sessions:    client,
 		Uploads:     client,
 		Images:      client,
+		Comments:    client,
 	}, client.Close, nil
 }
 
@@ -195,3 +198,15 @@ func (noopImageStore) DeleteImage(_ context.Context, _, _ string) (string, bool,
 func (noopImageStore) ImageExists(_ context.Context, _ string) (bool, error) { return false, nil }
 func (noopImageStore) LikeImage(_ context.Context, _, _ string) error        { return nil }
 func (noopImageStore) UnlikeImage(_ context.Context, _, _ string) error      { return nil }
+
+type noopCommentStore struct{}
+
+func (noopCommentStore) CreateComment(_ context.Context, _, _, _ string) (comments.Comment, error) {
+	return comments.Comment{}, nil
+}
+func (noopCommentStore) ListComments(_ context.Context, _ string, _, _ int) ([]comments.Comment, error) {
+	return nil, nil
+}
+func (noopCommentStore) DeleteComment(_ context.Context, _, _, _ string) (bool, error) {
+	return false, nil
+}

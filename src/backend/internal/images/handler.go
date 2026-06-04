@@ -16,6 +16,7 @@ type Image struct {
 	Description *string `json:"description"`
 	Likes       int     `json:"likes"`
 	Liked       bool    `json:"liked"`
+	Comments    int     `json:"comments"`
 	Created     string  `json:"created"`
 }
 
