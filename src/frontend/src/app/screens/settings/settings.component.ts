@@ -3,7 +3,7 @@ import {Router} from '@angular/router';
 
 import {APIClient} from '../../services/api-client.service';
 import {HttpCacheService} from '../../services/http-cache.service';
-import {Session} from '../../services/session.service';
+import {SessionService} from '../../services/session.service';
 import {ThemePreference, ThemeService} from '../../services/theme.service';
 
 @Component({
@@ -16,7 +16,7 @@ export class SettingsComponent {
     private apiClient: APIClient,
     private router: Router,
     private cache: HttpCacheService,
-    private session: Session,
+    private session: SessionService,
     public theme: ThemeService
   ) {}
 

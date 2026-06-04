@@ -3,7 +3,7 @@ import {EventEmitter} from '@angular/core';
 
 import {Image} from '../../../models/image.model';
 import {User} from '../../../models/user.model';
-import {Session} from '../../../services/session.service';
+import {SessionService} from '../../../services/session.service';
 
 @Component({
     selector: 'app-image',
@@ -21,7 +21,7 @@ export class ImageComponent implements OnDestroy {
   @Input() user: User | null;
   isLikeAnimating = false;
 
-  constructor(private session: Session) {}
+  constructor(private session: SessionService) {}
 
   onLikeClick() {
     const wasLiked = this.image.liked;

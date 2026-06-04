@@ -3,7 +3,7 @@ import {Router} from '@angular/router';
 
 import {APIClient} from '../../../services/api-client.service';
 import {User} from '../../../models/user.model';
-import {Session} from '../../../services/session.service';
+import {SessionService} from '../../../services/session.service';
 import {
   maxUploadSizeBytes,
   resizeImageForUpload,
@@ -27,7 +27,7 @@ export class EditProfileComponent implements OnInit {
   constructor(
     private apiClient: APIClient,
     private router: Router,
-    private session: Session
+    private session: SessionService
   ) {}
 
   ngOnInit() {

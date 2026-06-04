@@ -5,7 +5,7 @@ import {Pipe, PipeTransform} from '@angular/core';
     standalone: false
 })
 export class ImagePipe implements PipeTransform {
-  transform(value: string) {
+  transform(value: string | null | undefined) {
     if (!value || value.length === 0) {
       return '/assets/placeholder.svg';
     }

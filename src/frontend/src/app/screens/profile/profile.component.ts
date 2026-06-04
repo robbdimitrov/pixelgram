@@ -4,7 +4,7 @@ import {ActivatedRoute} from '@angular/router';
 import {Image} from '../../models/image.model';
 import {APIClient} from '../../services/api-client.service';
 import {PaginationService} from '../../services/pagination.service';
-import {Session} from '../../services/session.service';
+import {SessionService} from '../../services/session.service';
 import {User} from '../../models/user.model';
 
 @Component({
@@ -22,7 +22,7 @@ export class ProfileComponent {
     private apiClient: APIClient,
     private pagination: PaginationService<Image>,
     private route: ActivatedRoute,
-    private session: Session
+    private session: SessionService
   ) {
     this.route.params.subscribe((params) => {
       if (!this.user || params['userId'] !== this.user.id) {

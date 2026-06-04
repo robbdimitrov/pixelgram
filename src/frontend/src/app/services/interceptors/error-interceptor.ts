@@ -4,7 +4,7 @@ import {Router} from '@angular/router';
 import {catchError} from 'rxjs/operators';
 
 import {APIClient} from '../api-client.service';
-import {Session} from '../session.service';
+import {SessionService} from '../session.service';
 import {throwError} from 'rxjs';
 
 import {HttpCacheService} from '../http-cache.service';
@@ -15,7 +15,7 @@ export class ErrorInterceptor implements HttpInterceptor {
 
   constructor(
     private apiClient: APIClient,
-    private session: Session,
+    private session: SessionService,
     private cache: HttpCacheService,
     private router: Router
   ) {}

@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {Router} from '@angular/router';
-import {Session} from '../../services/session.service';
+import {SessionService} from '../../services/session.service';
 import {ThemeService} from '../../services/theme.service';
 
 @Component({
@@ -13,7 +13,7 @@ import {ThemeService} from '../../services/theme.service';
 })
 export class NavbarComponent {
   constructor(
-    private session: Session,
+    private session: SessionService,
     public router: Router,
     theme: ThemeService
   ) {

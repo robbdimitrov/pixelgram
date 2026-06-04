@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {Router} from '@angular/router';
 
 import {APIClient} from '../../../services/api-client.service';
-import {Session} from '../../../services/session.service';
+import {SessionService} from '../../../services/session.service';
 
 @Component({
     selector: 'app-change-password',
@@ -20,7 +20,7 @@ export class ChangePasswordComponent {
   errorMessage = '';
 
   constructor(private apiClient: APIClient,
-              private session: Session,
+              private session: SessionService,
               private router: Router) {}
 
   onSubmit() {

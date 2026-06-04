@@ -5,7 +5,7 @@ import { throwError, of } from 'rxjs';
 
 import { ErrorInterceptor } from './error-interceptor';
 import { APIClient } from '../api-client.service';
-import { Session } from '../session.service';
+import { SessionService } from '../session.service';
 import { HttpCacheService } from '../http-cache.service';
 
 describe('ErrorInterceptor', () => {
@@ -38,7 +38,7 @@ describe('ErrorInterceptor', () => {
       providers: [
         ErrorInterceptor,
         { provide: APIClient, useValue: mockApiClient },
-        { provide: Session, useValue: mockSession },
+        { provide: SessionService, useValue: mockSession },
         { provide: HttpCacheService, useValue: mockCache },
         { provide: Router, useValue: mockRouter }
       ]

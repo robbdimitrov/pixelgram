@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { Session } from './session.service';
+import { SessionService } from './session.service';
 import { ThemeService } from './theme.service';
 
-describe('Session Service', () => {
-  let session: Session;
+describe('SessionService', () => {
+  let session: SessionService;
   let mockThemeService: any;
 
   beforeEach(() => {
@@ -13,12 +13,12 @@ describe('Session Service', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        Session,
+        SessionService,
         { provide: ThemeService, useValue: mockThemeService }
       ]
     });
 
-    session = TestBed.inject(Session);
+    session = TestBed.inject(SessionService);
 
     // Clear localStorage before each test
     localStorage.clear();

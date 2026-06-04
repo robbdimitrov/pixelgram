@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {ThemeService} from './theme.service';
 
 @Injectable()
-export class Session {
+export class SessionService {
   private readonly userIdKey = 'userId';
 
   constructor(private themeService: ThemeService) {}

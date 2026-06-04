@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { Session } from '../services/session.service';
+import { SessionService } from '../services/session.service';
 import { authGuard } from './auth-guard.service';
 
 describe('authGuard', () => {
@@ -18,7 +18,7 @@ describe('authGuard', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: mockRouter },
-        { provide: Session, useValue: mockSession }
+        { provide: SessionService, useValue: mockSession }
       ]
     });
   });

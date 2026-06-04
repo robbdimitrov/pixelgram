@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 
 import {APIClient} from '../../services/api-client.service';
-import {Session} from '../../services/session.service';
+import {SessionService} from '../../services/session.service';
 
 @Component({
     selector: 'app-signup',
@@ -21,7 +21,7 @@ export class SignupComponent implements OnInit {
 
   constructor(private apiClient: APIClient,
               private router: Router,
-              private session: Session) {}
+              private session: SessionService) {}
 
   ngOnInit() {
     if (this.session.userId()) {

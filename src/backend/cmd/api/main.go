@@ -17,16 +17,16 @@ import (
 
 func main() {
 	port := getenv("PORT", "8080")
-	deps, closeDeps, err := dependencies()
+	stores, closeStores, err := openStores()
 	if err != nil {
-		slog.Error("failed to initialize dependencies", "error", err)
+		slog.Error("failed to initialize stores", "error", err)
 		os.Exit(1)
 	}
-	defer closeDeps()
+	defer closeStores()
 
 	handler := app.New(app.Config{
 		ImageDir: getenv("IMAGE_DIR", "/tmp"),
-	}, deps)
+	}, stores)
 
 	addr := ":" + port
 	slog.Info("starting backend", "addr", addr)
@@ -43,29 +43,29 @@ func main() {
 	}
 }
 
-func dependencies() (app.Dependencies, func(), error) {
+func openStores() (app.Stores, func(), error) {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		return app.Dependencies{
-			Sessions: noopSessionStore{},
-			Users:    noopUserStore{},
-			Auth:     noopAuthStore{},
-			Uploads:  noopUploadStore{},
-			Images:   noopImageStore{},
+		return app.Stores{
+			SessionAuth: noopSessionAuthStore{},
+			Users:       noopUserStore{},
+			Sessions:    noopSessionStore{},
+			Uploads:     noopUploadStore{},
+			Images:      noopImageStore{},
 		}, func() {}, nil
 	}
 
 	client, err := postgres.New(context.Background(), databaseURL, os.Getenv("SESSION_HASH_SECRET"))
 	if err != nil {
-		return app.Dependencies{}, func() {}, err
+		return app.Stores{}, func() {}, err
 	}
 
-	return app.Dependencies{
-		Sessions: client,
-		Users:    client,
-		Auth:     client,
-		Uploads:  client,
-		Images:   client,
+	return app.Stores{
+		SessionAuth: client,
+		Users:       client,
+		Sessions:    client,
+		Uploads:     client,
+		Images:      client,
 	}, client.Close, nil
 }
 
@@ -77,9 +77,9 @@ func getenv(key, fallback string) string {
 	return value
 }
 
-type noopSessionStore struct{}
+type noopSessionAuthStore struct{}
 
-func (noopSessionStore) RefreshSession(string) (httpx.Session, error) {
+func (noopSessionAuthStore) RefreshSession(string) (httpx.Session, error) {
 	return httpx.Session{}, nil
 }
 
@@ -109,37 +109,37 @@ func (noopUserStore) DeleteOtherSessions(string, string) error {
 	return nil
 }
 
-type noopAuthStore struct{}
+type noopSessionStore struct{}
 
-func (noopAuthStore) DeleteExpiredSessions() error {
+func (noopSessionStore) DeleteExpiredSessions() error {
 	return nil
 }
 
-func (noopAuthStore) DeleteExpiredLoginFailures() error {
+func (noopSessionStore) DeleteExpiredLoginFailures() error {
 	return nil
 }
 
-func (noopAuthStore) GetLoginFailures([]string) ([]sessions.LoginFailure, error) {
+func (noopSessionStore) GetLoginFailures([]string) ([]sessions.LoginFailure, error) {
 	return nil, nil
 }
 
-func (noopAuthStore) RecordLoginFailure(string, time.Time) error {
+func (noopSessionStore) RecordLoginFailure(string, time.Time) error {
 	return nil
 }
 
-func (noopAuthStore) ClearLoginFailures([]string) error {
+func (noopSessionStore) ClearLoginFailures([]string) error {
 	return nil
 }
 
-func (noopAuthStore) GetUserWithEmail(string) (sessions.UserCredentials, bool, error) {
+func (noopSessionStore) GetUserWithEmail(string) (sessions.UserCredentials, bool, error) {
 	return sessions.UserCredentials{}, false, nil
 }
 
-func (noopAuthStore) CreateSession(string, int, time.Time) (sessions.CreatedSession, error) {
+func (noopSessionStore) CreateSession(string, int, time.Time) (sessions.CreatedSession, error) {
 	return sessions.CreatedSession{}, nil
 }
 
-func (noopAuthStore) DeleteSession(string) error {
+func (noopSessionStore) DeleteSession(string) error {
 	return nil
 }
 

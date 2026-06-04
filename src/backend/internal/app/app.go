@@ -14,20 +14,20 @@ type Config struct {
 	ImageDir string
 }
 
-type Dependencies struct {
-	Sessions httpx.SessionStore
-	Users    users.Store
-	Auth     sessions.Store
-	Uploads  uploads.Store
-	Images   images.Store
+type Stores struct {
+	SessionAuth httpx.SessionStore
+	Users       users.Store
+	Sessions    sessions.Store
+	Uploads     uploads.Store
+	Images      images.Store
 }
 
-func New(cfg Config, deps Dependencies) http.Handler {
+func New(cfg Config, stores Stores) http.Handler {
 	mux := http.NewServeMux()
-	userHandler := users.Handler{Store: deps.Users, ImageDir: cfg.ImageDir}
-	sessionHandler := sessions.Handler{Store: deps.Auth}
-	uploadHandler := uploads.Handler{Store: deps.Uploads, ImageDir: cfg.ImageDir}
-	imageHandler := images.Handler{Store: deps.Images, ImageDir: cfg.ImageDir}
+	userHandler := users.Handler{Store: stores.Users, ImageDir: cfg.ImageDir}
+	sessionHandler := sessions.Handler{Store: stores.Sessions}
+	uploadHandler := uploads.Handler{Store: stores.Uploads, ImageDir: cfg.ImageDir}
+	imageHandler := images.Handler{Store: stores.Images, ImageDir: cfg.ImageDir}
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
@@ -55,7 +55,7 @@ func New(cfg Config, deps Dependencies) http.Handler {
 		mux,
 		httpx.SecurityHeaders,
 		httpx.OriginGuard,
-		httpx.RequireSession(deps.Sessions),
+		httpx.RequireSession(stores.SessionAuth),
 		httpx.RequestLogger,
 	)
 }
