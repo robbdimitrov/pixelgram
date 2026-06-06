@@ -10,8 +10,8 @@ export class TrimDirective {
   private ngControl = inject(NgControl, {optional: true, self: true});
 
   @HostListener('blur', ['$event.target'])
-  onBlur(target: any): void {
-    if (!target) return;
+  onBlur(target: EventTarget | null): void {
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
     const value = target.value;
     if (this.ngControl && typeof value === 'string') {
       const trimmedValue = value.trim();

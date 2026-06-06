@@ -7,7 +7,17 @@ import {ThemeService} from './theme.service';
 export class SessionService {
   private readonly userIdKey = 'userId';
   private themeService = inject(ThemeService);
-  isClearing = false;
+  private _isClearing = false;
+
+  startClearing(): boolean {
+    if (this._isClearing) return false;
+    this._isClearing = true;
+    return true;
+  }
+
+  stopClearing() {
+    this._isClearing = false;
+  }
 
   userId(): number | null {
     const value = localStorage.getItem(this.userIdKey);

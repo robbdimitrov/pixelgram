@@ -28,7 +28,7 @@ describe('errorInterceptor', () => {
 
   beforeEach(() => {
     mockApiClient = { logoutUser: jest.fn() };
-    mockSession = { userId: jest.fn(), clear: jest.fn() };
+    mockSession = { userId: jest.fn(), clear: jest.fn(), startClearing: jest.fn(), stopClearing: jest.fn() };
     mockCache = { clear: jest.fn() };
     mockRouter = { navigate: jest.fn() };
 
@@ -57,6 +57,7 @@ describe('errorInterceptor', () => {
     const next: HttpHandlerFn = () => throwError(() => errorResponse);
 
     mockSession.userId.mockReturnValue('123');
+    mockSession.startClearing.mockReturnValue(true);
     mockApiClient.logoutUser.mockReturnValue(of(null));
 
     runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
@@ -76,6 +77,7 @@ describe('errorInterceptor', () => {
     const next: HttpHandlerFn = () => throwError(() => errorResponse);
 
     mockSession.userId.mockReturnValue('123');
+    mockSession.startClearing.mockReturnValue(true);
     mockApiClient.logoutUser.mockReturnValue(throwError(() => new Error('Server Error')));
 
     runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({

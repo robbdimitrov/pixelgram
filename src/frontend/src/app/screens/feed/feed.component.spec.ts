@@ -40,12 +40,14 @@ describe('FeedComponent', () => {
       providers: [
         provideRouter([]),
         {provide: APIClient, useValue: mockApiClient},
-        {provide: PaginationService, useValue: mockPagination},
         {
           provide: ActivatedRoute,
           useValue: {params: of(params)}
         }
       ]
+    });
+    TestBed.overrideComponent(FeedComponent, {
+      set: {providers: [{provide: PaginationService, useValue: mockPagination}]}
     });
     component = TestBed.createComponent(FeedComponent).componentInstance;
   }

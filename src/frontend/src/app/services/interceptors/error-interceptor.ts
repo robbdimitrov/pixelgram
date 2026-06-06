@@ -16,14 +16,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        if (session.userId() && !session.isClearing) {
-          session.isClearing = true;
+        if (session.userId() && session.startClearing()) {
           cache.clear();
           session.clear();
           router.navigate(['/login']);
           apiClient.logoutUser().subscribe({
-            complete: () => { session.isClearing = false; },
-            error: () => { session.isClearing = false; }
+            complete: () => session.stopClearing(),
+            error: () => session.stopClearing()
           });
         }
       } else if (error.status === 404) {
