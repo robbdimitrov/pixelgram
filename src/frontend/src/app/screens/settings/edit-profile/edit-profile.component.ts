@@ -1,4 +1,4 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft, LucideTrash2} from '@lucide/angular';
@@ -35,7 +35,7 @@ import {
     LucideTrash2
   ]
 })
-export class EditProfileComponent implements OnInit {
+export class EditProfileComponent {
   private apiClient = inject(APIClient);
   private router = inject(Router);
   private session = inject(SessionService);
@@ -47,8 +47,9 @@ export class EditProfileComponent implements OnInit {
   imagePreview = '';
   user?: User;
   errorMessage = '';
+  isSubmitting = false;
 
-  ngOnInit() {
+  constructor() {
     const userId = this.session.userId();
     if (userId) {
       this.loadUser(userId);
@@ -57,28 +58,35 @@ export class EditProfileComponent implements OnInit {
 
   onSubmit() {
     const userId = this.session.userId();
-    if (!userId) {
+    if (!userId || !this.user || this.isSubmitting) {
       return;
     }
+    const user = this.user;
+    this.isSubmitting = true;
 
     const updateClosure = () => {
-      if (!this.user) {
-        return;
-      }
-
       this.errorMessage = '';
-      this.apiClient.updateUser(userId, this.user.name, this.user.username,
-        this.user.email, this.user.avatar ?? '', this.user.bio ?? '').subscribe({
-          next: () => this.router.navigate(['/settings']),
-          error: (error) => this.errorMessage = error.message || 'Could not update profile. Please try again.'
+      this.apiClient.updateUser(userId, user.name, user.username,
+        user.email, user.avatar ?? '', user.bio ?? '').subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            this.router.navigate(['/settings']);
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            this.errorMessage = error.message || 'Could not update profile. Please try again.';
+          }
         });
     };
 
     if (this.selectedFile) {
       this.apiClient.uploadImage(this.selectedFile).subscribe({
-        next: (data) => this.user!.avatar = data.filename,
-        error: (error) => this.errorMessage = error.error?.message ||
-          error.message || 'Could not upload avatar. Please try again.',
+        next: (data) => user.avatar = data.filename,
+        error: (error) => {
+          this.isSubmitting = false;
+          this.errorMessage = error.error?.message ||
+            error.message || 'Could not upload avatar. Please try again.';
+        },
         complete: () => updateClosure()
       });
     } else {

@@ -1,4 +1,4 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {switchMap} from 'rxjs';
@@ -14,7 +14,7 @@ import {TrimDirective} from '../../shared/directives/trim.directive';
   standalone: true,
   imports: [FormsModule, RouterLink, FormInputStyleDirective, PrimaryActionStyleDirective, TrimDirective]
 })
-export class SignupComponent implements OnInit {
+export class SignupComponent {
   private apiClient = inject(APIClient);
   private router = inject(Router);
   private session = inject(SessionService);
@@ -24,11 +24,12 @@ export class SignupComponent implements OnInit {
   emailValue = '';
   passwordValue = '';
   errorMessage = '';
+  isSubmitting = false;
 
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
 
-  ngOnInit() {
+  constructor() {
     if (this.session.userId()) {
       this.router.navigate(['/']);
     }
@@ -45,15 +46,21 @@ export class SignupComponent implements OnInit {
   }
 
   onSubmit() {
+    if (this.isSubmitting) {
+      return;
+    }
+    this.isSubmitting = true;
     this.errorMessage = '';
     this.apiClient.createUser(this.nameValue, this.usernameValue, this.emailValue, this.passwordValue).pipe(
       switchMap(() => this.apiClient.loginUser(this.emailValue, this.passwordValue))
     ).subscribe({
       next: (data) => {
+        this.isSubmitting = false;
         this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
       error: (error) => {
+        this.isSubmitting = false;
         this.errorMessage = error.message || 'Could not create account. Please try again.';
       }
     });

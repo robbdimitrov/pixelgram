@@ -31,10 +31,10 @@ export class FeedComponent {
       if (params['postId']) {
         this.postId = Number(params['postId']);
         this.userId = undefined;
-        this.loadPost(params['postId']);
+        this.loadPost(this.postId);
       } else {
         this.postId = undefined;
-        this.userId = params['userId'];
+        this.userId = params['userId'] ? Number(params['userId']) : undefined;
         this.loadNextPage();
       }
     });

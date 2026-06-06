@@ -70,7 +70,7 @@ describe('FeedComponent', () => {
     createComponent({postId: '10'});
 
     expect(component.postId).toBe(10);
-    expect(mockApiClient.getPost).toHaveBeenCalledWith('10');
+    expect(mockApiClient.getPost).toHaveBeenCalledWith(10);
   });
 
   it('should handle API errors gracefully during loadNextPage', () => {

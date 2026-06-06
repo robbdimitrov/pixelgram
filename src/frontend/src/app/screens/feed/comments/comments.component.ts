@@ -1,4 +1,4 @@
-import {Component, inject, input, OnInit} from '@angular/core';
+import {afterNextRender, Component, inject, input} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideSend, LucideTrash2} from '@lucide/angular';
@@ -17,7 +17,7 @@ import {RelativeDatePipe} from '../../../shared/pipes/relative-date.pipe';
   standalone: true,
   imports: [RouterLink, FormsModule, ImagePipe, RelativeDatePipe, LucideSend, LucideTrash2]
 })
-export class CommentsComponent implements OnInit {
+export class CommentsComponent {
   private apiClient = inject(APIClient);
   private session = inject(SessionService);
   private pagination = inject<PaginationService<Comment>>(PaginationService);
@@ -28,8 +28,8 @@ export class CommentsComponent implements OnInit {
   isSubmitting = false;
   isLoadingMore = false;
 
-  ngOnInit() {
-    this.loadPage();
+  constructor() {
+    afterNextRender(() => this.loadPage());
   }
 
   comments() {

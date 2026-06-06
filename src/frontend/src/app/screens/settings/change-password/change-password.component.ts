@@ -29,17 +29,25 @@ export class ChangePasswordComponent {
   passwordFieldType = 'password';
   passwordShowButtonTitle = 'Show';
   errorMessage = '';
+  isSubmitting = false;
 
   onSubmit() {
     const userId = this.session.userId();
-    if (!userId) {
+    if (!userId || this.isSubmitting) {
       return;
     }
+    this.isSubmitting = true;
 
     this.errorMessage = '';
     this.apiClient.changePassword(userId, this.oldPasswordValue, this.passwordValue).subscribe({
-      next: () => this.router.navigate(['/settings']),
-      error: (error) => this.errorMessage = error.message || 'Could not update password. Please try again.'
+      next: () => {
+        this.isSubmitting = false;
+        this.router.navigate(['/settings']);
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        this.errorMessage = error.message || 'Could not update password. Please try again.';
+      }
     });
   }
 

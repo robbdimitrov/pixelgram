@@ -13,7 +13,7 @@ node_modules
 .vscode
 .antigravitycli
 antigravity*
-.claude/settings.json
+.claude
 .idea/
 
 # Environment files

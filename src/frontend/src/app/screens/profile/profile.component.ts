@@ -29,8 +29,9 @@ export class ProfileComponent {
 
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
-      if (!this.user || params['userId'] !== this.user.id) {
-        this.loadUser(params['userId']);
+      const userId = Number(params['userId']);
+      if (!this.user || userId !== this.user.id) {
+        this.loadUser(userId);
       }
     });
   }
