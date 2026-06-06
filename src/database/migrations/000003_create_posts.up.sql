@@ -7,7 +7,7 @@ CREATE TABLE uploads (
 CREATE INDEX uploads_user_id_idx ON uploads(user_id);
 CREATE INDEX uploads_created_idx ON uploads(created);
 
-CREATE TABLE images (
+CREATE TABLE posts (
   id serial PRIMARY KEY,
   user_id integer REFERENCES users ON DELETE CASCADE,
   filename varchar(255) NOT NULL,
@@ -16,8 +16,8 @@ CREATE TABLE images (
 );
 
 CREATE TABLE likes (
-  image_id integer REFERENCES images ON DELETE CASCADE,
+  post_id integer REFERENCES posts ON DELETE CASCADE,
   user_id integer REFERENCES users ON DELETE CASCADE,
   created timestamp NOT NULL DEFAULT now(),
-  UNIQUE(image_id, user_id)
+  UNIQUE(post_id, user_id)
 );
