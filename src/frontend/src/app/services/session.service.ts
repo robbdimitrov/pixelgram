@@ -1,9 +1,12 @@
 import {Injectable} from '@angular/core';
 import {ThemeService} from './theme.service';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class SessionService {
   private readonly userIdKey = 'userId';
+  isClearing = false;
 
   constructor(private themeService: ThemeService) {}
 

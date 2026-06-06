@@ -1,37 +1,43 @@
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpResponse, HttpEvent } from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {share} from 'rxjs/operators';
-import {Observable, of} from 'rxjs';
+import { HttpInterceptorFn, HttpResponse, HttpEvent } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 
-import {HttpCacheService} from '../http-cache.service';
+import { HttpCacheService } from '../http-cache.service';
 
-@Injectable()
-export class CacheInterceptor implements HttpInterceptor {
-  constructor(private cache: HttpCacheService) {}
-
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!isCacheable(req)) {
-      return next.handle(req);
-    }
-    return this.sendCache(req.url) || this.sendRequest(req, next);
+export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
+  if (!isCacheable(req)) {
+    return next(req);
   }
+  const cache = inject(HttpCacheService);
+  return sendCache(cache, req.url) ?? sendRequest(cache, req, next);
+};
 
-  private sendCache(url: string) {
-    const response = this.cache.get(url);
-    if (response instanceof HttpResponse) {
-      return of(response);
-    }
-    return response;
+function sendCache(cache: HttpCacheService, url: string): Observable<HttpEvent<unknown>> | null {
+  const cached = cache.get(url);
+  if (cached instanceof HttpResponse) {
+    return of(cached);
   }
-
-  private sendRequest(req: HttpRequest<any>, next: HttpHandler) {
-    const result = next.handle(req).pipe(share());
-    this.cache.set(req.url, result);
-    return result;
-  }
+  return cached ?? null;
 }
 
-function isCacheable(req: HttpRequest<any>) {
+function sendRequest(
+  cache: HttpCacheService,
+  req: Parameters<HttpInterceptorFn>[0],
+  next: Parameters<HttpInterceptorFn>[1]
+): Observable<HttpEvent<unknown>> {
+  const result = next(req).pipe(
+    tap((event) => {
+      if (event instanceof HttpResponse) {
+        cache.set(req.url, event);
+      }
+    })
+  );
+  cache.set(req.url, result);
+  return result;
+}
+
+function isCacheable(req: Parameters<HttpInterceptorFn>[0]) {
   const re = /\/users\/\d+$/;
   return req.method === 'GET' && re.test(req.url);
 }

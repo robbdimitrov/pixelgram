@@ -1,50 +1,35 @@
-import {Injectable} from '@angular/core';
-import { HttpInterceptor, HttpHandler, HttpRequest, HttpErrorResponse } from '@angular/common/http';
-import {Router} from '@angular/router';
-import {catchError} from 'rxjs/operators';
+import { inject } from '@angular/core';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
 
-import {APIClient} from '../api-client.service';
-import {SessionService} from '../session.service';
-import {throwError} from 'rxjs';
+import { APIClient } from '../api-client.service';
+import { SessionService } from '../session.service';
+import { HttpCacheService } from '../http-cache.service';
 
-import {HttpCacheService} from '../http-cache.service';
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  const apiClient = inject(APIClient);
+  const session = inject(SessionService);
+  const cache = inject(HttpCacheService);
+  const router = inject(Router);
 
-@Injectable()
-export class ErrorInterceptor implements HttpInterceptor {
-  private clearingSession = false;
-
-  constructor(
-    private apiClient: APIClient,
-    private session: SessionService,
-    private cache: HttpCacheService,
-    private router: Router
-  ) {}
-
-  intercept(req: HttpRequest<any>, next: HttpHandler) {
-    return next.handle(req).pipe(
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  private handleError(error: HttpErrorResponse) {
-    if (error.status === 401) {
-      if (this.session.userId() && !this.clearingSession) {
-        this.clearingSession = true;
-        this.cache.clear();
-        this.session.clear();
-        this.router.navigate(['/login']);
-        this.apiClient.logoutUser().subscribe({
-          complete: () => {
-            this.clearingSession = false;
-          },
-          error: () => {
-            this.clearingSession = false;
-          }
-        });
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        if (session.userId() && !session.isClearing) {
+          session.isClearing = true;
+          cache.clear();
+          session.clear();
+          router.navigate(['/login']);
+          apiClient.logoutUser().subscribe({
+            complete: () => { session.isClearing = false; },
+            error: () => { session.isClearing = false; }
+          });
+        }
+      } else if (error.status === 404) {
+        router.navigate(['/not-found']);
       }
-    } else if (error.status === 404) {
-      this.router.navigate(['/not-found']);
-    }
-    return throwError(() => error.error);
-  }
-}
+      return throwError(() => error.error);
+    })
+  );
+};

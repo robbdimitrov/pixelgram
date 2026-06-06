@@ -1,18 +1,13 @@
-import { HttpInterceptor, HttpRequest, HttpHandler } from '@angular/common/http';
-import {Injectable} from '@angular/core';
+import { HttpInterceptorFn } from '@angular/common/http';
 
-@Injectable()
-export class HeaderInterceptor implements HttpInterceptor {
-  intercept(req: HttpRequest<any>, next: HttpHandler) {
-    if (isImageUpload(req) || !req.body) {
-      return next.handle(req);
-    }
-    const headers = {'content-type': 'application/json'};
-    const result = req.clone({setHeaders: headers});
-    return next.handle(result);
+export const headersInterceptor: HttpInterceptorFn = (req, next) => {
+  if (isImageUpload(req) || !req.body) {
+    return next(req);
   }
-}
+  const headers = {'content-type': 'application/json'};
+  return next(req.clone({setHeaders: headers}));
+};
 
-function isImageUpload(req: HttpRequest<any>) {
+function isImageUpload(req: Parameters<HttpInterceptorFn>[0]) {
   return req.method === 'POST' && req.url.includes('/uploads');
 }

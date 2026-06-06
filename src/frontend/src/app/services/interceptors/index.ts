@@ -1,11 +1,11 @@
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpInterceptorFn } from '@angular/common/http';
 
-import {CacheInterceptor} from './cache-interceptor';
-import {ErrorInterceptor} from './error-interceptor';
-import {HeaderInterceptor} from './headers-interceptor';
+import { cacheInterceptor } from './cache-interceptor';
+import { errorInterceptor } from './error-interceptor';
+import { headersInterceptor } from './headers-interceptor';
 
-export const interceptors = [
-  {provide: HTTP_INTERCEPTORS, useClass: CacheInterceptor, multi: true},
-  {provide: HTTP_INTERCEPTORS, useClass: HeaderInterceptor, multi: true},
-  {provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true}
+export const interceptors: HttpInterceptorFn[] = [
+  cacheInterceptor,
+  headersInterceptor,
+  errorInterceptor
 ];
