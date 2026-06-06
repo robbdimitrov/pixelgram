@@ -8,7 +8,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "test": "jest"
   },
   "dependencies": {
     "@angular/animations": "~22.0.0",

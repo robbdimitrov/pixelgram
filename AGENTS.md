@@ -5,7 +5,7 @@
 Three services, deployed via Kubernetes:
 - `src/backend` — Go API (`net/http`, `pgx`)
 - `src/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
-- `src/frontend` — Angular 21 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
+- `src/frontend` — Angular 22 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
 
@@ -34,8 +34,8 @@ Manual deployment:
 ```sh
 kubectl create namespace pixelgram
 kubectl create secret generic database-credentials -n pixelgram \
-  --from-literal=postgres-password="$(openssl rand -base64 32)" \
-  --from-literal=session-hash-secret="$(openssl rand -base64 32)"
+  --from-literal=postgres-password="$(openssl rand -hex 32)" \
+  --from-literal=session-hash-secret="$(openssl rand -hex 32)"
 kubectl apply -f ./k8s -n pixelgram
 kubectl port-forward service/frontend 8080 -n pixelgram   # access at localhost:8080
 ```
@@ -118,3 +118,17 @@ The backend reads `PORT` (defaults to `8080`).
 - **Frontend icons**: use Lucide Angular icons for UI icons. Do not add ad hoc inline SVG icons unless Lucide cannot represent the needed symbol.
 - **Frontend layout**: keep page widths intentional: `max-w-xl` for auth/settings/feed/single-post-like flows and `max-w-5xl` for profile grids, upload creation, and app-shell alignment.
 - **Engineering quality**: use SOLID, DRY, and KISS principles. Write good code, remove needless duplication, and refactor toward simpler, clearer implementations when touching an area.
+
+## Shared Style
+
+- Follow **SOLID**, **KISS**, and **DRY** when writing code and refactoring: keep changes focused, prefer simple local patterns, avoid duplicated logic, and add abstractions only when they remove real complexity.
+- Use standard initialisms in Go names (`ID`, `URL`, `HTTP`, `DB`). Generated identifiers are exempt.
+- HTTP APIs return JSON consistently, including errors. Use symbolic `http.Status*` constants.
+- Type API boundaries explicitly. Prefer `unknown` over `any`, map transport DTOs deliberately, and keep strict TypeScript enabled.
+- Comments explain constraints or intent. Do not preserve implementation history, temporary reasoning, or narration of obvious code.
+- Keep handwritten Go `gofmt`-clean. Regenerate generated code instead of editing it manually.
+- Write behavior-oriented tests with typed fakes and framework-native HTTP test utilities.
+- New migrations use two-space indentation, paired up/down files, and corrective migrations rather than rewriting applied history.
+- Microservices must be stateless and designed to work properly in multi-replica environments.
+- Frontend API response handling must tolerate `204 No Content` and non-JSON error bodies; avoid calling `response.json()` unconditionally.
+- No CI/CD, no pre-commit hooks exist in this repo.

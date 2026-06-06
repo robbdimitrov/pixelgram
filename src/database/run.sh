@@ -1,6 +1,7 @@
 #!/bin/sh
-set -e
+set -eu
 
+: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}"
 DB_URL="postgres://postgres:${POSTGRES_PASSWORD}@database:5432/pixelgram?sslmode=disable"
 
 echo "Running database migrations..."
