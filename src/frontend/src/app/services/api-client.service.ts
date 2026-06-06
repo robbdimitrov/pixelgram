@@ -4,7 +4,6 @@ import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 import {mapPost, mapUser} from '../shared/utils/mappers';
-import {HttpCacheService} from './http-cache.service';
 
 import {User, UserDto, UserIdDto} from '../models/user.model';
 import {Post, PostDto, ImageFilenameDto, PostIdDto, PostsDto} from '../models/post.model';
@@ -15,7 +14,6 @@ import {Comment, CommentDto, CommentsDto} from '../models/comment.model';
 })
 export class APIClient {
   private http = inject(HttpClient);
-  private cache = inject(HttpCacheService);
 
   // Users
 
@@ -25,11 +23,8 @@ export class APIClient {
     return this.http.post<UserIdDto>(url, body);
   }
 
-  getUser(userId: number, clearCache = false): Observable<User> {
+  getUser(userId: number): Observable<User> {
     const url = `/api/users/${userId}`;
-    if (clearCache) {
-      this.cache.delete(url);
-    }
     return this.http.get<UserDto>(url).pipe(map((res) => mapUser(res)));
   }
 

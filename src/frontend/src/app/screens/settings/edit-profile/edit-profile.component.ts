@@ -69,10 +69,7 @@ export class EditProfileComponent implements OnInit {
       this.errorMessage = '';
       this.apiClient.updateUser(userId, this.user.name, this.user.username,
         this.user.email, this.user.avatar ?? '', this.user.bio ?? '').subscribe({
-          next: () => {
-            this.apiClient.getUser(userId, true).subscribe();
-            this.router.navigate(['/settings']);
-          },
+          next: () => this.router.navigate(['/settings']),
           error: (error) => this.errorMessage = error.message || 'Could not update profile. Please try again.'
         });
     };

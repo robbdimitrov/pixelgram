@@ -6,15 +6,8 @@ import { throwError, of, Observable } from 'rxjs';
 import { errorInterceptor } from './error-interceptor';
 import { APIClient } from '../api-client.service';
 import { SessionService } from '../session.service';
-import { HttpCacheService } from '../http-cache.service';
 
-function runInterceptor(
-  next: HttpHandlerFn,
-  mockApiClient: Partial<APIClient>,
-  mockSession: Partial<SessionService>,
-  mockCache: Partial<HttpCacheService>,
-  mockRouter: Partial<Router>
-): Observable<HttpEvent<unknown>> {
+function runInterceptor(next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   return TestBed.runInInjectionContext(() =>
     errorInterceptor(new HttpRequest('GET', '/test'), next)
   );
@@ -23,20 +16,17 @@ function runInterceptor(
 describe('errorInterceptor', () => {
   let mockApiClient: any;
   let mockSession: any;
-  let mockCache: any;
   let mockRouter: any;
 
   beforeEach(() => {
     mockApiClient = { logoutUser: jest.fn() };
     mockSession = { userId: jest.fn(), clear: jest.fn(), startClearing: jest.fn(), stopClearing: jest.fn() };
-    mockCache = { clear: jest.fn() };
     mockRouter = { navigate: jest.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: APIClient, useValue: mockApiClient },
         { provide: SessionService, useValue: mockSession },
-        { provide: HttpCacheService, useValue: mockCache },
         { provide: Router, useValue: mockRouter }
       ]
     });
@@ -44,7 +34,7 @@ describe('errorInterceptor', () => {
 
   it('should pass through successful requests', (done) => {
     const next: HttpHandlerFn = () => of({ type: 4 } as unknown as HttpEvent<unknown>);
-    runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
+    runInterceptor(next).subscribe({
       next: (res) => {
         expect(res).toBeTruthy();
         done();
@@ -60,11 +50,10 @@ describe('errorInterceptor', () => {
     mockSession.startClearing.mockReturnValue(true);
     mockApiClient.logoutUser.mockReturnValue(of(null));
 
-    runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
+    runInterceptor(next).subscribe({
       error: (err) => {
         expect(err).toBe('Unauthorized');
         expect(mockApiClient.logoutUser).toHaveBeenCalled();
-        expect(mockCache.clear).toHaveBeenCalled();
         expect(mockSession.clear).toHaveBeenCalled();
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
         done();
@@ -80,11 +69,10 @@ describe('errorInterceptor', () => {
     mockSession.startClearing.mockReturnValue(true);
     mockApiClient.logoutUser.mockReturnValue(throwError(() => new Error('Server Error')));
 
-    runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
+    runInterceptor(next).subscribe({
       error: (err) => {
         expect(err).toBe('Unauthorized');
         expect(mockApiClient.logoutUser).toHaveBeenCalled();
-        expect(mockCache.clear).toHaveBeenCalled();
         expect(mockSession.clear).toHaveBeenCalled();
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
         done();
@@ -98,11 +86,10 @@ describe('errorInterceptor', () => {
 
     mockSession.userId.mockReturnValue(null);
 
-    runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
+    runInterceptor(next).subscribe({
       error: (err) => {
         expect(err).toBe('Unauthorized');
         expect(mockApiClient.logoutUser).not.toHaveBeenCalled();
-        expect(mockCache.clear).not.toHaveBeenCalled();
         expect(mockSession.clear).not.toHaveBeenCalled();
         expect(mockRouter.navigate).not.toHaveBeenCalledWith(['/login']);
         done();
@@ -116,7 +103,7 @@ describe('errorInterceptor', () => {
 
     mockSession.userId.mockReturnValue(null);
 
-    runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
+    runInterceptor(next).subscribe({
       error: (err) => {
         expect(err).toBe('Not Found');
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/not-found']);
@@ -131,7 +118,7 @@ describe('errorInterceptor', () => {
 
     mockSession.userId.mockReturnValue(null);
 
-    runInterceptor(next, mockApiClient, mockSession, mockCache, mockRouter).subscribe({
+    runInterceptor(next).subscribe({
       error: (err) => {
         expect(err).toBe('Server Error');
         expect(mockRouter.navigate).not.toHaveBeenCalled();

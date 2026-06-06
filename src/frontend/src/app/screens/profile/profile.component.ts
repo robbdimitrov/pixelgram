@@ -36,7 +36,7 @@ export class ProfileComponent {
   }
 
   loadUser(userId: number) {
-    this.apiClient.getUser(userId, true).subscribe({
+    this.apiClient.getUser(userId).subscribe({
       next: (value) => {
         this.user = value;
         this.hasLoadedPosts = false;

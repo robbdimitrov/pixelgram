@@ -4,7 +4,6 @@ import {NgClass} from '@angular/common';
 import {LucideChevronRight} from '@lucide/angular';
 
 import {APIClient} from '../../services/api-client.service';
-import {HttpCacheService} from '../../services/http-cache.service';
 import {SessionService} from '../../services/session.service';
 import {ThemePreference, ThemeService} from '../../services/theme.service';
 
@@ -17,7 +16,6 @@ import {ThemePreference, ThemeService} from '../../services/theme.service';
 export class SettingsComponent {
   private apiClient = inject(APIClient);
   private router = inject(Router);
-  private cache = inject(HttpCacheService);
   private session = inject(SessionService);
   theme = inject(ThemeService);
 
@@ -27,7 +25,6 @@ export class SettingsComponent {
 
   onLogoutClick() {
     this.apiClient.logoutUser().subscribe(() => {
-      this.cache.clear();
       this.session.clear();
       this.router.navigate(['/']);
     });

@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { APIClient } from './api-client.service';
-import { HttpCacheService } from './http-cache.service';
 
 describe('APIClient', () => {
   let service: APIClient;
@@ -13,11 +12,7 @@ describe('APIClient', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        APIClient,
-        {
-          provide: HttpCacheService,
-          useValue: { delete: jest.fn() } // Mock the cache service
-        }
+        APIClient
       ]
     });
 
