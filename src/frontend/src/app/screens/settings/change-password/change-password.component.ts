@@ -37,11 +37,10 @@ export class ChangePasswordComponent {
     }
 
     this.errorMessage = '';
-    this.apiClient.changePassword(userId, this.oldPasswordValue,
-      this.passwordValue).subscribe(
-        () => this.router.navigate(['/settings']),
-        (error) => this.errorMessage = error.message || 'Could not update password. Please try again.'
-      );
+    this.apiClient.changePassword(userId, this.oldPasswordValue, this.passwordValue).subscribe({
+      next: () => this.router.navigate(['/settings']),
+      error: (error) => this.errorMessage = error.message || 'Could not update password. Please try again.'
+    });
   }
 
   onVisibilityToggle(element: HTMLInputElement) {

@@ -1,6 +1,7 @@
 import {Component, inject, OnInit} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
+import {switchMap} from 'rxjs';
 
 import {APIClient} from '../../services/api-client.service';
 import {SessionService} from '../../services/session.service';
@@ -45,19 +46,16 @@ export class SignupComponent implements OnInit {
 
   onSubmit() {
     this.errorMessage = '';
-    this.apiClient.createUser(this.nameValue, this.usernameValue,
-      this.emailValue, this.passwordValue).subscribe({
-        next: () => {
-          this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe(
-            (data) => {
-              this.session.setUserId(data.id);
-              this.router.navigate(['/']);
-            }
-          );
-        },
-        error: (error) => {
-          this.errorMessage = error.message || 'Could not create account. Please try again.';
-        }
+    this.apiClient.createUser(this.nameValue, this.usernameValue, this.emailValue, this.passwordValue).pipe(
+      switchMap(() => this.apiClient.loginUser(this.emailValue, this.passwordValue))
+    ).subscribe({
+      next: (data) => {
+        this.session.setUserId(data.id);
+        this.router.navigate(['/']);
+      },
+      error: (error) => {
+        this.errorMessage = error.message || 'Could not create account. Please try again.';
+      }
     });
   }
 }
