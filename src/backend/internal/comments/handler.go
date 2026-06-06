@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
@@ -12,13 +13,13 @@ import (
 )
 
 type Comment struct {
-	ID       int     `json:"id"`
-	PostID   int     `json:"postId"`
-	UserID   int     `json:"userId"`
-	Username string  `json:"username"`
-	Avatar   *string `json:"avatar"`
-	Body     string  `json:"body"`
-	Created  string  `json:"created"`
+	ID       int       `json:"id"`
+	PostID   int       `json:"postId"`
+	UserID   int       `json:"userId"`
+	Username string    `json:"username"`
+	Avatar   *string   `json:"avatar"`
+	Body     string    `json:"body"`
+	Created  time.Time `json:"created"`
 }
 
 type Store interface {

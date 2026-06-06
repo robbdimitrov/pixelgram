@@ -138,7 +138,7 @@ func (c *Client) GetUser(ctx context.Context, userID string) (users.User, bool, 
 			`SELECT id, name, username, email, avatar, bio,
 			(SELECT count(*) FROM posts WHERE user_id = users.id) AS posts,
 			(SELECT count(*) FROM likes WHERE user_id = id) AS likes,
-			time_format(created) AS created
+			created
 			FROM users WHERE id = $1`,
 			userID,
 		).Scan(
@@ -414,7 +414,7 @@ func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID str
 		EXISTS (SELECT 1 FROM likes
 		WHERE post_id = id AND likes.user_id = $1) AS liked,
 		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		time_format(created) AS created
+		created
 		FROM posts
 		ORDER BY posts.created DESC
 		LIMIT $2 OFFSET $3`,
@@ -429,7 +429,7 @@ func (c *Client) GetPosts(ctx context.Context, userID string, page, limit int, c
 		EXISTS (SELECT 1 FROM likes
 		WHERE post_id = id AND likes.user_id = $1) AS liked,
 		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		time_format(created) AS created
+		created
 		FROM posts WHERE user_id = $2
 		ORDER BY posts.created DESC
 		LIMIT $3 OFFSET $4`,
@@ -444,7 +444,7 @@ func (c *Client) GetLikedPosts(ctx context.Context, userID string, page, limit i
 		EXISTS (SELECT 1 FROM likes
 		WHERE post_id = id AND likes.user_id = $1) AS liked,
 		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		time_format(posts.created) AS created
+		posts.created
 		FROM posts
 		INNER JOIN likes ON post_id = id
 		WHERE likes.user_id = $2
@@ -461,7 +461,7 @@ func (c *Client) GetPost(ctx context.Context, postID, currentUserID string) (pos
 		EXISTS (SELECT 1 FROM likes
 		WHERE post_id = id AND likes.user_id = $1) AS liked,
 		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		time_format(created) AS created
+		created
 		FROM posts WHERE id = $2`,
 		currentUserID, postID,
 	)
@@ -580,7 +580,7 @@ func (c *Client) CreateComment(ctx context.Context, postID, userID, body string)
 			RETURNING id, post_id, user_id,
 			(SELECT username FROM users WHERE id = $2),
 			(SELECT avatar FROM users WHERE id = $2),
-			body, time_format(created)`,
+			body, created`,
 			postID, userID, body,
 		).Scan(&comment.ID, &comment.PostID, &comment.UserID,
 			&comment.Username, &avatar, &comment.Body, &comment.Created)
@@ -606,7 +606,7 @@ func (c *Client) ListComments(ctx context.Context, postID string, page, limit in
 	err := withRetry(ctx, c.retryCfg, func() error {
 		rows, err := c.pool.Query(
 			ctx,
-			`SELECT c.id, c.post_id, c.user_id, u.username, u.avatar, c.body, time_format(c.created)
+			`SELECT c.id, c.post_id, c.user_id, u.username, u.avatar, c.body, c.created
 			FROM comments c
 			JOIN users u ON u.id = c.user_id
 			WHERE c.post_id = $1

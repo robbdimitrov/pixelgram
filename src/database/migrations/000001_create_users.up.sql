@@ -6,5 +6,5 @@ CREATE TABLE users (
   password varchar(255) NOT NULL,
   avatar varchar(255) DEFAULT '',
   bio varchar(255) DEFAULT '',
-  created timestamp NOT NULL DEFAULT now()
+  created timestamptz NOT NULL DEFAULT now()
 );

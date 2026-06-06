@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"pixelgram/backend/internal/auth"
 	"pixelgram/backend/internal/httpx"
@@ -196,7 +197,7 @@ func TestGetUser(t *testing.T) {
 			Bio:      &bio,
 			Posts:    2,
 			Likes:    3,
-			Created:  "2026-01-01T00:00:00.000Z",
+			Created:  time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 	}}
 	res := httptest.NewRecorder()

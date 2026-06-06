@@ -3,6 +3,7 @@ package posts
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
@@ -10,14 +11,14 @@ import (
 )
 
 type Post struct {
-	ID          int     `json:"id"`
-	UserID      int     `json:"userId"`
-	Filename    string  `json:"filename"`
-	Description *string `json:"description"`
-	Likes       int     `json:"likes"`
-	Liked       bool    `json:"liked"`
-	Comments    int     `json:"comments"`
-	Created     string  `json:"created"`
+	ID          int       `json:"id"`
+	UserID      int       `json:"userId"`
+	Filename    string    `json:"filename"`
+	Description *string   `json:"description"`
+	Likes       int       `json:"likes"`
+	Liked       bool      `json:"liked"`
+	Comments    int       `json:"comments"`
+	Created     time.Time `json:"created"`
 }
 
 type Store interface {

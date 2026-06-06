@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"pixelgram/backend/internal/auth"
 	"pixelgram/backend/internal/compat"
@@ -23,15 +24,15 @@ type Store interface {
 }
 
 type User struct {
-	ID       int     `json:"id"`
-	Name     string  `json:"name"`
-	Username string  `json:"username"`
-	Email    string  `json:"email"`
-	Avatar   *string `json:"avatar"`
-	Bio      *string `json:"bio"`
-	Posts    int     `json:"posts"`
-	Likes    int     `json:"likes"`
-	Created  string  `json:"created"`
+	ID       int       `json:"id"`
+	Name     string    `json:"name"`
+	Username string    `json:"username"`
+	Email    string    `json:"email"`
+	Avatar   *string   `json:"avatar"`
+	Bio      *string   `json:"bio"`
+	Posts    int       `json:"posts"`
+	Likes    int       `json:"likes"`
+	Created  time.Time `json:"created"`
 }
 
 type UserCredentials struct {
