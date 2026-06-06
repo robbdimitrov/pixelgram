@@ -71,11 +71,13 @@ export class CommentsComponent implements OnInit {
   }
 
   onDelete(comment: Comment) {
+    const index = this.pagination.data.indexOf(comment);
     this.pagination.data = this.pagination.data.filter((c) => c.id !== comment.id);
     this.apiClient.deleteComment(this.postId(), comment.id).subscribe({
       error: () => {
-        this.pagination.data = [...this.pagination.data, comment]
-          .sort((a, b) => a.created.getTime() - b.created.getTime());
+        const restored = [...this.pagination.data];
+        restored.splice(index, 0, comment);
+        this.pagination.data = restored;
       }
     });
   }

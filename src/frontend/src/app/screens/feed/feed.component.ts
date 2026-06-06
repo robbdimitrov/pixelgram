@@ -70,7 +70,7 @@ export class FeedComponent {
   loadPost(postId: number) {
     this.apiClient.getPost(postId).subscribe({
       next: (value) => {
-        this.pagination.update([value]);
+        this.pagination.data = [value];
         this.hasLoaded = true;
         this.loadMissingUsers([value]);
       },
@@ -172,6 +172,9 @@ export class FeedComponent {
         if (this.postId === post.id) {
           this.router.navigate([`/users/${post.userId}`]);
         }
+      },
+      error: () => {
+        this.pagination.data = [post, ...this.pagination.data];
       }
     });
   }

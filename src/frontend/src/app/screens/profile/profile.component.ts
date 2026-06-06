@@ -42,6 +42,9 @@ export class ProfileComponent {
         this.hasLoadedPosts = false;
         this.pagination.reset();
         this.loadNextPage();
+      },
+      error: () => {
+        this.hasLoadedPosts = true;
       }
     });
   }

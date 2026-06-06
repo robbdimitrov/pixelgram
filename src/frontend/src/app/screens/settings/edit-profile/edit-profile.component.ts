@@ -130,7 +130,8 @@ export class EditProfileComponent implements OnInit {
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe({
-      next: (value) => this.user = value
+      next: (value) => this.user = value,
+      error: () => this.errorMessage = 'Could not load profile. Please try again.'
     });
   }
 }
