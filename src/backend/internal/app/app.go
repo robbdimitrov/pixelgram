@@ -45,7 +45,7 @@ func New(cfg Config, stores Stores) http.Handler {
 	mux.HandleFunc("POST /sessions", sessionHandler.CreateSession)
 	mux.HandleFunc("DELETE /sessions", sessionHandler.DeleteSession)
 	mux.HandleFunc("POST /uploads", uploadHandler.CreateFile)
-	mux.Handle("GET /uploads/", uploads.FileServer(cfg.ImageDir))
+	mux.HandleFunc("GET /uploads/", uploadHandler.ServeFile)
 	mux.HandleFunc("POST /posts", postHandler.CreatePost)
 	mux.HandleFunc("GET /posts", postHandler.GetFeed)
 	mux.HandleFunc("GET /users/{userId}/posts", postHandler.GetPosts)

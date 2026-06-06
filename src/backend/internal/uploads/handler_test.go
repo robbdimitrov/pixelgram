@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"pixelgram/backend/internal/httpx"
 )
@@ -161,6 +162,136 @@ func TestCreateFileRejectsOversizedUpload(t *testing.T) {
 
 	if res.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusRequestEntityTooLarge)
+	}
+}
+
+func TestServeFile(t *testing.T) {
+	dir := t.TempDir()
+	filename := "0123456789abcdef0123456789abcdef"
+	content := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00}
+	modTime := time.Date(2026, time.June, 1, 12, 0, 0, 0, time.UTC)
+	path := filepath.Join(dir, filename)
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+	if err := os.Chtimes(path, modTime, modTime); err != nil {
+		t.Fatalf("Chtimes returned error: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
+	res := httptest.NewRecorder()
+
+	Handler{ImageDir: dir}.ServeFile(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if !bytes.Equal(res.Body.Bytes(), content) {
+		t.Fatalf("body = %v, want %v", res.Body.Bytes(), content)
+	}
+	if got := res.Header().Get("ETag"); got != `"`+filename+`"` {
+		t.Errorf("ETag = %q", got)
+	}
+	if got := res.Header().Get("Cache-Control"); got != "private, max-age=86400" {
+		t.Errorf("Cache-Control = %q", got)
+	}
+	if got := res.Header().Get("Content-Type"); got != "image/png" {
+		t.Errorf("Content-Type = %q", got)
+	}
+	if got := res.Header().Get("Last-Modified"); got != modTime.Format(http.TimeFormat) {
+		t.Errorf("Last-Modified = %q", got)
+	}
+}
+
+func TestServeFileHonorsIfNoneMatch(t *testing.T) {
+	dir := t.TempDir()
+	filename := "0123456789abcdef0123456789abcdef"
+	if err := os.WriteFile(filepath.Join(dir, filename), []byte("content"), 0o600); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
+	req.Header.Set("If-None-Match", `"`+filename+`"`)
+	res := httptest.NewRecorder()
+
+	Handler{ImageDir: dir}.ServeFile(res, req)
+
+	if res.Code != http.StatusNotModified {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotModified)
+	}
+	if res.Body.Len() != 0 {
+		t.Fatalf("body = %q, want empty", res.Body.String())
+	}
+}
+
+func TestServeFileIgnoresNonMatchingETag(t *testing.T) {
+	dir := t.TempDir()
+	filename := "0123456789abcdef0123456789abcdef"
+	content := []byte("complete content")
+	if err := os.WriteFile(filepath.Join(dir, filename), content, 0o600); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
+	req.Header.Set("If-None-Match", `"different"`)
+	res := httptest.NewRecorder()
+
+	Handler{ImageDir: dir}.ServeFile(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if !bytes.Equal(res.Body.Bytes(), content) {
+		t.Fatalf("body = %q, want %q", res.Body.Bytes(), content)
+	}
+}
+
+func TestServeFileRejectsInvalidOrMissingFiles(t *testing.T) {
+	dir := t.TempDir()
+	filename := "0123456789abcdef0123456789abcdef"
+	if err := os.Mkdir(filepath.Join(dir, filename), 0o700); err != nil {
+		t.Fatalf("Mkdir returned error: %v", err)
+	}
+
+	for _, path := range []string{
+		"/uploads/",
+		"/uploads/not-a-valid-filename",
+		"/uploads/0123456789ABCDEF0123456789ABCDEF",
+		"/uploads/" + filename + "/extra",
+		"/uploads/fedcba9876543210fedcba9876543210",
+		"/uploads/" + filename,
+	} {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			res := httptest.NewRecorder()
+
+			Handler{ImageDir: dir}.ServeFile(res, req)
+
+			if res.Code != http.StatusNotFound {
+				t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
+			}
+		})
+	}
+}
+
+func TestServeFileSupportsRanges(t *testing.T) {
+	dir := t.TempDir()
+	filename := "0123456789abcdef0123456789abcdef"
+	if err := os.WriteFile(filepath.Join(dir, filename), []byte("0123456789"), 0o600); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
+	req.Header.Set("Range", "bytes=2-5")
+	res := httptest.NewRecorder()
+
+	Handler{ImageDir: dir}.ServeFile(res, req)
+
+	if res.Code != http.StatusPartialContent {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusPartialContent)
+	}
+	if got := res.Body.String(); got != "2345" {
+		t.Fatalf("body = %q, want %q", got, "2345")
+	}
+	if got := res.Header().Get("Content-Range"); got != "bytes 2-5/10" {
+		t.Errorf("Content-Range = %q", got)
 	}
 }
 

@@ -231,6 +231,7 @@ func TestUpdateUserForbidden(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/users/2", strings.NewReader(`{}`))
 	req.SetPathValue("userId", "2")
+	req = httpx.WithUserID(req, "1")
 
 	handler.UpdateUser(res, req)
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"pixelgram/backend/internal/httpx"
 )
@@ -132,8 +133,42 @@ func (h Handler) saveMultipartImage(r *http.Request) (string, error) {
 	return filename, nil
 }
 
-func FileServer(imageDir string) http.Handler {
-	return http.StripPrefix("/uploads/", http.FileServer(http.Dir(imageDir)))
+func (h Handler) ServeFile(w http.ResponseWriter, r *http.Request) {
+	filename, ok := uploadFilename(r.URL.Path)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	file, err := os.Open(uploadPath(h.ImageDir, filename))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("Cache-Control", "private, max-age=86400")
+	w.Header().Set("ETag", `"`+filename+`"`)
+	http.ServeContent(w, r, filename, info.ModTime(), file)
+}
+
+func uploadFilename(path string) (string, bool) {
+	filename, ok := strings.CutPrefix(path, "/uploads/")
+	if !ok || len(filename) != 32 {
+		return "", false
+	}
+	for _, char := range filename {
+		if !('0' <= char && char <= '9') && !('a' <= char && char <= 'f') {
+			return "", false
+		}
+	}
+	return filename, true
 }
 
 func uploadPath(imageDir, filename string) string {
