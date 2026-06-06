@@ -5,7 +5,7 @@
 Three services, deployed via Kubernetes:
 - `src/backend` — Go API (`net/http`, `pgx`)
 - `src/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
-- `src/frontend` — Angular 22 SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
+- `src/frontend` — Angular SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
 

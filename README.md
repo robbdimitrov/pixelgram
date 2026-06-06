@@ -1,7 +1,6 @@
 # Pixelgram
 
-**Pixelgram** is an image-sharing application where users can upload, browse
-and like images.
+**Pixelgram** is a full-stack image-sharing platform built with a production-grade architecture. Combining a robust Go API with a modern Angular frontend, it provides a seamless experience for users to upload, browse, and interact with images.
 
 ## Features
 
@@ -9,7 +8,7 @@ and like images.
 - **Production-Ready & HA**: Fully containerized, stateless service designed for High Availability deployments on Kubernetes.
 - **Resilience**: Built-in rate limiting, circuit breaker and retry-with-backoff protecting the API and the database layer.
 - **Observability**: Structured JSON logging with request ID propagation across the request lifecycle.
-- **Modern Frontend**: Built with Angular 22, Tailwind CSS, DaisyUI and Lucide icons.
+- **Modern Frontend**: Built with Angular, Tailwind CSS, DaisyUI and Lucide icons.
 
 ## Architecture
 
@@ -17,7 +16,7 @@ and like images.
 | --- | --- | --- |
 | [backend](/src/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
 | [database](/src/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
-| [frontend](/src/frontend) | TypeScript | Angular 22 SPA styled with Tailwind CSS and DaisyUI. |
+| [frontend](/src/frontend) | TypeScript | Angular SPA styled with Tailwind CSS and DaisyUI. |
 
 ## Deploy
 
