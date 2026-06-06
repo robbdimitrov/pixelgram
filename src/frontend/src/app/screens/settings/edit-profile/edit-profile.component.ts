@@ -2,6 +2,7 @@ import {Component, inject} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft, LucideTrash2} from '@lucide/angular';
+import {finalize, Observable, of, switchMap, tap} from 'rxjs';
 
 import {APIClient} from '../../../services/api-client.service';
 import {User} from '../../../models/user.model';
@@ -63,35 +64,28 @@ export class EditProfileComponent {
     }
     const user = this.user;
     this.isSubmitting = true;
+    this.errorMessage = '';
 
-    const updateClosure = () => {
-      this.errorMessage = '';
-      this.apiClient.updateUser(userId, user.name, user.username,
-        user.email, user.avatar ?? '', user.bio ?? '').subscribe({
-          next: () => {
-            this.isSubmitting = false;
-            this.router.navigate(['/settings']);
-          },
-          error: (error) => {
-            this.isSubmitting = false;
-            this.errorMessage = error.message || 'Could not update profile. Please try again.';
-          }
-        });
-    };
+    let isUploading = Boolean(this.selectedFile);
+    const upload: Observable<{filename: string} | null> = this.selectedFile
+      ? this.apiClient.uploadImage(this.selectedFile).pipe(tap((data) => user.avatar = data.filename))
+      : of(null);
 
-    if (this.selectedFile) {
-      this.apiClient.uploadImage(this.selectedFile).subscribe({
-        next: (data) => user.avatar = data.filename,
-        error: (error) => {
-          this.isSubmitting = false;
-          this.errorMessage = error.error?.message ||
-            error.message || 'Could not upload avatar. Please try again.';
-        },
-        complete: () => updateClosure()
-      });
-    } else {
-      updateClosure();
-    }
+    upload.pipe(
+      switchMap(() => {
+        isUploading = false;
+        return this.apiClient.updateUser(userId, user.name, user.username,
+          user.email, user.avatar ?? '', user.bio ?? '');
+      }),
+      finalize(() => this.isSubmitting = false)
+    ).subscribe({
+      next: () => this.router.navigate(['/settings']),
+      error: (error) => {
+        this.errorMessage = isUploading
+          ? error.error?.message || error.message || 'Could not upload avatar. Please try again.'
+          : error.message || 'Could not update profile. Please try again.';
+      }
+    });
   }
 
   async onChange(files: FileList | null) {

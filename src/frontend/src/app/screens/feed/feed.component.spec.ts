@@ -31,6 +31,9 @@ describe('FeedComponent', () => {
         mockPagination.data = [...mockPagination.data, ...data];
       }),
       remove: jest.fn(),
+      reset: jest.fn(() => {
+        mockPagination.data = [];
+      }),
       count: jest.fn(() => mockPagination.data.length)
     };
   });
@@ -71,6 +74,25 @@ describe('FeedComponent', () => {
 
     expect(component.postId).toBe(10);
     expect(mockApiClient.getPost).toHaveBeenCalledWith(10);
+  });
+
+  it('should not load an invalid post route', () => {
+    createComponent({postId: 'invalid'});
+
+    expect(component.postId).toBeUndefined();
+    expect(component.hasLoaded).toBe(true);
+    expect(mockPagination.reset).toHaveBeenCalled();
+    expect(mockApiClient.getPost).not.toHaveBeenCalled();
+  });
+
+  it('should not load an invalid likes route', () => {
+    createComponent({userId: '0'});
+
+    expect(component.userId).toBeUndefined();
+    expect(component.hasLoaded).toBe(true);
+    expect(mockPagination.reset).toHaveBeenCalled();
+    expect(mockApiClient.getLikedPosts).not.toHaveBeenCalled();
+    expect(mockApiClient.getFeed).not.toHaveBeenCalled();
   });
 
   it('should handle API errors gracefully during loadNextPage', () => {

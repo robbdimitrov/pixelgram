@@ -30,6 +30,13 @@ export class ProfileComponent {
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
       const userId = Number(params['userId']);
+      if (!Number.isSafeInteger(userId) || userId <= 0) {
+        this.user = undefined;
+        this.hasLoadedPosts = true;
+        this.pagination.reset();
+        return;
+      }
+
       if (!this.user || userId !== this.user.id) {
         this.loadUser(userId);
       }

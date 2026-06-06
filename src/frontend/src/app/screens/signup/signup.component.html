@@ -111,8 +111,8 @@
       }
     </div>
 
-    <button type="submit" class="w-full text-base font-extrabold" appPrimaryAction [disabled]="!form.valid">
-      Create Account
+    <button type="submit" class="w-full text-base font-extrabold" appPrimaryAction [disabled]="!form.valid || isSubmitting">
+      {{ isSubmitting ? 'Creating Account...' : 'Create Account' }}
     </button>
   </form>
 

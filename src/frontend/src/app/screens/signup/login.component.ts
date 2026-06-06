@@ -1,6 +1,7 @@
 import {Component, inject} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
+import {finalize} from 'rxjs';
 
 import {APIClient} from '../../services/api-client.service';
 import {SessionService} from '../../services/session.service';
@@ -48,14 +49,14 @@ export class LoginComponent {
     }
     this.isSubmitting = true;
     this.errorMessage = '';
-    this.apiClient.loginUser(this.emailValue, this.passwordValue).subscribe({
+    this.apiClient.loginUser(this.emailValue, this.passwordValue).pipe(
+      finalize(() => this.isSubmitting = false)
+    ).subscribe({
       next: (data) => {
-        this.isSubmitting = false;
         this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
       error: (error) => {
-        this.isSubmitting = false;
         this.errorMessage = error.message || 'Could not log in. Please check your details.';
       }
     });

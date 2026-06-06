@@ -2,6 +2,7 @@ import {Component, inject} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft} from '@lucide/angular';
+import {finalize} from 'rxjs';
 
 import {APIClient} from '../../../services/api-client.service';
 import {SessionService} from '../../../services/session.service';
@@ -39,13 +40,11 @@ export class ChangePasswordComponent {
     this.isSubmitting = true;
 
     this.errorMessage = '';
-    this.apiClient.changePassword(userId, this.oldPasswordValue, this.passwordValue).subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.router.navigate(['/settings']);
-      },
+    this.apiClient.changePassword(userId, this.oldPasswordValue, this.passwordValue).pipe(
+      finalize(() => this.isSubmitting = false)
+    ).subscribe({
+      next: () => this.router.navigate(['/settings']),
       error: (error) => {
-        this.isSubmitting = false;
         this.errorMessage = error.message || 'Could not update password. Please try again.';
       }
     });

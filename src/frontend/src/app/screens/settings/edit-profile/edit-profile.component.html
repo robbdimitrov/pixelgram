@@ -120,9 +120,9 @@
         type="submit"
         class="w-full"
         appPrimaryAction
-        [disabled]="!form.valid"
+        [disabled]="!form.valid || isSubmitting"
         >
-        Save Profile Details
+        {{ isSubmitting ? 'Saving Profile...' : 'Save Profile Details' }}
       </button>
     </form>
   </div>

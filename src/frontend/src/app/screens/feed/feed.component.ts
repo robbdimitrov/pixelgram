@@ -29,12 +29,30 @@ export class FeedComponent {
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
       if (params['postId']) {
-        this.postId = Number(params['postId']);
+        const postId = Number(params['postId']);
+        if (!Number.isSafeInteger(postId) || postId <= 0) {
+          this.postId = undefined;
+          this.userId = undefined;
+          this.hasLoaded = true;
+          this.pagination.reset();
+          return;
+        }
+
+        this.postId = postId;
         this.userId = undefined;
-        this.loadPost(this.postId);
+        this.loadPost(postId);
       } else {
+        const userId = params['userId'] ? Number(params['userId']) : undefined;
+        if (userId !== undefined && (!Number.isSafeInteger(userId) || userId <= 0)) {
+          this.postId = undefined;
+          this.userId = undefined;
+          this.hasLoaded = true;
+          this.pagination.reset();
+          return;
+        }
+
         this.postId = undefined;
-        this.userId = params['userId'] ? Number(params['userId']) : undefined;
+        this.userId = userId;
         this.loadNextPage();
       }
     });

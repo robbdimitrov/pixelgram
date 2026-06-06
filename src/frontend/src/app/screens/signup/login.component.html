@@ -73,8 +73,8 @@
       }
     </div>
 
-    <button type="submit" class="w-full text-base font-extrabold" appPrimaryAction [disabled]="!form.valid">
-      Log In
+    <button type="submit" class="w-full text-base font-extrabold" appPrimaryAction [disabled]="!form.valid || isSubmitting">
+      {{ isSubmitting ? 'Logging In...' : 'Log In' }}
     </button>
   </form>
 
