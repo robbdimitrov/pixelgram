@@ -43,18 +43,21 @@ export const routes: Routes = [
   },
   {
     path: 'settings',
-    loadComponent: () => import('./screens/settings/settings.component').then((m) => m.SettingsComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'settings/profile',
-    loadComponent: () => import('./screens/settings/edit-profile/edit-profile.component').then((m) => m.EditProfileComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'settings/password',
-    loadComponent: () => import('./screens/settings/change-password/change-password.component').then((m) => m.ChangePasswordComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./screens/settings/settings.component').then((m) => m.SettingsComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./screens/settings/edit-profile/edit-profile.component').then((m) => m.EditProfileComponent)
+      },
+      {
+        path: 'password',
+        loadComponent: () => import('./screens/settings/change-password/change-password.component').then((m) => m.ChangePasswordComponent)
+      }
+    ]
   },
   {
     path: 'login',

@@ -1,18 +1,23 @@
-import { FeedComponent } from './feed.component';
-import { of, throwError } from 'rxjs';
+import {TestBed} from '@angular/core/testing';
+import {provideRouter} from '@angular/router';
+import {of, throwError} from 'rxjs';
+
+import {FeedComponent} from './feed.component';
+import {APIClient} from '../../services/api-client.service';
+import {PaginationService} from '../../services/pagination.service';
+import {ActivatedRoute} from '@angular/router';
 
 describe('FeedComponent', () => {
   let component: FeedComponent;
   let mockApiClient: any;
   let mockPagination: any;
-  let mockRouter: any;
-  let mockRoute: any;
 
   beforeEach(() => {
     mockApiClient = {
       getFeed: jest.fn(),
       getLikedPosts: jest.fn(),
       getPost: jest.fn(),
+      getUser: jest.fn().mockReturnValue(of({id: 1, username: 'test'})),
       likePost: jest.fn(),
       unlikePost: jest.fn(),
       deletePost: jest.fn()
@@ -22,27 +27,33 @@ describe('FeedComponent', () => {
       data: [],
       page: 1,
       hasMore: true,
-      update: jest.fn((data, length) => {
+      update: jest.fn((data) => {
         mockPagination.data = [...mockPagination.data, ...data];
       }),
       remove: jest.fn(),
       count: jest.fn(() => mockPagination.data.length)
     };
-
-    mockRouter = {
-      navigate: jest.fn()
-    };
-
-    // Set a default empty route params
-    mockRoute = {
-      params: of({})
-    };
   });
 
-  it('should initialize and load feed if no params provided', () => {
-    mockApiClient.getFeed.mockReturnValue(of([{ id: 1, filename: 'test.jpg' }]));
+  function createComponent(params: Record<string, string> = {}) {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        {provide: APIClient, useValue: mockApiClient},
+        {provide: PaginationService, useValue: mockPagination},
+        {
+          provide: ActivatedRoute,
+          useValue: {params: of(params)}
+        }
+      ]
+    });
+    component = TestBed.createComponent(FeedComponent).componentInstance;
+  }
 
-    component = new FeedComponent(mockApiClient, mockPagination, mockRouter, mockRoute);
+  it('should initialize and load feed if no params provided', () => {
+    mockApiClient.getFeed.mockReturnValue(of([{id: 1, filename: 'test.jpg', userId: 1}]));
+
+    createComponent();
 
     expect(component.userId).toBeUndefined();
     expect(component.postId).toBeUndefined();
@@ -52,10 +63,9 @@ describe('FeedComponent', () => {
   });
 
   it('should load specific post if postId param provided', () => {
-    mockRoute.params = of({ postId: '10' });
-    mockApiClient.getPost.mockReturnValue(of({ id: 10, filename: 'test10.jpg' }));
+    mockApiClient.getPost.mockReturnValue(of({id: 10, filename: 'test10.jpg', userId: 1}));
 
-    component = new FeedComponent(mockApiClient, mockPagination, mockRouter, mockRoute);
+    createComponent({postId: '10'});
 
     expect(component.postId).toBe(10);
     expect(mockApiClient.getPost).toHaveBeenCalledWith('10');
@@ -63,9 +73,9 @@ describe('FeedComponent', () => {
 
   it('should handle API errors gracefully during loadNextPage', () => {
     mockApiClient.getFeed.mockReturnValue(throwError(() => new Error('API Error')));
-    
-    component = new FeedComponent(mockApiClient, mockPagination, mockRouter, mockRoute);
-    
+
+    createComponent();
+
     expect(component.isLoadingNextPage).toBe(false);
     expect(component.hasLoaded).toBe(true);
     expect(mockPagination.update).not.toHaveBeenCalled();
@@ -73,10 +83,9 @@ describe('FeedComponent', () => {
 
   describe('Likes', () => {
     beforeEach(() => {
-      mockRoute.params = of({});
       mockApiClient.getFeed.mockReturnValue(of([]));
-      component = new FeedComponent(mockApiClient, mockPagination, mockRouter, mockRoute);
-      mockPagination.data = [{ id: 1, liked: false, likes: 0 }];
+      createComponent();
+      mockPagination.data = [{id: 1, liked: false, likes: 0}];
     });
 
     it('should revert optimistic like on error', () => {
