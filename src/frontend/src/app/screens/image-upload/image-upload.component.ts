@@ -1,6 +1,9 @@
 import {Component} from '@angular/core';
 import {Router} from '@angular/router';
+import {FormsModule} from '@angular/forms';
+import {NgClass} from '@angular/common';
 import {concatMap, finalize} from 'rxjs/operators';
+import {LucideSquarePlus} from '@lucide/angular';
 
 import {APIClient} from '../../services/api-client.service';
 import {
@@ -10,9 +13,10 @@ import {
 } from '../../shared/utils/image-resizer';
 
 @Component({
-    selector: 'app-upload',
-    templateUrl: './image-upload.component.html',
-    standalone: false
+  selector: 'app-upload',
+  templateUrl: './image-upload.component.html',
+  standalone: true,
+  imports: [FormsModule, NgClass, LucideSquarePlus]
 })
 export class ImageUploadComponent {
   readonly maxDescriptionLength = 160;

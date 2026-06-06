@@ -1,13 +1,20 @@
 import {Component} from '@angular/core';
-import {Router} from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
+import {FormsModule} from '@angular/forms';
+import {LucideArrowLeft} from '@lucide/angular';
 
 import {APIClient} from '../../../services/api-client.service';
 import {SessionService} from '../../../services/session.service';
+import {
+  FormInputStyleDirective,
+  PrimaryActionStyleDirective
+} from '../../../shared/directives/form-control-style.directive';
 
 @Component({
-    selector: 'app-change-password',
-    templateUrl: './change-password.component.html',
-    standalone: false
+  selector: 'app-change-password',
+  templateUrl: './change-password.component.html',
+  standalone: true,
+  imports: [FormsModule, RouterLink, FormInputStyleDirective, PrimaryActionStyleDirective, LucideArrowLeft]
 })
 export class ChangePasswordComponent {
   oldPasswordValue = '';

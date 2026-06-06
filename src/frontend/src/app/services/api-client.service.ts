@@ -10,7 +10,9 @@ import {User, UserDto, UserIdDto} from '../models/user.model';
 import {Post, PostDto, ImageFilenameDto, PostIdDto, PostsDto} from '../models/post.model';
 import {Comment, CommentDto, CommentsDto} from '../models/comment.model';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class APIClient {
   constructor(private http: HttpClient, private cache: HttpCacheService) {}
 

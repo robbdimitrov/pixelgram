@@ -1,15 +1,23 @@
 import {Component} from '@angular/core';
-import {Router} from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
+import {
+  LucideCamera,
+  LucideHome,
+  LucideSquarePlus,
+  LucideUser
+} from '@lucide/angular';
+
 import {SessionService} from '../../services/session.service';
 import {ThemeService} from '../../services/theme.service';
 
 @Component({
-    selector: 'app-navbar',
-    templateUrl: './navbar.component.html',
-    host: {
-      class: 'block'
-    },
-    standalone: false
+  selector: 'app-navbar',
+  templateUrl: './navbar.component.html',
+  host: {
+    class: 'block'
+  },
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive, LucideCamera, LucideHome, LucideSquarePlus, LucideUser]
 })
 export class NavbarComponent {
   constructor(

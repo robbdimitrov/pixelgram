@@ -69,7 +69,7 @@ function addClasses(elementRef: ElementRef<HTMLElement>, classes: string[]) {
 
 @Directive({
   selector: 'input[appFormInput]',
-  standalone: false
+  standalone: true
 })
 export class FormInputStyleDirective {
   constructor(elementRef: ElementRef<HTMLInputElement>) {
@@ -79,7 +79,7 @@ export class FormInputStyleDirective {
 
 @Directive({
   selector: 'textarea[appFormTextarea]',
-  standalone: false
+  standalone: true
 })
 export class FormTextareaStyleDirective {
   constructor(elementRef: ElementRef<HTMLTextAreaElement>) {
@@ -89,7 +89,7 @@ export class FormTextareaStyleDirective {
 
 @Directive({
   selector: 'button[appPrimaryAction], a[appPrimaryAction]',
-  standalone: false
+  standalone: true
 })
 export class PrimaryActionStyleDirective {
   constructor(elementRef: ElementRef<HTMLElement>) {

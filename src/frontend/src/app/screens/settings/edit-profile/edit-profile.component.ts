@@ -1,9 +1,18 @@
 import {Component, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
+import {FormsModule} from '@angular/forms';
+import {LucideArrowLeft, LucideTrash2} from '@lucide/angular';
 
 import {APIClient} from '../../../services/api-client.service';
 import {User} from '../../../models/user.model';
 import {SessionService} from '../../../services/session.service';
+import {ImagePipe} from '../../../shared/pipes/image.pipe';
+import {
+  FormInputStyleDirective,
+  FormTextareaStyleDirective,
+  PrimaryActionStyleDirective
+} from '../../../shared/directives/form-control-style.directive';
+import {TrimDirective} from '../../../shared/directives/trim.directive';
 import {
   maxUploadSizeBytes,
   resizeImageForUpload,
@@ -11,9 +20,20 @@ import {
 } from '../../../shared/utils/image-resizer';
 
 @Component({
-    selector: 'app-edit-profile',
-    templateUrl: './edit-profile.component.html',
-    standalone: false
+  selector: 'app-edit-profile',
+  templateUrl: './edit-profile.component.html',
+  standalone: true,
+  imports: [
+    FormsModule,
+    RouterLink,
+    ImagePipe,
+    FormInputStyleDirective,
+    FormTextareaStyleDirective,
+    PrimaryActionStyleDirective,
+    TrimDirective,
+    LucideArrowLeft,
+    LucideTrash2
+  ]
 })
 export class EditProfileComponent implements OnInit {
   readonly maxFileSizeBytes = maxUploadSizeBytes;

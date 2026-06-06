@@ -4,7 +4,7 @@ import { NgControl } from '@angular/forms';
 
 @Directive({
   selector: 'input[type=text], input[type=email], textarea, input:not([type])',
-  standalone: false
+  standalone: true
 })
 export class TrimDirective {
   constructor(@Optional() @Self() private ngControl: NgControl) {}

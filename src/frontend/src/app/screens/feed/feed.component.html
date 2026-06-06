@@ -15,7 +15,7 @@
       <div class="w-full transition-all duration-300">
         <app-post
           [post]="post"
-          [user]="post.userId | user | async"
+          [user]="users[post.userId] || null"
           [singleView]="!!postId"
           (like)="onLike($event)"
           (unlike)="onUnlike($event)"

@@ -1,14 +1,22 @@
 import {Component, Input, OnDestroy, Output} from '@angular/core';
 import {EventEmitter} from '@angular/core';
+import {RouterLink} from '@angular/router';
+import {NgClass} from '@angular/common';
+import {LucideHeart, LucideMessageCircle, LucideTrash2} from '@lucide/angular';
 
 import {Post} from '../../../models/post.model';
 import {User} from '../../../models/user.model';
 import {SessionService} from '../../../services/session.service';
+import {ImagePipe} from '../../../shared/pipes/image.pipe';
+import {PluralizePipe} from '../../../shared/pipes/pluralize.pipe';
+import {RelativeDatePipe} from '../../../shared/pipes/relative-date.pipe';
+import {CommentsComponent} from '../comments/comments.component';
 
 @Component({
-    selector: 'app-post',
-    templateUrl: './post.component.html',
-    standalone: false
+  selector: 'app-post',
+  templateUrl: './post.component.html',
+  standalone: true,
+  imports: [RouterLink, NgClass, ImagePipe, PluralizePipe, RelativeDatePipe, CommentsComponent, LucideHeart, LucideMessageCircle, LucideTrash2]
 })
 export class PostComponent implements OnDestroy {
   private readonly fallbackImage = '/assets/placeholder.svg';

@@ -6,12 +6,16 @@ import {APIClient} from '../../services/api-client.service';
 import {PaginationService} from '../../services/pagination.service';
 import {SessionService} from '../../services/session.service';
 import {User} from '../../models/user.model';
+import {ProfileHeaderComponent} from './profile-header/profile-header.component';
+import {ThumbnailComponent} from './thumbnail/thumbnail.component';
+import {EmptyStateComponent} from '../../shared/components/empty-state.component';
 
 @Component({
-    selector: 'app-profile',
-    templateUrl: './profile.component.html',
-    providers: [PaginationService],
-    standalone: false
+  selector: 'app-profile',
+  templateUrl: './profile.component.html',
+  providers: [PaginationService],
+  standalone: true,
+  imports: [ProfileHeaderComponent, ThumbnailComponent, EmptyStateComponent]
 })
 export class ProfileComponent {
   user?: User;

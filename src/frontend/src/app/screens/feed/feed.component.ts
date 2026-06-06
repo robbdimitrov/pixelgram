@@ -3,18 +3,23 @@ import {ActivatedRoute, Router} from '@angular/router';
 
 import {APIClient} from '../../services/api-client.service';
 import {Post} from '../../models/post.model';
+import {User} from '../../models/user.model';
 import {PaginationService} from '../../services/pagination.service';
+import {PostComponent} from './post/post.component';
+import {EmptyStateComponent} from '../../shared/components/empty-state.component';
 
 @Component({
-    templateUrl: './feed.component.html',
-    providers: [PaginationService],
-    standalone: false
+  templateUrl: './feed.component.html',
+  providers: [PaginationService],
+  standalone: true,
+  imports: [PostComponent, EmptyStateComponent]
 })
 export class FeedComponent {
   userId?: number;
   postId?: number;
   hasLoaded = false;
   isLoadingNextPage = false;
+  users: Record<number, User> = {};
 
   constructor(
     private apiClient: APIClient,
@@ -53,6 +58,7 @@ export class FeedComponent {
         });
         this.pagination.update(posts, value.length);
         this.hasLoaded = true;
+        this.loadMissingUsers(posts);
       },
       error: (error) => {
         this.isLoadingNextPage = false;
@@ -67,12 +73,23 @@ export class FeedComponent {
       next: (value) => {
         this.pagination.update([value]);
         this.hasLoaded = true;
+        this.loadMissingUsers([value]);
       },
       error: (error) => {
         this.hasLoaded = true;
         console.error(`Loading post failed: ${error.message}`);
       }
     });
+  }
+
+  private loadMissingUsers(posts: Post[]) {
+    const missing = [...new Set(posts.map((p) => p.userId))].filter((id) => !this.users[id]);
+    for (const id of missing) {
+      this.apiClient.getUser(id).subscribe({
+        next: (user) => { this.users = {...this.users, [user.id]: user}; },
+        error: (error) => console.error(`Loading user failed: ${error.message}`)
+      });
+    }
   }
 
   posts() {

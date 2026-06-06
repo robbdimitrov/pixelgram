@@ -1,15 +1,21 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {RouterLink} from '@angular/router';
+import {FormsModule} from '@angular/forms';
+import {LucideSend, LucideTrash2} from '@lucide/angular';
 
 import {APIClient} from '../../../services/api-client.service';
 import {SessionService} from '../../../services/session.service';
 import {PaginationService} from '../../../services/pagination.service';
 import {Comment} from '../../../models/comment.model';
+import {ImagePipe} from '../../../shared/pipes/image.pipe';
+import {RelativeDatePipe} from '../../../shared/pipes/relative-date.pipe';
 
 @Component({
   selector: 'app-comments',
   templateUrl: './comments.component.html',
   providers: [PaginationService],
-  standalone: false
+  standalone: true,
+  imports: [RouterLink, FormsModule, ImagePipe, RelativeDatePipe, LucideSend, LucideTrash2]
 })
 export class CommentsComponent implements OnInit {
   @Input() postId: number;

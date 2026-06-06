@@ -1,8 +1,8 @@
 import {Pipe, PipeTransform} from '@angular/core';
 
 @Pipe({
-    name: 'relativedate',
-    standalone: false
+  name: 'relativedate',
+  standalone: true
 })
 export class RelativeDatePipe implements PipeTransform {
   private readonly formatter = new Intl.RelativeTimeFormat('en', {
