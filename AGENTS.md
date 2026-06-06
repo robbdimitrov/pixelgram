@@ -9,8 +9,6 @@ Three services, deployed via Kubernetes:
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
 
-Services are stateless and must work correctly with multiple replicas. Keep implementations free of node-local state.
-
 ## Commands
 
 ### Build (Docker images)
@@ -112,12 +110,10 @@ The backend reads `PORT` (defaults to `8080`).
 - **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
 - **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
 - **Database migrations**: `src/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `src/database/migrations/`.
-- **No CI/CD, no pre-commit hooks** exist in this repo.
 - **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
 - **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Do not add inline `style` attributes or custom component SCSS/CSS for redesign work; use Tailwind config/theme tokens when styling needs to be shared.
 - **Frontend icons**: use Lucide Angular icons for UI icons. Do not add ad hoc inline SVG icons unless Lucide cannot represent the needed symbol.
 - **Frontend layout**: keep page widths intentional: `max-w-xl` for auth/settings/feed/single-post-like flows and `max-w-5xl` for profile grids, upload creation, and app-shell alignment.
-- **Engineering quality**: use SOLID, DRY, and KISS principles. Write good code, remove needless duplication, and refactor toward simpler, clearer implementations when touching an area.
 
 ## Shared Style
 
@@ -131,4 +127,3 @@ The backend reads `PORT` (defaults to `8080`).
 - New migrations use two-space indentation, paired up/down files, and corrective migrations rather than rewriting applied history.
 - Microservices must be stateless and designed to work properly in multi-replica environments.
 - Frontend API response handling must tolerate `204 No Content` and non-JSON error bodies; avoid calling `response.json()` unconditionally.
-- No CI/CD, no pre-commit hooks exist in this repo.
