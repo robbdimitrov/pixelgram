@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, inject, input} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {LucideSettings} from '@lucide/angular';
 
@@ -14,14 +14,11 @@ import {PluralizePipe} from '../../../shared/pipes/pluralize.pipe';
   imports: [RouterLink, ImagePipe, PluralizePipe, LucideSettings]
 })
 export class ProfileHeaderComponent {
-  @Input() user: User;
+  private session = inject(SessionService);
 
-  constructor(private session: SessionService) {}
+  user = input.required<User>();
 
   isCurrentUser() {
-    if (!this.user) {
-      return false;
-    }
-    return this.session.userId() === this.user.id;
+    return this.session.userId() === this.user().id;
   }
 }

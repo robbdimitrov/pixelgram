@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft, LucideTrash2} from '@lucide/angular';
@@ -36,6 +36,10 @@ import {
   ]
 })
 export class EditProfileComponent implements OnInit {
+  private apiClient = inject(APIClient);
+  private router = inject(Router);
+  private session = inject(SessionService);
+
   readonly maxFileSizeBytes = maxUploadSizeBytes;
   readonly supportedMimeTypes = supportedUploadMimeTypes;
 
@@ -43,12 +47,6 @@ export class EditProfileComponent implements OnInit {
   imagePreview = '';
   user?: User;
   errorMessage = '';
-
-  constructor(
-    private apiClient: APIClient,
-    private router: Router,
-    private session: SessionService
-  ) {}
 
   ngOnInit() {
     const userId = this.session.userId();
@@ -132,8 +130,7 @@ export class EditProfileComponent implements OnInit {
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe({
-      next: (value) => this.user = value,
-      error: (error) => console.error(`Loading user failed: ${error.message}`)
+      next: (value) => this.user = value
     });
   }
 }

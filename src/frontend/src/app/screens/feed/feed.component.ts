@@ -1,5 +1,6 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 import {APIClient} from '../../services/api-client.service';
 import {Post} from '../../models/post.model';
@@ -15,19 +16,18 @@ import {EmptyStateComponent} from '../../shared/components/empty-state.component
   imports: [PostComponent, EmptyStateComponent]
 })
 export class FeedComponent {
+  private apiClient = inject(APIClient);
+  private pagination = inject<PaginationService<Post>>(PaginationService);
+  private router = inject(Router);
+
   userId?: number;
   postId?: number;
   hasLoaded = false;
   isLoadingNextPage = false;
   users: Record<number, User> = {};
 
-  constructor(
-    private apiClient: APIClient,
-    private pagination: PaginationService<Post>,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {
-    this.route.params.subscribe((params) => {
+  constructor() {
+    inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
       if (params['postId']) {
         this.postId = Number(params['postId']);
         this.userId = undefined;
@@ -60,10 +60,9 @@ export class FeedComponent {
         this.hasLoaded = true;
         this.loadMissingUsers(posts);
       },
-      error: (error) => {
+      error: () => {
         this.isLoadingNextPage = false;
         this.hasLoaded = true;
-        console.error(`Error loading posts: ${error.message}`);
       }
     });
   }
@@ -75,9 +74,8 @@ export class FeedComponent {
         this.hasLoaded = true;
         this.loadMissingUsers([value]);
       },
-      error: (error) => {
+      error: () => {
         this.hasLoaded = true;
-        console.error(`Loading post failed: ${error.message}`);
       }
     });
   }
@@ -86,8 +84,7 @@ export class FeedComponent {
     const missing = [...new Set(posts.map((p) => p.userId))].filter((id) => !this.users[id]);
     for (const id of missing) {
       this.apiClient.getUser(id).subscribe({
-        next: (user) => { this.users = {...this.users, [user.id]: user}; },
-        error: (error) => console.error(`Loading user failed: ${error.message}`)
+        next: (user) => { this.users = {...this.users, [user.id]: user}; }
       });
     }
   }
@@ -138,9 +135,8 @@ export class FeedComponent {
 
   onLike(postId: number) {
     this.apiClient.likePost(postId).subscribe({
-      error: (error) => {
+      error: () => {
         this.revertLike(postId, false);
-        console.error(`Liking post failed: ${error.message}`);
       }
     });
   }
@@ -152,7 +148,7 @@ export class FeedComponent {
     }
 
     this.apiClient.unlikePost(postId).subscribe({
-      error: (error) => {
+      error: () => {
         if (this.isLikesPage() && post) {
           post.liked = true;
           post.likes += 1;
@@ -160,7 +156,6 @@ export class FeedComponent {
         } else {
           this.revertLike(postId, true);
         }
-        console.error(`Unliking post failed: ${error.message}`);
       }
     });
   }
@@ -176,8 +171,7 @@ export class FeedComponent {
         if (this.postId === post.id) {
           this.router.navigate([`/users/${post.userId}`]);
         }
-      },
-      error: (error) => console.error(`Deleting post failed: ${error.message}`)
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {ThemeService} from './theme.service';
 
 @Injectable({
@@ -6,9 +6,8 @@ import {ThemeService} from './theme.service';
 })
 export class SessionService {
   private readonly userIdKey = 'userId';
+  private themeService = inject(ThemeService);
   isClearing = false;
-
-  constructor(private themeService: ThemeService) {}
 
   userId(): number | null {
     const value = localStorage.getItem(this.userIdKey);

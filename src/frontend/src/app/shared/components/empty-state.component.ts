@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, input} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {NgClass} from '@angular/common';
 import {
@@ -17,10 +17,10 @@ type EmptyStateIcon = 'camera' | 'heart' | 'square-plus' | 'triangle-alert';
   imports: [RouterLink, NgClass, LucideCamera, LucideHeart, LucideTriangleAlert, LucideSquarePlus]
 })
 export class EmptyStateComponent {
-  @Input() icon: EmptyStateIcon = 'camera';
-  @Input() title = '';
-  @Input() description = '';
-  @Input() actionLabel = '';
-  @Input() actionRoute: string | any[] = '';
-  @Input() actionStyle: 'primary' | 'outline' = 'primary';
+  icon = input<EmptyStateIcon>('camera');
+  title = input('');
+  description = input('');
+  actionLabel = input('');
+  actionRoute = input<string | unknown[]>('');
+  actionStyle = input<'primary' | 'outline'>('primary');
 }

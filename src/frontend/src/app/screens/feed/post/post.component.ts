@@ -1,5 +1,4 @@
-import {Component, Input, OnDestroy, Output} from '@angular/core';
-import {EventEmitter} from '@angular/core';
+import {Component, DestroyRef, inject, input, output, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {NgClass} from '@angular/common';
 import {LucideHeart, LucideMessageCircle, LucideTrash2} from '@lucide/angular';
@@ -18,46 +17,49 @@ import {CommentsComponent} from '../comments/comments.component';
   standalone: true,
   imports: [RouterLink, NgClass, ImagePipe, PluralizePipe, RelativeDatePipe, CommentsComponent, LucideHeart, LucideMessageCircle, LucideTrash2]
 })
-export class PostComponent implements OnDestroy {
+export class PostComponent {
   private readonly fallbackImage = '/assets/placeholder.svg';
   private likeAnimationTimeout?: ReturnType<typeof setTimeout>;
+  private session = inject(SessionService);
+  private destroyRef = inject(DestroyRef);
 
-  @Output() like = new EventEmitter<number>();
-  @Output() unlike = new EventEmitter<number>();
-  @Output() deleteAction = new EventEmitter<Post>();
-  @Input() post: Post;
-  @Input() user: User | null;
-  @Input() singleView = false;
-  isLikeAnimating = false;
+  like = output<number>();
+  unlike = output<number>();
+  deleteAction = output<Post>();
+  post = input.required<Post>();
+  user = input<User | null>(null);
+  singleView = input(false);
+  isLikeAnimating = signal(false);
 
-  constructor(private session: SessionService) {}
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.likeAnimationTimeout) {
+        clearTimeout(this.likeAnimationTimeout);
+      }
+    });
+  }
 
   onLikeClick() {
-    const wasLiked = this.post.liked;
-    this.post.liked = !this.post.liked;
-    this.post.likes += (this.post.liked ? 1 : -1);
-    if (this.post.liked) {
+    const post = this.post();
+    const wasLiked = post.liked;
+    post.liked = !post.liked;
+    post.likes += (post.liked ? 1 : -1);
+    if (post.liked) {
       if (!wasLiked) {
         this.playLikeAnimation();
       }
-      this.like.emit(this.post.id);
+      this.like.emit(post.id);
     } else {
-      this.unlike.emit(this.post.id);
-    }
-  }
-
-  ngOnDestroy() {
-    if (this.likeAnimationTimeout) {
-      clearTimeout(this.likeAnimationTimeout);
+      this.unlike.emit(post.id);
     }
   }
 
   isOwnedByCurrentUser() {
-    return this.session.userId() === this.post.userId;
+    return this.session.userId() === this.post().userId;
   }
 
   isDescriptionPresent() {
-    return this.post.description.length > 0;
+    return this.post().description.length > 0;
   }
 
   onImageError(event: Event) {
@@ -65,24 +67,22 @@ export class PostComponent implements OnDestroy {
     if (imageElement.src.endsWith(this.fallbackImage)) {
       return;
     }
-
     imageElement.src = this.fallbackImage;
   }
 
   onDeleteClick() {
-    this.deleteAction.emit(this.post);
+    this.deleteAction.emit(this.post());
   }
 
   private playLikeAnimation() {
     if (this.likeAnimationTimeout) {
       clearTimeout(this.likeAnimationTimeout);
     }
-
-    this.isLikeAnimating = false;
+    this.isLikeAnimating.set(false);
     requestAnimationFrame(() => {
-      this.isLikeAnimating = true;
+      this.isLikeAnimating.set(true);
       this.likeAnimationTimeout = setTimeout(() => {
-        this.isLikeAnimating = false;
+        this.isLikeAnimating.set(false);
       }, 220);
     });
   }

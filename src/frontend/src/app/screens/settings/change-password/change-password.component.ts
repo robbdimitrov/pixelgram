@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft} from '@lucide/angular';
@@ -17,6 +17,10 @@ import {
   imports: [FormsModule, RouterLink, FormInputStyleDirective, PrimaryActionStyleDirective, LucideArrowLeft]
 })
 export class ChangePasswordComponent {
+  private apiClient = inject(APIClient);
+  private session = inject(SessionService);
+  private router = inject(Router);
+
   oldPasswordValue = '';
   oldPasswordFieldType = 'password';
   oldPasswordShowButtonTitle = 'Show';
@@ -25,10 +29,6 @@ export class ChangePasswordComponent {
   passwordFieldType = 'password';
   passwordShowButtonTitle = 'Show';
   errorMessage = '';
-
-  constructor(private apiClient: APIClient,
-              private session: SessionService,
-              private router: Router) {}
 
   onSubmit() {
     const userId = this.session.userId();

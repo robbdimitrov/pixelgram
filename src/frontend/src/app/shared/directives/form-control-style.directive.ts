@@ -1,4 +1,4 @@
-import {Directive, ElementRef} from '@angular/core';
+import {Directive, ElementRef, inject} from '@angular/core';
 
 const INPUT_CLASSES = [
   'input',
@@ -72,8 +72,8 @@ function addClasses(elementRef: ElementRef<HTMLElement>, classes: string[]) {
   standalone: true
 })
 export class FormInputStyleDirective {
-  constructor(elementRef: ElementRef<HTMLInputElement>) {
-    addClasses(elementRef, INPUT_CLASSES);
+  constructor() {
+    addClasses(inject(ElementRef<HTMLInputElement>), INPUT_CLASSES);
   }
 }
 
@@ -82,8 +82,8 @@ export class FormInputStyleDirective {
   standalone: true
 })
 export class FormTextareaStyleDirective {
-  constructor(elementRef: ElementRef<HTMLTextAreaElement>) {
-    addClasses(elementRef, TEXTAREA_CLASSES);
+  constructor() {
+    addClasses(inject(ElementRef<HTMLTextAreaElement>), TEXTAREA_CLASSES);
   }
 }
 
@@ -92,7 +92,7 @@ export class FormTextareaStyleDirective {
   standalone: true
 })
 export class PrimaryActionStyleDirective {
-  constructor(elementRef: ElementRef<HTMLElement>) {
-    addClasses(elementRef, PRIMARY_ACTION_CLASSES);
+  constructor() {
+    addClasses(inject(ElementRef<HTMLElement>), PRIMARY_ACTION_CLASSES);
   }
 }

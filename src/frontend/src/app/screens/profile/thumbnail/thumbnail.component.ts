@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, input} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {LucideHeart} from '@lucide/angular';
 
@@ -12,5 +12,5 @@ import {ImagePipe} from '../../../shared/pipes/image.pipe';
   imports: [RouterLink, ImagePipe, LucideHeart]
 })
 export class ThumbnailComponent {
-  @Input() post: Post;
+  post = input.required<Post>();
 }

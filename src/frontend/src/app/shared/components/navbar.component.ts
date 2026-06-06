@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {
   LucideCamera,
@@ -8,7 +8,6 @@ import {
 } from '@lucide/angular';
 
 import {SessionService} from '../../services/session.service';
-import {ThemeService} from '../../services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -20,13 +19,8 @@ import {ThemeService} from '../../services/theme.service';
   imports: [RouterLink, RouterLinkActive, LucideCamera, LucideHome, LucideSquarePlus, LucideUser]
 })
 export class NavbarComponent {
-  constructor(
-    private session: SessionService,
-    public router: Router,
-    theme: ThemeService
-  ) {
-    void theme;
-  }
+  private session = inject(SessionService);
+  router = inject(Router);
 
   userId() {
     return this.session.userId();

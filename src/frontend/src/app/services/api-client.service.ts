@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {inject, Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 import {mapPost, mapUser} from '../shared/utils/mappers';
@@ -14,7 +14,8 @@ import {Comment, CommentDto, CommentsDto} from '../models/comment.model';
   providedIn: 'root'
 })
 export class APIClient {
-  constructor(private http: HttpClient, private cache: HttpCacheService) {}
+  private http = inject(HttpClient);
+  private cache = inject(HttpCacheService);
 
   // Users
 

@@ -1,7 +1,8 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {RouterOutlet} from '@angular/router';
 
 import {NavbarComponent} from './shared/components/navbar.component';
+import {ThemeService} from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -9,4 +10,8 @@ import {NavbarComponent} from './shared/components/navbar.component';
   standalone: true,
   imports: [RouterOutlet, NavbarComponent]
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor() {
+    inject(ThemeService);
+  }
+}

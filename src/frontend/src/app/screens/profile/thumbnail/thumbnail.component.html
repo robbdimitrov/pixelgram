@@ -1,12 +1,11 @@
-<a [routerLink]="['/posts', post.id]" class="group relative block aspect-square w-full overflow-hidden rounded-2xl bg-base-300/30 border border-white/10 shadow-sm hover:shadow-md transition-all duration-500">
-  <img 
-    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" 
-    [src]="post.filename | image"
-    [alt]="post.description"
+<a [routerLink]="['/posts', post().id]" class="group relative block aspect-square w-full overflow-hidden rounded-2xl bg-base-300/30 border border-white/10 shadow-sm hover:shadow-md transition-all duration-500">
+  <img
+    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+    [src]="post().filename | image"
+    [alt]="post().description"
   >
-  <!-- Hover details overlay -->
   <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 text-white font-extrabold text-sm gap-2 backdrop-blur-xs">
     <svg lucideHeart class="w-4 h-4 fill-current text-white"></svg>
-    <span>{{post.likes}}</span>
+    <span>{{post().likes}}</span>
   </div>
 </a>

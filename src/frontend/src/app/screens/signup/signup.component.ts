@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 
@@ -14,6 +14,10 @@ import {TrimDirective} from '../../shared/directives/trim.directive';
   imports: [FormsModule, RouterLink, FormInputStyleDirective, PrimaryActionStyleDirective, TrimDirective]
 })
 export class SignupComponent implements OnInit {
+  private apiClient = inject(APIClient);
+  private router = inject(Router);
+  private session = inject(SessionService);
+
   nameValue = '';
   usernameValue = '';
   emailValue = '';
@@ -22,10 +26,6 @@ export class SignupComponent implements OnInit {
 
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
-
-  constructor(private apiClient: APIClient,
-              private router: Router,
-              private session: SessionService) {}
 
   ngOnInit() {
     if (this.session.userId()) {

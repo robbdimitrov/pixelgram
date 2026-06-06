@@ -1,5 +1,6 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 import {Post} from '../../models/post.model';
 import {APIClient} from '../../services/api-client.service';
@@ -18,17 +19,16 @@ import {EmptyStateComponent} from '../../shared/components/empty-state.component
   imports: [ProfileHeaderComponent, ThumbnailComponent, EmptyStateComponent]
 })
 export class ProfileComponent {
+  private apiClient = inject(APIClient);
+  private pagination = inject<PaginationService<Post>>(PaginationService);
+  private session = inject(SessionService);
+
   user?: User;
   hasLoadedPosts = false;
   isLoadingNextPage = false;
 
-  constructor(
-    private apiClient: APIClient,
-    private pagination: PaginationService<Post>,
-    private route: ActivatedRoute,
-    private session: SessionService
-  ) {
-    this.route.params.subscribe((params) => {
+  constructor() {
+    inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
       if (!this.user || params['userId'] !== this.user.id) {
         this.loadUser(params['userId']);
       }
@@ -42,8 +42,7 @@ export class ProfileComponent {
         this.hasLoadedPosts = false;
         this.pagination.reset();
         this.loadNextPage();
-      },
-      error: (error) => console.error(`Loading user failed: ${error.message}`)
+      }
     });
   }
 
@@ -62,10 +61,9 @@ export class ProfileComponent {
         this.pagination.update(posts, value.length);
         this.hasLoadedPosts = true;
       },
-      error: (error) => {
+      error: () => {
         this.isLoadingNextPage = false;
         this.hasLoadedPosts = true;
-        console.error(`Error loading posts: ${error.message}`);
       }
     });
   }

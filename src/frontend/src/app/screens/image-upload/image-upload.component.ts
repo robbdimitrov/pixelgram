@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Router} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {NgClass} from '@angular/common';
@@ -19,6 +19,9 @@ import {
   imports: [FormsModule, NgClass, LucideSquarePlus]
 })
 export class ImageUploadComponent {
+  private router = inject(Router);
+  private apiClient = inject(APIClient);
+
   readonly maxDescriptionLength = 160;
   readonly maxFileSizeBytes = maxUploadSizeBytes;
   readonly supportedMimeTypes = supportedUploadMimeTypes;
@@ -29,11 +32,6 @@ export class ImageUploadComponent {
   isSubmitting = false;
   isDragging = false;
   private selectedFile?: File;
-
-  constructor(
-    private router: Router,
-    private apiClient: APIClient
-  ) {}
 
   onChange(files: FileList | null) {
     this.selectFile(files?.item(0));
