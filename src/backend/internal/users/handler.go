@@ -120,7 +120,11 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := r.PathValue("userId")
-	currentUserID, _ := httpx.UserID(r)
+	currentUserID, ok := httpx.UserID(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 	if userID != currentUserID {
 		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
 		return

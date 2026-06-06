@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -114,7 +115,9 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = h.Store.ClearLoginFailures(ctx, rateLimitKeys)
+	if err := h.Store.ClearLoginFailures(ctx, rateLimitKeys); err != nil {
+		slog.Warn("failed to clear login failures", "error", err)
+	}
 	httpx.SetSessionCookie(w, r, sessionID)
 	httpx.WriteJSON(w, http.StatusOK, map[string]int{"id": session.UserID})
 }

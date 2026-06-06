@@ -25,6 +25,10 @@ func ParsePagination(query url.Values) (Pagination, bool) {
 		return Pagination{}, false
 	}
 
+	if page > 1000 {
+		return Pagination{}, false
+	}
+
 	if limit > 50 {
 		limit = 50
 	}

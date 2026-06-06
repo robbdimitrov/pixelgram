@@ -185,6 +185,7 @@ func SetSessionCookie(w http.ResponseWriter, r *http.Request, sessionID string) 
 		MaxAge:   7 * 24 * 60 * 60,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
+		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
 	})
 }
 
