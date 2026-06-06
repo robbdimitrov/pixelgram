@@ -24,9 +24,13 @@ export class SettingsComponent {
   }
 
   onLogoutClick() {
-    this.apiClient.logoutUser().subscribe(() => {
+    const clearAndRedirect = () => {
       this.session.clear();
       this.router.navigate(['/']);
+    };
+    this.apiClient.logoutUser().subscribe({
+      next: clearAndRedirect,
+      error: clearAndRedirect
     });
   }
 

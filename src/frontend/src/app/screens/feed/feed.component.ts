@@ -84,7 +84,8 @@ export class FeedComponent {
     const missing = [...new Set(posts.map((p) => p.userId))].filter((id) => !this.users[id]);
     for (const id of missing) {
       this.apiClient.getUser(id).subscribe({
-        next: (user) => { this.users = {...this.users, [user.id]: user}; }
+        next: (user) => { this.users = {...this.users, [user.id]: user}; },
+        error: () => {}
       });
     }
   }
@@ -152,7 +153,7 @@ export class FeedComponent {
         if (this.isLikesPage() && post) {
           post.liked = true;
           post.likes += 1;
-          this.pagination.update([post]);
+          this.pagination.data = [post, ...this.pagination.data];
         } else {
           this.revertLike(postId, true);
         }
