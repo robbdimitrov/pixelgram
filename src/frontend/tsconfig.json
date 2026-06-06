@@ -16,7 +16,7 @@
     "importHelpers": true,
     "strictPropertyInitialization": false,
     "target": "ES2022",
-    "module": "es2020",
+    "module": "es2022",
     "types": ["jest", "node"]
   },
   "angularCompilerOptions": {
