@@ -7,28 +7,28 @@ all: backend database frontend
 
 .PHONY: backend
 backend:
-	docker build -t $(IMAGE_PREFIX)/backend src/backend
+	docker build -t $(IMAGE_PREFIX)/backend apps/backend
 
 .PHONY: database
 database:
-	docker build -t $(IMAGE_PREFIX)/database src/database
+	docker build -t $(IMAGE_PREFIX)/database apps/database
 
 .PHONY: frontend
 frontend:
-	docker build -t $(IMAGE_PREFIX)/frontend src/frontend
+	docker build -t $(IMAGE_PREFIX)/frontend apps/frontend
 
 .PHONY: format
 format:
-	@gofmt -w $$(find src/backend -name '*.go')
+	@gofmt -w $$(find apps/backend -name '*.go')
 
 .PHONY: lint
 lint:
-	@test -z "$$(gofmt -l $$(find src/backend -name '*.go'))"
-	@cd src/frontend && npm run lint
+	@test -z "$$(gofmt -l $$(find apps/backend -name '*.go'))"
+	@cd apps/frontend && npm run lint
 
 .PHONY: test
 test:
 	@echo "Testing backend..."
-	@cd src/backend && go test ./...
+	@cd apps/backend && go test ./...
 	@echo "Testing frontend..."
-	@cd src/frontend && npm test
+	@cd apps/frontend && npm test

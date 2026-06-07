@@ -14,9 +14,9 @@
 
 | Service | Language | Description |
 | --- | --- | --- |
-| [backend](/src/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
-| [database](/src/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
-| [frontend](/src/frontend) | TypeScript | Angular SPA styled with Tailwind CSS and DaisyUI. |
+| [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
+| [database](/apps/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
+| [frontend](/apps/frontend) | TypeScript | Angular SPA styled with Tailwind CSS and DaisyUI. |
 
 ## Deploy
 
@@ -33,7 +33,7 @@ The script builds the Docker images, creates the Kubernetes namespace (`pixelgra
 To remove all deployed resources and the namespace:
 
 ```sh
-kubectl delete -f ./k8s -n pixelgram
+kubectl delete -f ./deploy -n pixelgram
 kubectl delete namespace pixelgram
 ```
 

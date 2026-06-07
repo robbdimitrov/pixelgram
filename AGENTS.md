@@ -3,9 +3,9 @@
 ## Architecture
 
 Three services, deployed via Kubernetes:
-- `src/backend` — Go API (`net/http`, `pgx`)
-- `src/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
-- `src/frontend` — Angular SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
+- `apps/backend` — Go API (`net/http`, `pgx`)
+- `apps/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
+- `apps/frontend` — Angular SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
 
@@ -34,14 +34,14 @@ kubectl create namespace pixelgram
 kubectl create secret generic database-credentials -n pixelgram \
   --from-literal=postgres-password="$(openssl rand -hex 32)" \
   --from-literal=session-hash-secret="$(openssl rand -hex 32)"
-kubectl apply -f ./k8s -n pixelgram
+kubectl apply -f ./deploy -n pixelgram
 kubectl port-forward service/frontend 8080 -n pixelgram   # access at localhost:8080
 ```
 
 ### Cleanup
 
 ```sh
-kubectl delete -f ./k8s -n pixelgram
+kubectl delete -f ./deploy -n pixelgram
 kubectl delete namespace pixelgram
 ```
 
@@ -49,9 +49,9 @@ kubectl delete namespace pixelgram
 
 ```sh
 # Backend
-cd src/backend && go fmt ./...
+cd apps/backend && go fmt ./...
 
-# Frontend (from src/frontend)
+# Frontend (from apps/frontend)
 npm run lint          # ng lint (ESLint with @angular-eslint)
 ```
 
@@ -60,13 +60,13 @@ npm run lint          # ng lint (ESLint with @angular-eslint)
 When `DATABASE_URL` is unset, the backend automatically uses noop stores — useful for local handler testing without a real DB:
 
 ```sh
-cd src/backend && go run ./cmd/api
+cd apps/backend && go run ./cmd/api
 ```
 
 ### Frontend dev server (not Docker)
 
 ```sh
-cd src/frontend && npm start
+cd apps/frontend && npm start
 # Proxies /api → localhost:8080 (backend must be running separately)
 ```
 
@@ -74,7 +74,7 @@ To target the backend deployed in kind without rebuilding the frontend image:
 
 ```sh
 kubectl port-forward service/backend 8080:8080 -n pixelgram
-cd src/frontend && npm start
+cd apps/frontend && npm start
 ```
 
 If local `8080` is occupied by the frontend port-forward, use another backend port with a temporary Angular proxy config.
@@ -89,7 +89,7 @@ make test
 
 ## Environment variables (backend)
 
-Set in `k8s/backend.yaml`:
+Set in `deploy/backend.yaml`:
 - `DATABASE_URL` — PostgreSQL connection string
 - `IMAGE_DIR` — path for uploaded image storage
 - `SESSION_HASH_SECRET` — used to hash persisted session tokens
@@ -109,7 +109,7 @@ The backend reads `PORT` (defaults to `8080`).
 - **Password hashing**: Argon2id PHC hashes via `golang.org/x/crypto/argon2` (not bcrypt).
 - **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
 - **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
-- **Database migrations**: `src/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `src/database/migrations/`.
+- **Database migrations**: `apps/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `apps/database/migrations/`.
 - **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
 - **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Do not add inline `style` attributes or custom component SCSS/CSS for redesign work; use Tailwind config/theme tokens when styling needs to be shared.
 - **Frontend icons**: use Lucide Angular icons for UI icons. Do not add ad hoc inline SVG icons unless Lucide cannot represent the needed symbol.

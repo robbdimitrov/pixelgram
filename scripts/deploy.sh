@@ -7,7 +7,7 @@ set -euo pipefail
 CLUSTER="${CLUSTER:-pixelgram}"
 NS="${NS:-pixelgram}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-K8S_DIR="$ROOT/k8s"
+K8S_DIR="$ROOT/deploy"
 REGISTRY="${REGISTRY:-localhost:5000/pixelgram}"
 APP_HOST="${APP_HOST:-pixelgram.localhost}"
 LOCAL_PORT="${LOCAL_PORT:-8080}"
