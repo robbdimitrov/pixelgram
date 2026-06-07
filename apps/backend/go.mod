@@ -1,4 +1,4 @@
-module pixelgram/backend
+module github.com/robbdimitrov/pixelgram/apps/backend
 
 go 1.26
 

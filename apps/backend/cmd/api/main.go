@@ -11,13 +11,13 @@ import (
 	"syscall"
 	"time"
 
-	"pixelgram/backend/internal/app"
-	"pixelgram/backend/internal/comments"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/posts"
-	"pixelgram/backend/internal/sessions"
-	"pixelgram/backend/internal/store/postgres"
-	"pixelgram/backend/internal/users"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/app"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/comments"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/posts"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/sessions"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/store/postgres"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/users"
 )
 
 func main() {

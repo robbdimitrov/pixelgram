@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/httpx"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/auth"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
 )
 
 const (

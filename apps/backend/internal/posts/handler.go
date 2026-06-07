@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"pixelgram/backend/internal/compat"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/uploads"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/compat"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/uploads"
 )
 
 type Post struct {

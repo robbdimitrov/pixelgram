@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/compat"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/uploads"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/auth"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/compat"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/store"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/uploads"
 )
 
 type Store interface {

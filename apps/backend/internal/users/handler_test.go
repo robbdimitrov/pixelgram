@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/store"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/auth"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/store"
 )
 
 type fakeStore struct {

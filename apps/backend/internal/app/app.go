@@ -3,12 +3,12 @@ package app
 import (
 	"net/http"
 
-	"pixelgram/backend/internal/comments"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/posts"
-	"pixelgram/backend/internal/sessions"
-	"pixelgram/backend/internal/uploads"
-	"pixelgram/backend/internal/users"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/comments"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/posts"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/sessions"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/uploads"
+	"github.com/robbdimitrov/pixelgram/apps/backend/internal/users"
 )
 
 type Config struct {
