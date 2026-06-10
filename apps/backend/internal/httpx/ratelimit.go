@@ -175,6 +175,11 @@ func rateLimitKey(r *http.Request, policy RateLimitPolicy) string {
 	if userID, ok := UserID(r); ok && userID != "" {
 		return policy.Name + ":user:" + userID
 	}
+	// Session cookie is HttpOnly and server-issued, so it's a stable per-client
+	// identifier that doesn't collapse when a proxy (e.g. nginx) sits in front.
+	if sessionID, ok := GetSessionCookie(r); ok {
+		return policy.Name + ":session:" + sessionID
+	}
 	return policy.Name + ":ip:" + ClientIP(r)
 }
 
