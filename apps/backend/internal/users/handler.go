@@ -115,6 +115,11 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Email is private: only expose it on the requester's own profile.
+	if currentUserID, ok := httpx.UserID(r); !ok || currentUserID != userID {
+		user.Email = ""
+	}
+
 	httpx.WriteJSON(w, http.StatusOK, user)
 }
 
@@ -223,10 +228,7 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 		return
 	}
 
-	currentSessionID := ""
-	if cookie, err := r.Cookie("session"); err == nil {
-		currentSessionID = cookie.Value
-	}
+	currentSessionID, _ := httpx.GetSessionCookie(r)
 	if err := h.Store.DeleteOtherSessions(ctx, userID, currentSessionID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return

@@ -26,10 +26,6 @@ func ValidSessionID(sessionID string) bool {
 }
 
 func HashSessionToken(token, secret string) string {
-	if secret == "" {
-		secret = "pixelgram-development-session-secret"
-	}
-
 	mac := hmac.New(sha256.New, []byte(secret))
 	_, _ = mac.Write([]byte(token))
 	return hex.EncodeToString(mac.Sum(nil))

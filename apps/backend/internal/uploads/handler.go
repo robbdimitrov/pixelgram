@@ -18,8 +18,9 @@ const fileLimit = 1_000_000
 
 type Store interface {
 	DeleteExpiredUploads(ctx context.Context) ([]string, error)
-	HasPendingUploadCapacity(ctx context.Context, userID string) (bool, error)
-	CreateUpload(ctx context.Context, userID, filename string) error
+	// CreateUpload atomically records a pending upload, returning false if the
+	// user is already at the pending-upload cap (no row inserted).
+	CreateUpload(ctx context.Context, userID, filename string) (bool, error)
 }
 
 type Handler struct {
@@ -61,21 +62,15 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 	}
 	deleteUploadFiles(h.ImageDir, expired)
 
-	hasCapacity, err := h.Store.HasPendingUploadCapacity(ctx, userID)
+	created, err := h.Store.CreateUpload(ctx, userID, filename)
 	if err != nil {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
 	}
-	if !hasCapacity {
+	if !created {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusTooManyRequests, "Too many pending uploads. Create posts with existing uploads or try again later.")
-		return
-	}
-
-	if err := h.Store.CreateUpload(ctx, userID, filename); err != nil {
-		DeleteUploadFile(h.ImageDir, filename)
-		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
 	}
 

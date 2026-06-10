@@ -178,10 +178,19 @@ func rateLimitKey(r *http.Request, policy RateLimitPolicy) string {
 	return policy.Name + ":ip:" + ClientIP(r)
 }
 
-// ClientIP extracts the client IP, preferring X-Forwarded-For (set by ingress).
+// trustProxy controls whether X-Forwarded-For is honored. It must only be
+// enabled when the backend sits behind a proxy that overwrites the header
+// (see the frontend nginx config); otherwise clients can spoof their IP and
+// bypass IP-based rate limiting.
+var trustProxy = envBool("TRUST_PROXY", false)
+
+// ClientIP extracts the client IP, preferring X-Forwarded-For only when the
+// deployment is configured to trust an upstream proxy.
 func ClientIP(r *http.Request) string {
-	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		return strings.TrimSpace(strings.Split(forwarded, ",")[0])
+	if trustProxy {
+		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+			return strings.TrimSpace(strings.Split(forwarded, ",")[0])
+		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err == nil {

@@ -5,6 +5,7 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=builder /usr/src/app/dist/browser /usr/share/nginx/html

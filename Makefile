@@ -8,14 +8,17 @@ all: backend database frontend
 .PHONY: backend
 backend:
 	docker build -t $(IMAGE_PREFIX)/backend apps/backend
+	docker push $(IMAGE_PREFIX)/backend
 
 .PHONY: database
 database:
 	docker build -t $(IMAGE_PREFIX)/database apps/database
+	docker push $(IMAGE_PREFIX)/database
 
 .PHONY: frontend
 frontend:
 	docker build -t $(IMAGE_PREFIX)/frontend apps/frontend
+	docker push $(IMAGE_PREFIX)/frontend
 
 .PHONY: format
 format:

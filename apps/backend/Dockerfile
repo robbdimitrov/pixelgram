@@ -7,5 +7,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/backend
 
 FROM scratch
 COPY --from=builder /out/backend /backend
+USER 65532:65532
 EXPOSE 8080
 CMD ["/backend"]

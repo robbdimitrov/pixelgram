@@ -42,11 +42,14 @@ func TestHashSessionTokenMatchesNodeImplementation(t *testing.T) {
 	}
 }
 
-func TestHashSessionTokenDefaultSecret(t *testing.T) {
-	got := HashSessionToken("AAAAAAAAAAAAAAAAAAAAAAAAAAAA", "")
-	const want = "9b51d73b223c2562eb7b76ddb20dca2eece534f9e703243a37c289a6fc474af7"
+func TestHashSessionTokenNoFallbackSecret(t *testing.T) {
+	const token = "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	// An empty secret must not silently fall back to a hardcoded value; it
+	// hashes with an empty HMAC key, distinct from any real secret.
+	emptySecret := HashSessionToken(token, "")
+	legacyFallback := HashSessionToken(token, "pixelgram-development-session-secret")
 
-	if got != want {
-		t.Fatalf("HashSessionToken() = %q, want %q", got, want)
+	if emptySecret == legacyFallback {
+		t.Fatal("HashSessionToken with empty secret must not reuse the old development fallback secret")
 	}
 }

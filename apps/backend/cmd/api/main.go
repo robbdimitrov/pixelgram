@@ -97,7 +97,12 @@ func openStores(databaseURL string) (app.Stores, func(), error) {
 		}, func() {}, nil
 	}
 
-	client, err := postgres.New(context.Background(), databaseURL, os.Getenv("SESSION_HASH_SECRET"))
+	sessionSecret := os.Getenv("SESSION_HASH_SECRET")
+	if sessionSecret == "" {
+		return app.Stores{}, func() {}, errors.New("SESSION_HASH_SECRET is required when DATABASE_URL is set")
+	}
+
+	client, err := postgres.New(context.Background(), databaseURL, sessionSecret)
 	if err != nil {
 		return app.Stores{}, func() {}, err
 	}
@@ -193,11 +198,8 @@ func (noopSessionStore) DeleteSession(_ context.Context, _ string) error { retur
 
 type noopUploadStore struct{}
 
-func (noopUploadStore) DeleteExpiredUploads(_ context.Context) ([]string, error) { return nil, nil }
-func (noopUploadStore) HasPendingUploadCapacity(_ context.Context, _ string) (bool, error) {
-	return false, nil
-}
-func (noopUploadStore) CreateUpload(_ context.Context, _, _ string) error { return nil }
+func (noopUploadStore) DeleteExpiredUploads(_ context.Context) ([]string, error)  { return nil, nil }
+func (noopUploadStore) CreateUpload(_ context.Context, _, _ string) (bool, error) { return false, nil }
 
 type noopPostStore struct{}
 

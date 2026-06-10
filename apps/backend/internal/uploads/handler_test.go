@@ -28,15 +28,17 @@ func (s *fakeStore) DeleteExpiredUploads(_ context.Context) ([]string, error) {
 	return s.expired, s.err
 }
 
-func (s *fakeStore) HasPendingUploadCapacity(_ context.Context, _ string) (bool, error) {
-	return s.capacity, s.err
-}
-
-func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) error {
+func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) (bool, error) {
+	if s.err != nil {
+		return false, s.err
+	}
+	if !s.capacity {
+		return false, nil
+	}
 	s.created = true
 	s.createdUser = userID
 	s.filename = filename
-	return s.err
+	return true, nil
 }
 
 func TestCreateFileMissingFile(t *testing.T) {

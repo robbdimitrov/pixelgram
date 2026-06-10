@@ -4,3 +4,9 @@ node_modules
 npm-debug.log
 
 dist
+coverage
+.angular
+
+# Local debug/scratch scripts — must never enter the image build context
+test-*.js
+read_img.py

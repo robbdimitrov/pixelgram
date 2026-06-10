@@ -113,6 +113,12 @@ build_images() {
   log "building images"
   export DOCKER_BUILDKIT=1
   make -C "${ROOT}"
+  if docker ps | grep -q pixelgram-control-plane; then
+    log "loading images into kind node"
+    docker save localhost:5000/pixelgram/backend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
+    docker save localhost:5000/pixelgram/database | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
+    docker save localhost:5000/pixelgram/frontend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
+  fi
 }
 
 apply_manifests() {

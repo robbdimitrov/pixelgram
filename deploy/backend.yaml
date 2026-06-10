@@ -33,10 +33,23 @@ spec:
         app: pixelgram
         tier: backend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
       - name: migration
         image: localhost:5000/pixelgram/database
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         env:
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -47,6 +60,12 @@ spec:
       - name: backend
         image: localhost:5000/pixelgram/backend
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         ports:
         - containerPort: 8080
         resources:
@@ -70,6 +89,8 @@ spec:
           value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
         - name: IMAGE_DIR
           value: /data/images
+        - name: TRUST_PROXY
+          value: "true"
         - name: SESSION_HASH_SECRET
           valueFrom:
             secretKeyRef:

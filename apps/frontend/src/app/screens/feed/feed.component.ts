@@ -70,6 +70,7 @@ export class FeedComponent {
 
     req.subscribe({
       next: (value) => {
+        console.log('FEED REQUEST SUCCESS', value);
         this.isLoadingNextPage = false;
         const posts = value.filter((post) => {
           return !(this.pagination.data.some((item) => post.id === item.id));
@@ -78,7 +79,8 @@ export class FeedComponent {
         this.hasLoaded = true;
         this.loadMissingUsers(posts);
       },
-      error: () => {
+      error: (err) => {
+        console.log('FEED REQUEST ERROR', err);
         this.isLoadingNextPage = false;
         this.hasLoaded = true;
       }

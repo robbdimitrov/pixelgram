@@ -290,41 +290,29 @@ func (c *Client) DeleteOtherSessions(ctx context.Context, userID, currentSession
 	return nil
 }
 
-func (c *Client) CreateUpload(ctx context.Context, userID, filename string) error {
-	if !c.breaker.allow() {
-		return store.ErrUnavailable
-	}
-	_, err := c.pool.Exec(
-		ctx,
-		`INSERT INTO uploads (user_id, filename) VALUES ($1, $2)`,
-		userID, filename,
-	)
-	if err != nil {
-		c.breaker.failure(err)
-		return err
-	}
-	c.breaker.success()
-	return nil
-}
+const maxPendingUploads = 20
 
-func (c *Client) HasPendingUploadCapacity(ctx context.Context, userID string) (bool, error) {
+func (c *Client) CreateUpload(ctx context.Context, userID, filename string) (bool, error) {
 	if !c.breaker.allow() {
 		return false, store.ErrUnavailable
 	}
-	var count int
-	err := withRetry(ctx, c.retryCfg, func() error {
-		return c.pool.QueryRow(
-			ctx,
-			`SELECT count(*) AS count FROM uploads WHERE user_id = $1`,
-			userID,
-		).Scan(&count)
-	})
+	// Enforce the per-user cap inside the insert. This narrows the
+	// check-then-insert window to a single statement; under READ COMMITTED a
+	// tiny burst can still slightly exceed the cap, which is fine for a soft
+	// anti-abuse limit.
+	tag, err := c.pool.Exec(
+		ctx,
+		`INSERT INTO uploads (user_id, filename)
+		SELECT $1, $2
+		WHERE (SELECT count(*) FROM uploads WHERE user_id = $1) < $3`,
+		userID, filename, maxPendingUploads,
+	)
 	if err != nil {
 		c.breaker.failure(err)
 		return false, err
 	}
 	c.breaker.success()
-	return count < 20, nil
+	return tag.RowsAffected() > 0, nil
 }
 
 func (c *Client) DeleteExpiredUploads(ctx context.Context) ([]string, error) {

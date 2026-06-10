@@ -33,10 +33,21 @@ spec:
         app: pixelgram
         tier: frontend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: frontend
         image: localhost:5000/pixelgram/frontend
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         ports:
         - containerPort: 8080
         resources:
@@ -66,3 +77,17 @@ spec:
             port: 8080
           failureThreshold: 30
           periodSeconds: 2
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /var/cache/nginx
+          name: nginx-cache
+        - mountPath: /var/run
+          name: nginx-run
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}

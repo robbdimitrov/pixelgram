@@ -14,7 +14,12 @@ import (
 const (
 	sessionDuration   = 7 * 24 * time.Hour
 	rateLimitDuration = 15 * time.Minute
-	maxLoginFailures  = 5
+	// ipLoginFailures throttles brute-forcing from a single client (the IP key
+	// is trustworthy now that the proxy overwrites X-Forwarded-For). The email
+	// key uses a much higher threshold so an attacker cannot cheaply lock a
+	// victim's account, while still bounding distributed credential stuffing.
+	ipLoginFailures    = 5
+	emailLoginFailures = 50
 )
 
 type UserCredentials struct {
@@ -124,14 +129,14 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	cookie, err := r.Cookie("session")
-	if err != nil || !auth.ValidSessionID(cookie.Value) {
+	sessionID, ok := httpx.GetSessionCookie(r)
+	if !ok || !auth.ValidSessionID(sessionID) {
 		httpx.ClearSessionCookie(w, r)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	if err := h.Store.DeleteSession(ctx, cookie.Value); err != nil {
+	if err := h.Store.DeleteSession(ctx, sessionID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
@@ -142,11 +147,18 @@ func (h Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 
 func rateLimited(failures []LoginFailure, now time.Time) bool {
 	for _, failure := range failures {
-		if failure.Count >= maxLoginFailures && failure.ResetAt.After(now) {
+		if failure.Count >= failureThreshold(failure.Key) && failure.ResetAt.After(now) {
 			return true
 		}
 	}
 	return false
+}
+
+func failureThreshold(key string) int {
+	if strings.HasPrefix(key, "email:") {
+		return emailLoginFailures
+	}
+	return ipLoginFailures
 }
 
 func recordFailures(ctx context.Context, store Store, keys []string) {

@@ -83,8 +83,8 @@ func TestCreateSessionMissingFields(t *testing.T) {
 
 func TestCreateSessionRateLimited(t *testing.T) {
 	store := &fakeStore{failures: []LoginFailure{{
-		Key:     "email:test@example.com",
-		Count:   5,
+		Key:     "ip:192.0.2.1",
+		Count:   ipLoginFailures,
 		ResetAt: time.Now().Add(time.Minute),
 	}}}
 	handler := Handler{Store: store}
@@ -101,6 +101,29 @@ func TestCreateSessionRateLimited(t *testing.T) {
 	}
 	if store.recordedFailures != 0 {
 		t.Fatal("rate limited request should not record another failure")
+	}
+}
+
+func TestCreateSessionEmailKeyDoesNotLockBelowThreshold(t *testing.T) {
+	// A handful of failures on the email key must not lock the account; only
+	// the IP key trips at the low threshold. This guards against the cheap
+	// account-lockout DoS.
+	store := &fakeStore{failures: []LoginFailure{{
+		Key:     "email:test@example.com",
+		Count:   ipLoginFailures,
+		ResetAt: time.Now().Add(time.Minute),
+	}}}
+	handler := Handler{Store: store}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader(`{
+		"email":"test@example.com",
+		"password":"password123"
+	}`))
+
+	handler.CreateSession(res, req)
+
+	if res.Code == http.StatusTooManyRequests {
+		t.Fatal("email key below its threshold must not rate limit")
 	}
 }
 

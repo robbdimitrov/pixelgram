@@ -15,6 +15,19 @@ type SessionStore interface {
 	RefreshSession(ctx context.Context, sessionID string) (Session, error)
 }
 
+const sessionCookieName = "session"
+
+func GetSessionCookie(r *http.Request) (string, bool) {
+	if cookie, err := r.Cookie(sessionCookieName); err == nil && cookie.Value != "" {
+		return cookie.Value, true
+	}
+	return "", false
+}
+
+func secureRequest(r *http.Request) bool {
+	return r.TLS != nil || (trustProxy && r.Header.Get("X-Forwarded-Proto") == "https")
+}
+
 type Session struct {
 	ID     string
 	UserID string
@@ -137,19 +150,19 @@ func RequireSession(store SessionStore) func(http.Handler) http.Handler {
 				return
 			}
 
-			cookie, err := r.Cookie("session")
-			if err != nil || cookie.Value == "" {
+			sessionID, ok := GetSessionCookie(r)
+			if !ok {
 				WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
 				return
 			}
 
-			if !auth.ValidSessionID(cookie.Value) {
+			if !auth.ValidSessionID(sessionID) {
 				ClearSessionCookie(w, r)
 				WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
 				return
 			}
 
-			session, err := store.RefreshSession(r.Context(), cookie.Value)
+			session, err := store.RefreshSession(r.Context(), sessionID)
 			if err != nil {
 				WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 				return
@@ -160,7 +173,7 @@ func RequireSession(store SessionStore) func(http.Handler) http.Handler {
 				return
 			}
 
-			SetSessionCookie(w, r, cookie.Value)
+			SetSessionCookie(w, r, sessionID)
 			next.ServeHTTP(w, WithUserID(r, session.UserID))
 		})
 	}
@@ -171,32 +184,36 @@ func expectedOrigin(r *http.Request) string {
 	if r.TLS != nil {
 		scheme = "https"
 	}
-	if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
-		scheme = strings.Split(forwardedProto, ",")[0]
+	if trustProxy {
+		if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
+			scheme = strings.Split(forwardedProto, ",")[0]
+		}
 	}
 	return scheme + "://" + r.Host
 }
 
 func SetSessionCookie(w http.ResponseWriter, r *http.Request, sessionID string) {
+	secure := secureRequest(r)
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
+		Name:     sessionCookieName,
 		Value:    sessionID,
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+		Secure:   secure,
 	})
 }
 
 func ClearSessionCookie(w http.ResponseWriter, r *http.Request) {
+	secure := secureRequest(r)
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
+		Name:     sessionCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+		Secure:   secure,
 	})
 }
