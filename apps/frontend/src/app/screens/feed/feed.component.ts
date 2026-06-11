@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
@@ -22,9 +22,9 @@ export class FeedComponent {
 
   userId?: number;
   postId?: number;
-  hasLoaded = false;
-  isLoadingNextPage = false;
-  users: Record<number, User> = {};
+  hasLoaded = signal(false);
+  isLoadingNextPage = signal(false);
+  users = signal<Record<number, User>>({});
 
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -33,7 +33,7 @@ export class FeedComponent {
         if (!Number.isSafeInteger(postId) || postId <= 0) {
           this.postId = undefined;
           this.userId = undefined;
-          this.hasLoaded = true;
+          this.hasLoaded.set(true);
           this.pagination.reset();
           return;
         }
@@ -46,7 +46,7 @@ export class FeedComponent {
         if (userId !== undefined && (!Number.isSafeInteger(userId) || userId <= 0)) {
           this.postId = undefined;
           this.userId = undefined;
-          this.hasLoaded = true;
+          this.hasLoaded.set(true);
           this.pagination.reset();
           return;
         }
@@ -59,10 +59,10 @@ export class FeedComponent {
   }
 
   loadNextPage() {
-    if (this.isLoadingNextPage) {
+    if (this.isLoadingNextPage()) {
       return;
     }
-    this.isLoadingNextPage = true;
+    this.isLoadingNextPage.set(true);
 
     const req = (this.userId ?
       this.apiClient.getLikedPosts(this.userId, this.pagination.page) :
@@ -70,19 +70,17 @@ export class FeedComponent {
 
     req.subscribe({
       next: (value) => {
-        console.log('FEED REQUEST SUCCESS', value);
-        this.isLoadingNextPage = false;
         const posts = value.filter((post) => {
           return !(this.pagination.data.some((item) => post.id === item.id));
         });
         this.pagination.update(posts, value.length);
-        this.hasLoaded = true;
+        this.isLoadingNextPage.set(false);
+        this.hasLoaded.set(true);
         this.loadMissingUsers(posts);
       },
-      error: (err) => {
-        console.log('FEED REQUEST ERROR', err);
-        this.isLoadingNextPage = false;
-        this.hasLoaded = true;
+      error: () => {
+        this.isLoadingNextPage.set(false);
+        this.hasLoaded.set(true);
       }
     });
   }
@@ -91,20 +89,20 @@ export class FeedComponent {
     this.apiClient.getPost(postId).subscribe({
       next: (value) => {
         this.pagination.data = [value];
-        this.hasLoaded = true;
+        this.hasLoaded.set(true);
         this.loadMissingUsers([value]);
       },
       error: () => {
-        this.hasLoaded = true;
+        this.hasLoaded.set(true);
       }
     });
   }
 
   private loadMissingUsers(posts: Post[]) {
-    const missing = [...new Set(posts.map((p) => p.userId))].filter((id) => !this.users[id]);
+    const missing = [...new Set(posts.map((p) => p.userId))].filter((id) => !this.users()[id]);
     for (const id of missing) {
       this.apiClient.getUser(id).subscribe({
-        next: (user) => { this.users = {...this.users, [user.id]: user}; },
+        next: (user) => this.users.update((users) => ({...users, [user.id]: user})),
         error: () => {}
       });
     }
@@ -123,7 +121,7 @@ export class FeedComponent {
   }
 
   isEmpty() {
-    return this.hasLoaded && this.count() === 0;
+    return this.hasLoaded() && this.count() === 0;
   }
 
   isLikesPage() {

@@ -61,8 +61,8 @@ describe('ImageUploadComponent', () => {
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
-      expect(component.errorMessage).toBe('');
-      expect(component.imagePreview).toBe('data:image/jpeg;base64,fake');
+      expect(component.errorMessage()).toBe('');
+      expect(component.imagePreview()).toBe('data:image/jpeg;base64,fake');
       expect(component['selectedFile']).toBe(mockFile);
       expect(component.canShare()).toBe(true);
     });
@@ -73,8 +73,8 @@ describe('ImageUploadComponent', () => {
 
       await component['selectFile'](mockFile);
 
-      expect(component.errorMessage).toBe('Resize failed');
-      expect(component.imagePreview).toBe('');
+      expect(component.errorMessage()).toBe('Resize failed');
+      expect(component.imagePreview()).toBe('');
       expect(component['selectedFile']).toBeUndefined();
       expect(component.canShare()).toBe(false);
     });
@@ -91,7 +91,7 @@ describe('ImageUploadComponent', () => {
 
       component.onSubmitClick();
 
-      expect(component.isSubmitting).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
       expect(mockApiClient.uploadImage).toHaveBeenCalledWith(mockFile);
       expect(mockApiClient.createPost).toHaveBeenCalledWith('uploaded.jpg', 'My Cool Photo');
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
@@ -105,8 +105,8 @@ describe('ImageUploadComponent', () => {
 
       component.onSubmitClick();
 
-      expect(component.isSubmitting).toBe(false);
-      expect(component.errorMessage).toBe('Upload failed');
+      expect(component.isSubmitting()).toBe(false);
+      expect(component.errorMessage()).toBe('Upload failed');
       expect(mockApiClient.createPost).not.toHaveBeenCalled();
       expect(mockRouter.navigate).not.toHaveBeenCalled();
     });

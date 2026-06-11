@@ -11,21 +11,21 @@
         (click)="onSubmitClick()"
         [disabled]="!canShare()"
       >
-        {{ isSubmitting ? 'Sharing...' : 'Share' }}
+        {{ isSubmitting() ? 'Sharing...' : 'Share' }}
       </button>
     </div>
 
     <div class="grid min-h-[34rem] md:grid-cols-[minmax(0,1fr)_22rem]">
       <div
         class="relative flex min-h-96 items-center justify-center bg-slate-50 p-6 transition-colors dark:bg-slate-900 sm:px-8"
-        [ngClass]="{'bg-slate-100 dark:bg-white/10': isDragging}"
+        [ngClass]="{'bg-slate-100 dark:bg-white/10': isDragging()}"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
       >
-        @if (imagePreview) {
+        @if (imagePreview()) {
           <div class="aspect-square w-full max-w-[42rem] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900">
-            <img class="h-full w-full object-cover" [src]="imagePreview" alt="Upload preview">
+            <img class="h-full w-full object-cover" [src]="imagePreview()" alt="Upload preview">
           </div>
           <button
             type="button"
@@ -72,9 +72,9 @@
           [maxlength]="maxDescriptionLength"
         ></textarea>
 
-        @if (errorMessage) {
+        @if (errorMessage()) {
           <div class="mx-6 mb-6 rounded-2xl bg-error/10 px-4 py-3 text-sm font-bold text-error sm:mx-8">
-            {{ errorMessage }}
+            {{ errorMessage() }}
           </div>
         }
 

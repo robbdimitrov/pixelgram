@@ -38,7 +38,7 @@ describe('FeedComponent', () => {
     };
   });
 
-  function createComponent(params: Record<string, string> = {}) {
+  function createFixture(params: Record<string, string> = {}) {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -52,7 +52,13 @@ describe('FeedComponent', () => {
     TestBed.overrideComponent(FeedComponent, {
       set: {providers: [{provide: PaginationService, useValue: mockPagination}]}
     });
-    component = TestBed.createComponent(FeedComponent).componentInstance;
+    const fixture = TestBed.createComponent(FeedComponent);
+    component = fixture.componentInstance;
+    return fixture;
+  }
+
+  function createComponent(params: Record<string, string> = {}) {
+    createFixture(params);
   }
 
   it('should initialize and load feed if no params provided', () => {
@@ -64,7 +70,7 @@ describe('FeedComponent', () => {
     expect(component.postId).toBeUndefined();
     expect(mockApiClient.getFeed).toHaveBeenCalledWith(1);
     expect(mockPagination.update).toHaveBeenCalled();
-    expect(component.hasLoaded).toBe(true);
+    expect(component.hasLoaded()).toBe(true);
   });
 
   it('should load specific post if postId param provided', () => {
@@ -80,7 +86,7 @@ describe('FeedComponent', () => {
     createComponent({postId: 'invalid'});
 
     expect(component.postId).toBeUndefined();
-    expect(component.hasLoaded).toBe(true);
+    expect(component.hasLoaded()).toBe(true);
     expect(mockPagination.reset).toHaveBeenCalled();
     expect(mockApiClient.getPost).not.toHaveBeenCalled();
   });
@@ -89,7 +95,7 @@ describe('FeedComponent', () => {
     createComponent({userId: '0'});
 
     expect(component.userId).toBeUndefined();
-    expect(component.hasLoaded).toBe(true);
+    expect(component.hasLoaded()).toBe(true);
     expect(mockPagination.reset).toHaveBeenCalled();
     expect(mockApiClient.getLikedPosts).not.toHaveBeenCalled();
     expect(mockApiClient.getFeed).not.toHaveBeenCalled();
@@ -100,9 +106,19 @@ describe('FeedComponent', () => {
 
     createComponent();
 
-    expect(component.isLoadingNextPage).toBe(false);
-    expect(component.hasLoaded).toBe(true);
+    expect(component.isLoadingNextPage()).toBe(false);
+    expect(component.hasLoaded()).toBe(true);
     expect(mockPagination.update).not.toHaveBeenCalled();
+  });
+
+  it('should render the empty state after loading an empty feed', () => {
+    mockApiClient.getFeed.mockReturnValue(of([]));
+
+    const fixture = createFixture();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Ready for your first post?');
+    expect(fixture.nativeElement.textContent).toContain('Share Your First Photo');
   });
 
   describe('Likes', () => {

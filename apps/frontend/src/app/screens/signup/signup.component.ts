@@ -1,7 +1,7 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {finalize, switchMap} from 'rxjs';
+import {switchMap} from 'rxjs';
 
 import {APIClient} from '../../services/api-client.service';
 import {SessionService} from '../../services/session.service';
@@ -23,8 +23,8 @@ export class SignupComponent {
   usernameValue = '';
   emailValue = '';
   passwordValue = '';
-  errorMessage = '';
-  isSubmitting = false;
+  errorMessage = signal('');
+  isSubmitting = signal(false);
 
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
@@ -46,21 +46,22 @@ export class SignupComponent {
   }
 
   onSubmit() {
-    if (this.isSubmitting) {
+    if (this.isSubmitting()) {
       return;
     }
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
     this.apiClient.createUser(this.nameValue, this.usernameValue, this.emailValue, this.passwordValue).pipe(
-      switchMap(() => this.apiClient.loginUser(this.emailValue, this.passwordValue)),
-      finalize(() => this.isSubmitting = false)
+      switchMap(() => this.apiClient.loginUser(this.emailValue, this.passwordValue))
     ).subscribe({
       next: (data) => {
+        this.isSubmitting.set(false);
         this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
       error: (error) => {
-        this.errorMessage = error.message || 'Could not create account. Please try again.';
+        this.isSubmitting.set(false);
+        this.errorMessage.set(error.message || 'Could not create account. Please try again.');
       }
     });
   }
