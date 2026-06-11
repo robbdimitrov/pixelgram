@@ -17,6 +17,7 @@ metadata:
     app: pixelgram
     tier: database
 spec:
+  replicas: 1
   strategy:
     type: Recreate
   selector:
