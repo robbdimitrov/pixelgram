@@ -10,10 +10,9 @@ export const authGuard: CanActivateFn = (_route, _state) => {
   if (isPlatformServer(inject(PLATFORM_ID))) {
     const request = inject(REQUEST, {optional: true});
     const cookieHeader = request?.headers.get('cookie') ?? '';
-    const hasSession = /(?:^|;\s*)session=/.test(cookieHeader);
+    const hasSession = /(?:^|;\s*)session=([^;]+)/.test(cookieHeader);
     if (!hasSession) {
-      router.navigate(['/login']);
-      return false;
+      return router.parseUrl('/login');
     }
     return true;
   }

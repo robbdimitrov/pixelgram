@@ -47,10 +47,10 @@ describe('authGuard — browser platform', () => {
 });
 
 describe('authGuard — server platform', () => {
-  let mockRouter: {navigate: jest.Mock};
+  let mockRouter: {navigate: jest.Mock; parseUrl: jest.Mock};
 
   beforeEach(() => {
-    mockRouter = {navigate: jest.fn()};
+    mockRouter = {navigate: jest.fn(), parseUrl: jest.fn().mockReturnValue({url: '/login'})};
   });
 
   afterEach(() => TestBed.resetTestingModule());
@@ -72,15 +72,19 @@ describe('authGuard — server platform', () => {
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
-  it('should redirect to /login and return false when session cookie is absent', () => {
+  it('should return a UrlTree for /login when session cookie is absent', () => {
     setup('');
-    expect(run()).toBe(false);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
+    const result = run();
+    expect(result).not.toBe(false);
+    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/login');
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
-  it('should redirect to /login when only unrelated cookies are present', () => {
+  it('should return a UrlTree for /login when only unrelated cookies are present', () => {
     setup('theme=dark; othercookie=value');
-    expect(run()).toBe(false);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
+    const result = run();
+    expect(result).not.toBe(false);
+    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/login');
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 });

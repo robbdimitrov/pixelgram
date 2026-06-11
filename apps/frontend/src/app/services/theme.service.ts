@@ -1,4 +1,4 @@
-import {afterNextRender, inject, Injectable, PLATFORM_ID, REQUEST} from '@angular/core';
+import {afterNextRender, DestroyRef, inject, Injectable, PLATFORM_ID, REQUEST} from '@angular/core';
 import {isPlatformBrowser, isPlatformServer, DOCUMENT} from '@angular/common';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -13,6 +13,7 @@ export class ThemeService {
 
   private readonly doc = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   private systemThemeQuery?: MediaQueryList;
   private readonly systemThemeListener = (event: MediaQueryListEvent) => {
     if (this.preference === 'system') {
@@ -39,6 +40,9 @@ export class ThemeService {
       afterNextRender(() => {
         this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
         this.systemThemeQuery.addEventListener('change', this.systemThemeListener);
+        this.destroyRef.onDestroy(() =>
+          this.systemThemeQuery?.removeEventListener('change', this.systemThemeListener)
+        );
         this.preference = this.savedThemePreference();
         this.updateThemeMode();
       });

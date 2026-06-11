@@ -32,18 +32,7 @@ app.get(['/health', '/healthz'], (_req: Request, res: Response) => {
   res.status(200).send('ok');
 });
 
-// /api reverse proxy — streams bodies (multipart uploads pass through untouched).
-app.use(
-  '/api',
-  createProxyMiddleware({
-    target: backendUrl,
-    changeOrigin: true,
-    xfwd: true,
-    pathRewrite: {'^/api': ''},
-  })
-);
-
-// Security headers for all remaining responses.
+// Security headers for all responses (including proxied /api).
 app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -52,8 +41,22 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// /api reverse proxy — streams bodies (multipart uploads pass through untouched).
+// changeOrigin: false preserves the browser's original Host header, matching
+// the prior nginx `proxy_set_header Host $http_host` behaviour.
+app.use(
+  '/api',
+  createProxyMiddleware({
+    target: backendUrl,
+    changeOrigin: false,
+    xfwd: true,
+    pathRewrite: {'^/api': ''},
+  })
+);
+
 // Static assets with cache headers matching the nginx config.
-const HASHED_ASSET_RE = /[.\-][a-z0-9_-]{8,}\.(js|css)$/i;
+// Matches Angular's esbuild fingerprint format: exactly 8 uppercase base62 chars after a dash.
+const HASHED_ASSET_RE = /-[A-Z0-9]{8}\.(js|css)$/;
 
 app.use(
   express.static(browserDistFolder, {
@@ -73,6 +76,9 @@ app.use(
 );
 
 // Angular SSR handler with per-request nonce for inline scripts.
+// Note: CSP_NONCE DI token is not used here because AngularNodeAppEngine does not
+// yet expose per-request DI providers. The regex-based nonce injection below is a
+// workaround; migrate to DI-based nonce once Angular exposes per-request providers.
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   try {
     const angularResponse = await angularApp.handle(req);

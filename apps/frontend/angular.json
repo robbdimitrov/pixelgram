@@ -46,9 +46,6 @@
             "scripts": [],
             "server": "src/main.server.ts",
             "outputMode": "server",
-            "security": {
-              "allowedHosts": ["localhost", "frontend"]
-            },
             "ssr": {
               "entry": "src/server.ts"
             }
@@ -87,7 +84,10 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true
+              "namedChunks": true,
+              "security": {
+                "allowedHosts": ["localhost", "frontend"]
+              }
             }
           },
           "defaultConfiguration": "production"
