@@ -5,7 +5,7 @@ import {
 } from '@angular/ssr/node';
 import express, {Request, Response, NextFunction} from 'express';
 import {createProxyMiddleware} from 'http-proxy-middleware';
-import {join} from 'node:path';
+import {join, basename} from 'node:path';
 import {randomBytes} from 'node:crypto';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -55,7 +55,7 @@ app.use(
 );
 
 // Static assets with cache headers matching the nginx config.
-// Matches Angular's esbuild fingerprint format: exactly 8 uppercase base62 chars after a dash.
+// Matches Angular's esbuild fingerprint format: exactly 8 uppercase base36 chars after a dash.
 const HASHED_ASSET_RE = /-[A-Z0-9]{8}\.(js|css)$/;
 
 app.use(
@@ -63,10 +63,10 @@ app.use(
     index: false,
     redirect: false,
     setHeaders(res, filePath) {
-      const basename = filePath.split('/').pop() ?? '';
-      if (basename === 'index.html') {
+      const name = basename(filePath);
+      if (name === 'index.html') {
         res.setHeader('Cache-Control', 'no-cache');
-      } else if (HASHED_ASSET_RE.test(basename)) {
+      } else if (HASHED_ASSET_RE.test(name)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       } else {
         res.setHeader('Cache-Control', 'public, max-age=3600');

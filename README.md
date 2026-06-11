@@ -2,6 +2,9 @@
 
 **Pixelgram** is a full-stack image-sharing platform built with a production-grade architecture. Combining a robust Go API with a modern Angular frontend, it provides a seamless experience for users to upload, browse, and interact with images.
 
+[![Pixelgram Rewrite: Glassmorphic Redesign via Multi-Model AI Refactor](https://img.youtube.com/vi/nTqpn376k_g/maxresdefault.jpg)](https://www.youtube.com/watch?v=nTqpn376k_g)
+
+
 ## Features
 
 - **Monolithic Backend**: Single Go service handling users, sessions, images, likes and uploads, backed by PostgreSQL.

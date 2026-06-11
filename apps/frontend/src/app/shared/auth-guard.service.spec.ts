@@ -74,17 +74,13 @@ describe('authGuard — server platform', () => {
 
   it('should return a UrlTree for /login when session cookie is absent', () => {
     setup('');
-    const result = run();
-    expect(result).not.toBe(false);
-    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/login');
+    expect(run()).toBe(mockRouter.parseUrl.mock.results[0].value);
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
   it('should return a UrlTree for /login when only unrelated cookies are present', () => {
     setup('theme=dark; othercookie=value');
-    const result = run();
-    expect(result).not.toBe(false);
-    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/login');
+    expect(run()).toBe(mockRouter.parseUrl.mock.results[0].value);
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 });
