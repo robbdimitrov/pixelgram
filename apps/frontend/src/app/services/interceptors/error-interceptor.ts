@@ -1,12 +1,17 @@
-import { inject } from '@angular/core';
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import {inject, PLATFORM_ID} from '@angular/core';
+import {HttpInterceptorFn, HttpErrorResponse} from '@angular/common/http';
+import {isPlatformBrowser} from '@angular/common';
+import {Router} from '@angular/router';
+import {catchError, throwError} from 'rxjs';
 
-import { APIClient } from '../api-client.service';
-import { SessionService } from '../session.service';
+import {APIClient} from '../api-client.service';
+import {SessionService} from '../session.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+    return next(req).pipe(catchError((error: HttpErrorResponse) => throwError(() => error.error)));
+  }
+
   const apiClient = inject(APIClient);
   const session = inject(SessionService);
   const router = inject(Router);

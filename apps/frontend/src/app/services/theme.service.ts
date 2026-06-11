@@ -1,4 +1,5 @@
-import {Injectable} from '@angular/core';
+import {afterNextRender, inject, Injectable, PLATFORM_ID, REQUEST} from '@angular/core';
+import {isPlatformBrowser, isPlatformServer, DOCUMENT} from '@angular/common';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -9,6 +10,9 @@ export class ThemeService {
   readonly options: ThemePreference[] = ['system', 'light', 'dark'];
   preference: ThemePreference = 'system';
   isDarkMode = false;
+
+  private readonly doc = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
   private systemThemeQuery?: MediaQueryList;
   private readonly systemThemeListener = (event: MediaQueryListEvent) => {
     if (this.preference === 'system') {
@@ -18,15 +22,35 @@ export class ThemeService {
   };
 
   constructor() {
-    this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    this.systemThemeQuery.addEventListener('change', this.systemThemeListener);
-    this.preference = this.savedThemePreference();
-    this.updateThemeMode();
+    if (isPlatformServer(this.platformId)) {
+      const request = inject(REQUEST, {optional: true});
+      const cookieHeader = request?.headers.get('cookie') ?? '';
+      const match = /(?:^|;\s*)theme=([^;]+)/.exec(cookieHeader);
+      const saved = match?.[1] as ThemePreference | undefined;
+      this.preference = saved === 'light' || saved === 'dark' || saved === 'system'
+        ? saved
+        : 'system';
+      this.isDarkMode = this.preference === 'dark';
+      this.applyTheme();
+      return;
+    }
+
+    if (isPlatformBrowser(this.platformId)) {
+      afterNextRender(() => {
+        this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        this.systemThemeQuery.addEventListener('change', this.systemThemeListener);
+        this.preference = this.savedThemePreference();
+        this.updateThemeMode();
+      });
+    }
   }
 
   setPreference(theme: ThemePreference) {
     this.preference = theme;
-    localStorage.setItem('theme', theme);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('theme', theme);
+      this.doc.cookie = `theme=${theme}; path=/; max-age=31536000; samesite=lax`;
+    }
     this.updateThemeMode();
   }
 
@@ -47,11 +71,11 @@ export class ThemeService {
 
   private applyTheme() {
     const theme = this.isDarkMode ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
+    this.doc.documentElement.setAttribute('data-theme', theme);
     if (this.isDarkMode) {
-      document.documentElement.classList.add('dark');
+      this.doc.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      this.doc.documentElement.classList.remove('dark');
     }
   }
 
