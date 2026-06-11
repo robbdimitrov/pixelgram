@@ -5,7 +5,10 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-COPY ./security-headers.conf /etc/nginx/security-headers.conf
-COPY --from=builder /usr/src/app/dist/browser /usr/share/nginx/html
+FROM node:26.2.0-alpine
+ENV NODE_ENV=production PORT=8080
+WORKDIR /usr/src/app
+COPY --from=builder /usr/src/app/dist ./dist
+USER node
+EXPOSE 8080
+CMD ["node", "dist/server/server.mjs"]

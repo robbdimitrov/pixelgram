@@ -5,7 +5,7 @@
 Three services, deployed via Kubernetes:
 - `apps/backend` — Go API (`net/http`, `pgx`)
 - `apps/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
-- `apps/frontend` — Angular SPA (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint)
+- `apps/frontend` — Angular SSR app (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint; Node/Express server)
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
 
@@ -67,7 +67,7 @@ cd apps/backend && go run ./cmd/api
 
 ```sh
 cd apps/frontend && npm start
-# Proxies /api → localhost:8080 (backend must be running separately)
+# SSR dev server; browser XHR proxied via proxy.conf.json → localhost:8080
 ```
 
 To target the backend deployed in kind without rebuilding the frontend image:
@@ -75,6 +75,12 @@ To target the backend deployed in kind without rebuilding the frontend image:
 ```sh
 kubectl port-forward service/backend 8080:8080 -n pixelgram
 cd apps/frontend && npm start
+```
+
+To run the production SSR bundle locally (after `npm run build`):
+
+```sh
+cd apps/frontend && BACKEND_URL=http://localhost:8080 npm run serve:ssr
 ```
 
 If local `8080` is occupied by the frontend port-forward, use another backend port with a temporary Angular proxy config.
@@ -108,7 +114,10 @@ The backend reads `PORT` (defaults to `8080`).
 - **Auth**: session-based via a `session` cookie (not JWT). Auth middleware is applied before routes.
 - **Password hashing**: Argon2id PHC hashes via `golang.org/x/crypto/argon2` (not bcrypt).
 - **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
-- **Frontend Nginx**: in production, the nginx container proxies `/api/` → `http://backend:8080/`. During dev, `proxy.conf.json` handles the same proxy.
+- **Frontend SSR server**: the Angular SSR Node/Express server (`src/server.ts`) replaces nginx. It serves `RenderMode.Server` for all routes, proxies `/api/` → `BACKEND_URL` (env var; default `http://backend:8080`), applies CSP/security headers with a per-request nonce for inline scripts, and sets cache headers for static assets. Runs as uid 1000, `readOnlyRootFilesystem`, port 8080. Health probe path is `/health`. During dev, `proxy.conf.json` handles browser XHR proxy for `/api/`.
+- **Theme cookie**: `ThemeService` writes a `theme` cookie alongside `localStorage` so SSR can apply `data-theme` on `<html>` without FOUC. Server reads the cookie from the inbound `Request` token.
+- **`serverApiInterceptor`**: server-only `HttpInterceptorFn` (first in interceptor array) that rewrites `/api/…` → `${BACKEND_URL}/…` and forwards the inbound `Cookie` header so SSR fetches are authenticated.
+- **HTTP transfer cache**: `provideClientHydration(withHttpTransferCacheOptions({filter: GET-only}))` serializes server-side GETs into the HTML; the client reuses them — no double-fetch after hydration.
 - **Database migrations**: `apps/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `apps/database/migrations/`.
 - **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
 - **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Do not add inline `style` attributes or custom component SCSS/CSS for redesign work; use Tailwind config/theme tokens when styling needs to be shared.
