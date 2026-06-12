@@ -17,38 +17,37 @@
 
 ```mermaid
 graph TD
-    classDef user fill:transparent,stroke:transparent
+    Browser["Browser"]
+
+    subgraph cluster ["Kubernetes Cluster"]
+        Web["Frontend<br>(Angular SSR)"]:::frontend
+        API["Backend API<br>(Go)"]:::backend
+
+        subgraph data ["Data & Storage"]
+            DB[("PostgreSQL<br>(StatefulSet)")]:::database
+            Vol[("Image Storage<br>(PVC)")]:::storage
+        end
+    end
+
+    Browser -->|HTTP| Web
+    Web -->|REST API| API
+    API -->|SQL| DB
+    API -->|File I/O| Vol
+
     classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
     classDef backend fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
     classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
     classDef storage fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
-    
-    User["👤 User"]:::user
 
-    subgraph Client ["Client"]
-        FE["📱 Frontend<br/>(Angular)"]:::frontend
-    end
-
-    subgraph Services ["Backend Services"]
-        BE["⚙️ Backend API<br/>(Go)"]:::backend
-    end
-
-    subgraph Data ["Data & Storage"]
-        DB[("🗄️ Database<br/>(PostgreSQL)")]:::database
-        Vol["📁 Image Volume"]:::storage
-    end
-
-    User -->|HTTP Requests| FE
-    FE -->|REST API| BE
-    BE -->|SQL Queries| DB
-    BE -->|File I/O| Vol
+    style cluster fill:transparent,stroke:#64748b
+    style data fill:transparent,stroke:transparent
 ```
 
 | Service | Language | Description |
 | --- | --- | --- |
 | [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
 | [database](/apps/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
-| [frontend](/apps/frontend) | TypeScript | Angular SPA styled with Tailwind CSS and DaisyUI. |
+| [frontend](/apps/frontend) | TypeScript | Angular SSR application styled with Tailwind CSS and DaisyUI. |
 
 ## Deploy
 
