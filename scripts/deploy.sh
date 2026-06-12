@@ -16,7 +16,7 @@ PORT_FORWARD_LOG="${PORT_FORWARD_LOG:-/tmp/pixelgram-port-forward-${LOCAL_PORT}.
 PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/pixelgram-port-forward-${LOCAL_PORT}.pid}"
 
 SERVICES=(backend database frontend)
-ROLL_OUT_DATABASE=(deployment/database)
+ROLL_OUT_DATABASE=(statefulset/database)
 ROLL_OUT_REST=(
   deployment/backend
   deployment/frontend
@@ -238,8 +238,9 @@ print_summary() {
                  stop: kill \$(cat ${PORT_FORWARD_PID_FILE})
 
   Pods           kubectl -n ${NS} get pods
-  Logs           kubectl -n ${NS} logs deployment/<service> --tail=100
-  Tear down      kubectl delete -f ${K8S_DIR} -n ${NS}
+  App logs       kubectl -n ${NS} logs deployment/<service> --tail=100
+  Database logs  kubectl -n ${NS} logs statefulset/database --tail=100
+  Tear down      kubectl delete namespace ${NS}
 
 EOF
 }
