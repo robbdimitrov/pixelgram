@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"pixelgram/backend/internal/httpx"
 )
 
 type fakeStore struct {

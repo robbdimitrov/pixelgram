@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
+	"pixelgram/backend/internal/httpx"
 )
 
 const fileLimit = 1_000_000

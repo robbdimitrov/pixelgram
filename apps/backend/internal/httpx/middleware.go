@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/auth"
+	"pixelgram/backend/internal/auth"
 )
 
 type SessionStore interface {

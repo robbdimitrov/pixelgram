@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/compat"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/store"
+	"pixelgram/backend/internal/compat"
+	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/store"
 )
 
 type Comment struct {

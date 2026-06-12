@@ -11,13 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/auth"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/comments"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/httpx"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/posts"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/sessions"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/store"
-	"github.com/robbdimitrov/pixelgram/apps/backend/internal/users"
+	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/posts"
+	"pixelgram/backend/internal/sessions"
+	"pixelgram/backend/internal/store"
+	"pixelgram/backend/internal/users"
 )
 
 type Client struct {
