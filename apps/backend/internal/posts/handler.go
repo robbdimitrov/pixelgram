@@ -13,6 +13,9 @@ import (
 type Post struct {
 	ID          int       `json:"id"`
 	UserID      int       `json:"userId"`
+	Username    string    `json:"username"`
+	Name        string    `json:"name"`
+	Avatar      *string   `json:"avatar"`
 	Filename    string    `json:"filename"`
 	Description *string   `json:"description"`
 	Likes       int       `json:"likes"`

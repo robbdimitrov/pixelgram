@@ -395,15 +395,21 @@ func (c *Client) CreatePost(ctx context.Context, userID, filename string, descri
 	return id, true, nil
 }
 
+// Shared SELECT list for post queries. $1 is the current user ID (for the
+// per-row "liked" check). Joins users (u) so the author is returned inline.
+const postColumns = `posts.id, posts.user_id, u.username, u.name, u.avatar,
+	posts.filename, posts.description,
+	(SELECT count(*) FROM likes WHERE post_id = posts.id) AS likes,
+	EXISTS (SELECT 1 FROM likes
+	WHERE post_id = posts.id AND likes.user_id = $1) AS liked,
+	(SELECT count(*) FROM comments WHERE post_id = posts.id) AS comments,
+	posts.created`
+
 func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]posts.Post, error) {
 	return c.queryPosts(ctx,
-		`SELECT id, user_id, filename, description,
-		(SELECT count(*) FROM likes WHERE post_id = id) AS likes,
-		EXISTS (SELECT 1 FROM likes
-		WHERE post_id = id AND likes.user_id = $1) AS liked,
-		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		created
+		`SELECT `+postColumns+`
 		FROM posts
+		JOIN users u ON u.id = posts.user_id
 		ORDER BY posts.created DESC
 		LIMIT $2 OFFSET $3`,
 		currentUserID, limit, page*limit,
@@ -412,13 +418,10 @@ func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID str
 
 func (c *Client) GetPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]posts.Post, error) {
 	return c.queryPosts(ctx,
-		`SELECT id, user_id, filename, description,
-		(SELECT count(*) FROM likes WHERE post_id = id) AS likes,
-		EXISTS (SELECT 1 FROM likes
-		WHERE post_id = id AND likes.user_id = $1) AS liked,
-		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		created
-		FROM posts WHERE user_id = $2
+		`SELECT `+postColumns+`
+		FROM posts
+		JOIN users u ON u.id = posts.user_id
+		WHERE posts.user_id = $2
 		ORDER BY posts.created DESC
 		LIMIT $3 OFFSET $4`,
 		currentUserID, userID, limit, page*limit,
@@ -427,14 +430,10 @@ func (c *Client) GetPosts(ctx context.Context, userID string, page, limit int, c
 
 func (c *Client) GetLikedPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]posts.Post, error) {
 	return c.queryPosts(ctx,
-		`SELECT id, posts.user_id, filename, description,
-		(SELECT count(*) FROM likes WHERE post_id = id) AS likes,
-		EXISTS (SELECT 1 FROM likes
-		WHERE post_id = id AND likes.user_id = $1) AS liked,
-		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		posts.created
+		`SELECT `+postColumns+`
 		FROM posts
-		INNER JOIN likes ON post_id = id
+		JOIN users u ON u.id = posts.user_id
+		INNER JOIN likes ON likes.post_id = posts.id
 		WHERE likes.user_id = $2
 		ORDER BY likes.created DESC
 		LIMIT $3 OFFSET $4`,
@@ -444,13 +443,10 @@ func (c *Client) GetLikedPosts(ctx context.Context, userID string, page, limit i
 
 func (c *Client) GetPost(ctx context.Context, postID, currentUserID string) (posts.Post, bool, error) {
 	result, err := c.queryPosts(ctx,
-		`SELECT id, user_id, filename, description,
-		(SELECT count(*) FROM likes WHERE post_id = id) AS likes,
-		EXISTS (SELECT 1 FROM likes
-		WHERE post_id = id AND likes.user_id = $1) AS liked,
-		(SELECT count(*) FROM comments WHERE post_id = id) AS comments,
-		created
-		FROM posts WHERE id = $2`,
+		`SELECT `+postColumns+`
+		FROM posts
+		JOIN users u ON u.id = posts.user_id
+		WHERE posts.id = $2`,
 		currentUserID, postID,
 	)
 	if err != nil {
@@ -683,12 +679,15 @@ func (c *Client) queryPosts(ctx context.Context, query string, args ...any) ([]p
 		for rows.Next() {
 			var post posts.Post
 			var description sql.NullString
+			var avatar sql.NullString
 			if err := rows.Scan(
-				&post.ID, &post.UserID, &post.Filename, &description,
+				&post.ID, &post.UserID, &post.Username, &post.Name, &avatar,
+				&post.Filename, &description,
 				&post.Likes, &post.Liked, &post.Comments, &post.Created,
 			); err != nil {
 				return err
 			}
+			post.Avatar = nullableString(avatar)
 			post.Description = nullableString(description)
 			result = append(result, post)
 		}
@@ -721,19 +720,34 @@ func (c *Client) CreateSession(ctx context.Context, sessionID string, userID int
 	return session, nil
 }
 
+const sessionTTL = 7 * 24 * time.Hour
+
 func (c *Client) RefreshSession(ctx context.Context, sessionID string) (httpx.Session, error) {
 	if !c.breaker.allow() {
 		return httpx.Session{}, store.ErrUnavailable
 	}
+	hashed := c.hashSession(sessionID)
 	var session httpx.Session
 	var userID int
+	// Only write when the session is past the halfway point of its window;
+	// otherwise read it. Avoids a row write on every authenticated request.
 	err := withRetry(ctx, c.retryCfg, func() error {
 		return c.pool.QueryRow(
 			ctx,
-			`UPDATE sessions SET expires_at = $2 WHERE id = $1 AND expires_at > now()
-			RETURNING id, user_id`,
-			c.hashSession(sessionID),
-			time.Now().Add(7*24*time.Hour),
+			`WITH refreshed AS (
+			  UPDATE sessions SET expires_at = $2
+			  WHERE id = $1 AND expires_at > now() AND expires_at < $3
+			  RETURNING id, user_id
+			)
+			SELECT id, user_id FROM refreshed
+			UNION ALL
+			SELECT id, user_id FROM sessions
+			WHERE id = $1 AND expires_at > now()
+			  AND NOT EXISTS (SELECT 1 FROM refreshed)
+			LIMIT 1`,
+			hashed,
+			time.Now().Add(sessionTTL),
+			time.Now().Add(sessionTTL/2),
 		).Scan(&session.ID, &userID)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
