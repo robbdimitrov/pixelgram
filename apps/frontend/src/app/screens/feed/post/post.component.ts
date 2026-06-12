@@ -1,10 +1,9 @@
-import {Component, DestroyRef, inject, input, output, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {NgClass} from '@angular/common';
 import {LucideHeart, LucideMessageCircle, LucideTrash2} from '@lucide/angular';
 
 import {Post} from '../../../models/post.model';
-import {User} from '../../../models/user.model';
 import {SessionService} from '../../../services/session.service';
 import {ImagePipe} from '../../../shared/pipes/image.pipe';
 import {PluralizePipe} from '../../../shared/pipes/pluralize.pipe';
@@ -15,6 +14,7 @@ import {CommentsComponent} from '../comments/comments.component';
   selector: 'app-post',
   templateUrl: './post.component.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgClass, ImagePipe, PluralizePipe, RelativeDatePipe, CommentsComponent, LucideHeart, LucideMessageCircle, LucideTrash2]
 })
 export class PostComponent {
@@ -27,7 +27,6 @@ export class PostComponent {
   unlike = output<number>();
   deleteAction = output<Post>();
   post = input.required<Post>();
-  user = input<User | null>(null);
   singleView = input(false);
   isLikeAnimating = signal(false);
 

@@ -4,7 +4,6 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 import {APIClient} from '../../services/api-client.service';
 import {Post} from '../../models/post.model';
-import {User} from '../../models/user.model';
 import {PaginationService} from '../../services/pagination.service';
 import {PostComponent} from './post/post.component';
 import {EmptyStateComponent} from '../../shared/components/empty-state.component';
@@ -24,7 +23,6 @@ export class FeedComponent {
   postId?: number;
   hasLoaded = signal(false);
   isLoadingNextPage = signal(false);
-  users = signal<Record<number, User>>({});
 
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -76,7 +74,6 @@ export class FeedComponent {
         this.pagination.update(posts, value.length);
         this.isLoadingNextPage.set(false);
         this.hasLoaded.set(true);
-        this.loadMissingUsers(posts);
       },
       error: () => {
         this.isLoadingNextPage.set(false);
@@ -90,22 +87,11 @@ export class FeedComponent {
       next: (value) => {
         this.pagination.data = [value];
         this.hasLoaded.set(true);
-        this.loadMissingUsers([value]);
       },
       error: () => {
         this.hasLoaded.set(true);
       }
     });
-  }
-
-  private loadMissingUsers(posts: Post[]) {
-    const missing = [...new Set(posts.map((p) => p.userId))].filter((id) => !this.users()[id]);
-    for (const id of missing) {
-      this.apiClient.getUser(id).subscribe({
-        next: (user) => this.users.update((users) => ({...users, [user.id]: user})),
-        error: () => {}
-      });
-    }
   }
 
   posts() {
@@ -198,12 +184,11 @@ export class FeedComponent {
   }
 
   private revertLike(postId: number, liked: boolean) {
-    const post = this.pagination.data.find((item) => item.id === postId);
-    if (!post) {
-      return;
-    }
-
-    post.liked = liked;
-    post.likes += liked ? 1 : -1;
+    // Replace with a new object so the OnPush post component re-renders.
+    this.pagination.data = this.pagination.data.map((item) =>
+      item.id === postId
+        ? {...item, liked, likes: item.likes + (liked ? 1 : -1)}
+        : item
+    );
   }
 }

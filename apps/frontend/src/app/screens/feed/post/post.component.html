@@ -1,20 +1,18 @@
 <div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
   <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-6 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:pr-20">
-    @if (user(); as u) {
-      <div class="flex items-center gap-3">
-        <a [routerLink]="['/users', u.id]" class="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
-          <img class="h-full w-full object-cover" [src]="u.avatar | image" [alt]="u.username" (error)="onImageError($event)">
+    <div class="flex items-center gap-3">
+      <a [routerLink]="['/users', post().userId]" class="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
+        <img class="h-full w-full object-cover" [src]="post().avatar | image" [alt]="post().username" loading="lazy" decoding="async" (error)="onImageError($event)">
+      </a>
+      <div class="flex flex-col">
+        <a [routerLink]="['/users', post().userId]" class="text-base font-bold leading-6 text-slate-950 transition-colors hover:text-primary dark:text-white">
+          {{post().username}}
         </a>
-        <div class="flex flex-col">
-          <a [routerLink]="['/users', u.id]" class="text-base font-bold leading-6 text-slate-950 transition-colors hover:text-primary dark:text-white">
-            {{u.username}}
-          </a>
-          @if (u.name) {
-            <span class="text-sm leading-5 text-slate-500 dark:text-slate-400">{{u.name}}</span>
-          }
-        </div>
+        @if (post().name) {
+          <span class="text-sm leading-5 text-slate-500 dark:text-slate-400">{{post().name}}</span>
+        }
       </div>
-    }
+    </div>
 
     @if (isOwnedByCurrentUser()) {
       <button
@@ -34,6 +32,8 @@
       class="h-full w-full cursor-pointer object-cover transition-transform duration-700 hover:scale-[1.03]"
       [src]="post().filename | image"
       [alt]="post().description"
+      loading="lazy"
+      decoding="async"
       (error)="onImageError($event)"
       (dblclick)="onLikeClick()"
       >
@@ -76,11 +76,9 @@
 
     @if (isDescriptionPresent()) {
       <div class="text-base leading-7">
-        @if (user(); as u) {
-          <a [routerLink]="['/users', post().userId]" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">
-            {{u.username}}
-          </a>
-        }
+        <a [routerLink]="['/users', post().userId]" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">
+          {{post().username}}
+        </a>
         <span class="whitespace-pre-wrap text-slate-700 dark:text-slate-300">{{post().description}}</span>
       </div>
     }

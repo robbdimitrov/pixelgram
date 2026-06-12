@@ -19,6 +19,9 @@ export function mapPost(post: PostDto): Post {
   return new Post(
     post.id,
     post.userId,
+    post.username,
+    post.name,
+    post.avatar,
     post.filename,
     post.description,
     post.likes,

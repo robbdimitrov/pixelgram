@@ -5,6 +5,9 @@ export interface PostIdDto {
 export interface PostDto {
   id: number;
   userId: number;
+  username: string;
+  name: string;
+  avatar: string | null;
   filename: string;
   description: string;
   likes: number;
@@ -25,6 +28,9 @@ export class Post {
   constructor(
     public id: number,
     public userId: number,
+    public username: string,
+    public name: string,
+    public avatar: string | null,
     public filename: string,
     public description: string,
     public likes: number,
