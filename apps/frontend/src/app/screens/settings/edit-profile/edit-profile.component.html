@@ -13,31 +13,34 @@
 
   @if (user(); as u) {
     <form (ngSubmit)="onSubmit()" #form="ngForm" class="grid gap-6">
-      <div class="flex flex-col items-center gap-2">
-        <div class="relative">
-          <label
-            for="file"
-            class="group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full border border-slate-200 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15"
-            title="Change Avatar"
-            >
-            <img class="h-full w-full object-cover" [src]="imagePreview() || (u.avatar | image)" alt="Profile avatar">
-            <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              Change
-            </div>
-          </label>
+      <div class="flex flex-col items-center gap-3">
+        <label
+          for="file"
+          class="group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full border border-slate-200 bg-slate-100 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15 dark:bg-slate-800"
+          title="Change Avatar"
+          >
+          <img class="h-full w-full object-cover" [src]="imagePreview() || (u.avatar | image)" alt="Profile avatar">
+          <div class="absolute inset-0 flex items-center justify-center bg-slate-950/40 text-xs font-bold text-white opacity-0 backdrop-blur-[2px] transition-all duration-300 group-hover:opacity-100">
+            Change
+          </div>
+        </label>
+        <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
+        
+        <div class="flex h-5 items-center gap-3">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Tap image to change</span>
           @if (imagePreview() || u.avatar) {
+            <span class="text-slate-300 dark:text-slate-600">&bull;</span>
             <button
               type="button"
-              class="btn btn-error btn-circle btn-xs absolute -right-1 -top-1 text-white shadow-md"
+              class="group flex items-center gap-1 text-xs font-bold text-slate-500 transition-colors hover:text-error dark:text-slate-400 dark:hover:text-error"
               title="Remove avatar"
               (click)="removeAvatar()"
               >
-              <svg lucideTrash2 class="h-3.5 w-3.5"></svg>
+              <svg lucideTrash2 class="h-3.5 w-3.5 transition-transform group-hover:scale-110"></svg>
+              Remove
             </button>
           }
         </div>
-        <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tap avatar to change</span>
       </div>
       <div class="grid gap-4">
         <div class="form-control grid gap-2">
