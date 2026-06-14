@@ -594,7 +594,7 @@ func (c *Client) ListComments(ctx context.Context, postID string, page, limit in
 			FROM comments c
 			JOIN users u ON u.id = c.user_id
 			WHERE c.post_id = $1
-			ORDER BY c.created ASC
+			ORDER BY c.created DESC
 			LIMIT $2 OFFSET $3`,
 			postID, limit, page*limit,
 		)

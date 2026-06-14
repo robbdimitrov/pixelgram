@@ -60,7 +60,7 @@ export class CommentsComponent implements OnInit {
     this.isSubmitting.set(true);
     this.apiClient.createComment(this.postId(), body).subscribe({
       next: (comment) => {
-        this.pagination.data.set([...this.pagination.data(), comment]);
+        this.pagination.data.set([comment, ...this.pagination.data()]);
         this.newCommentBody = '';
         this.isSubmitting.set(false);
       },

@@ -25,7 +25,7 @@
     }
   </div>
 
-  @if (hasMore() && count() > 0) {
+  @if (!postId() && hasMore() && count() > 0) {
     <button
       id="next"
       class="btn btn-outline btn-primary rounded-xl px-8 font-bold transition-transform hover:scale-105 active:scale-95"
