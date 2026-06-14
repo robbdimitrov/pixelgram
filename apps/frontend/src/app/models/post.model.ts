@@ -9,7 +9,7 @@ export interface PostDto {
   name: string;
   avatar: string | null;
   filename: string;
-  description: string;
+  description: string | null;
   likes: number;
   liked: boolean;
   comments: number;
@@ -32,7 +32,7 @@ export class Post {
     public name: string,
     public avatar: string | null,
     public filename: string,
-    public description: string,
+    public description: string | null,
     public likes: number,
     public liked: boolean,
     public comments: number,

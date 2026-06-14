@@ -58,7 +58,7 @@ export class PostComponent {
   }
 
   isDescriptionPresent() {
-    return this.post().description.length > 0;
+    return this.post().description && this.post().description!.length > 0;
   }
 
   onImageError(event: Event) {
