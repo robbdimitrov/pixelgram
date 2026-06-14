@@ -40,32 +40,39 @@
   </div>
 
   <div class="flex flex-col gap-4 p-6">
-    <div class="flex items-center">
+    <div class="flex items-center gap-5">
       <button
         type="button"
-        class="group -ml-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-500 active:scale-95 dark:hover:bg-rose-400/10 dark:hover:text-rose-400"
+        class="group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors active:scale-95"
+        [ngClass]="{
+          'text-rose-500 dark:text-rose-400': post().liked,
+          'text-slate-500 dark:text-slate-400': !post().liked
+        }"
         [attr.aria-label]="post().liked ? 'Unlike post' : 'Like post'"
         [attr.aria-pressed]="post().liked"
         (click)="onLikeClick()"
-        >
+      >
         <svg
           lucideHeart
-          class="h-6 w-6 transition-all duration-150 ease-out group-hover:text-rose-500 dark:group-hover:text-rose-400"
+          class="h-5 w-5 transition-all duration-150 ease-out"
           [class.animate-like-pop]="isLikeAnimating()"
           [ngClass]="{
-            'fill-rose-500 text-rose-500': post().liked,
-            'fill-transparent text-slate-500 dark:text-slate-400': !post().liked
+            'fill-rose-500 dark:fill-rose-400': post().liked,
+            'fill-transparent group-hover:text-rose-500 dark:group-hover:text-rose-400': !post().liked
           }"
         ></svg>
+        <span
+          class="transition-transform duration-150"
+          [class.animate-like-pop]="isLikeAnimating()"
+          [ngClass]="{
+            'group-hover:text-slate-950 dark:group-hover:text-white': !post().liked
+          }"
+        >
+          {{post().likes}} {{post().likes | pluralize:'like'}}
+        </span>
       </button>
-      <span
-        class="-ml-0.5 text-base font-extrabold leading-none text-slate-900 transition-transform duration-150 dark:text-slate-100"
-        [class.animate-like-pop]="isLikeAnimating()"
-      >
-        {{post().likes}} {{post().likes | pluralize:'like'}}
-      </span>
       <a
-        class="group ml-5 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        class="group inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
         [routerLink]="['/posts', post().id]"
         aria-label="View comments"
       >
