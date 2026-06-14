@@ -85,8 +85,11 @@ export class CommentsComponent implements OnInit {
   private loadPage() {
     this.apiClient.getComments(this.postId(), this.pagination.page).subscribe({
       next: (items) => {
+        const comments = items.filter((comment) => {
+          return !(this.pagination.data().some((item) => comment.id === item.id));
+        });
         this.isLoadingMore.set(false);
-        this.pagination.update(items, items.length);
+        this.pagination.update(comments, items.length);
       },
       error: () => {
         this.isLoadingMore.set(false);
