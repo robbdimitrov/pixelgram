@@ -4,7 +4,7 @@
       type="text"
       class="min-w-0 flex-1 bg-transparent text-sm text-slate-950 placeholder:text-slate-400 focus:outline-none dark:text-white dark:placeholder:text-slate-500"
       placeholder="Add a comment…"
-      maxlength="2200"
+      maxlength="400"
       [(ngModel)]="newCommentBody"
       name="commentBody"
     >
@@ -29,14 +29,15 @@
       </a>
       <div class="min-w-0 flex-1 text-sm leading-6">
         <a [routerLink]="['/users', comment.userId]" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">{{comment.username}}</a>
-        <span class="whitespace-pre-wrap text-slate-700 dark:text-slate-300">{{comment.body}}</span>
+        <span class="break-words whitespace-pre-wrap text-slate-700 dark:text-slate-300">{{comment.body}}</span>
         <div class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{{comment.created | relativedate}}</div>
       </div>
       @if (isOwnComment(comment)) {
         <button
           type="button"
-          class="mt-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 text-slate-400 hover:text-error dark:text-slate-600 dark:hover:text-error"
+          class="-mr-2 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:text-slate-500 dark:hover:text-rose-400"
           aria-label="Delete comment"
+          title="Delete comment"
           (click)="onDelete(comment)"
         >
           <svg lucideTrash2 class="h-4 w-4"></svg>
