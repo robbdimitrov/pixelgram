@@ -17,10 +17,10 @@
   @if (actionLabel() && actionRoute()) {
     <a
       [routerLink]="actionRoute()"
-      class="btn inline-flex h-12 min-h-12 items-center justify-center rounded-full px-6 font-bold leading-none shadow-lg shadow-slate-900/15"
+      class="btn inline-flex h-12 min-h-12 items-center justify-center rounded-full px-6 font-bold leading-none transition-all duration-150 active:scale-95"
       [ngClass]="{
-        'border-0 bg-slate-950 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200': actionStyle() === 'primary',
-        'btn-outline border-slate-300 text-slate-900 hover:border-slate-950 hover:bg-slate-950 hover:text-white dark:border-white/20 dark:text-white dark:hover:border-white dark:hover:bg-white dark:hover:text-slate-950': actionStyle() === 'outline'
+        'border-0 bg-slate-950 text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200': actionStyle() === 'primary',
+        'border border-slate-300 bg-transparent text-slate-900 hover:border-slate-400 hover:bg-slate-50 dark:border-white/15 dark:bg-transparent dark:text-white dark:hover:border-white/30 dark:hover:bg-white/5': actionStyle() === 'outline'
       }"
     >
       {{ actionLabel() }}
