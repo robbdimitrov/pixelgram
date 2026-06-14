@@ -19,8 +19,8 @@ export class FeedComponent {
   private pagination = inject<PaginationService<Post>>(PaginationService);
   private router = inject(Router);
 
-  userId?: number;
-  postId?: number;
+  userId = signal<number | undefined>(undefined);
+  postId = signal<number | undefined>(undefined);
   hasLoaded = signal(false);
   isLoadingNextPage = signal(false);
 
@@ -29,28 +29,28 @@ export class FeedComponent {
       if (params['postId']) {
         const postId = Number(params['postId']);
         if (!Number.isSafeInteger(postId) || postId <= 0) {
-          this.postId = undefined;
-          this.userId = undefined;
+          this.postId.set(undefined);
+          this.userId.set(undefined);
           this.hasLoaded.set(true);
           this.pagination.reset();
           return;
         }
 
-        this.postId = postId;
-        this.userId = undefined;
+        this.postId.set(postId);
+        this.userId.set(undefined);
         this.loadPost(postId);
       } else {
         const userId = params['userId'] ? Number(params['userId']) : undefined;
         if (userId !== undefined && (!Number.isSafeInteger(userId) || userId <= 0)) {
-          this.postId = undefined;
-          this.userId = undefined;
+          this.postId.set(undefined);
+          this.userId.set(undefined);
           this.hasLoaded.set(true);
           this.pagination.reset();
           return;
         }
 
-        this.postId = undefined;
-        this.userId = userId;
+        this.postId.set(undefined);
+        this.userId.set(userId);
         this.loadNextPage();
       }
     });
@@ -62,14 +62,15 @@ export class FeedComponent {
     }
     this.isLoadingNextPage.set(true);
 
-    const req = (this.userId ?
-      this.apiClient.getLikedPosts(this.userId, this.pagination.page) :
+    const userId = this.userId();
+    const req = (userId ?
+      this.apiClient.getLikedPosts(userId, this.pagination.page) :
       this.apiClient.getFeed(this.pagination.page));
 
     req.subscribe({
       next: (value) => {
         const posts = value.filter((post) => {
-          return !(this.pagination.data.some((item) => post.id === item.id));
+          return !(this.pagination.data().some((item) => post.id === item.id));
         });
         this.pagination.update(posts, value.length);
         this.isLoadingNextPage.set(false);
@@ -85,7 +86,7 @@ export class FeedComponent {
   loadPost(postId: number) {
     this.apiClient.getPost(postId).subscribe({
       next: (value) => {
-        this.pagination.data = [value];
+        this.pagination.data.set([value]);
         this.hasLoaded.set(true);
       },
       error: () => {
@@ -95,7 +96,7 @@ export class FeedComponent {
   }
 
   posts() {
-    return this.pagination.data;
+    return this.pagination.data();
   }
 
   count() {
@@ -103,7 +104,7 @@ export class FeedComponent {
   }
 
   hasMore() {
-    return this.pagination.hasMore;
+    return this.pagination.hasMore();
   }
 
   isEmpty() {
@@ -111,7 +112,7 @@ export class FeedComponent {
   }
 
   isLikesPage() {
-    return this.userId !== undefined;
+    return this.userId() !== undefined;
   }
 
   emptyStateTitle() {
@@ -147,7 +148,7 @@ export class FeedComponent {
   }
 
   onUnlike(postId: number) {
-    const post = this.pagination.data.find((item) => item.id === postId);
+    const post = this.pagination.data().find((item) => item.id === postId);
     if (this.isLikesPage() && post) {
       this.pagination.remove(post);
     }
@@ -157,7 +158,7 @@ export class FeedComponent {
         if (this.isLikesPage() && post) {
           post.liked = true;
           post.likes += 1;
-          this.pagination.data = [post, ...this.pagination.data];
+          this.pagination.data.set([post, ...this.pagination.data()]);
         } else {
           this.revertLike(postId, true);
         }
@@ -173,22 +174,22 @@ export class FeedComponent {
     this.pagination.remove(post);
     this.apiClient.deletePost(post.id).subscribe({
       next: () => {
-        if (this.postId === post.id) {
+        if (this.postId() === post.id) {
           this.router.navigate([`/users/${post.userId}`]);
         }
       },
       error: () => {
-        this.pagination.data = [post, ...this.pagination.data];
+        this.pagination.data.set([post, ...this.pagination.data()]);
       }
     });
   }
 
   private revertLike(postId: number, liked: boolean) {
     // Replace with a new object so the OnPush post component re-renders.
-    this.pagination.data = this.pagination.data.map((item) =>
+    this.pagination.data.update((data) => data.map((item) =>
       item.id === postId
         ? {...item, liked, likes: item.likes + (liked ? 1 : -1)}
         : item
-    );
+    ));
   }
 }

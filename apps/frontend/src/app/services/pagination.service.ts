@@ -1,32 +1,37 @@
-import {Injectable} from '@angular/core';
+import {Injectable, signal} from '@angular/core';
 
 @Injectable()
 export class PaginationService<T> {
-  data: Array<T> = [];
+  data = signal<Array<T>>([]);
   perPage = 10;
   page = 0;
-  hasMore = true;
+  hasMore = signal(true);
 
   update(data: Array<T>, totalFetched: number = data.length) {
-    this.data.push(...data);
+    this.data.update(curr => [...curr, ...data]);
     this.page++;
-    this.hasMore = totalFetched === this.perPage;
+    this.hasMore.set(totalFetched === this.perPage);
   }
 
   remove(item: T) {
-    const index = this.data.indexOf(item);
-    if (index > -1) {
-      this.data.splice(index, 1);
-    }
+    this.data.update(curr => {
+      const index = curr.indexOf(item);
+      if (index > -1) {
+        const next = [...curr];
+        next.splice(index, 1);
+        return next;
+      }
+      return curr;
+    });
   }
 
   reset() {
     this.page = 0;
-    this.data = [];
-    this.hasMore = true;
+    this.data.set([]);
+    this.hasMore.set(true);
   }
 
   count() {
-    return this.data.length;
+    return this.data().length;
   }
 }

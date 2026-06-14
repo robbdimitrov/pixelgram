@@ -1,4 +1,4 @@
-import {afterNextRender, Component, inject, input} from '@angular/core';
+import {Component, inject, input, OnInit, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideSend, LucideTrash2} from '@lucide/angular';
@@ -17,7 +17,7 @@ import {RelativeDatePipe} from '../../../shared/pipes/relative-date.pipe';
   standalone: true,
   imports: [RouterLink, FormsModule, ImagePipe, RelativeDatePipe, LucideSend, LucideTrash2]
 })
-export class CommentsComponent {
+export class CommentsComponent implements OnInit {
   private apiClient = inject(APIClient);
   private session = inject(SessionService);
   private pagination = inject<PaginationService<Comment>>(PaginationService);
@@ -25,19 +25,19 @@ export class CommentsComponent {
   postId = input.required<number>();
 
   newCommentBody = '';
-  isSubmitting = false;
-  isLoadingMore = false;
+  isSubmitting = signal(false);
+  isLoadingMore = signal(false);
 
-  constructor() {
-    afterNextRender(() => this.loadPage());
+  ngOnInit() {
+    this.loadPage();
   }
 
   comments() {
-    return this.pagination.data;
+    return this.pagination.data();
   }
 
   hasMore() {
-    return this.pagination.hasMore;
+    return this.pagination.hasMore();
   }
 
   isOwnComment(comment: Comment) {
@@ -45,39 +45,39 @@ export class CommentsComponent {
   }
 
   onLoadMore() {
-    if (this.isLoadingMore) {
+    if (this.isLoadingMore()) {
       return;
     }
-    this.isLoadingMore = true;
+    this.isLoadingMore.set(true);
     this.loadPage();
   }
 
   onSubmit() {
     const body = this.newCommentBody.trim();
-    if (!body || this.isSubmitting) {
+    if (!body || this.isSubmitting()) {
       return;
     }
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     this.apiClient.createComment(this.postId(), body).subscribe({
       next: (comment) => {
-        this.pagination.data = [...this.pagination.data, comment];
+        this.pagination.data.set([...this.pagination.data(), comment]);
         this.newCommentBody = '';
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
       },
       error: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
       }
     });
   }
 
   onDelete(comment: Comment) {
-    const index = this.pagination.data.indexOf(comment);
-    this.pagination.data = this.pagination.data.filter((c) => c.id !== comment.id);
+    const index = this.pagination.data().indexOf(comment);
+    this.pagination.data.update(curr => curr.filter((c) => c.id !== comment.id));
     this.apiClient.deleteComment(this.postId(), comment.id).subscribe({
       error: () => {
-        const restored = [...this.pagination.data];
+        const restored = [...this.pagination.data()];
         restored.splice(index, 0, comment);
-        this.pagination.data = restored;
+        this.pagination.data.set(restored);
       }
     });
   }
@@ -85,11 +85,11 @@ export class CommentsComponent {
   private loadPage() {
     this.apiClient.getComments(this.postId(), this.pagination.page).subscribe({
       next: (items) => {
-        this.isLoadingMore = false;
+        this.isLoadingMore.set(false);
         this.pagination.update(items, items.length);
       },
       error: () => {
-        this.isLoadingMore = false;
+        this.isLoadingMore.set(false);
       }
     });
   }

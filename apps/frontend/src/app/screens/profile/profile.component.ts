@@ -67,7 +67,7 @@ export class ProfileComponent {
     this.apiClient.getPosts(user.id, this.pagination.page).subscribe({
       next: (value) => {
         const posts = value.filter((post) => {
-          return !(this.pagination.data.some((item) => post.id === item.id));
+          return !(this.pagination.data().some((item) => post.id === item.id));
         });
         this.pagination.update(posts, value.length);
         this.isLoadingNextPage.set(false);
@@ -81,7 +81,7 @@ export class ProfileComponent {
   }
 
   posts() {
-    return this.pagination.data;
+    return this.pagination.data();
   }
 
   count() {
@@ -89,7 +89,7 @@ export class ProfileComponent {
   }
 
   hasMore() {
-    return this.pagination.hasMore;
+    return this.pagination.hasMore();
   }
 
   isEmpty() {

@@ -47,13 +47,13 @@ describe('LoginComponent', () => {
     component.onSubmit();
     component.onSubmit();
 
-    expect(component.isSubmitting).toBe(true);
+    expect(component.isSubmitting()).toBe(true);
     expect(apiClient.loginUser).toHaveBeenCalledTimes(1);
 
     response.error(new Error('Login failed'));
 
-    expect(component.isSubmitting).toBe(false);
-    expect(component.errorMessage).toBe('Login failed');
+    expect(component.isSubmitting()).toBe(false);
+    expect(component.errorMessage()).toBe('Login failed');
     expect(TestBed.inject(Router).url).toBe('/');
   });
 });

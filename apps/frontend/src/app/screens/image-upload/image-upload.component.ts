@@ -31,7 +31,7 @@ export class ImageUploadComponent {
   errorMessage = signal('');
   isSubmitting = signal(false);
   isDragging = signal(false);
-  private selectedFile?: File;
+  selectedFile = signal<File | undefined>(undefined);
 
   onChange(files: FileList | null) {
     this.selectFile(files?.item(0));
@@ -60,8 +60,9 @@ export class ImageUploadComponent {
     }
 
     try {
-      this.selectedFile = await resizeImageForUpload(file);
-      this.getImagePreview(this.selectedFile);
+      const resized = await resizeImageForUpload(file);
+      this.selectedFile.set(resized);
+      this.getImagePreview(resized);
     } catch (error) {
       this.clearSelection();
       this.errorMessage.set(error instanceof Error ? error.message : 'Could not prepare image.');
@@ -81,16 +82,16 @@ export class ImageUploadComponent {
   }
 
   canShare(): boolean {
-    return Boolean(this.selectedFile && !this.isSubmitting());
+    return Boolean(this.selectedFile() && !this.isSubmitting());
   }
 
   clearSelection() {
-    this.selectedFile = undefined;
+    this.selectedFile.set(undefined);
     this.imagePreview.set('');
   }
 
   onSubmitClick() {
-    if (!this.selectedFile || this.isSubmitting()) {
+    if (!this.selectedFile() || this.isSubmitting()) {
       return;
     }
 
@@ -98,7 +99,7 @@ export class ImageUploadComponent {
     this.isSubmitting.set(true);
     const imageDescription = this.imageDescription.trim();
 
-    this.apiClient.uploadImage(this.selectedFile).pipe(
+    this.apiClient.uploadImage(this.selectedFile()!).pipe(
       concatMap((data) => this.apiClient.createPost(data.filename, imageDescription))
     ).subscribe({
       next: () => {

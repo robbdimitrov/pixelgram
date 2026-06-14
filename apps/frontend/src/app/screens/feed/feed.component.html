@@ -15,7 +15,7 @@
       <div class="w-full transition-all duration-300">
         <app-post
           [post]="post"
-          [singleView]="!!postId"
+          [singleView]="!!postId()"
           (like)="onLike($event)"
           (unlike)="onUnlike($event)"
           (deleteAction)="onDeleteAction($event)"

@@ -63,7 +63,7 @@ describe('ImageUploadComponent', () => {
 
       expect(component.errorMessage()).toBe('');
       expect(component.imagePreview()).toBe('data:image/jpeg;base64,fake');
-      expect(component['selectedFile']).toBe(mockFile);
+      expect(component.selectedFile()).toBe(mockFile);
       expect(component.canShare()).toBe(true);
     });
 
@@ -75,7 +75,7 @@ describe('ImageUploadComponent', () => {
 
       expect(component.errorMessage()).toBe('Resize failed');
       expect(component.imagePreview()).toBe('');
-      expect(component['selectedFile']).toBeUndefined();
+      expect(component.selectedFile()).toBeUndefined();
       expect(component.canShare()).toBe(false);
     });
   });
@@ -83,7 +83,7 @@ describe('ImageUploadComponent', () => {
   describe('onSubmitClick', () => {
     it('should upload and create post, then navigate to home', () => {
       const mockFile = new File([''], 'test.jpg', {type: 'image/jpeg'});
-      component['selectedFile'] = mockFile;
+      component.selectedFile.set(mockFile);
       component.imageDescription = '   My Cool Photo   ';
 
       mockApiClient.uploadImage.mockReturnValue(of({filename: 'uploaded.jpg'}));
@@ -99,7 +99,7 @@ describe('ImageUploadComponent', () => {
 
     it('should set errorMessage if upload fails', () => {
       const mockFile = new File([''], 'test.jpg', {type: 'image/jpeg'});
-      component['selectedFile'] = mockFile;
+      component.selectedFile.set(mockFile);
 
       mockApiClient.uploadImage.mockReturnValue(throwError(() => new Error('Upload failed')));
 

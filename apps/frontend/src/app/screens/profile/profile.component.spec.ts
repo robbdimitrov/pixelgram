@@ -1,3 +1,4 @@
+import {signal} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {ActivatedRoute} from '@angular/router';
 import {of, Subject} from 'rxjs';
@@ -12,9 +13,9 @@ describe('ProfileComponent', () => {
   it('should not load an invalid user route', () => {
     const apiClient = {getUser: jest.fn()};
     const pagination = {
-      data: [],
+      data: signal([]),
       page: 1,
-      hasMore: false,
+      hasMore: signal(false),
       reset: jest.fn(),
       count: jest.fn(() => 0)
     };

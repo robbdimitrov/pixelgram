@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft} from '@lucide/angular';
@@ -29,23 +29,23 @@ export class ChangePasswordComponent {
   passwordValue = '';
   passwordFieldType = 'password';
   passwordShowButtonTitle = 'Show';
-  errorMessage = '';
-  isSubmitting = false;
+  errorMessage = signal('');
+  isSubmitting = signal(false);
 
   onSubmit() {
     const userId = this.session.userId();
-    if (!userId || this.isSubmitting) {
+    if (!userId || this.isSubmitting()) {
       return;
     }
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
-    this.errorMessage = '';
+    this.errorMessage.set('');
     this.apiClient.changePassword(userId, this.oldPasswordValue, this.passwordValue).pipe(
-      finalize(() => this.isSubmitting = false)
+      finalize(() => this.isSubmitting.set(false))
     ).subscribe({
       next: () => this.router.navigate(['/settings']),
       error: (error) => {
-        this.errorMessage = error.message || 'Could not update password. Please try again.';
+        this.errorMessage.set(error.message || 'Could not update password. Please try again.');
       }
     });
   }

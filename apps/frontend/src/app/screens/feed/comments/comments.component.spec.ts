@@ -1,3 +1,4 @@
+import {signal} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {of} from 'rxjs';
 
@@ -10,9 +11,9 @@ describe('CommentsComponent', () => {
   it('should load comments after the required post input is bound', async () => {
     const apiClient = {getComments: jest.fn().mockReturnValue(of([]))};
     const pagination = {
-      data: [],
+      data: signal([]),
       page: 1,
-      hasMore: false,
+      hasMore: signal(false),
       update: jest.fn()
     };
 

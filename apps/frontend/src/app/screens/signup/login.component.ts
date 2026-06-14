@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {finalize} from 'rxjs';
@@ -21,8 +21,8 @@ export class LoginComponent {
 
   emailValue = '';
   passwordValue = '';
-  errorMessage = '';
-  isSubmitting = false;
+  errorMessage = signal('');
+  isSubmitting = signal(false);
 
   passwordFieldType = 'password';
   showButtonTitle = 'Show';
@@ -44,20 +44,20 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (this.isSubmitting) {
+    if (this.isSubmitting()) {
       return;
     }
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
     this.apiClient.loginUser(this.emailValue, this.passwordValue).pipe(
-      finalize(() => this.isSubmitting = false)
+      finalize(() => this.isSubmitting.set(false))
     ).subscribe({
       next: (data) => {
         this.session.setUserId(data.id);
         this.router.navigate(['/']);
       },
       error: (error) => {
-        this.errorMessage = error.message || 'Could not log in. Please check your details.';
+        this.errorMessage.set(error.message || 'Could not log in. Please check your details.');
       }
     });
   }
