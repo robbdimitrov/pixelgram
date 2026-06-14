@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal, OnInit} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideArrowLeft, LucideTrash2} from '@lucide/angular';
@@ -36,7 +36,7 @@ import {
     LucideTrash2
   ]
 })
-export class EditProfileComponent {
+export class EditProfileComponent implements OnInit {
   private apiClient = inject(APIClient);
   private router = inject(Router);
   private session = inject(SessionService);
@@ -44,13 +44,13 @@ export class EditProfileComponent {
   readonly maxFileSizeBytes = maxUploadSizeBytes;
   readonly supportedMimeTypes = supportedUploadMimeTypes;
 
-  selectedFile: File | null = null;
-  imagePreview = '';
-  user?: User;
-  errorMessage = '';
-  isSubmitting = false;
+  selectedFile = signal<File | null>(null);
+  imagePreview = signal('');
+  user = signal<User | undefined>(undefined);
+  errorMessage = signal('');
+  isSubmitting = signal(false);
 
-  constructor() {
+  ngOnInit() {
     const userId = this.session.userId();
     if (userId) {
       this.loadUser(userId);
@@ -59,31 +59,33 @@ export class EditProfileComponent {
 
   onSubmit() {
     const userId = this.session.userId();
-    if (!userId || !this.user || this.isSubmitting) {
+    const user = this.user();
+    if (!userId || !user || this.isSubmitting()) {
       return;
     }
-    const user = this.user;
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
 
-    let isUploading = Boolean(this.selectedFile);
-    const upload: Observable<{filename: string} | null> = this.selectedFile
-      ? this.apiClient.uploadImage(this.selectedFile).pipe(tap((data) => user.avatar = data.filename))
+    const currentSelectedFile = this.selectedFile();
+    let isUploading = Boolean(currentSelectedFile);
+    const upload: Observable<{filename: string} | null> = currentSelectedFile
+      ? this.apiClient.uploadImage(currentSelectedFile).pipe(tap((data) => this.user.update(u => u ? {...u, avatar: data.filename} : u)))
       : of(null);
 
     upload.pipe(
       switchMap(() => {
+        const u = this.user()!;
         isUploading = false;
-        return this.apiClient.updateUser(userId, user.name, user.username,
-          user.email, user.avatar ?? '', user.bio ?? '');
+        return this.apiClient.updateUser(userId, u.name, u.username,
+          u.email, u.avatar ?? '', u.bio ?? '');
       }),
-      finalize(() => this.isSubmitting = false)
+      finalize(() => this.isSubmitting.set(false))
     ).subscribe({
       next: () => this.router.navigate(['/settings']),
       error: (error) => {
-        this.errorMessage = isUploading
+        this.errorMessage.set(isUploading
           ? error.error?.message || error.message || 'Could not upload avatar. Please try again.'
-          : error.message || 'Could not update profile. Please try again.';
+          : error.message || 'Could not update profile. Please try again.');
       }
     });
   }
@@ -93,47 +95,48 @@ export class EditProfileComponent {
       return;
     }
     const file = files[0];
-    this.errorMessage = '';
+    this.errorMessage.set('');
 
     try {
-      this.selectedFile = await resizeImageForUpload(file);
-      this.loadImagePreview(this.selectedFile);
+      const resized = await resizeImageForUpload(file);
+      this.selectedFile.set(resized);
+      this.loadImagePreview(resized);
     } catch (error) {
       this.clearSelectedFile();
-      this.errorMessage = error instanceof Error ? error.message : 'Could not prepare avatar.';
+      this.errorMessage.set(error instanceof Error ? error.message : 'Could not prepare avatar.');
     }
   }
 
   clearSelectedFile() {
-    this.selectedFile = null;
-    this.imagePreview = '';
+    this.selectedFile.set(null);
+    this.imagePreview.set('');
   }
 
   removeAvatar() {
-    if (!this.user) {
+    if (!this.user()) {
       return;
     }
 
     this.clearSelectedFile();
-    this.user.avatar = '';
+    this.user.update(u => u ? {...u, avatar: ''} : u);
   }
 
   loadImagePreview(file: File) {
     if (!file) {
-      this.imagePreview = '';
+      this.imagePreview.set('');
       return;
     }
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      this.imagePreview = reader.result as string;
+      this.imagePreview.set(reader.result as string);
     };
   }
 
   loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe({
-      next: (value) => this.user = value,
-      error: () => this.errorMessage = 'Could not load profile. Please try again.'
+      next: (value) => this.user.set(value),
+      error: () => this.errorMessage.set('Could not load profile. Please try again.')
     });
   }
 }

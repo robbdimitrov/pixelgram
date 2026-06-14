@@ -29,18 +29,19 @@ describe('EditProfileComponent', () => {
       ]
     });
     const component = TestBed.createComponent(EditProfileComponent).componentInstance;
-    component.selectedFile = new File(['image'], 'avatar.jpg', {type: 'image/jpeg'});
+    component.ngOnInit();
+    component.selectedFile.set(new File(['image'], 'avatar.jpg', {type: 'image/jpeg'}));
 
     component.onSubmit();
     component.onSubmit();
 
-    expect(component.isSubmitting).toBe(true);
+    expect(component.isSubmitting()).toBe(true);
     expect(apiClient.uploadImage).toHaveBeenCalledTimes(1);
 
     upload.error(new Error('Upload failed'));
 
-    expect(component.isSubmitting).toBe(false);
-    expect(component.errorMessage).toBe('Upload failed');
+    expect(component.isSubmitting()).toBe(false);
+    expect(component.errorMessage()).toBe('Upload failed');
     expect(apiClient.updateUser).not.toHaveBeenCalled();
   });
 });

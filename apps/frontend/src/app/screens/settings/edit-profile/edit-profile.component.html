@@ -1,18 +1,18 @@
-@if (user) {
-  <div class="mx-auto flex max-w-xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white sm:px-8">
-    <div class="flex items-center gap-3 border-b border-slate-200 pb-4 dark:border-white/10">
-      <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white" title="Back to Settings">
-        <svg lucideArrowLeft class="h-5 w-5"></svg>
-      </a>
-      <h1 class="text-2xl font-black text-slate-950 dark:text-white">Edit Profile</h1>
+<div class="mx-auto flex max-w-xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white sm:px-8">
+  <div class="flex items-center gap-3 border-b border-slate-200 pb-4 dark:border-white/10">
+    <a routerLink="/settings" class="btn btn-ghost btn-circle btn-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white" title="Back to Settings">
+      <svg lucideArrowLeft class="h-5 w-5"></svg>
+    </a>
+    <h1 class="text-2xl font-black text-slate-950 dark:text-white">Edit Profile</h1>
+  </div>
+  @if (errorMessage()) {
+    <div class="rounded-2xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+      {{ errorMessage() }}
     </div>
-    <form (ngSubmit)="onSubmit()" #form="ngForm" class="grid gap-6">
-      @if (errorMessage) {
-        <div class="rounded-2xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
-          {{ errorMessage }}
-        </div>
-      }
+  }
 
+  @if (user(); as u) {
+    <form (ngSubmit)="onSubmit()" #form="ngForm" class="grid gap-6">
       <div class="flex flex-col items-center gap-2">
         <div class="relative">
           <label
@@ -20,12 +20,12 @@
             class="group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full border border-slate-200 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15"
             title="Change Avatar"
             >
-            <img class="h-full w-full object-cover" [src]="imagePreview || (user.avatar | image)" alt="Profile avatar">
+            <img class="h-full w-full object-cover" [src]="imagePreview() || (u.avatar | image)" alt="Profile avatar">
             <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               Change
             </div>
           </label>
-          @if (imagePreview || user.avatar) {
+          @if (imagePreview() || u.avatar) {
             <button
               type="button"
               class="btn btn-error btn-circle btn-xs absolute -right-1 -top-1 text-white shadow-md"
@@ -49,7 +49,7 @@
             id="name"
             name="name"
             #name="ngModel"
-            [(ngModel)]="user.name"
+            [(ngModel)]="u.name"
             appFormInput
             placeholder="Enter your name"
             required
@@ -67,7 +67,7 @@
             id="username"
             name="username"
             #username="ngModel"
-            [(ngModel)]="user.username"
+            [(ngModel)]="u.username"
             appFormInput
             placeholder="Enter username"
             required
@@ -85,7 +85,7 @@
             id="email"
             name="email"
             #email="ngModel"
-            [(ngModel)]="user.email"
+            [(ngModel)]="u.email"
             appFormInput
             placeholder="Enter email"
             pattern="[^@]+@[^@]+\.[^@]+"
@@ -108,7 +108,7 @@
           <textarea
             id="bio"
             name="bio"
-            [(ngModel)]="user.bio"
+            [(ngModel)]="u.bio"
             class="h-24"
             appFormTextarea
             placeholder="Tell people about yourself..."
@@ -120,10 +120,14 @@
         type="submit"
         class="w-full"
         appPrimaryAction
-        [disabled]="!form.valid || isSubmitting"
+        [disabled]="!form.valid || isSubmitting()"
         >
-        {{ isSubmitting ? 'Saving Profile...' : 'Save Profile Details' }}
+        {{ isSubmitting() ? 'Saving Profile...' : 'Save Profile Details' }}
       </button>
     </form>
-  </div>
-}
+  } @else if (!errorMessage()) {
+    <div class="flex justify-center py-12">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+    </div>
+  }
+</div>
