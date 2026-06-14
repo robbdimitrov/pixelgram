@@ -8,6 +8,29 @@ import {SessionService} from '../../services/session.service';
 import {UserIdDto} from '../../models/user.model';
 
 describe('LoginComponent', () => {
+  it('updates the session before navigating after login', () => {
+    const apiClient = {loginUser: jest.fn().mockReturnValue(new Subject<UserIdDto>())};
+    const session = {userId: () => null, setUserId: jest.fn()};
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        {provide: APIClient, useValue: apiClient},
+        {provide: SessionService, useValue: session}
+      ]
+    });
+    const router = TestBed.inject(Router);
+    const navigate = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+    const component = TestBed.createComponent(LoginComponent).componentInstance;
+
+    component.onSubmit();
+    apiClient.loginUser.mock.results[0].value.next({id: 42});
+
+    expect(session.setUserId).toHaveBeenCalledWith(42);
+    expect(navigate).toHaveBeenCalledWith(['/']);
+    expect(session.setUserId.mock.invocationCallOrder[0]).toBeLessThan(navigate.mock.invocationCallOrder[0]);
+  });
+
   it('should block duplicate submissions and reset after an error', () => {
     const response = new Subject<UserIdDto>();
     const apiClient = {loginUser: jest.fn().mockReturnValue(response)};

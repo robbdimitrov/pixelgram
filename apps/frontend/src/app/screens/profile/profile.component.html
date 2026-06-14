@@ -1,7 +1,7 @@
 <div class="mx-auto flex max-w-5xl flex-col gap-6">
-  @if (user) {
+  @if (user(); as profileUser) {
     <app-profile-header
-      [user]="user"
+      [user]="profileUser"
       >
     </app-profile-header>
   }
@@ -36,9 +36,9 @@
         id="next"
         class="btn btn-outline btn-primary rounded-xl px-8 font-bold transition-transform hover:scale-105 active:scale-95"
         (click)="onNextClick()"
-        [disabled]="isLoadingNextPage"
+        [disabled]="isLoadingNextPage()"
         >
-        @if (isLoadingNextPage) {
+        @if (isLoadingNextPage()) {
           <span class="loading loading-spinner"></span>
         } @else {
           Load More

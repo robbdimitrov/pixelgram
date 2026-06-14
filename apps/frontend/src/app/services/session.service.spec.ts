@@ -7,6 +7,7 @@ describe('SessionService', () => {
   let mockThemeService: any;
 
   beforeEach(() => {
+    localStorage.clear();
     mockThemeService = {
       setPreference: jest.fn()
     };
@@ -19,9 +20,6 @@ describe('SessionService', () => {
     });
 
     session = TestBed.inject(SessionService);
-
-    // Clear localStorage before each test
-    localStorage.clear();
   });
 
   afterEach(() => {
@@ -37,15 +35,27 @@ describe('SessionService', () => {
       expect(session.userId()).toBeNull();
     });
 
-    it('should return userId as a number from localStorage', () => {
+    it('should initialize userId from localStorage', () => {
       localStorage.setItem('userId', '123');
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          SessionService,
+          {provide: ThemeService, useValue: mockThemeService}
+        ]
+      });
+      session = TestBed.inject(SessionService);
+
       expect(session.userId()).toBe(123);
     });
   });
 
   describe('setUserId', () => {
-    it('should set userId in localStorage as string', () => {
+    it('should update userId reactively and persist it in localStorage', () => {
       session.setUserId(456);
+
+      expect(session.userId()).toBe(456);
       expect(localStorage.getItem('userId')).toBe('456');
     });
   });
@@ -58,6 +68,7 @@ describe('SessionService', () => {
       session.clear();
 
       expect(mockThemeService.setPreference).toHaveBeenCalledWith('system');
+      expect(session.userId()).toBeNull();
       expect(localStorage.getItem('userId')).toBeNull();
       expect(localStorage.getItem('someOtherKey')).toBe('value');
     });

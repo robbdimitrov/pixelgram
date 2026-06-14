@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
@@ -23,21 +23,21 @@ export class ProfileComponent {
   private pagination = inject<PaginationService<Post>>(PaginationService);
   private session = inject(SessionService);
 
-  user?: User;
-  hasLoadedPosts = false;
-  isLoadingNextPage = false;
+  user = signal<User | undefined>(undefined);
+  hasLoadedPosts = signal(false);
+  isLoadingNextPage = signal(false);
 
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
       const userId = Number(params['userId']);
       if (!Number.isSafeInteger(userId) || userId <= 0) {
-        this.user = undefined;
-        this.hasLoadedPosts = true;
+        this.user.set(undefined);
+        this.hasLoadedPosts.set(true);
         this.pagination.reset();
         return;
       }
 
-      if (!this.user || userId !== this.user.id) {
+      if (!this.user() || userId !== this.user()?.id) {
         this.loadUser(userId);
       }
     });
@@ -46,35 +46,36 @@ export class ProfileComponent {
   loadUser(userId: number) {
     this.apiClient.getUser(userId).subscribe({
       next: (value) => {
-        this.user = value;
-        this.hasLoadedPosts = false;
+        this.user.set(value);
+        this.hasLoadedPosts.set(false);
         this.pagination.reset();
         this.loadNextPage();
       },
       error: () => {
-        this.hasLoadedPosts = true;
+        this.hasLoadedPosts.set(true);
       }
     });
   }
 
   loadNextPage() {
-    if (!this.user || this.isLoadingNextPage) {
+    const user = this.user();
+    if (!user || this.isLoadingNextPage()) {
       return;
     }
-    this.isLoadingNextPage = true;
+    this.isLoadingNextPage.set(true);
 
-    this.apiClient.getPosts(this.user.id, this.pagination.page).subscribe({
+    this.apiClient.getPosts(user.id, this.pagination.page).subscribe({
       next: (value) => {
-        this.isLoadingNextPage = false;
         const posts = value.filter((post) => {
           return !(this.pagination.data.some((item) => post.id === item.id));
         });
         this.pagination.update(posts, value.length);
-        this.hasLoadedPosts = true;
+        this.isLoadingNextPage.set(false);
+        this.hasLoadedPosts.set(true);
       },
       error: () => {
-        this.isLoadingNextPage = false;
-        this.hasLoadedPosts = true;
+        this.isLoadingNextPage.set(false);
+        this.hasLoadedPosts.set(true);
       }
     });
   }
@@ -92,15 +93,16 @@ export class ProfileComponent {
   }
 
   isEmpty() {
-    return this.hasLoadedPosts && this.count() === 0;
+    return this.hasLoadedPosts() && this.count() === 0;
   }
 
   isCurrentUser() {
-    if (!this.user) {
+    const user = this.user();
+    if (!user) {
       return false;
     }
 
-    return this.session.userId() === this.user.id;
+    return this.session.userId() === user.id;
   }
 
   emptyStateDescription() {

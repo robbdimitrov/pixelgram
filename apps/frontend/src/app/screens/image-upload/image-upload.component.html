@@ -17,25 +17,30 @@
 
     <div class="grid min-h-[34rem] md:grid-cols-[minmax(0,1fr)_22rem]">
       <div
-        class="relative flex min-h-96 items-center justify-center bg-slate-50 p-6 transition-colors dark:bg-slate-900 sm:px-8"
+        class="flex min-h-96 items-center justify-center bg-slate-50 p-6 transition-colors dark:bg-slate-900 sm:px-8"
         [ngClass]="{'bg-slate-100 dark:bg-white/10': isDragging()}"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
       >
         @if (imagePreview()) {
-          <div class="aspect-square w-full max-w-[42rem] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900">
-            <img class="h-full w-full object-cover" [src]="imagePreview()" alt="Upload preview">
+          <div class="flex w-full max-w-[42rem] flex-col gap-4">
+            <div class="aspect-square w-full overflow-hidden rounded-xl bg-slate-100 shadow-sm dark:bg-slate-900">
+              <img class="h-full w-full object-cover" [src]="imagePreview()" alt="Upload preview">
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p class="text-sm text-slate-500 dark:text-slate-400">This is how your photo will appear in the feed.</p>
+              <button
+                type="button"
+                class="btn btn-sm inline-flex min-h-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white px-5 font-black leading-none text-slate-950 shadow-sm hover:border-slate-400 hover:bg-slate-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:border-white/30 dark:hover:bg-white/10"
+                (click)="file.click()"
+              >
+                Change photo
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            class="absolute bottom-8 left-8 inline-flex h-10 items-center justify-center rounded-full bg-white/90 px-4 text-xs font-black leading-none text-slate-950 shadow-lg shadow-slate-900/10 transition-colors hover:bg-white dark:bg-slate-950/90 dark:text-white dark:hover:bg-slate-950"
-            (click)="file.click()"
-          >
-            Change photo
-          </button>
         } @else {
-          <label class="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-300 p-6 text-center transition-colors hover:border-slate-400 hover:bg-white/60 dark:border-white/15 dark:hover:border-white/30 dark:hover:bg-white/5 sm:px-8" for="file">
+          <label class="flex aspect-square w-full max-w-[42rem] cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-300 p-6 text-center transition-colors hover:border-slate-400 hover:bg-white/60 dark:border-white/15 dark:hover:border-white/30 dark:hover:bg-white/5 sm:px-8" for="file">
             <span class="grid h-16 w-16 place-items-center rounded-full bg-slate-950 text-white shadow-md shadow-slate-900/15 dark:bg-white dark:text-slate-950">
               <svg lucideSquarePlus class="h-7 w-7"></svg>
             </span>

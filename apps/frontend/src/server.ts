@@ -17,8 +17,12 @@ import {randomBytes} from 'node:crypto';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const backendUrl = process.env['BACKEND_URL'] ?? 'http://backend:8080';
 const backendTarget = new URL(backendUrl);
+const allowedHosts = (process.env['ALLOWED_HOSTS'] ?? 'pixelgram.localhost,localhost,127.0.0.1,frontend')
+  .split(',')
+  .map((host) => host.trim())
+  .filter(Boolean);
 
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeAppEngine({allowedHosts});
 
 const BASE_CSP = [
   "default-src 'self'",
