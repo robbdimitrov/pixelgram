@@ -21,8 +21,7 @@ import {
 export class ImageUploadComponent {
   private router = inject(Router);
   private apiClient = inject(APIClient);
-
-  readonly maxDescriptionLength = 160;
+  readonly maxDescriptionLength = 2200;
   readonly maxFileSizeBytes = maxUploadSizeBytes;
   readonly supportedMimeTypes = supportedUploadMimeTypes;
 

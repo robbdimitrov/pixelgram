@@ -11,7 +11,7 @@ CREATE TABLE posts (
   id serial PRIMARY KEY,
   user_id integer REFERENCES users ON DELETE CASCADE,
   filename varchar(255) NOT NULL,
-  description varchar(255) NOT NULL,
+  description varchar(2200),
   created timestamptz NOT NULL DEFAULT now()
 );
 

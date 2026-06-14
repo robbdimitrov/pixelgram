@@ -52,8 +52,8 @@ func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Comment body is required.")
 		return
 	}
-	if len([]rune(body.Body)) > 2200 {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Comment must be 2200 characters or fewer.")
+	if len([]rune(body.Body)) > 400 {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Comment must be 400 characters or fewer.")
 		return
 	}
 
