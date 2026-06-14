@@ -5,12 +5,12 @@ import {Pipe, PipeTransform} from '@angular/core';
   standalone: true
 })
 export class RelativeDatePipe implements PipeTransform {
-  private readonly formatter = new Intl.RelativeTimeFormat('en', {
-    numeric: 'auto',
-    style: 'narrow'
-  });
+  transform(value: Date | string, style: 'long' | 'short' | 'narrow' = 'narrow'): string {
+    const formatter = new Intl.RelativeTimeFormat('en', {
+      numeric: 'auto',
+      style: style
+    });
 
-  transform(value: Date | string): string {
     const date = new Date(value);
     const seconds = Math.round((date.getTime() - Date.now()) / 1000);
     const absoluteSeconds = Math.abs(seconds);
@@ -32,12 +32,12 @@ export class RelativeDatePipe implements PipeTransform {
     let duration = seconds;
     for (const division of divisions) {
       if (Math.abs(duration) < division.amount) {
-        return this.formatter.format(Math.round(duration), division.name);
+        return formatter.format(Math.round(duration), division.name);
       }
 
       duration /= division.amount;
     }
 
-    return this.formatter.format(Math.round(duration), 'year');
+    return formatter.format(Math.round(duration), 'year');
   }
 }

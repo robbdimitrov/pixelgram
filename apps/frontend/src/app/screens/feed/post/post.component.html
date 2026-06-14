@@ -90,8 +90,8 @@
       </div>
     }
 
-    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
-      {{post().created | relativedate}}
+    <span class="text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
+      {{post().created | relativedate:'long'}}
     </span>
 
     @if (singleView()) {
