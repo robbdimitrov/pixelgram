@@ -1,0 +1,2 @@
+ALTER TABLE posts ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE posts ALTER COLUMN description TYPE varchar(2200);
