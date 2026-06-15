@@ -1,7 +1,7 @@
 import {Component, inject, signal, OnInit} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {LucideArrowLeft, LucideTrash2} from '@lucide/angular';
+import {LucideArrowLeft, LucideTrash2, LucideCamera} from '@lucide/angular';
 import {finalize, Observable, of, switchMap, tap} from 'rxjs';
 
 import {UserService} from '../../../services/user.service';
@@ -34,7 +34,8 @@ import {
     PrimaryActionStyleDirective,
     TrimDirective,
     LucideArrowLeft,
-    LucideTrash2
+    LucideTrash2,
+    LucideCamera
   ]
 })
 export class EditProfileComponent implements OnInit {

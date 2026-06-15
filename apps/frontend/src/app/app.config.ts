@@ -1,4 +1,4 @@
-import {ApplicationConfig, inject, provideAppInitializer, provideExperimentalZonelessChangeDetection} from '@angular/core';
+import {ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection} from '@angular/core';
 import {provideRouter} from '@angular/router';
 import {provideHttpClient, withFetch, withInterceptors} from '@angular/common/http';
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
@@ -10,7 +10,7 @@ import {SessionService} from './features/auth/session.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideExperimentalZonelessChangeDetection(),
+    provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withFetch(), withInterceptors(interceptors)),
     provideAppInitializer(() => inject(SessionService).bootstrap()),

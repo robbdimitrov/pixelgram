@@ -14,33 +14,34 @@
   @if (user(); as u) {
     <form (ngSubmit)="onSubmit()" #form="ngForm" class="grid gap-6">
       <div class="flex flex-col items-center gap-3">
-        <label
-          for="file"
-          class="group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full border border-slate-200 bg-slate-100 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15 dark:bg-slate-800"
-          title="Change Avatar"
-          >
-          <img class="h-full w-full object-cover" [src]="imagePreview() || (u.avatar | image)" alt="Profile avatar">
-          <div class="absolute inset-0 flex items-center justify-center bg-slate-950/40 text-xs font-bold text-white opacity-0 backdrop-blur-[2px] transition-all duration-300 group-hover:opacity-100">
-            Change
-          </div>
-        </label>
-        <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
-        
-        <div class="flex h-5 items-center gap-3">
-          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Tap image to change</span>
+        <div class="relative">
+          <label
+            for="file"
+            class="group relative block h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full border border-slate-200 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15 sm:h-28 sm:w-28"
+            title="Change Avatar"
+            >
+            <img class="h-full w-full object-cover" [src]="imagePreview() || (u.avatar | image)" alt="Profile avatar">
+            <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 text-white opacity-0 backdrop-blur-[2px] transition-all duration-300 group-hover:opacity-100">
+              <svg lucideCamera class="h-6 w-6"></svg>
+              <span class="mt-1 text-[10px] font-bold uppercase tracking-wider">Change</span>
+            </div>
+          </label>
+          <input type="file" id="file" #file accept="image/*" class="hidden" (change)="onChange(file.files)">
+          
           @if (imagePreview() || u.avatar) {
-            <span class="text-slate-300 dark:text-slate-600">&bull;</span>
-            <button
-              type="button"
-              class="group flex items-center gap-1 text-xs font-bold text-slate-500 transition-colors hover:text-error dark:text-slate-400 dark:hover:text-error"
-              title="Remove avatar"
-              (click)="removeAvatar()"
-              >
-              <svg lucideTrash2 class="h-3.5 w-3.5 transition-transform group-hover:scale-110"></svg>
-              Remove
-            </button>
+            <div class="absolute bottom-0 right-0 rounded-full bg-white dark:bg-slate-950 shadow-sm">
+              <button
+                type="button"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-all duration-150 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 active:scale-95 dark:border-white/15 dark:text-slate-500 dark:hover:border-rose-900/50 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                title="Remove avatar"
+                (click)="removeAvatar()"
+                >
+                <svg lucideTrash2 class="h-4 w-4"></svg>
+              </button>
+            </div>
           }
         </div>
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Tap image to change</span>
       </div>
       <div class="grid gap-4">
         <div class="form-control grid gap-2">
