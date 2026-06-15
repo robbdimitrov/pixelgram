@@ -169,5 +169,5 @@ func (r *SessionRepository) exec(ctx context.Context, query string, args ...any)
 
 var (
 	_ sessions.Repository = (*SessionRepository)(nil)
-	_ httpx.SessionStore   = (*SessionRepository)(nil)
+	_ httpx.SessionStore  = (*SessionRepository)(nil)
 )

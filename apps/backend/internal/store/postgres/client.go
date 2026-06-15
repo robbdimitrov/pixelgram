@@ -27,4 +27,3 @@ func NewWithDB(db *database.DB) *Client {
 func (c *Client) Close() {
 	c.db.Close()
 }
-
