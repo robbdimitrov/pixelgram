@@ -20,6 +20,7 @@ import {
   resizeImageForUpload,
   supportedUploadMimeTypes
 } from '../../../../../shared/utils/image-resizer';
+import {ProfileAvatarStyleDirective} from '../../../../../shared/ui/directives/profile-avatar-style.directive';
 
 @Component({
   selector: 'app-edit-profile',
@@ -35,7 +36,8 @@ import {
     TrimDirective,
     LucideArrowLeft,
     LucideTrash2,
-    LucideCamera
+    LucideCamera,
+    ProfileAvatarStyleDirective
   ]
 })
 export class EditProfileComponent implements OnInit {

@@ -8,12 +8,13 @@ import {UserService} from '../../../services/user.service';
 import {SessionService} from '../../../../auth/session.service';
 import {ImagePipe} from '../../../../../shared/ui/pipes/image.pipe';
 import {PluralizePipe} from '../../../../../shared/ui/pipes/pluralize.pipe';
+import {ProfileAvatarStyleDirective} from '../../../../../shared/ui/directives/profile-avatar-style.directive';
 
 @Component({
   selector: 'app-profile-header',
   templateUrl: './profile-header.component.html',
   standalone: true,
-  imports: [RouterLink, ImagePipe, PluralizePipe, LucideSettings]
+  imports: [RouterLink, ImagePipe, PluralizePipe, LucideSettings, ProfileAvatarStyleDirective]
 })
 export class ProfileHeaderComponent {
   private session = inject(SessionService);

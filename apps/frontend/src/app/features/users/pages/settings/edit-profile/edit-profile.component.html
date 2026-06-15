@@ -17,7 +17,8 @@
         <div class="relative">
           <label
             for="file"
-            class="group relative block h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full border border-slate-200 shadow-md transition-transform hover:scale-[1.02] dark:border-white/15 sm:h-28 sm:w-28"
+            appProfileAvatarStyle
+            class="group block cursor-pointer transition-transform hover:scale-[1.02]"
             title="Change Avatar"
             >
             <img class="h-full w-full object-cover" [src]="imagePreview() || (u.avatar | image)" alt="Profile avatar">
