@@ -8,13 +8,21 @@ import {PaginationService} from '../../../services/pagination.service';
 import {SessionService} from '../../../services/session.service';
 
 describe('CommentsComponent', () => {
-  it('should load comments after the required post input is bound', async () => {
-    const apiClient = {getComments: jest.fn().mockReturnValue(of([]))};
+  it('should advance through comment cursors', async () => {
+    const firstPage = Array.from({length: 10}, (_, id) => ({id}));
+    const apiClient = {
+      getComments: jest.fn()
+        .mockReturnValueOnce(of({items: firstPage, nextCursor: 'comments-next'}))
+        .mockReturnValue(of({items: [], nextCursor: null}))
+    };
     const pagination = {
       data: signal([]),
-      page: 1,
-      hasMore: signal(false),
-      update: jest.fn()
+      cursor: null as string | null,
+      hasMore: signal(true),
+      update: jest.fn((_items, nextCursor) => {
+        pagination.cursor = nextCursor;
+        pagination.hasMore.set(nextCursor !== null);
+      })
     };
 
     TestBed.configureTestingModule({
@@ -31,8 +39,14 @@ describe('CommentsComponent', () => {
 
     fixture.detectChanges();
     await fixture.whenStable();
+    const component = fixture.componentInstance;
 
-    expect(apiClient.getComments).toHaveBeenCalledWith(42, 1);
-    expect(pagination.update).toHaveBeenCalledWith([], 0);
+    expect(apiClient.getComments).toHaveBeenCalledWith(42, null);
+    expect(pagination.update).toHaveBeenCalledWith(firstPage, 'comments-next');
+
+    component.onLoadMore();
+
+    expect(apiClient.getComments).toHaveBeenLastCalledWith(42, 'comments-next');
+    expect(pagination.update).toHaveBeenLastCalledWith([], null);
   });
 });

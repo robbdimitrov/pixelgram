@@ -14,7 +14,7 @@ describe('ProfileComponent', () => {
     const apiClient = {getUser: jest.fn()};
     const pagination = {
       data: signal([]),
-      page: 1,
+      cursor: null,
       hasMore: signal(false),
       reset: jest.fn(),
       count: jest.fn(() => 0)
@@ -41,7 +41,7 @@ describe('ProfileComponent', () => {
 
   it('renders the profile and empty state after asynchronous responses', () => {
     const userResponse = new Subject<User>();
-    const postsResponse = new Subject<never[]>();
+    const postsResponse = new Subject<{items: never[]; nextCursor: null}>();
     const apiClient = {
       getUser: jest.fn().mockReturnValue(userResponse),
       getPosts: jest.fn().mockReturnValue(postsResponse)
@@ -71,10 +71,66 @@ describe('ProfileComponent', () => {
       isFollowing: false,
       created: new Date()
     });
-    postsResponse.next([]);
+    postsResponse.next({items: [], nextCursor: null});
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Profile Test');
     expect(fixture.nativeElement.textContent).toContain('No uploads yet');
+  });
+
+  it('should reset pagination and fetch each profile from a fresh cursor', () => {
+    const params = new Subject<Record<string, string>>();
+    const apiClient = {
+      getUser: jest.fn((userId: number) => of(new User(
+        userId, 'Profile', 'profile', 'profile@example.com',
+        null, null, 0, 0, 0, 0, false, new Date()
+      ))),
+      getPosts: jest.fn()
+        .mockReturnValueOnce(of({items: [], nextCursor: null}))
+        .mockReturnValueOnce(of({items: [], nextCursor: 'profile-next'}))
+        .mockReturnValue(of({items: [], nextCursor: null}))
+    };
+    const pagination = {
+      data: signal([]),
+      cursor: null as string | null,
+      hasMore: signal(true),
+      reset: jest.fn(),
+      update: jest.fn(),
+      count: jest.fn()
+    };
+    pagination.reset.mockImplementation(() => {
+      pagination.cursor = null;
+      pagination.data.set([]);
+      pagination.hasMore.set(true);
+    });
+    pagination.update.mockImplementation((_items, nextCursor) => {
+      pagination.cursor = nextCursor;
+      pagination.hasMore.set(nextCursor !== null);
+    });
+    pagination.count.mockImplementation(() => pagination.data().length);
+
+    TestBed.configureTestingModule({
+      providers: [
+        {provide: APIClient, useValue: apiClient},
+        {provide: SessionService, useValue: {userId: () => 1}},
+        {provide: ActivatedRoute, useValue: {params}}
+      ]
+    });
+    TestBed.overrideComponent(ProfileComponent, {
+      set: {providers: [{provide: PaginationService, useValue: pagination}]}
+    });
+    const component = TestBed.createComponent(ProfileComponent).componentInstance;
+
+    params.next({userId: '20'});
+    pagination.cursor = 'old-profile-cursor';
+    params.next({userId: '21'});
+
+    expect(pagination.reset).toHaveBeenCalledTimes(2);
+    expect(apiClient.getPosts).toHaveBeenNthCalledWith(1, 20, null);
+    expect(apiClient.getPosts).toHaveBeenNthCalledWith(2, 21, null);
+
+    component.onNextClick();
+
+    expect(apiClient.getPosts).toHaveBeenNthCalledWith(3, 21, 'profile-next');
   });
 });

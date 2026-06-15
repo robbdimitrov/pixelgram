@@ -8,10 +8,6 @@ export interface CommentDto {
   created: string;
 }
 
-export interface CommentsDto {
-  items: CommentDto[];
-}
-
 export class Comment {
   constructor(
     public id: number,

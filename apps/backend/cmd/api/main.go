@@ -13,6 +13,7 @@ import (
 
 	"pixelgram/backend/internal/app"
 	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/sessions"
@@ -208,14 +209,14 @@ type noopPostStore struct{}
 func (noopPostStore) CreatePost(_ context.Context, _, _ string, _ *string) (int, bool, error) {
 	return 0, false, nil
 }
-func (noopPostStore) GetFeed(_ context.Context, _, _ int, _ string) ([]posts.Post, error) {
-	return nil, nil
+func (noopPostStore) GetFeed(_ context.Context, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
+	return nil, nil, nil
 }
-func (noopPostStore) GetPosts(_ context.Context, _ string, _, _ int, _ string) ([]posts.Post, error) {
-	return nil, nil
+func (noopPostStore) GetPosts(_ context.Context, _ string, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
+	return nil, nil, nil
 }
-func (noopPostStore) GetLikedPosts(_ context.Context, _ string, _, _ int, _ string) ([]posts.Post, error) {
-	return nil, nil
+func (noopPostStore) GetLikedPosts(_ context.Context, _ string, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
+	return nil, nil, nil
 }
 func (noopPostStore) GetPost(_ context.Context, _, _ string) (posts.Post, bool, error) {
 	return posts.Post{}, false, nil
@@ -232,8 +233,8 @@ type noopCommentStore struct{}
 func (noopCommentStore) CreateComment(_ context.Context, _, _, _ string) (comments.Comment, error) {
 	return comments.Comment{}, nil
 }
-func (noopCommentStore) ListComments(_ context.Context, _ string, _, _ int) ([]comments.Comment, error) {
-	return nil, nil
+func (noopCommentStore) ListComments(_ context.Context, _ string, _ *compat.Cursor, _ int) ([]comments.Comment, *compat.Cursor, error) {
+	return nil, nil, nil
 }
 func (noopCommentStore) DeleteComment(_ context.Context, _, _, _ string) (bool, error) {
 	return false, nil

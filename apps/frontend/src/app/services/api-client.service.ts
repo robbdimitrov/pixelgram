@@ -1,13 +1,14 @@
 import {inject, Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 import {mapPost, mapUser} from '../shared/utils/mappers';
 
 import {User, UserDto, UserIdDto} from '../models/user.model';
-import {Post, PostDto, ImageFilenameDto, PostIdDto, PostsDto} from '../models/post.model';
-import {Comment, CommentDto, CommentsDto} from '../models/comment.model';
+import {Post, PostDto, ImageFilenameDto, PostIdDto} from '../models/post.model';
+import {Comment, CommentDto} from '../models/comment.model';
+import {CursorPage} from '../models/pagination.model';
 
 @Injectable({
   providedIn: 'root'
@@ -72,24 +73,24 @@ export class APIClient {
     return this.http.post<PostIdDto>(url, body);
   }
 
-  getFeed(page: number): Observable<Post[]> {
-    const url = `/api/posts?page=${page}`;
-    return this.http.get<PostsDto>(url).pipe(
-      map((res) => res.items.map((item) => mapPost(item)))
-    );
+  getFeed(cursor: string | null): Observable<CursorPage<Post>> {
+    return this.getPostPage('/api/posts', cursor);
   }
 
-  getPosts(userId: number, page: number): Observable<Post[]> {
-    const url = `/api/users/${userId}/posts?page=${page}`;
-    return this.http.get<PostsDto>(url).pipe(
-      map((res) => res.items.map((item) => mapPost(item)))
-    );
+  getPosts(userId: number, cursor: string | null): Observable<CursorPage<Post>> {
+    return this.getPostPage(`/api/users/${userId}/posts`, cursor);
   }
 
-  getLikedPosts(userId: number, page: number): Observable<Post[]> {
-    const url = `/api/users/${userId}/likes?page=${page}`;
-    return this.http.get<PostsDto>(url).pipe(
-      map((res) => res.items.map((item) => mapPost(item)))
+  getLikedPosts(userId: number, cursor: string | null): Observable<CursorPage<Post>> {
+    return this.getPostPage(`/api/users/${userId}/likes`, cursor);
+  }
+
+  private getPostPage(url: string, cursor: string | null): Observable<CursorPage<Post>> {
+    return this.http.get<CursorPage<PostDto>>(url, {params: this.cursorParams(cursor)}).pipe(
+      map((res) => ({
+        items: res.items.map((item) => mapPost(item)),
+        nextCursor: res.nextCursor
+      }))
     );
   }
 
@@ -117,12 +118,15 @@ export class APIClient {
 
   // Comments
 
-  getComments(postId: number, page: number): Observable<Comment[]> {
-    const url = `/api/posts/${postId}/comments?page=${page}`;
-    return this.http.get<CommentsDto>(url).pipe(
-      map((res) => res.items.map((item) => new Comment(
-        item.id, item.postId, item.userId, item.username, item.avatar, item.body, new Date(item.created)
-      )))
+  getComments(postId: number, cursor: string | null): Observable<CursorPage<Comment>> {
+    const url = `/api/posts/${postId}/comments`;
+    return this.http.get<CursorPage<CommentDto>>(url, {params: this.cursorParams(cursor)}).pipe(
+      map((res) => ({
+        items: res.items.map((item) => new Comment(
+          item.id, item.postId, item.userId, item.username, item.avatar, item.body, new Date(item.created)
+        )),
+        nextCursor: res.nextCursor
+      }))
     );
   }
 
@@ -147,5 +151,9 @@ export class APIClient {
     const formData = new FormData();
     formData.append('image', file, file.name);
     return this.http.post<ImageFilenameDto>(url, formData);
+  }
+
+  private cursorParams(cursor: string | null): HttpParams {
+    return cursor ? new HttpParams().set('cursor', cursor) : new HttpParams();
   }
 }

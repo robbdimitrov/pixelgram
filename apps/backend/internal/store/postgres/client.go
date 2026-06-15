@@ -13,6 +13,7 @@ import (
 
 	"pixelgram/backend/internal/auth"
 	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/sessions"
@@ -451,12 +452,13 @@ const postColumns = `posts.id, posts.user_id, u.username, u.name, u.avatar,
 	(SELECT count(*) FROM comments WHERE post_id = posts.id) AS comments,
 	posts.created`
 
-func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]posts.Post, error) {
-	return c.queryPosts(ctx,
-		`SELECT `+postColumns+`
+func (c *Client) GetFeed(ctx context.Context, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+	return c.queryPostPage(ctx,
+		`SELECT `+postColumns+`, posts.created AS cursor_created
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
-		WHERE
+		WHERE (
 			(
 				EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
 				AND (
@@ -469,34 +471,40 @@ func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID str
 				NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
 				AND posts.user_id != $1
 			)
-		ORDER BY posts.created DESC
-		LIMIT $2 OFFSET $3`,
-		currentUserID, limit, page*limit,
+		)
+		AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
+		ORDER BY posts.created DESC, posts.id DESC
+		LIMIT $5`,
+		limit, currentUserID, hasCursor, cursorCreated, cursorID, limit+1,
 	)
 }
 
-func (c *Client) GetPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]posts.Post, error) {
-	return c.queryPosts(ctx,
-		`SELECT `+postColumns+`
+func (c *Client) GetPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+	return c.queryPostPage(ctx,
+		`SELECT `+postColumns+`, posts.created AS cursor_created
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
 		WHERE posts.user_id = $2
-		ORDER BY posts.created DESC
-		LIMIT $3 OFFSET $4`,
-		currentUserID, userID, limit, page*limit,
+		AND (NOT $3 OR (posts.created, posts.id) < ($4, $5))
+		ORDER BY posts.created DESC, posts.id DESC
+		LIMIT $6`,
+		limit, currentUserID, userID, hasCursor, cursorCreated, cursorID, limit+1,
 	)
 }
 
-func (c *Client) GetLikedPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]posts.Post, error) {
-	return c.queryPosts(ctx,
-		`SELECT `+postColumns+`
+func (c *Client) GetLikedPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+	return c.queryPostPage(ctx,
+		`SELECT `+postColumns+`, likes.created AS cursor_created
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
 		INNER JOIN likes ON likes.post_id = posts.id
 		WHERE likes.user_id = $2
-		ORDER BY likes.created DESC
-		LIMIT $3 OFFSET $4`,
-		currentUserID, userID, limit, page*limit,
+		AND (NOT $3 OR (likes.created, posts.id) < ($4, $5))
+		ORDER BY likes.created DESC, posts.id DESC
+		LIMIT $6`,
+		limit, currentUserID, userID, hasCursor, cursorCreated, cursorID, limit+1,
 	)
 }
 
@@ -641,10 +649,11 @@ func (c *Client) CreateComment(ctx context.Context, postID, userID, body string)
 	return comment, nil
 }
 
-func (c *Client) ListComments(ctx context.Context, postID string, page, limit int) ([]comments.Comment, error) {
+func (c *Client) ListComments(ctx context.Context, postID string, cursor *compat.Cursor, limit int) ([]comments.Comment, *compat.Cursor, error) {
 	if !c.breaker.allow() {
-		return nil, store.ErrUnavailable
+		return nil, nil, store.ErrUnavailable
 	}
+	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
 	var result []comments.Comment
 	err := withRetry(ctx, c.retryCfg, func() error {
 		rows, err := c.pool.Query(
@@ -653,9 +662,10 @@ func (c *Client) ListComments(ctx context.Context, postID string, page, limit in
 			FROM comments c
 			JOIN users u ON u.id = c.user_id
 			WHERE c.post_id = $1
-			ORDER BY c.created DESC
-			LIMIT $2 OFFSET $3`,
-			postID, limit, page*limit,
+			AND (NOT $2 OR (c.created, c.id) < ($3, $4))
+			ORDER BY c.created DESC, c.id DESC
+			LIMIT $5`,
+			postID, hasCursor, cursorCreated, cursorID, limit+1,
 		)
 		if err != nil {
 			return err
@@ -679,10 +689,16 @@ func (c *Client) ListComments(ctx context.Context, postID string, page, limit in
 	})
 	if err != nil {
 		c.breaker.failure(err)
-		return nil, err
+		return nil, nil, err
 	}
 	c.breaker.success()
-	return result, nil
+	if len(result) <= limit {
+		return result, nil, nil
+	}
+
+	result = result[:limit]
+	last := result[len(result)-1]
+	return result, &compat.Cursor{Created: last.Created, ID: last.ID}, nil
 }
 
 func (c *Client) DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error) {
@@ -758,6 +774,71 @@ func (c *Client) queryPosts(ctx context.Context, query string, args ...any) ([]p
 	}
 	c.breaker.success()
 	return result, nil
+}
+
+func (c *Client) queryPostPage(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *compat.Cursor, error) {
+	if !c.breaker.allow() {
+		return nil, nil, store.ErrUnavailable
+	}
+
+	type row struct {
+		post          posts.Post
+		cursorCreated time.Time
+	}
+	var result []row
+	err := withRetry(ctx, c.retryCfg, func() error {
+		rows, err := c.pool.Query(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		result = []row{}
+		for rows.Next() {
+			var item row
+			var description sql.NullString
+			var avatar sql.NullString
+			if err := rows.Scan(
+				&item.post.ID, &item.post.UserID, &item.post.Username, &item.post.Name, &avatar,
+				&item.post.Filename, &description,
+				&item.post.Likes, &item.post.Liked, &item.post.Comments, &item.post.Created,
+				&item.cursorCreated,
+			); err != nil {
+				return err
+			}
+			item.post.Avatar = nullableString(avatar)
+			item.post.Description = nullableString(description)
+			result = append(result, item)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		c.breaker.failure(err)
+		return nil, nil, err
+	}
+	c.breaker.success()
+
+	hasMore := len(result) > limit
+	if hasMore {
+		result = result[:limit]
+	}
+	items := make([]posts.Post, len(result))
+	for i, item := range result {
+		items[i] = item.post
+	}
+	if !hasMore {
+		return items, nil, nil
+	}
+
+	last := result[len(result)-1]
+	return items, &compat.Cursor{Created: last.cursorCreated, ID: last.post.ID}, nil
+}
+
+func cursorValues(cursor *compat.Cursor) (bool, time.Time, int) {
+	if cursor == nil {
+		return false, time.Time{}, 0
+	}
+	return true, cursor.Created, cursor.ID
 }
 
 func (c *Client) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {

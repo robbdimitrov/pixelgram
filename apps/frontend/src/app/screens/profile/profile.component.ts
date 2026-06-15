@@ -26,54 +26,67 @@ export class ProfileComponent {
   user = signal<User | undefined>(undefined);
   hasLoadedPosts = signal(false);
   isLoadingNextPage = signal(false);
+  private routeVersion = 0;
 
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const routeVersion = ++this.routeVersion;
       const userId = Number(params['userId']);
+      this.user.set(undefined);
+      this.hasLoadedPosts.set(false);
+      this.isLoadingNextPage.set(false);
+      this.pagination.reset();
+
       if (!Number.isSafeInteger(userId) || userId <= 0) {
-        this.user.set(undefined);
         this.hasLoadedPosts.set(true);
-        this.pagination.reset();
         return;
       }
 
-      if (!this.user() || userId !== this.user()?.id) {
-        this.loadUser(userId);
-      }
+      this.loadUser(userId, routeVersion);
     });
   }
 
-  loadUser(userId: number) {
+  loadUser(userId: number, routeVersion = this.routeVersion) {
     this.apiClient.getUser(userId).subscribe({
       next: (value) => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
         this.user.set(value);
-        this.hasLoadedPosts.set(false);
-        this.pagination.reset();
-        this.loadNextPage();
+        this.loadNextPage(routeVersion);
       },
       error: () => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
         this.hasLoadedPosts.set(true);
       }
     });
   }
 
-  loadNextPage() {
+  loadNextPage(routeVersion = this.routeVersion) {
     const user = this.user();
     if (!user || this.isLoadingNextPage()) {
       return;
     }
     this.isLoadingNextPage.set(true);
 
-    this.apiClient.getPosts(user.id, this.pagination.page).subscribe({
-      next: (value) => {
-        const posts = value.filter((post) => {
+    this.apiClient.getPosts(user.id, this.pagination.cursor).subscribe({
+      next: (page) => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
+        const posts = page.items.filter((post) => {
           return !(this.pagination.data().some((item) => post.id === item.id));
         });
-        this.pagination.update(posts, value.length);
+        this.pagination.update(posts, page.nextCursor);
         this.isLoadingNextPage.set(false);
         this.hasLoadedPosts.set(true);
       },
       error: () => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
         this.isLoadingNextPage.set(false);
         this.hasLoadedPosts.set(true);
       }

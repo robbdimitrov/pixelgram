@@ -3,14 +3,13 @@ import {Injectable, signal} from '@angular/core';
 @Injectable()
 export class PaginationService<T> {
   data = signal<Array<T>>([]);
-  perPage = 10;
-  page = 0;
+  cursor: string | null = null;
   hasMore = signal(true);
 
-  update(data: Array<T>, totalFetched: number = data.length) {
+  update(data: Array<T>, nextCursor: string | null) {
     this.data.update(curr => [...curr, ...data]);
-    this.page++;
-    this.hasMore.set(totalFetched === this.perPage);
+    this.cursor = nextCursor;
+    this.hasMore.set(nextCursor !== null);
   }
 
   remove(item: T) {
@@ -26,7 +25,7 @@ export class PaginationService<T> {
   }
 
   reset() {
-    this.page = 0;
+    this.cursor = null;
     this.data.set([]);
     this.hasMore.set(true);
   }

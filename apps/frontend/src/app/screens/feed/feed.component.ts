@@ -23,40 +23,44 @@ export class FeedComponent {
   postId = signal<number | undefined>(undefined);
   hasLoaded = signal(false);
   isLoadingNextPage = signal(false);
+  private routeVersion = 0;
 
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const routeVersion = ++this.routeVersion;
+      this.pagination.reset();
+      this.hasLoaded.set(false);
+      this.isLoadingNextPage.set(false);
+
       if (params['postId']) {
         const postId = Number(params['postId']);
         if (!Number.isSafeInteger(postId) || postId <= 0) {
           this.postId.set(undefined);
           this.userId.set(undefined);
           this.hasLoaded.set(true);
-          this.pagination.reset();
           return;
         }
 
         this.postId.set(postId);
         this.userId.set(undefined);
-        this.loadPost(postId);
+        this.loadPost(postId, routeVersion);
       } else {
         const userId = params['userId'] ? Number(params['userId']) : undefined;
         if (userId !== undefined && (!Number.isSafeInteger(userId) || userId <= 0)) {
           this.postId.set(undefined);
           this.userId.set(undefined);
           this.hasLoaded.set(true);
-          this.pagination.reset();
           return;
         }
 
         this.postId.set(undefined);
         this.userId.set(userId);
-        this.loadNextPage();
+        this.loadNextPage(routeVersion);
       }
     });
   }
 
-  loadNextPage() {
+  loadNextPage(routeVersion = this.routeVersion) {
     if (this.isLoadingNextPage()) {
       return;
     }
@@ -64,32 +68,44 @@ export class FeedComponent {
 
     const userId = this.userId();
     const req = (userId ?
-      this.apiClient.getLikedPosts(userId, this.pagination.page) :
-      this.apiClient.getFeed(this.pagination.page));
+      this.apiClient.getLikedPosts(userId, this.pagination.cursor) :
+      this.apiClient.getFeed(this.pagination.cursor));
 
     req.subscribe({
-      next: (value) => {
-        const posts = value.filter((post) => {
+      next: (page) => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
+        const posts = page.items.filter((post) => {
           return !(this.pagination.data().some((item) => post.id === item.id));
         });
-        this.pagination.update(posts, value.length);
+        this.pagination.update(posts, page.nextCursor);
         this.isLoadingNextPage.set(false);
         this.hasLoaded.set(true);
       },
       error: () => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
         this.isLoadingNextPage.set(false);
         this.hasLoaded.set(true);
       }
     });
   }
 
-  loadPost(postId: number) {
+  loadPost(postId: number, routeVersion = this.routeVersion) {
     this.apiClient.getPost(postId).subscribe({
       next: (value) => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
         this.pagination.data.set([value]);
         this.hasLoaded.set(true);
       },
       error: () => {
+        if (routeVersion !== this.routeVersion) {
+          return;
+        }
         this.hasLoaded.set(true);
       }
     });

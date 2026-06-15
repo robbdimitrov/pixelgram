@@ -8,42 +8,49 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
 )
 
 type fakeStore struct {
-	post           Post
-	posts          []Post
-	found          bool
-	err            error
-	createdID      int
-	created        bool
-	deleted        bool
-	deletedFile    string
-	exists         bool
-	liked          bool
-	unliked        bool
-	requestedPage  int
-	requestedLimit int
+	post            Post
+	posts           []Post
+	found           bool
+	err             error
+	createdID       int
+	created         bool
+	deleted         bool
+	deletedFile     string
+	exists          bool
+	liked           bool
+	unliked         bool
+	requestedUser   string
+	requestedCursor *compat.Cursor
+	requestedLimit  int
+	nextCursor      *compat.Cursor
 }
 
 func (s *fakeStore) CreatePost(_ context.Context, _ string, _ string, _ *string) (int, bool, error) {
 	return s.createdID, s.created, s.err
 }
 
-func (s *fakeStore) GetFeed(_ context.Context, page, limit int, _ string) ([]Post, error) {
-	s.requestedPage = page
+func (s *fakeStore) GetFeed(_ context.Context, cursor *compat.Cursor, limit int, _ string) ([]Post, *compat.Cursor, error) {
+	s.requestedCursor = cursor
 	s.requestedLimit = limit
-	return s.posts, s.err
+	return s.posts, s.nextCursor, s.err
 }
 
-func (s *fakeStore) GetPosts(_ context.Context, _ string, _ int, _ int, _ string) ([]Post, error) {
-	return s.posts, s.err
+func (s *fakeStore) GetPosts(_ context.Context, userID string, cursor *compat.Cursor, limit int, _ string) ([]Post, *compat.Cursor, error) {
+	s.requestedUser = userID
+	s.requestedCursor = cursor
+	s.requestedLimit = limit
+	return s.posts, s.nextCursor, s.err
 }
 
-func (s *fakeStore) GetLikedPosts(_ context.Context, _ string, _ int, _ int, _ string) ([]Post, error) {
-	return s.posts, s.err
+func (s *fakeStore) GetLikedPosts(_ context.Context, _ string, _ *compat.Cursor, _ int, _ string) ([]Post, *compat.Cursor, error) {
+	return s.posts, s.nextCursor, s.err
 }
 
 func (s *fakeStore) GetPost(_ context.Context, _ string, _ string) (Post, bool, error) {
@@ -117,10 +124,15 @@ func TestCreatePostSuccess(t *testing.T) {
 }
 
 func TestGetFeedPagination(t *testing.T) {
-	store := &fakeStore{posts: []Post{{ID: 1, Filename: "a"}}}
+	cursor := compat.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
+	nextCursor := compat.Cursor{Created: time.Date(2026, 6, 14, 10, 0, 0, 0, time.UTC), ID: 21}
+	store := &fakeStore{
+		posts:      []Post{{ID: 1, Filename: "a"}},
+		nextCursor: &nextCursor,
+	}
 	handler := Handler{Store: store}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts?page=2&limit=500", nil)
+	req := httptest.NewRequest(http.MethodGet, "/posts?cursor="+compat.EncodeCursor(cursor)+"&limit=500", nil)
 	req = httpx.WithUserID(req, "1")
 
 	handler.GetFeed(res, req)
@@ -128,10 +140,10 @@ func TestGetFeedPagination(t *testing.T) {
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
 	}
-	if store.requestedPage != 2 || store.requestedLimit != 50 {
-		t.Fatalf("pagination = page %d limit %d", store.requestedPage, store.requestedLimit)
+	if store.requestedCursor == nil || *store.requestedCursor != cursor || store.requestedLimit != 50 {
+		t.Fatalf("pagination = cursor %+v limit %d", store.requestedCursor, store.requestedLimit)
 	}
-	if !strings.Contains(res.Body.String(), `"items"`) {
+	if !strings.Contains(res.Body.String(), `"nextCursor":"`+compat.EncodeCursor(nextCursor)+`"`) {
 		t.Fatalf("body = %q", res.Body.String())
 	}
 }
@@ -139,13 +151,35 @@ func TestGetFeedPagination(t *testing.T) {
 func TestGetFeedInvalidPagination(t *testing.T) {
 	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts?page=-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/posts?cursor=invalid", nil)
 	req = httpx.WithUserID(req, "1")
 
 	handler.GetFeed(res, req)
 
 	if res.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+}
+
+func TestGetPostsPagination(t *testing.T) {
+	cursor := compat.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
+	store := &fakeStore{posts: []Post{{ID: 1, Filename: "a"}}}
+	handler := Handler{Store: store}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/users/42/posts?cursor="+compat.EncodeCursor(cursor)+"&limit=25", nil)
+	req.SetPathValue("userId", "42")
+	req = httpx.WithUserID(req, "1")
+
+	handler.GetPosts(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if store.requestedUser != "42" || store.requestedCursor == nil || *store.requestedCursor != cursor || store.requestedLimit != 25 {
+		t.Fatalf(
+			"request = user %q cursor %+v limit %d",
+			store.requestedUser, store.requestedCursor, store.requestedLimit,
+		)
 	}
 }
 

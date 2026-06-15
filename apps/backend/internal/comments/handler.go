@@ -24,7 +24,7 @@ type Comment struct {
 
 type Store interface {
 	CreateComment(ctx context.Context, postID, userID, body string) (Comment, error)
-	ListComments(ctx context.Context, postID string, page, limit int) ([]Comment, error)
+	ListComments(ctx context.Context, postID string, cursor *compat.Cursor, limit int) ([]Comment, *compat.Cursor, error)
 	DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error)
 }
 
@@ -87,7 +87,7 @@ func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := h.Store.ListComments(ctx, postID, pagination.Page, pagination.Limit)
+	items, nextCursor, err := h.Store.ListComments(ctx, postID, pagination.Cursor, pagination.Limit)
 	if errors.Is(err, store.ErrUnavailable) {
 		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Service Unavailable")
 		return
@@ -97,7 +97,7 @@ func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string][]Comment{"items": items})
+	httpx.WriteJSON(w, http.StatusOK, compat.NewCursorPage(items, nextCursor))
 }
 
 func (h Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {

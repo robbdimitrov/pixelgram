@@ -26,9 +26,9 @@ type Post struct {
 
 type Store interface {
 	CreatePost(ctx context.Context, userID, filename string, description *string) (int, bool, error)
-	GetFeed(ctx context.Context, page, limit int, currentUserID string) ([]Post, error)
-	GetPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Post, error)
-	GetLikedPosts(ctx context.Context, userID string, page, limit int, currentUserID string) ([]Post, error)
+	GetFeed(ctx context.Context, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
+	GetPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
+	GetLikedPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
 	GetPost(ctx context.Context, postID, currentUserID string) (Post, bool, error)
 	DeletePost(ctx context.Context, postID, userID string) (string, bool, error)
 	PostExists(ctx context.Context, postID string) (bool, error)
@@ -86,13 +86,13 @@ func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := h.Store.GetFeed(ctx, pagination.Page, pagination.Limit, currentUserID)
+	items, nextCursor, err := h.Store.GetFeed(ctx, pagination.Cursor, pagination.Limit, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string][]Post{"items": posts})
+	writePostPage(w, items, nextCursor)
 }
 
 func (h Handler) GetPosts(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ func (h Handler) GetLikedPosts(w http.ResponseWriter, r *http.Request) {
 	h.getPostList(w, r, h.Store.GetLikedPosts)
 }
 
-func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, string, int, int, string) ([]Post, error)) {
+func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, string, *compat.Cursor, int, string) ([]Post, *compat.Cursor, error)) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
 	pagination, ok := compat.ParsePagination(r.URL.Query())
@@ -112,13 +112,17 @@ func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(
 		return
 	}
 
-	posts, err := fetch(ctx, r.PathValue("userId"), pagination.Page, pagination.Limit, currentUserID)
+	items, nextCursor, err := fetch(ctx, r.PathValue("userId"), pagination.Cursor, pagination.Limit, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string][]Post{"items": posts})
+	writePostPage(w, items, nextCursor)
+}
+
+func writePostPage(w http.ResponseWriter, items []Post, nextCursor *compat.Cursor) {
+	httpx.WriteJSON(w, http.StatusOK, compat.NewCursorPage(items, nextCursor))
 }
 
 func (h Handler) GetPost(w http.ResponseWriter, r *http.Request) {

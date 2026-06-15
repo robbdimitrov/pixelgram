@@ -148,28 +148,37 @@ describe('APIClient', () => {
 
   describe('getFeed', () => {
     it('should GET feed', () => {
-      service.getFeed(1).subscribe();
-      const req = httpMock.expectOne('/api/posts?page=1');
+      service.getFeed(null).subscribe();
+      const req = httpMock.expectOne('/api/posts');
       expect(req.request.method).toBe('GET');
-      req.flush({ items: [] });
+      req.flush({items: [], nextCursor: null});
     });
   });
 
   describe('getPosts', () => {
     it('should GET user posts', () => {
-      service.getPosts(1, 1).subscribe();
-      const req = httpMock.expectOne('/api/users/1/posts?page=1');
+      service.getPosts(1, 'next cursor').subscribe();
+      const req = httpMock.expectOne('/api/users/1/posts?cursor=next%20cursor');
       expect(req.request.method).toBe('GET');
-      req.flush({ items: [] });
+      req.flush({items: [], nextCursor: null});
     });
   });
 
   describe('getLikedPosts', () => {
     it('should GET liked posts', () => {
-      service.getLikedPosts(1, 1).subscribe();
-      const req = httpMock.expectOne('/api/users/1/likes?page=1');
+      service.getLikedPosts(1, null).subscribe();
+      const req = httpMock.expectOne('/api/users/1/likes');
       expect(req.request.method).toBe('GET');
-      req.flush({ items: [] });
+      req.flush({items: [], nextCursor: null});
+    });
+  });
+
+  describe('getComments', () => {
+    it('should GET post comments', () => {
+      service.getComments(42, 'next').subscribe();
+      const req = httpMock.expectOne('/api/posts/42/comments?cursor=next');
+      expect(req.request.method).toBe('GET');
+      req.flush({items: [], nextCursor: null});
     });
   });
 

@@ -16,10 +16,6 @@ export interface PostDto {
   created: string;
 }
 
-export interface PostsDto {
-  items: PostDto[];
-}
-
 export interface ImageFilenameDto {
   filename: string;
 }

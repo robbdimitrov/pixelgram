@@ -5,4 +5,4 @@ CREATE TABLE comments (
   body      varchar(400) NOT NULL CHECK (char_length(body) > 0),
   created   timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX comments_post_id_idx ON comments(post_id);
+CREATE INDEX comments_post_id_created_id_idx ON comments (post_id, created DESC, id DESC);

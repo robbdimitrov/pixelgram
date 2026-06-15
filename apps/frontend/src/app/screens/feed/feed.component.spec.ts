@@ -1,7 +1,7 @@
 import {signal} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {provideRouter} from '@angular/router';
-import {of, throwError} from 'rxjs';
+import {of, Subject, throwError} from 'rxjs';
 
 import {FeedComponent} from './feed.component';
 import {APIClient} from '../../services/api-client.service';
@@ -26,14 +26,18 @@ describe('FeedComponent', () => {
 
     mockPagination = {
       data: signal([]),
-      page: 1,
+      cursor: null as string | null,
       hasMore: signal(true),
-      update: jest.fn((data) => {
+      update: jest.fn((data, nextCursor) => {
         mockPagination.data.update((curr: any) => [...curr, ...data]);
+        mockPagination.cursor = nextCursor;
+        mockPagination.hasMore.set(nextCursor !== null);
       }),
       remove: jest.fn(),
       reset: jest.fn(() => {
+        mockPagination.cursor = null;
         mockPagination.data.set([]);
+        mockPagination.hasMore.set(true);
       }),
       count: jest.fn(() => mockPagination.data().length)
     };
@@ -63,15 +67,57 @@ describe('FeedComponent', () => {
   }
 
   it('should initialize and load feed if no params provided', () => {
-    mockApiClient.getFeed.mockReturnValue(of([{id: 1, filename: 'test.jpg', userId: 1}]));
+    mockApiClient.getFeed
+      .mockReturnValueOnce(of({
+        items: [{id: 1, filename: 'test.jpg', userId: 1}],
+        nextCursor: 'feed-next'
+      }))
+      .mockReturnValue(of({items: [], nextCursor: null}));
 
     createComponent();
 
     expect(component.userId()).toBeUndefined();
     expect(component.postId()).toBeUndefined();
-    expect(mockApiClient.getFeed).toHaveBeenCalledWith(1);
+    expect(mockApiClient.getFeed).toHaveBeenCalledWith(null);
     expect(mockPagination.update).toHaveBeenCalled();
     expect(component.hasLoaded()).toBe(true);
+
+    component.onNextClick();
+
+    expect(mockApiClient.getFeed).toHaveBeenLastCalledWith('feed-next');
+  });
+
+  it('should reset pagination and use the likes endpoint after a route change', () => {
+    const params = new Subject<Record<string, string>>();
+    mockApiClient.getFeed.mockReturnValue(of({items: [], nextCursor: null}));
+    mockApiClient.getLikedPosts
+      .mockReturnValueOnce(of({items: [], nextCursor: 'likes-next'}))
+      .mockReturnValue(of({items: [], nextCursor: null}));
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        {provide: APIClient, useValue: mockApiClient},
+        {provide: ActivatedRoute, useValue: {params}}
+      ]
+    });
+    TestBed.overrideComponent(FeedComponent, {
+      set: {providers: [{provide: PaginationService, useValue: mockPagination}]}
+    });
+    component = TestBed.createComponent(FeedComponent).componentInstance;
+
+    params.next({});
+    expect(mockApiClient.getFeed).toHaveBeenCalledWith(null);
+    mockPagination.cursor = 'old-feed-cursor';
+
+    params.next({userId: '7'});
+
+    expect(mockPagination.reset).toHaveBeenCalledTimes(2);
+    expect(mockApiClient.getLikedPosts).toHaveBeenCalledWith(7, null);
+
+    component.onNextClick();
+
+    expect(mockApiClient.getLikedPosts).toHaveBeenLastCalledWith(7, 'likes-next');
   });
 
   it('should load specific post if postId param provided', () => {
@@ -113,7 +159,7 @@ describe('FeedComponent', () => {
   });
 
   it('should render the empty state after loading an empty feed', () => {
-    mockApiClient.getFeed.mockReturnValue(of([]));
+    mockApiClient.getFeed.mockReturnValue(of({items: [], nextCursor: null}));
 
     const fixture = createFixture();
     fixture.detectChanges();
@@ -124,7 +170,7 @@ describe('FeedComponent', () => {
 
   describe('Likes', () => {
     beforeEach(() => {
-      mockApiClient.getFeed.mockReturnValue(of([]));
+      mockApiClient.getFeed.mockReturnValue(of({items: [], nextCursor: null}));
       createComponent();
       mockPagination.data.set([{id: 1, liked: false, likes: 0}]);
     });
