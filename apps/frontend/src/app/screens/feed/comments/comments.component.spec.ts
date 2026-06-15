@@ -8,6 +8,7 @@ import {PaginationService} from '../../../services/pagination.service';
 import {SessionService} from '../../../services/session.service';
 
 describe('CommentsComponent', () => {
+  const publicId = '550e8400-e29b-41d4-a716-446655440000';
   it('should advance through comment cursors', async () => {
     const firstPage = Array.from({length: 10}, (_, id) => ({id}));
     const apiClient = {
@@ -35,18 +36,18 @@ describe('CommentsComponent', () => {
       set: {providers: [{provide: PaginationService, useValue: pagination}]}
     });
     const fixture = TestBed.createComponent(CommentsComponent);
-    fixture.componentRef.setInput('postId', 42);
+    fixture.componentRef.setInput('publicId', publicId);
 
     fixture.detectChanges();
     await fixture.whenStable();
     const component = fixture.componentInstance;
 
-    expect(apiClient.getComments).toHaveBeenCalledWith(42, null);
+    expect(apiClient.getComments).toHaveBeenCalledWith(publicId, null);
     expect(pagination.update).toHaveBeenCalledWith(firstPage, 'comments-next');
 
     component.onLoadMore();
 
-    expect(apiClient.getComments).toHaveBeenLastCalledWith(42, 'comments-next');
+    expect(apiClient.getComments).toHaveBeenLastCalledWith(publicId, 'comments-next');
     expect(pagination.update).toHaveBeenLastCalledWith([], null);
   });
 });

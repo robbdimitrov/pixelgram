@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,7 +17,8 @@ import (
 
 type Store interface {
 	CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error)
-	GetUser(ctx context.Context, userID, currentUserID string) (User, bool, error)
+	GetUserByUsername(ctx context.Context, username, currentUserID string) (User, bool, error)
+	GetUserByID(ctx context.Context, userID, currentUserID string) (User, bool, error)
 	GetUserWithID(ctx context.Context, userID string) (UserCredentials, bool, error)
 	UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (UpdateUserResult, error)
 	UpdatePassword(ctx context.Context, userID, passwordHash string) error
@@ -68,11 +70,15 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := strings.TrimSpace(body.Name)
-	username := strings.TrimSpace(body.Username)
+	username := strings.ToLower(strings.TrimSpace(body.Username))
 	email := strings.ToLower(strings.TrimSpace(body.Email))
 
 	if name == "" || username == "" || email == "" || body.Password == "" {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Name, username, email and password are required.")
+		return
+	}
+	if !compat.ValidUsername(username) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
 	}
 
@@ -108,10 +114,10 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID := r.PathValue("userId")
+	username := strings.ToLower(r.PathValue("username"))
 	currentUserID, _ := httpx.UserID(r)
 
-	user, found, err := h.Store.GetUser(ctx, userID, currentUserID)
+	user, found, err := h.Store.GetUserByUsername(ctx, username, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -122,8 +128,28 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Email is private: only expose it on the requester's own profile.
-	if currentUserID, ok := httpx.UserID(r); !ok || currentUserID != userID {
+	if currentUserID, ok := httpx.UserID(r); !ok || currentUserID != strconv.Itoa(user.ID) {
 		user.Email = ""
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, user)
+}
+
+func (h Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	currentUserID, ok := httpx.UserID(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	user, found, err := h.Store.GetUserByID(r.Context(), currentUserID, currentUserID)
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	if !found {
+		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
+		return
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, user)
@@ -161,10 +187,14 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := strings.TrimSpace(body.Name)
-	username := strings.TrimSpace(body.Username)
+	username := strings.ToLower(strings.TrimSpace(body.Username))
 	email := strings.ToLower(strings.TrimSpace(body.Email))
 	if name == "" || username == "" {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Name and username are required.")
+		return
+	}
+	if !compat.ValidUsername(username) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
 	}
 	if !compat.ValidEmail(email) {

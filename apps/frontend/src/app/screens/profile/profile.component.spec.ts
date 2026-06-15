@@ -11,7 +11,7 @@ import {User} from '../../models/user.model';
 
 describe('ProfileComponent', () => {
   it('should not load an invalid user route', () => {
-    const apiClient = {getUser: jest.fn()};
+    const apiClient = {getUserByUsername: jest.fn()};
     const pagination = {
       data: signal([]),
       cursor: null,
@@ -24,7 +24,7 @@ describe('ProfileComponent', () => {
       providers: [
         {provide: APIClient, useValue: apiClient},
         {provide: SessionService, useValue: {userId: () => null}},
-        {provide: ActivatedRoute, useValue: {params: of({userId: 'invalid'})}}
+        {provide: ActivatedRoute, useValue: {params: of({})}}
       ]
     });
     TestBed.overrideComponent(ProfileComponent, {
@@ -36,14 +36,14 @@ describe('ProfileComponent', () => {
     expect(component.user()).toBeUndefined();
     expect(component.hasLoadedPosts()).toBe(true);
     expect(pagination.reset).toHaveBeenCalled();
-    expect(apiClient.getUser).not.toHaveBeenCalled();
+    expect(apiClient.getUserByUsername).not.toHaveBeenCalled();
   });
 
   it('renders the profile and empty state after asynchronous responses', () => {
     const userResponse = new Subject<User>();
     const postsResponse = new Subject<{items: never[]; nextCursor: null}>();
     const apiClient = {
-      getUser: jest.fn().mockReturnValue(userResponse),
+      getUserByUsername: jest.fn().mockReturnValue(userResponse),
       getPosts: jest.fn().mockReturnValue(postsResponse)
     };
 
@@ -51,7 +51,7 @@ describe('ProfileComponent', () => {
       providers: [
         {provide: APIClient, useValue: apiClient},
         {provide: SessionService, useValue: {userId: () => 20}},
-        {provide: ActivatedRoute, useValue: {params: of({userId: '20'})}}
+        {provide: ActivatedRoute, useValue: {params: of({username: 'profiletest'})}}
       ]
     });
 
@@ -81,8 +81,8 @@ describe('ProfileComponent', () => {
   it('should reset pagination and fetch each profile from a fresh cursor', () => {
     const params = new Subject<Record<string, string>>();
     const apiClient = {
-      getUser: jest.fn((userId: number) => of(new User(
-        userId, 'Profile', 'profile', 'profile@example.com',
+      getUserByUsername: jest.fn((username: string) => of(new User(
+        username === 'first' ? 20 : 21, 'Profile', username, 'profile@example.com',
         null, null, 0, 0, 0, 0, false, new Date()
       ))),
       getPosts: jest.fn()
@@ -121,16 +121,16 @@ describe('ProfileComponent', () => {
     });
     const component = TestBed.createComponent(ProfileComponent).componentInstance;
 
-    params.next({userId: '20'});
+    params.next({username: 'first'});
     pagination.cursor = 'old-profile-cursor';
-    params.next({userId: '21'});
+    params.next({username: 'second'});
 
     expect(pagination.reset).toHaveBeenCalledTimes(2);
-    expect(apiClient.getPosts).toHaveBeenNthCalledWith(1, 20, null);
-    expect(apiClient.getPosts).toHaveBeenNthCalledWith(2, 21, null);
+    expect(apiClient.getPosts).toHaveBeenNthCalledWith(1, 'first', null);
+    expect(apiClient.getPosts).toHaveBeenNthCalledWith(2, 'second', null);
 
     component.onNextClick();
 
-    expect(apiClient.getPosts).toHaveBeenNthCalledWith(3, 21, 'profile-next');
+    expect(apiClient.getPosts).toHaveBeenNthCalledWith(3, 'second', 'profile-next');
   });
 });

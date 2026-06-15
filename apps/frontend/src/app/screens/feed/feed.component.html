@@ -15,7 +15,7 @@
       <div class="w-full transition-all duration-300">
         <app-post
           [post]="post"
-          [singleView]="!!postId()"
+          [singleView]="!!publicId()"
           (like)="onLike($event)"
           (unlike)="onUnlike($event)"
           (deleteAction)="onDeleteAction($event)"
@@ -25,7 +25,7 @@
     }
   </div>
 
-  @if (!postId() && hasMore() && count() > 0) {
+  @if (!publicId() && hasMore() && count() > 0) {
     <button
       id="next"
       class="btn btn-outline btn-primary rounded-xl px-8 font-bold transition-transform hover:scale-105 active:scale-95"

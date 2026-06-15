@@ -22,8 +22,8 @@ export class NavbarComponent {
   private session = inject(SessionService);
   router = inject(Router);
 
-  userId() {
-    return this.session.userId();
+  currentUser() {
+    return this.session.currentUser();
   }
 
   isSignupRoute() {

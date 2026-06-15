@@ -11,21 +11,26 @@ describe('EditProfileComponent', () => {
   it('should block duplicate submissions and reset after an upload error', () => {
     const upload = new Subject<ImageFilenameDto>();
     const apiClient = {
-      getUser: jest.fn().mockReturnValue(of({
-        id: 1,
-        name: 'Test User',
-        username: 'test',
-        email: 'test@example.com'
-      })),
       uploadImage: jest.fn().mockReturnValue(upload),
-      updateUser: jest.fn()
+      updateUser: jest.fn(),
+      getCurrentUser: jest.fn()
     };
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         {provide: APIClient, useValue: apiClient},
-        {provide: SessionService, useValue: {userId: () => 1}}
+        {provide: SessionService, useValue: {
+          userId: () => 1,
+          currentUser: () => ({
+            id: 1,
+            name: 'Test User',
+            username: 'test',
+            email: 'test@example.com',
+            avatar: null,
+            bio: null
+          })
+        }}
       ]
     });
     const component = TestBed.createComponent(EditProfileComponent).componentInstance;

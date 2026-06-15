@@ -1,11 +1,11 @@
 <div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
   <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-6 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:pr-20">
     <div class="flex items-center gap-3">
-      <a [routerLink]="['/users', post().userId]" class="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
+      <a [routerLink]="'/@' + post().username" class="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
         <img class="h-full w-full object-cover" [src]="post().avatar | image" [alt]="post().username" loading="lazy" decoding="async" (error)="onImageError($event)">
       </a>
       <div class="flex flex-col">
-        <a [routerLink]="['/users', post().userId]" class="text-base font-bold leading-6 text-slate-950 transition-colors hover:text-primary dark:text-white">
+        <a [routerLink]="'/@' + post().username" class="text-base font-bold leading-6 text-slate-950 transition-colors hover:text-primary dark:text-white">
           {{post().username}}
         </a>
         @if (post().name) {
@@ -73,7 +73,7 @@
       </button>
       <a
         class="group inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
-        [routerLink]="['/posts', post().id]"
+        [routerLink]="['/posts', post().publicId]"
         aria-label="View comments"
       >
         <svg lucideMessageCircle class="h-5 w-5"></svg>
@@ -83,7 +83,7 @@
 
     @if (isDescriptionPresent()) {
       <div class="text-base leading-7">
-        <a [routerLink]="['/users', post().userId]" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">
+        <a [routerLink]="'/@' + post().username" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">
           {{post().username}}
         </a>
         <span class="whitespace-pre-wrap text-slate-700 dark:text-slate-300">{{post().description}}</span>
@@ -96,7 +96,7 @@
 
     @if (singleView()) {
       <div class="border-t border-slate-100 pt-4 dark:border-white/10">
-        <app-comments [postId]="post().id"></app-comments>
+        <app-comments [publicId]="post().publicId"></app-comments>
       </div>
     }
   </div>

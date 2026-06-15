@@ -1,17 +1,39 @@
-import {inject, Injectable, PLATFORM_ID, signal} from '@angular/core';
-import {isPlatformBrowser} from '@angular/common';
+import {inject, Injectable, signal} from '@angular/core';
+import {firstValueFrom} from 'rxjs';
 
 import {ThemeService} from './theme.service';
+import {APIClient} from './api-client.service';
+import {User} from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SessionService {
-  private readonly userIdKey = 'userId';
   private themeService = inject(ThemeService);
-  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  readonly userId = signal(this.storedUserId());
+  private apiClient = inject(APIClient);
+  readonly currentUser = signal<User | null>(null);
+  readonly bootstrapped = signal(false);
   private _isClearing = false;
+  private bootstrapPromise?: Promise<void>;
+
+  bootstrap(): Promise<void> {
+    if (!this.bootstrapPromise) {
+      this.bootstrapPromise = firstValueFrom(this.apiClient.getCurrentUser())
+        .then((user) => this.currentUser.set(user))
+        .catch(() => this.currentUser.set(null))
+        .finally(() => this.bootstrapped.set(true));
+    }
+    return this.bootstrapPromise;
+  }
+
+  userId() {
+    return this.currentUser()?.id ?? null;
+  }
+
+  setCurrentUser(user: User) {
+    this.currentUser.set(user);
+    this.bootstrapped.set(true);
+  }
 
   startClearing(): boolean {
     if (this._isClearing) return false;
@@ -23,25 +45,9 @@ export class SessionService {
     this._isClearing = false;
   }
 
-  setUserId(userId: number) {
-    if (!this.isBrowser) return;
-    localStorage.setItem(this.userIdKey, userId.toString());
-    this.userId.set(userId);
-  }
-
   clear() {
     this.themeService.setPreference('system');
-    if (!this.isBrowser) return;
-    localStorage.removeItem(this.userIdKey);
-    this.userId.set(null);
-  }
-
-  private storedUserId(): number | null {
-    if (!this.isBrowser) return null;
-    const value = localStorage.getItem(this.userIdKey);
-    if (!value) return null;
-
-    const userId = Number(value);
-    return Number.isInteger(userId) && userId > 0 ? userId : null;
+    this.currentUser.set(null);
+    this.bootstrapped.set(true);
   }
 }

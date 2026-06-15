@@ -31,23 +31,23 @@ export class ProfileComponent {
   constructor() {
     inject(ActivatedRoute).params.pipe(takeUntilDestroyed()).subscribe((params) => {
       const routeVersion = ++this.routeVersion;
-      const userId = Number(params['userId']);
+      const username = params['username'];
       this.user.set(undefined);
       this.hasLoadedPosts.set(false);
       this.isLoadingNextPage.set(false);
       this.pagination.reset();
 
-      if (!Number.isSafeInteger(userId) || userId <= 0) {
+      if (!username) {
         this.hasLoadedPosts.set(true);
         return;
       }
 
-      this.loadUser(userId, routeVersion);
+      this.loadUser(username, routeVersion);
     });
   }
 
-  loadUser(userId: number, routeVersion = this.routeVersion) {
-    this.apiClient.getUser(userId).subscribe({
+  loadUser(username: string, routeVersion = this.routeVersion) {
+    this.apiClient.getUserByUsername(username).subscribe({
       next: (value) => {
         if (routeVersion !== this.routeVersion) {
           return;
@@ -71,7 +71,7 @@ export class ProfileComponent {
     }
     this.isLoadingNextPage.set(true);
 
-    this.apiClient.getPosts(user.id, this.pagination.cursor).subscribe({
+    this.apiClient.getPosts(user.username, this.pagination.cursor).subscribe({
       next: (page) => {
         if (routeVersion !== this.routeVersion) {
           return;

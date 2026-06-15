@@ -126,7 +126,15 @@ func (c *Client) GetUserWithID(ctx context.Context, userID string) (users.UserCr
 	return user, true, nil
 }
 
-func (c *Client) GetUser(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
+func (c *Client) GetUserByUsername(ctx context.Context, username, currentUserID string) (users.User, bool, error) {
+	return c.getUser(ctx, "username", username, currentUserID)
+}
+
+func (c *Client) GetUserByID(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
+	return c.getUser(ctx, "id", userID, currentUserID)
+}
+
+func (c *Client) getUser(ctx context.Context, column, value, currentUserID string) (users.User, bool, error) {
 	if !c.breaker.allow() {
 		return users.User{}, false, store.ErrUnavailable
 	}
@@ -143,8 +151,8 @@ func (c *Client) GetUser(ctx context.Context, userID, currentUserID string) (use
 			(SELECT count(*) FROM follows WHERE follower_id = id) AS following,
 			EXISTS (SELECT 1 FROM follows WHERE follower_id = $2 AND followee_id = id) AS is_following,
 			created
-			FROM users WHERE id = $1`,
-			userID, currentUserID,
+			FROM users WHERE `+column+` = $1`,
+			value, currentUserID,
 		).Scan(
 			&user.ID, &user.Name, &user.Username, &user.Email,
 			&avatar, &bio, &user.Posts, &user.Likes,
@@ -395,14 +403,14 @@ func (c *Client) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
 	return filenames, nil
 }
 
-func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string) (int, bool, error) {
+func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error) {
 	if !c.breaker.allow() {
-		return 0, false, store.ErrUnavailable
+		return "", false, store.ErrUnavailable
 	}
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
 		c.breaker.failure(err)
-		return 0, false, err
+		return "", false, err
 	}
 	defer rollback(ctx, tx)
 
@@ -415,36 +423,36 @@ func (c *Client) CreatePost(ctx context.Context, userID, filename string, descri
 	).Scan(&consumed)
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.breaker.success()
-		return 0, false, nil
+		return "", false, nil
 	}
 	if err != nil {
 		c.breaker.failure(err)
-		return 0, false, err
+		return "", false, err
 	}
 
-	var id int
+	var publicID string
 	err = tx.QueryRow(
 		ctx,
 		`INSERT INTO posts (user_id, filename, description)
-		VALUES ($1, $2, $3) RETURNING id`,
+		VALUES ($1, $2, $3) RETURNING public_id`,
 		userID, filename, description,
-	).Scan(&id)
+	).Scan(&publicID)
 	if err != nil {
 		c.breaker.failure(err)
-		return 0, false, err
+		return "", false, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		c.breaker.failure(err)
-		return 0, false, err
+		return "", false, err
 	}
 	c.breaker.success()
-	return id, true, nil
+	return publicID, true, nil
 }
 
 // Shared SELECT list for post queries. $1 is the current user ID (for the
 // per-row "liked" check). Joins users (u) so the author is returned inline.
-const postColumns = `posts.id, posts.user_id, u.username, u.name, u.avatar,
+const postColumns = `posts.id, posts.public_id, posts.user_id, u.username, u.name, u.avatar,
 	posts.filename, posts.description,
 	(SELECT count(*) FROM likes WHERE post_id = posts.id) AS likes,
 	EXISTS (SELECT 1 FROM likes
@@ -479,33 +487,67 @@ func (c *Client) GetFeed(ctx context.Context, cursor *compat.Cursor, limit int, 
 	)
 }
 
-func (c *Client) GetPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+func (c *Client) GetPosts(ctx context.Context, username string, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+	exists, err := c.usernameExists(ctx, username)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !exists {
+		return nil, nil, store.ErrNotFound
+	}
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
 	return c.queryPostPage(ctx,
 		`SELECT `+postColumns+`, posts.created AS cursor_created
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
-		WHERE posts.user_id = $2
+		WHERE u.username = $2
 		AND (NOT $3 OR (posts.created, posts.id) < ($4, $5))
 		ORDER BY posts.created DESC, posts.id DESC
 		LIMIT $6`,
-		limit, currentUserID, userID, hasCursor, cursorCreated, cursorID, limit+1,
+		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1,
 	)
 }
 
-func (c *Client) GetLikedPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+func (c *Client) GetLikedPosts(ctx context.Context, username string, cursor *compat.Cursor, limit int, currentUserID string) ([]posts.Post, *compat.Cursor, error) {
+	exists, err := c.usernameExists(ctx, username)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !exists {
+		return nil, nil, store.ErrNotFound
+	}
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
 	return c.queryPostPage(ctx,
 		`SELECT `+postColumns+`, likes.created AS cursor_created
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
 		INNER JOIN likes ON likes.post_id = posts.id
-		WHERE likes.user_id = $2
+		WHERE likes.user_id = (SELECT id FROM users WHERE username = $2)
 		AND (NOT $3 OR (likes.created, posts.id) < ($4, $5))
 		ORDER BY likes.created DESC, posts.id DESC
 		LIMIT $6`,
-		limit, currentUserID, userID, hasCursor, cursorCreated, cursorID, limit+1,
+		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1,
 	)
+}
+
+func (c *Client) usernameExists(ctx context.Context, username string) (bool, error) {
+	if !c.breaker.allow() {
+		return false, store.ErrUnavailable
+	}
+	var exists bool
+	err := withRetry(ctx, c.retryCfg, func() error {
+		return c.pool.QueryRow(
+			ctx,
+			`SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`,
+			username,
+		).Scan(&exists)
+	})
+	if err != nil {
+		c.breaker.failure(err)
+		return false, err
+	}
+	c.breaker.success()
+	return exists, nil
 }
 
 func (c *Client) GetPost(ctx context.Context, postID, currentUserID string) (posts.Post, bool, error) {
@@ -513,7 +555,7 @@ func (c *Client) GetPost(ctx context.Context, postID, currentUserID string) (pos
 		`SELECT `+postColumns+`
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
-		WHERE posts.id = $2`,
+		WHERE posts.public_id = $2`,
 		currentUserID, postID,
 	)
 	if err != nil {
@@ -539,7 +581,7 @@ func (c *Client) DeletePost(ctx context.Context, postID, userID string) (string,
 	var filename string
 	err = tx.QueryRow(
 		ctx,
-		`DELETE FROM posts WHERE id = $1 AND user_id = $2 RETURNING filename`,
+		`DELETE FROM posts WHERE public_id = $1 AND user_id = $2 RETURNING filename`,
 		postID, userID,
 	).Scan(&filename)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -573,7 +615,7 @@ func (c *Client) PostExists(ctx context.Context, postID string) (bool, error) {
 	err := withRetry(ctx, c.retryCfg, func() error {
 		return c.pool.QueryRow(
 			ctx,
-			`SELECT EXISTS (SELECT 1 FROM posts WHERE id = $1)`,
+			`SELECT EXISTS (SELECT 1 FROM posts WHERE public_id = $1)`,
 			postID,
 		).Scan(&exists)
 	})
@@ -592,7 +634,7 @@ func (c *Client) LikePost(ctx context.Context, postID, userID string) error {
 	_, err := c.pool.Exec(
 		ctx,
 		`INSERT INTO likes (user_id, post_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM posts WHERE id = $2)
+		SELECT $1, id FROM posts WHERE public_id = $2
 		ON CONFLICT DO NOTHING`,
 		userID, postID,
 	)
@@ -608,7 +650,12 @@ func (c *Client) UnlikePost(ctx context.Context, postID, userID string) error {
 	if !c.breaker.allow() {
 		return store.ErrUnavailable
 	}
-	_, err := c.pool.Exec(ctx, `DELETE FROM likes WHERE user_id = $1 AND post_id = $2`, userID, postID)
+	_, err := c.pool.Exec(
+		ctx,
+		`DELETE FROM likes
+		WHERE user_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)`,
+		userID, postID,
+	)
 	if err != nil {
 		c.breaker.failure(err)
 		return err
@@ -627,7 +674,7 @@ func (c *Client) CreateComment(ctx context.Context, postID, userID, body string)
 		return c.pool.QueryRow(
 			ctx,
 			`INSERT INTO comments (post_id, user_id, body)
-			SELECT $1, $2, $3 WHERE EXISTS (SELECT 1 FROM posts WHERE id = $1)
+			SELECT id, $2, $3 FROM posts WHERE public_id = $1
 			RETURNING id, post_id, user_id,
 			(SELECT username FROM users WHERE id = $2),
 			(SELECT avatar FROM users WHERE id = $2),
@@ -661,7 +708,7 @@ func (c *Client) ListComments(ctx context.Context, postID string, cursor *compat
 			`SELECT c.id, c.post_id, c.user_id, u.username, u.avatar, c.body, c.created
 			FROM comments c
 			JOIN users u ON u.id = c.user_id
-			WHERE c.post_id = $1
+			WHERE c.post_id = (SELECT id FROM posts WHERE public_id = $1)
 			AND (NOT $2 OR (c.created, c.id) < ($3, $4))
 			ORDER BY c.created DESC, c.id DESC
 			LIMIT $5`,
@@ -709,7 +756,11 @@ func (c *Client) DeleteComment(ctx context.Context, postID, commentID, userID st
 	var deletedID int
 	err := c.pool.QueryRow(
 		ctx,
-		`DELETE FROM comments WHERE id = $1 AND post_id = $2 AND user_id = $3 RETURNING id`,
+		`DELETE FROM comments
+		WHERE id = $1
+		  AND post_id = (SELECT id FROM posts WHERE public_id = $2)
+		  AND user_id = $3
+		RETURNING id`,
 		commentID, postID, userID,
 	).Scan(&deletedID)
 	if err == nil {
@@ -724,7 +775,10 @@ func (c *Client) DeleteComment(ctx context.Context, postID, commentID, userID st
 	var exists bool
 	err = c.pool.QueryRow(
 		ctx,
-		`SELECT EXISTS(SELECT 1 FROM comments WHERE id = $1 AND post_id = $2)`,
+		`SELECT EXISTS(
+		  SELECT 1 FROM comments
+		  WHERE id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)
+		)`,
 		commentID, postID,
 	).Scan(&exists)
 	if err != nil {
@@ -756,7 +810,7 @@ func (c *Client) queryPosts(ctx context.Context, query string, args ...any) ([]p
 			var description sql.NullString
 			var avatar sql.NullString
 			if err := rows.Scan(
-				&post.ID, &post.UserID, &post.Username, &post.Name, &avatar,
+				&post.ID, &post.PublicID, &post.UserID, &post.Username, &post.Name, &avatar,
 				&post.Filename, &description,
 				&post.Likes, &post.Liked, &post.Comments, &post.Created,
 			); err != nil {
@@ -799,7 +853,7 @@ func (c *Client) queryPostPage(ctx context.Context, query string, limit int, arg
 			var description sql.NullString
 			var avatar sql.NullString
 			if err := rows.Scan(
-				&item.post.ID, &item.post.UserID, &item.post.Username, &item.post.Name, &avatar,
+				&item.post.ID, &item.post.PublicID, &item.post.UserID, &item.post.Username, &item.post.Name, &avatar,
 				&item.post.Filename, &description,
 				&item.post.Likes, &item.post.Liked, &item.post.Comments, &item.post.Created,
 				&item.cursorCreated,

@@ -1,6 +1,28 @@
-import {Routes} from '@angular/router';
+import {Routes, UrlMatchResult, UrlSegment} from '@angular/router';
 
 import {authGuard} from './shared/auth-guard.service';
+
+const usernamePattern = /^[a-z0-9._]{3,30}$/;
+
+export function profileLikesMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments.length !== 2 || segments[1].path !== 'likes') {
+    return null;
+  }
+  const username = segments[0].path.startsWith('@') ? segments[0].path.slice(1) : '';
+  return usernamePattern.test(username)
+    ? {consumed: segments, posParams: {username: new UrlSegment(username, {})}}
+    : null;
+}
+
+export function profileMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments.length !== 1) {
+    return null;
+  }
+  const username = segments[0].path.startsWith('@') ? segments[0].path.slice(1) : '';
+  return usernamePattern.test(username)
+    ? {consumed: segments, posParams: {username: new UrlSegment(username, {})}}
+    : null;
+}
 
 export const routes: Routes = [
   {
@@ -14,17 +36,17 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'posts/:postId',
+    path: 'posts/:publicId',
     loadComponent: () => import('./screens/feed/feed.component').then((m) => m.FeedComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'users/:userId/likes',
+    matcher: profileLikesMatcher,
     loadComponent: () => import('./screens/feed/feed.component').then((m) => m.FeedComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'users/:userId',
+    matcher: profileMatcher,
     loadComponent: () => import('./screens/profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [authGuard]
   },

@@ -1,7 +1,7 @@
 import {Component, inject, signal} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {finalize} from 'rxjs';
+import {finalize, switchMap} from 'rxjs';
 
 import {APIClient} from '../../services/api-client.service';
 import {SessionService} from '../../services/session.service';
@@ -50,10 +50,11 @@ export class LoginComponent {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
     this.apiClient.loginUser(this.emailValue, this.passwordValue).pipe(
+      switchMap(() => this.apiClient.getCurrentUser()),
       finalize(() => this.isSubmitting.set(false))
     ).subscribe({
-      next: (data) => {
-        this.session.setUserId(data.id);
+      next: (user) => {
+        this.session.setCurrentUser(user);
         this.router.navigate(['/']);
       },
       error: (error) => {

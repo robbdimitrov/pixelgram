@@ -7,7 +7,7 @@
   </a>
 
   <nav class="flex shrink-0 items-center gap-1 rounded-full bg-slate-950/5 p-1 leading-none dark:bg-white/5 sm:gap-2" aria-label="Primary navigation">
-    @if (userId()) {
+    @if (currentUser(); as user) {
       <a
         class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
         routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
@@ -31,7 +31,7 @@
       <a
         class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/15 dark:hover:text-white"
         routerLinkActive="bg-white text-slate-950 shadow-md dark:bg-white dark:text-slate-950"
-        [routerLink]="['/users', userId()]"
+        [routerLink]="'/@' + user.username"
         title="Profile"
         aria-label="Profile"
       >

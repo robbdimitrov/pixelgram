@@ -22,7 +22,7 @@ export class CommentsComponent implements OnInit {
   private session = inject(SessionService);
   private pagination = inject<PaginationService<Comment>>(PaginationService);
 
-  postId = input.required<number>();
+  publicId = input.required<string>();
 
   newCommentBody = '';
   isSubmitting = signal(false);
@@ -58,7 +58,7 @@ export class CommentsComponent implements OnInit {
       return;
     }
     this.isSubmitting.set(true);
-    this.apiClient.createComment(this.postId(), body).subscribe({
+    this.apiClient.createComment(this.publicId(), body).subscribe({
       next: (comment) => {
         this.pagination.data.set([comment, ...this.pagination.data()]);
         this.newCommentBody = '';
@@ -73,7 +73,7 @@ export class CommentsComponent implements OnInit {
   onDelete(comment: Comment) {
     const index = this.pagination.data().indexOf(comment);
     this.pagination.data.update(curr => curr.filter((c) => c.id !== comment.id));
-    this.apiClient.deleteComment(this.postId(), comment.id).subscribe({
+    this.apiClient.deleteComment(this.publicId(), comment.id).subscribe({
       error: () => {
         const restored = [...this.pagination.data()];
         restored.splice(index, 0, comment);
@@ -83,7 +83,7 @@ export class CommentsComponent implements OnInit {
   }
 
   private loadPage() {
-    this.apiClient.getComments(this.postId(), this.pagination.cursor).subscribe({
+    this.apiClient.getComments(this.publicId(), this.pagination.cursor).subscribe({
       next: (page) => {
         const comments = page.items.filter((comment) => {
           return !(this.pagination.data().some((item) => comment.id === item.id));

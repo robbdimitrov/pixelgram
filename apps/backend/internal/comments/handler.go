@@ -23,6 +23,7 @@ type Comment struct {
 }
 
 type Store interface {
+	PostExists(ctx context.Context, publicID string) (bool, error)
 	CreateComment(ctx context.Context, postID, userID, body string) (Comment, error)
 	ListComments(ctx context.Context, postID string, cursor *compat.Cursor, limit int) ([]Comment, *compat.Cursor, error)
 	DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error)
@@ -35,8 +36,8 @@ type Handler struct {
 func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	postID := r.PathValue("postId")
-	if !compat.ParseID(postID) {
+	postID := r.PathValue("publicId")
+	if !compat.ValidUUID(postID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
@@ -76,14 +77,23 @@ func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	postID := r.PathValue("postId")
-	if !compat.ParseID(postID) {
+	postID := r.PathValue("publicId")
+	if !compat.ValidUUID(postID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
 	pagination, ok := compat.ParsePagination(r.URL.Query())
 	if !ok {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid pagination parameters.")
+		return
+	}
+	exists, err := h.Store.PostExists(ctx, postID)
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	if !exists {
+		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 		return
 	}
 
@@ -103,9 +113,9 @@ func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 func (h Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	postID := r.PathValue("postId")
+	postID := r.PathValue("publicId")
 	commentID := r.PathValue("commentId")
-	if !compat.ParseID(postID) || !compat.ParseID(commentID) {
+	if !compat.ValidUUID(postID) || !compat.ParseID(commentID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid ID.")
 		return
 	}

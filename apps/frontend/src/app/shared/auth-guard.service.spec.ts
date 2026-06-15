@@ -1,6 +1,5 @@
 import {TestBed} from '@angular/core/testing';
-import {Router, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
-import {PLATFORM_ID, REQUEST} from '@angular/core';
+import {ActivatedRouteSnapshot, Router, RouterStateSnapshot} from '@angular/router';
 
 import {SessionService} from '../services/session.service';
 import {authGuard} from './auth-guard.service';
@@ -8,79 +7,36 @@ import {authGuard} from './auth-guard.service';
 const ROUTE = {} as ActivatedRouteSnapshot;
 const STATE = {} as RouterStateSnapshot;
 
-function makeRequest(cookieHeader: string): Request {
-  return {headers: {get: (name: string) => name.toLowerCase() === 'cookie' ? cookieHeader : null}} as unknown as Request;
-}
-
-function run(): boolean | ReturnType<typeof authGuard> {
-  return TestBed.runInInjectionContext(() => authGuard(ROUTE, STATE));
-}
-
-describe('authGuard — browser platform', () => {
-  let mockRouter: {navigate: jest.Mock};
-  let mockSession: {userId: jest.Mock};
-
-  beforeEach(() => {
-    mockRouter = {navigate: jest.fn()};
-    mockSession = {userId: jest.fn()};
-
+describe('authGuard', () => {
+  it('waits for bootstrap and allows an authenticated user', async () => {
+    const session = {bootstrap: jest.fn().mockResolvedValue(undefined), userId: jest.fn().mockReturnValue(7)};
     TestBed.configureTestingModule({
       providers: [
-        {provide: Router, useValue: mockRouter},
-        {provide: SessionService, useValue: mockSession},
-        {provide: PLATFORM_ID, useValue: 'browser'}
+        {provide: Router, useValue: {parseUrl: jest.fn()}},
+        {provide: SessionService, useValue: session}
       ]
     });
+
+    const result = await TestBed.runInInjectionContext(() => authGuard(ROUTE, STATE));
+
+    expect(session.bootstrap).toHaveBeenCalled();
+    expect(result).toBe(true);
   });
 
-  it('should allow access if userId is set', () => {
-    mockSession.userId.mockReturnValue(123);
-    expect(run()).toBe(true);
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
-  });
-
-  it('should redirect to /login and return false if userId is null', () => {
-    mockSession.userId.mockReturnValue(null);
-    expect(run()).toBe(false);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
-  });
-});
-
-describe('authGuard — server platform', () => {
-  let mockRouter: {navigate: jest.Mock; parseUrl: jest.Mock};
-
-  beforeEach(() => {
-    mockRouter = {navigate: jest.fn(), parseUrl: jest.fn().mockReturnValue({url: '/login'})};
-  });
-
-  afterEach(() => TestBed.resetTestingModule());
-
-  function setup(cookieHeader: string) {
+  it('returns a login UrlTree after unauthenticated bootstrap', async () => {
+    const loginTree = {url: '/login'};
+    const router = {parseUrl: jest.fn().mockReturnValue(loginTree)};
+    const session = {bootstrap: jest.fn().mockResolvedValue(undefined), userId: jest.fn().mockReturnValue(null)};
     TestBed.configureTestingModule({
       providers: [
-        {provide: Router, useValue: mockRouter},
-        {provide: SessionService, useValue: {userId: jest.fn()}},
-        {provide: PLATFORM_ID, useValue: 'server'},
-        {provide: REQUEST, useValue: makeRequest(cookieHeader)}
+        {provide: Router, useValue: router},
+        {provide: SessionService, useValue: session}
       ]
     });
-  }
 
-  it('should allow access when session cookie is present', () => {
-    setup('session=abc123');
-    expect(run()).toBe(true);
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
-  });
+    const result = await TestBed.runInInjectionContext(() => authGuard(ROUTE, STATE));
 
-  it('should return a UrlTree for /login when session cookie is absent', () => {
-    setup('');
-    expect(run()).toBe(mockRouter.parseUrl.mock.results[0].value);
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
-  });
-
-  it('should return a UrlTree for /login when only unrelated cookies are present', () => {
-    setup('theme=dark; othercookie=value');
-    expect(run()).toBe(mockRouter.parseUrl.mock.results[0].value);
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
+    expect(result).toBe(loginTree);
+    expect(router.parseUrl).toHaveBeenCalledWith('/login');
   });
 });

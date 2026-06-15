@@ -9,6 +9,7 @@ CREATE INDEX uploads_created_idx ON uploads(created);
 
 CREATE TABLE posts (
   id serial PRIMARY KEY,
+  public_id uuid UNIQUE NOT NULL DEFAULT gen_random_uuid(),
   user_id integer REFERENCES users ON DELETE CASCADE,
   filename varchar(255) NOT NULL,
   description varchar(1000),

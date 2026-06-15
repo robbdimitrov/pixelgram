@@ -19,8 +19,8 @@ export class FeedComponent {
   private pagination = inject<PaginationService<Post>>(PaginationService);
   private router = inject(Router);
 
-  userId = signal<number | undefined>(undefined);
-  postId = signal<number | undefined>(undefined);
+  username = signal<string | undefined>(undefined);
+  publicId = signal<string | undefined>(undefined);
   hasLoaded = signal(false);
   isLoadingNextPage = signal(false);
   private routeVersion = 0;
@@ -32,29 +32,14 @@ export class FeedComponent {
       this.hasLoaded.set(false);
       this.isLoadingNextPage.set(false);
 
-      if (params['postId']) {
-        const postId = Number(params['postId']);
-        if (!Number.isSafeInteger(postId) || postId <= 0) {
-          this.postId.set(undefined);
-          this.userId.set(undefined);
-          this.hasLoaded.set(true);
-          return;
-        }
-
-        this.postId.set(postId);
-        this.userId.set(undefined);
-        this.loadPost(postId, routeVersion);
+      if (params['publicId']) {
+        const publicId = params['publicId'];
+        this.publicId.set(publicId);
+        this.username.set(undefined);
+        this.loadPost(publicId, routeVersion);
       } else {
-        const userId = params['userId'] ? Number(params['userId']) : undefined;
-        if (userId !== undefined && (!Number.isSafeInteger(userId) || userId <= 0)) {
-          this.postId.set(undefined);
-          this.userId.set(undefined);
-          this.hasLoaded.set(true);
-          return;
-        }
-
-        this.postId.set(undefined);
-        this.userId.set(userId);
+        this.publicId.set(undefined);
+        this.username.set(params['username']);
         this.loadNextPage(routeVersion);
       }
     });
@@ -66,9 +51,9 @@ export class FeedComponent {
     }
     this.isLoadingNextPage.set(true);
 
-    const userId = this.userId();
-    const req = (userId ?
-      this.apiClient.getLikedPosts(userId, this.pagination.cursor) :
+    const username = this.username();
+    const req = (username ?
+      this.apiClient.getLikedPosts(username, this.pagination.cursor) :
       this.apiClient.getFeed(this.pagination.cursor));
 
     req.subscribe({
@@ -93,8 +78,8 @@ export class FeedComponent {
     });
   }
 
-  loadPost(postId: number, routeVersion = this.routeVersion) {
-    this.apiClient.getPost(postId).subscribe({
+  loadPost(publicId: string, routeVersion = this.routeVersion) {
+    this.apiClient.getPost(publicId).subscribe({
       next: (value) => {
         if (routeVersion !== this.routeVersion) {
           return;
@@ -128,7 +113,7 @@ export class FeedComponent {
   }
 
   isLikesPage() {
-    return this.userId() !== undefined;
+    return this.username() !== undefined;
   }
 
   emptyStateTitle() {
@@ -155,28 +140,28 @@ export class FeedComponent {
     return this.isLikesPage() ? '/feed' : '/upload';
   }
 
-  onLike(postId: number) {
-    this.apiClient.likePost(postId).subscribe({
+  onLike(publicId: string) {
+    this.apiClient.likePost(publicId).subscribe({
       error: () => {
-        this.revertLike(postId, false);
+        this.revertLike(publicId, false);
       }
     });
   }
 
-  onUnlike(postId: number) {
-    const post = this.pagination.data().find((item) => item.id === postId);
+  onUnlike(publicId: string) {
+    const post = this.pagination.data().find((item) => item.publicId === publicId);
     if (this.isLikesPage() && post) {
       this.pagination.remove(post);
     }
 
-    this.apiClient.unlikePost(postId).subscribe({
+    this.apiClient.unlikePost(publicId).subscribe({
       error: () => {
         if (this.isLikesPage() && post) {
           post.liked = true;
           post.likes += 1;
           this.pagination.data.set([post, ...this.pagination.data()]);
         } else {
-          this.revertLike(postId, true);
+          this.revertLike(publicId, true);
         }
       }
     });
@@ -188,10 +173,10 @@ export class FeedComponent {
 
   onDeleteAction(post: Post) {
     this.pagination.remove(post);
-    this.apiClient.deletePost(post.id).subscribe({
+    this.apiClient.deletePost(post.publicId).subscribe({
       next: () => {
-        if (this.postId() === post.id) {
-          this.router.navigate([`/users/${post.userId}`]);
+        if (this.publicId() === post.publicId) {
+          this.router.navigate([`/@${post.username}`]);
         }
       },
       error: () => {
@@ -200,10 +185,10 @@ export class FeedComponent {
     });
   }
 
-  private revertLike(postId: number, liked: boolean) {
+  private revertLike(publicId: string, liked: boolean) {
     // Replace with a new object so the OnPush post component re-renders.
     this.pagination.data.update((data) => data.map((item) =>
-      item.id === postId
+      item.publicId === publicId
         ? {...item, liked, likes: item.likes + (liked ? 1 : -1)}
         : item
     ));

@@ -1,6 +1,6 @@
 import {TestBed} from '@angular/core/testing';
 import {provideRouter, Router} from '@angular/router';
-import {Subject} from 'rxjs';
+import {of, Subject} from 'rxjs';
 
 import {LoginComponent} from './login.component';
 import {APIClient} from '../../services/api-client.service';
@@ -9,8 +9,12 @@ import {UserIdDto} from '../../models/user.model';
 
 describe('LoginComponent', () => {
   it('updates the session before navigating after login', () => {
-    const apiClient = {loginUser: jest.fn().mockReturnValue(new Subject<UserIdDto>())};
-    const session = {userId: () => null, setUserId: jest.fn()};
+    const user = {id: 42, username: 'test'};
+    const apiClient = {
+      loginUser: jest.fn().mockReturnValue(new Subject<UserIdDto>()),
+      getCurrentUser: jest.fn().mockReturnValue(of(user))
+    };
+    const session = {userId: () => null, setCurrentUser: jest.fn()};
 
     TestBed.configureTestingModule({
       providers: [
@@ -26,20 +30,20 @@ describe('LoginComponent', () => {
     component.onSubmit();
     apiClient.loginUser.mock.results[0].value.next({id: 42});
 
-    expect(session.setUserId).toHaveBeenCalledWith(42);
+    expect(session.setCurrentUser).toHaveBeenCalledWith(user);
     expect(navigate).toHaveBeenCalledWith(['/']);
-    expect(session.setUserId.mock.invocationCallOrder[0]).toBeLessThan(navigate.mock.invocationCallOrder[0]);
+    expect(session.setCurrentUser.mock.invocationCallOrder[0]).toBeLessThan(navigate.mock.invocationCallOrder[0]);
   });
 
   it('should block duplicate submissions and reset after an error', () => {
     const response = new Subject<UserIdDto>();
-    const apiClient = {loginUser: jest.fn().mockReturnValue(response)};
+    const apiClient = {loginUser: jest.fn().mockReturnValue(response), getCurrentUser: jest.fn()};
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         {provide: APIClient, useValue: apiClient},
-        {provide: SessionService, useValue: {userId: () => null, setUserId: jest.fn()}}
+        {provide: SessionService, useValue: {userId: () => null, setCurrentUser: jest.fn()}}
       ]
     });
     const component = TestBed.createComponent(LoginComponent).componentInstance;

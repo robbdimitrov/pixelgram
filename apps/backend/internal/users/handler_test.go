@@ -39,7 +39,11 @@ func (s *fakeStore) CreateUser(_ context.Context, name, username, email, passwor
 	return s.id, s.err
 }
 
-func (s *fakeStore) GetUser(_ context.Context, _, _ string) (User, bool, error) {
+func (s *fakeStore) GetUserByUsername(_ context.Context, _, _ string) (User, bool, error) {
+	return s.user, s.found, s.err
+}
+
+func (s *fakeStore) GetUserByID(_ context.Context, _, _ string) (User, bool, error) {
 	return s.user, s.found, s.err
 }
 
@@ -133,7 +137,7 @@ func TestCreateUserTrimsAndNormalizes(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{
 		"name":" Test User ",
-		"username":" test ",
+		"username":" Test ",
 		"email":" Test@Example.COM ",
 		"password":" password123 "
 	}`))
@@ -174,6 +178,27 @@ func TestCreateUserConflict(t *testing.T) {
 	}
 }
 
+func TestCreateUserRejectsInvalidUsername(t *testing.T) {
+	store := &fakeStore{}
+	handler := Handler{Store: store}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{
+		"name":"Test",
+		"username":"bad-name",
+		"email":"test@example.com",
+		"password":"password123"
+	}`))
+
+	handler.CreateUser(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+	if store.created {
+		t.Fatal("invalid username should not create user")
+	}
+}
+
 func TestCreateUserStoreError(t *testing.T) {
 	handler := Handler{Store: &fakeStore{err: errors.New("database unavailable")}}
 	res := httptest.NewRecorder()
@@ -209,8 +234,8 @@ func TestGetUser(t *testing.T) {
 		},
 	}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/users/1", nil)
-	req.SetPathValue("userId", "1")
+	req := httptest.NewRequest(http.MethodGet, "/users/test", nil)
+	req.SetPathValue("username", "test")
 
 	handler.GetUser(res, req)
 
@@ -225,13 +250,31 @@ func TestGetUser(t *testing.T) {
 func TestGetUserNotFound(t *testing.T) {
 	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/users/999", nil)
-	req.SetPathValue("userId", "999")
+	req := httptest.NewRequest(http.MethodGet, "/users/missing", nil)
+	req.SetPathValue("username", "missing")
 
 	handler.GetUser(res, req)
 
 	if res.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
+	}
+}
+
+func TestGetCurrentUserUsesSessionIdentity(t *testing.T) {
+	handler := Handler{Store: &fakeStore{
+		found: true,
+		user:  User{ID: 7, Username: "test", Email: "private@example.com"},
+	}}
+	res := httptest.NewRecorder()
+	req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/users/me", nil), "7")
+
+	handler.GetCurrentUser(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if !strings.Contains(res.Body.String(), `"email":"private@example.com"`) {
+		t.Fatalf("body = %q", res.Body.String())
 	}
 }
 
@@ -255,7 +298,7 @@ func TestUpdateUserProfile(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
 		"name":" Test User ",
-		"username":" test ",
+		"username":" Test ",
 		"email":" Test@Example.COM "
 	}`))
 	req.SetPathValue("userId", "1")

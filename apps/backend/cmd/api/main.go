@@ -166,7 +166,10 @@ func (noopSessionAuthStore) RefreshSession(_ context.Context, _ string) (httpx.S
 type noopUserStore struct{}
 
 func (noopUserStore) CreateUser(_ context.Context, _, _, _, _ string) (int, error) { return 0, nil }
-func (noopUserStore) GetUser(_ context.Context, _, _ string) (users.User, bool, error) {
+func (noopUserStore) GetUserByUsername(_ context.Context, _, _ string) (users.User, bool, error) {
+	return users.User{}, false, nil
+}
+func (noopUserStore) GetUserByID(_ context.Context, _, _ string) (users.User, bool, error) {
 	return users.User{}, false, nil
 }
 func (noopUserStore) GetUserWithID(_ context.Context, _ string) (users.UserCredentials, bool, error) {
@@ -206,8 +209,8 @@ func (noopUploadStore) CreateUpload(_ context.Context, _, _ string) (bool, error
 
 type noopPostStore struct{}
 
-func (noopPostStore) CreatePost(_ context.Context, _, _ string, _ *string) (int, bool, error) {
-	return 0, false, nil
+func (noopPostStore) CreatePost(_ context.Context, _, _ string, _ *string) (string, bool, error) {
+	return "", false, nil
 }
 func (noopPostStore) GetFeed(_ context.Context, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
 	return nil, nil, nil
@@ -230,6 +233,7 @@ func (noopPostStore) UnlikePost(_ context.Context, _, _ string) error      { ret
 
 type noopCommentStore struct{}
 
+func (noopCommentStore) PostExists(_ context.Context, _ string) (bool, error) { return false, nil }
 func (noopCommentStore) CreateComment(_ context.Context, _, _, _ string) (comments.Comment, error) {
 	return comments.Comment{}, nil
 }

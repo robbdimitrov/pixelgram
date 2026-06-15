@@ -51,9 +51,9 @@ export class EditProfileComponent implements OnInit {
   isSubmitting = signal(false);
 
   ngOnInit() {
-    const userId = this.session.userId();
-    if (userId) {
-      this.loadUser(userId);
+    const user = this.session.currentUser();
+    if (user) {
+      this.user.set({...user});
     }
   }
 
@@ -79,9 +79,13 @@ export class EditProfileComponent implements OnInit {
         return this.apiClient.updateUser(userId, u.name, u.username,
           u.email, u.avatar ?? '', u.bio ?? '');
       }),
+      switchMap(() => this.apiClient.getCurrentUser()),
       finalize(() => this.isSubmitting.set(false))
     ).subscribe({
-      next: () => this.router.navigate(['/settings']),
+      next: (updatedUser) => {
+        this.session.setCurrentUser(updatedUser);
+        this.router.navigate(['/settings']);
+      },
       error: (error) => {
         this.errorMessage.set(isUploading
           ? error.error?.message || error.message || 'Could not upload avatar. Please try again.'
@@ -133,10 +137,4 @@ export class EditProfileComponent implements OnInit {
     };
   }
 
-  loadUser(userId: number) {
-    this.apiClient.getUser(userId).subscribe({
-      next: (value) => this.user.set(value),
-      error: () => this.errorMessage.set('Could not load profile. Please try again.')
-    });
-  }
 }

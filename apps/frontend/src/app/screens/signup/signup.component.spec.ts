@@ -12,14 +12,15 @@ describe('SignupComponent', () => {
     const response = new Subject<UserIdDto>();
     const apiClient = {
       createUser: jest.fn().mockReturnValue(response),
-      loginUser: jest.fn()
+      loginUser: jest.fn(),
+      getCurrentUser: jest.fn()
     };
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         {provide: APIClient, useValue: apiClient},
-        {provide: SessionService, useValue: {userId: () => null, setUserId: jest.fn()}}
+        {provide: SessionService, useValue: {userId: () => null, setCurrentUser: jest.fn()}}
       ]
     });
     const fixture = TestBed.createComponent(SignupComponent);

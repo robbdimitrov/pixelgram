@@ -9,6 +9,7 @@ import {PaginationService} from '../../services/pagination.service';
 import {ActivatedRoute} from '@angular/router';
 
 describe('FeedComponent', () => {
+  const publicId = '550e8400-e29b-41d4-a716-446655440000';
   let component: FeedComponent;
   let mockApiClient: any;
   let mockPagination: any;
@@ -76,8 +77,8 @@ describe('FeedComponent', () => {
 
     createComponent();
 
-    expect(component.userId()).toBeUndefined();
-    expect(component.postId()).toBeUndefined();
+    expect(component.username()).toBeUndefined();
+    expect(component.publicId()).toBeUndefined();
     expect(mockApiClient.getFeed).toHaveBeenCalledWith(null);
     expect(mockPagination.update).toHaveBeenCalled();
     expect(component.hasLoaded()).toBe(true);
@@ -110,42 +111,23 @@ describe('FeedComponent', () => {
     expect(mockApiClient.getFeed).toHaveBeenCalledWith(null);
     mockPagination.cursor = 'old-feed-cursor';
 
-    params.next({userId: '7'});
+    params.next({username: 'testuser'});
 
     expect(mockPagination.reset).toHaveBeenCalledTimes(2);
-    expect(mockApiClient.getLikedPosts).toHaveBeenCalledWith(7, null);
+    expect(mockApiClient.getLikedPosts).toHaveBeenCalledWith('testuser', null);
 
     component.onNextClick();
 
-    expect(mockApiClient.getLikedPosts).toHaveBeenLastCalledWith(7, 'likes-next');
+    expect(mockApiClient.getLikedPosts).toHaveBeenLastCalledWith('testuser', 'likes-next');
   });
 
-  it('should load specific post if postId param provided', () => {
-    mockApiClient.getPost.mockReturnValue(of({id: 10, filename: 'test10.jpg', userId: 1}));
+  it('should load specific post if publicId param provided', () => {
+    mockApiClient.getPost.mockReturnValue(of({id: 10, publicId, filename: 'test10.jpg', userId: 1}));
 
-    createComponent({postId: '10'});
+    createComponent({publicId});
 
-    expect(component.postId()).toBe(10);
-    expect(mockApiClient.getPost).toHaveBeenCalledWith(10);
-  });
-
-  it('should not load an invalid post route', () => {
-    createComponent({postId: 'invalid'});
-
-    expect(component.postId()).toBeUndefined();
-    expect(component.hasLoaded()).toBe(true);
-    expect(mockPagination.reset).toHaveBeenCalled();
-    expect(mockApiClient.getPost).not.toHaveBeenCalled();
-  });
-
-  it('should not load an invalid likes route', () => {
-    createComponent({userId: '0'});
-
-    expect(component.userId()).toBeUndefined();
-    expect(component.hasLoaded()).toBe(true);
-    expect(mockPagination.reset).toHaveBeenCalled();
-    expect(mockApiClient.getLikedPosts).not.toHaveBeenCalled();
-    expect(mockApiClient.getFeed).not.toHaveBeenCalled();
+    expect(component.publicId()).toBe(publicId);
+    expect(mockApiClient.getPost).toHaveBeenCalledWith(publicId);
   });
 
   it('should handle API errors gracefully during loadNextPage', () => {
@@ -172,17 +154,17 @@ describe('FeedComponent', () => {
     beforeEach(() => {
       mockApiClient.getFeed.mockReturnValue(of({items: [], nextCursor: null}));
       createComponent();
-      mockPagination.data.set([{id: 1, liked: false, likes: 0}]);
+      mockPagination.data.set([{id: 1, publicId, liked: false, likes: 0}]);
     });
 
     it('should revert optimistic like on error', () => {
       mockApiClient.likePost.mockReturnValue(throwError(() => new Error('Failed to like')));
 
-      mockPagination.data.set([{id: 1, liked: true, likes: 1}]);
+      mockPagination.data.set([{id: 1, publicId, liked: true, likes: 1}]);
 
-      component.onLike(1);
+      component.onLike(publicId);
 
-      expect(mockApiClient.likePost).toHaveBeenCalledWith(1);
+      expect(mockApiClient.likePost).toHaveBeenCalledWith(publicId);
       expect(mockPagination.data()[0].liked).toBe(false);
       expect(mockPagination.data()[0].likes).toBe(0);
     });
@@ -190,11 +172,11 @@ describe('FeedComponent', () => {
     it('should revert optimistic unlike on error', () => {
       mockApiClient.unlikePost.mockReturnValue(throwError(() => new Error('Failed to unlike')));
 
-      mockPagination.data.set([{id: 1, liked: false, likes: 0}]);
+      mockPagination.data.set([{id: 1, publicId, liked: false, likes: 0}]);
 
-      component.onUnlike(1);
+      component.onUnlike(publicId);
 
-      expect(mockApiClient.unlikePost).toHaveBeenCalledWith(1);
+      expect(mockApiClient.unlikePost).toHaveBeenCalledWith(publicId);
       expect(mockPagination.data()[0].liked).toBe(true);
       expect(mockPagination.data()[0].likes).toBe(1);
     });

@@ -20,19 +20,23 @@ export class APIClient {
 
   createUser(name: string, username: string, email: string, password: string): Observable<UserIdDto> {
     const url = '/api/users';
-    const body = {name, username, email, password};
+    const body = {name, username: username.trim().toLowerCase(), email, password};
     return this.http.post<UserIdDto>(url, body);
   }
 
-  getUser(userId: number): Observable<User> {
-    const url = `/api/users/${userId}`;
+  getUserByUsername(username: string): Observable<User> {
+    const url = `/api/users/${encodeURIComponent(username)}`;
     return this.http.get<UserDto>(url).pipe(map((res) => mapUser(res)));
+  }
+
+  getCurrentUser(): Observable<User> {
+    return this.http.get<UserDto>('/api/users/me').pipe(map((res) => mapUser(res)));
   }
 
   updateUser(userId: number, name: string, username: string,
       email: string, avatar: string, bio: string): Observable<void> {
     const url = `/api/users/${userId}`;
-    const body = {name, username, email, avatar, bio};
+    const body = {name, username: username.trim().toLowerCase(), email, avatar, bio};
     return this.http.put<void>(url, body);
   }
 
@@ -77,12 +81,12 @@ export class APIClient {
     return this.getPostPage('/api/posts', cursor);
   }
 
-  getPosts(userId: number, cursor: string | null): Observable<CursorPage<Post>> {
-    return this.getPostPage(`/api/users/${userId}/posts`, cursor);
+  getPosts(username: string, cursor: string | null): Observable<CursorPage<Post>> {
+    return this.getPostPage(`/api/users/${encodeURIComponent(username)}/posts`, cursor);
   }
 
-  getLikedPosts(userId: number, cursor: string | null): Observable<CursorPage<Post>> {
-    return this.getPostPage(`/api/users/${userId}/likes`, cursor);
+  getLikedPosts(username: string, cursor: string | null): Observable<CursorPage<Post>> {
+    return this.getPostPage(`/api/users/${encodeURIComponent(username)}/likes`, cursor);
   }
 
   private getPostPage(url: string, cursor: string | null): Observable<CursorPage<Post>> {
@@ -94,32 +98,32 @@ export class APIClient {
     );
   }
 
-  getPost(postId: number): Observable<Post> {
-    const url = `/api/posts/${postId}`;
+  getPost(publicId: string): Observable<Post> {
+    const url = `/api/posts/${publicId}`;
     return this.http.get<PostDto>(url).pipe(
       map((res) => mapPost(res))
     );
   }
 
-  deletePost(postId: number): Observable<void> {
-    const url = `/api/posts/${postId}`;
+  deletePost(publicId: string): Observable<void> {
+    const url = `/api/posts/${publicId}`;
     return this.http.delete<void>(url);
   }
 
-  likePost(postId: number): Observable<void> {
-    const url = `/api/posts/${postId}/likes`;
+  likePost(publicId: string): Observable<void> {
+    const url = `/api/posts/${publicId}/likes`;
     return this.http.post<void>(url, {});
   }
 
-  unlikePost(postId: number): Observable<void> {
-    const url = `/api/posts/${postId}/likes`;
+  unlikePost(publicId: string): Observable<void> {
+    const url = `/api/posts/${publicId}/likes`;
     return this.http.delete<void>(url);
   }
 
   // Comments
 
-  getComments(postId: number, cursor: string | null): Observable<CursorPage<Comment>> {
-    const url = `/api/posts/${postId}/comments`;
+  getComments(publicId: string, cursor: string | null): Observable<CursorPage<Comment>> {
+    const url = `/api/posts/${publicId}/comments`;
     return this.http.get<CursorPage<CommentDto>>(url, {params: this.cursorParams(cursor)}).pipe(
       map((res) => ({
         items: res.items.map((item) => new Comment(
@@ -130,8 +134,8 @@ export class APIClient {
     );
   }
 
-  createComment(postId: number, body: string): Observable<Comment> {
-    const url = `/api/posts/${postId}/comments`;
+  createComment(publicId: string, body: string): Observable<Comment> {
+    const url = `/api/posts/${publicId}/comments`;
     return this.http.post<CommentDto>(url, {body}).pipe(
       map((res) => new Comment(
         res.id, res.postId, res.userId, res.username, res.avatar, res.body, new Date(res.created)
@@ -139,8 +143,8 @@ export class APIClient {
     );
   }
 
-  deleteComment(postId: number, commentId: number): Observable<void> {
-    const url = `/api/posts/${postId}/comments/${commentId}`;
+  deleteComment(publicId: string, commentId: number): Observable<void> {
+    const url = `/api/posts/${publicId}/comments/${commentId}`;
     return this.http.delete<void>(url);
   }
 

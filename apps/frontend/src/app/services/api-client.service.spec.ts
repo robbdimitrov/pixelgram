@@ -28,7 +28,7 @@ describe('APIClient', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('getUser', () => {
+  describe('getUserByUsername', () => {
     it('should fetch a user and map it', () => {
       const mockUserRes = {
         id: 1,
@@ -40,12 +40,12 @@ describe('APIClient', () => {
         likes: 0
       };
 
-      service.getUser(1).subscribe(user => {
+      service.getUserByUsername('testuser').subscribe(user => {
         expect(user.id).toBe(1);
         expect(user.name).toBe('Test');
       });
 
-      const req = httpMock.expectOne('/api/users/1');
+      const req = httpMock.expectOne('/api/users/testuser');
       expect(req.request.method).toBe('GET');
       req.flush(mockUserRes);
     });
@@ -77,11 +77,11 @@ describe('APIClient', () => {
   describe('createPost', () => {
     it('should POST post data', () => {
       const mockPostRes = {
-        id: 1
+        publicId: '550e8400-e29b-41d4-a716-446655440000'
       };
 
       service.createPost('img.jpg', 'Testing').subscribe(res => {
-        expect(res.id).toBe(1);
+        expect(res.publicId).toBe('550e8400-e29b-41d4-a716-446655440000');
       });
 
       const req = httpMock.expectOne('/api/posts');
@@ -157,8 +157,8 @@ describe('APIClient', () => {
 
   describe('getPosts', () => {
     it('should GET user posts', () => {
-      service.getPosts(1, 'next cursor').subscribe();
-      const req = httpMock.expectOne('/api/users/1/posts?cursor=next%20cursor');
+      service.getPosts('testuser', 'next cursor').subscribe();
+      const req = httpMock.expectOne('/api/users/testuser/posts?cursor=next%20cursor');
       expect(req.request.method).toBe('GET');
       req.flush({items: [], nextCursor: null});
     });
@@ -166,8 +166,8 @@ describe('APIClient', () => {
 
   describe('getLikedPosts', () => {
     it('should GET liked posts', () => {
-      service.getLikedPosts(1, null).subscribe();
-      const req = httpMock.expectOne('/api/users/1/likes');
+      service.getLikedPosts('testuser', null).subscribe();
+      const req = httpMock.expectOne('/api/users/testuser/likes');
       expect(req.request.method).toBe('GET');
       req.flush({items: [], nextCursor: null});
     });
@@ -175,8 +175,8 @@ describe('APIClient', () => {
 
   describe('getComments', () => {
     it('should GET post comments', () => {
-      service.getComments(42, 'next').subscribe();
-      const req = httpMock.expectOne('/api/posts/42/comments?cursor=next');
+      service.getComments('550e8400-e29b-41d4-a716-446655440000', 'next').subscribe();
+      const req = httpMock.expectOne('/api/posts/550e8400-e29b-41d4-a716-446655440000/comments?cursor=next');
       expect(req.request.method).toBe('GET');
       req.flush({items: [], nextCursor: null});
     });
@@ -184,8 +184,8 @@ describe('APIClient', () => {
 
   describe('getPost', () => {
     it('should GET post', () => {
-      service.getPost(1).subscribe();
-      const req = httpMock.expectOne('/api/posts/1');
+      service.getPost('550e8400-e29b-41d4-a716-446655440000').subscribe();
+      const req = httpMock.expectOne('/api/posts/550e8400-e29b-41d4-a716-446655440000');
       expect(req.request.method).toBe('GET');
       req.flush({ id: '1' });
     });
@@ -193,8 +193,8 @@ describe('APIClient', () => {
 
   describe('deletePost', () => {
     it('should DELETE post', () => {
-      service.deletePost(1).subscribe();
-      const req = httpMock.expectOne('/api/posts/1');
+      service.deletePost('550e8400-e29b-41d4-a716-446655440000').subscribe();
+      const req = httpMock.expectOne('/api/posts/550e8400-e29b-41d4-a716-446655440000');
       expect(req.request.method).toBe('DELETE');
       req.flush({});
     });
@@ -202,8 +202,8 @@ describe('APIClient', () => {
 
   describe('likePost', () => {
     it('should POST like', () => {
-      service.likePost(1).subscribe();
-      const req = httpMock.expectOne('/api/posts/1/likes');
+      service.likePost('550e8400-e29b-41d4-a716-446655440000').subscribe();
+      const req = httpMock.expectOne('/api/posts/550e8400-e29b-41d4-a716-446655440000/likes');
       expect(req.request.method).toBe('POST');
       req.flush({});
     });
@@ -211,8 +211,8 @@ describe('APIClient', () => {
 
   describe('unlikePost', () => {
     it('should DELETE like', () => {
-      service.unlikePost(1).subscribe();
-      const req = httpMock.expectOne('/api/posts/1/likes');
+      service.unlikePost('550e8400-e29b-41d4-a716-446655440000').subscribe();
+      const req = httpMock.expectOne('/api/posts/550e8400-e29b-41d4-a716-446655440000/likes');
       expect(req.request.method).toBe('DELETE');
       req.flush({});
     });

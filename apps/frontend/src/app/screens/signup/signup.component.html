@@ -47,6 +47,9 @@
         appFormInput
         placeholder="johndoe"
         autocomplete="username"
+        pattern="[a-z0-9._]{3,30}"
+        minlength="3"
+        maxlength="30"
         required
       >
       @if (username.invalid && (username.touched || form.submitted)) {

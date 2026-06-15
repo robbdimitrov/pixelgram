@@ -10,10 +10,16 @@ import (
 	"pixelgram/backend/internal/compat"
 )
 
+const testPublicID = "550e8400-e29b-41d4-a716-446655440000"
+
 type fakeStore struct {
 	requestedPostID string
 	requestedCursor *compat.Cursor
 	requestedLimit  int
+}
+
+func (s *fakeStore) PostExists(context.Context, string) (bool, error) {
+	return true, nil
 }
 
 func (s *fakeStore) CreateComment(context.Context, string, string, string) (Comment, error) {
@@ -36,15 +42,15 @@ func TestListCommentsPagination(t *testing.T) {
 	store := &fakeStore{}
 	handler := Handler{Store: store}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts/42/comments?cursor="+compat.EncodeCursor(cursor)+"&limit=25", nil)
-	req.SetPathValue("postId", "42")
+	req := httptest.NewRequest(http.MethodGet, "/posts/"+testPublicID+"/comments?cursor="+compat.EncodeCursor(cursor)+"&limit=25", nil)
+	req.SetPathValue("publicId", testPublicID)
 
 	handler.ListComments(res, req)
 
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
 	}
-	if store.requestedPostID != "42" || store.requestedCursor == nil || *store.requestedCursor != cursor || store.requestedLimit != 25 {
+	if store.requestedPostID != testPublicID || store.requestedCursor == nil || *store.requestedCursor != cursor || store.requestedLimit != 25 {
 		t.Fatalf(
 			"request = post %q cursor %+v limit %d",
 			store.requestedPostID, store.requestedCursor, store.requestedLimit,

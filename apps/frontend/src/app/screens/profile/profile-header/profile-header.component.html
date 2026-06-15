@@ -50,7 +50,7 @@
         <strong class="font-black text-slate-950 dark:text-white">{{user().posts}}</strong> {{user().posts | pluralize:'post'}}
       </span>
       <a
-        [routerLink]="['/users', user().id, 'likes']"
+        [routerLink]="'/@' + user().username + '/likes'"
         class="transition-colors hover:text-slate-950 dark:hover:text-white"
         >
         <strong class="font-black text-slate-950 dark:text-white">{{user().likes}}</strong> {{user().likes | pluralize:'like'}}

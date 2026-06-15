@@ -1,76 +1,53 @@
-import { TestBed } from '@angular/core/testing';
-import { SessionService } from './session.service';
-import { ThemeService } from './theme.service';
+import {TestBed} from '@angular/core/testing';
+import {of, throwError} from 'rxjs';
+
+import {SessionService} from './session.service';
+import {ThemeService} from './theme.service';
+import {APIClient} from './api-client.service';
 
 describe('SessionService', () => {
+  const user = {id: 7, username: 'test'};
   let session: SessionService;
-  let mockThemeService: any;
+  let apiClient: {getCurrentUser: jest.Mock};
+  let theme: {setPreference: jest.Mock};
 
   beforeEach(() => {
-    localStorage.clear();
-    mockThemeService = {
-      setPreference: jest.fn()
-    };
-
+    apiClient = {getCurrentUser: jest.fn().mockReturnValue(of(user))};
+    theme = {setPreference: jest.fn()};
     TestBed.configureTestingModule({
       providers: [
         SessionService,
-        { provide: ThemeService, useValue: mockThemeService }
+        {provide: APIClient, useValue: apiClient},
+        {provide: ThemeService, useValue: theme}
       ]
     });
-
     session = TestBed.inject(SessionService);
   });
 
-  afterEach(() => {
-    localStorage.clear();
+  it('bootstraps the authoritative current user once', async () => {
+    await session.bootstrap();
+    await session.bootstrap();
+
+    expect(apiClient.getCurrentUser).toHaveBeenCalledTimes(1);
+    expect(session.currentUser()).toBe(user);
+    expect(session.userId()).toBe(7);
+    expect(session.bootstrapped()).toBe(true);
   });
 
-  it('should be created', () => {
-    expect(session).toBeTruthy();
+  it('completes bootstrap without a user when the request fails', async () => {
+    apiClient.getCurrentUser.mockReturnValue(throwError(() => new Error('Unauthorized')));
+
+    await session.bootstrap();
+
+    expect(session.currentUser()).toBeNull();
+    expect(session.bootstrapped()).toBe(true);
   });
 
-  describe('userId', () => {
-    it('should return null if no userId in localStorage', () => {
-      expect(session.userId()).toBeNull();
-    });
+  it('clears only current-user state and resets the theme', () => {
+    session.setCurrentUser(user as never);
+    session.clear();
 
-    it('should initialize userId from localStorage', () => {
-      localStorage.setItem('userId', '123');
-
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [
-          SessionService,
-          {provide: ThemeService, useValue: mockThemeService}
-        ]
-      });
-      session = TestBed.inject(SessionService);
-
-      expect(session.userId()).toBe(123);
-    });
-  });
-
-  describe('setUserId', () => {
-    it('should update userId reactively and persist it in localStorage', () => {
-      session.setUserId(456);
-
-      expect(session.userId()).toBe(456);
-      expect(localStorage.getItem('userId')).toBe('456');
-    });
-  });
-
-  describe('clear', () => {
-    it('should reset theme preference to system and clear the session user id', () => {
-      localStorage.setItem('userId', '999');
-      localStorage.setItem('someOtherKey', 'value');
-
-      session.clear();
-
-      expect(mockThemeService.setPreference).toHaveBeenCalledWith('system');
-      expect(session.userId()).toBeNull();
-      expect(localStorage.getItem('userId')).toBeNull();
-      expect(localStorage.getItem('someOtherKey')).toBe('value');
-    });
+    expect(theme.setPreference).toHaveBeenCalledWith('system');
+    expect(session.currentUser()).toBeNull();
   });
 });

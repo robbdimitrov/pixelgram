@@ -52,11 +52,12 @@ export class SignupComponent {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
     this.apiClient.createUser(this.nameValue, this.usernameValue, this.emailValue, this.passwordValue).pipe(
-      switchMap(() => this.apiClient.loginUser(this.emailValue, this.passwordValue))
+      switchMap(() => this.apiClient.loginUser(this.emailValue, this.passwordValue)),
+      switchMap(() => this.apiClient.getCurrentUser())
     ).subscribe({
-      next: (data) => {
+      next: (user) => {
         this.isSubmitting.set(false);
-        this.session.setUserId(data.id);
+        this.session.setCurrentUser(user);
         this.router.navigate(['/']);
       },
       error: (error) => {

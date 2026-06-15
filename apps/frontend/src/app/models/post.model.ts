@@ -1,9 +1,10 @@
 export interface PostIdDto {
-  id: number;
+  publicId: string;
 }
 
 export interface PostDto {
   id: number;
+  publicId: string;
   userId: number;
   username: string;
   name: string;
@@ -23,6 +24,7 @@ export interface ImageFilenameDto {
 export class Post {
   constructor(
     public id: number,
+    public publicId: string,
     public userId: number,
     public username: string,
     public name: string,

@@ -23,8 +23,8 @@ export class PostComponent {
   private session = inject(SessionService);
   private destroyRef = inject(DestroyRef);
 
-  like = output<number>();
-  unlike = output<number>();
+  like = output<string>();
+  unlike = output<string>();
   deleteAction = output<Post>();
   post = input.required<Post>();
   singleView = input(false);
@@ -47,9 +47,9 @@ export class PostComponent {
       if (!wasLiked) {
         this.playLikeAnimation();
       }
-      this.like.emit(post.id);
+      this.like.emit(post.publicId);
     } else {
-      this.unlike.emit(post.id);
+      this.unlike.emit(post.publicId);
     }
   }
 

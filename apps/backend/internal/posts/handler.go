@@ -2,16 +2,20 @@ package posts
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/uploads"
 )
 
 type Post struct {
 	ID          int       `json:"id"`
+	PublicID    string    `json:"publicId"`
 	UserID      int       `json:"userId"`
 	Username    string    `json:"username"`
 	Name        string    `json:"name"`
@@ -25,7 +29,7 @@ type Post struct {
 }
 
 type Store interface {
-	CreatePost(ctx context.Context, userID, filename string, description *string) (int, bool, error)
+	CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error)
 	GetFeed(ctx context.Context, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
 	GetPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
 	GetLikedPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
@@ -64,7 +68,7 @@ func (h Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	if body.Description != "" {
 		description = &body.Description
 	}
-	id, created, err := h.Store.CreatePost(ctx, userID, body.Filename, description)
+	publicID, created, err := h.Store.CreatePost(ctx, userID, body.Filename, description)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -74,7 +78,7 @@ func (h Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, map[string]int{"id": id})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]string{"publicId": publicID})
 }
 
 func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +116,11 @@ func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(
 		return
 	}
 
-	items, nextCursor, err := fetch(ctx, r.PathValue("userId"), pagination.Cursor, pagination.Limit, currentUserID)
+	items, nextCursor, err := fetch(ctx, strings.ToLower(r.PathValue("username")), pagination.Cursor, pagination.Limit, currentUserID)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
+		return
+	}
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -128,7 +136,12 @@ func writePostPage(w http.ResponseWriter, items []Post, nextCursor *compat.Curso
 func (h Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
-	post, found, err := h.Store.GetPost(ctx, r.PathValue("postId"), currentUserID)
+	publicID := r.PathValue("publicId")
+	if !compat.ValidUUID(publicID) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
+		return
+	}
+	post, found, err := h.Store.GetPost(ctx, publicID, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -144,8 +157,12 @@ func (h Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 func (h Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	postID := r.PathValue("postId")
-	filename, deleted, err := h.Store.DeletePost(ctx, postID, userID)
+	publicID := r.PathValue("publicId")
+	if !compat.ValidUUID(publicID) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
+		return
+	}
+	filename, deleted, err := h.Store.DeletePost(ctx, publicID, userID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -156,7 +173,7 @@ func (h Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, found, err := h.Store.GetPost(ctx, postID, userID); err != nil {
+	if _, found, err := h.Store.GetPost(ctx, publicID, userID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 	} else if found {
 		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
@@ -176,8 +193,12 @@ func (h Handler) UnlikePost(w http.ResponseWriter, r *http.Request) {
 func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(context.Context, string, string) error) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	postID := r.PathValue("postId")
-	exists, err := h.Store.PostExists(ctx, postID)
+	publicID := r.PathValue("publicId")
+	if !compat.ValidUUID(publicID) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
+		return
+	}
+	exists, err := h.Store.PostExists(ctx, publicID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -187,7 +208,7 @@ func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(
 		return
 	}
 
-	if err := update(ctx, postID, userID); err != nil {
+	if err := update(ctx, publicID, userID); err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}

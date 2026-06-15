@@ -21,6 +21,7 @@ export function mapUser(user: UserDto): User {
 export function mapPost(post: PostDto): Post {
   return new Post(
     post.id,
+    post.publicId,
     post.userId,
     post.username,
     post.name,
