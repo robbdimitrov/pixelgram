@@ -105,7 +105,7 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 	}
 
 	return app.Repositories{
-		SessionAuth: client,
+		SessionAuth: postgres.NewSessionRepository(client),
 		Users:       postgres.NewUserRepository(client),
 		Sessions:    postgres.NewSessionRepository(client),
 		Uploads:     postgres.NewUploadRepository(client),
