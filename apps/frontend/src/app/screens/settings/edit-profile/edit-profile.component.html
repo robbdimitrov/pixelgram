@@ -55,6 +55,7 @@
             [(ngModel)]="u.name"
             appFormInput
             placeholder="Enter your name"
+            autocomplete="name"
             required
             >
           @if (name.invalid && (name.touched || form.submitted)) {
@@ -73,6 +74,7 @@
             [(ngModel)]="u.username"
             appFormInput
             placeholder="Enter username"
+            autocomplete="username"
             required
             >
           @if (username.invalid && (username.touched || form.submitted)) {
@@ -92,6 +94,7 @@
             appFormInput
             placeholder="Enter email"
             pattern="[^@]+@[^@]+\.[^@]+"
+            autocomplete="email"
             required
             >
           @if (email.invalid && (email.touched || form.submitted)) {
@@ -116,6 +119,7 @@
             appFormTextarea
             placeholder="Tell people about yourself..."
             maxlength="300"
+            autocomplete="off"
           ></textarea>
         </div>
       </div>

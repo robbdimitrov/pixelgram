@@ -27,6 +27,7 @@
         appFormInput
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
+        autocomplete="username"
         required
       >
       @if (email.invalid && (email.touched || form.submitted)) {
@@ -56,6 +57,7 @@
           placeholder="Password"
           minlength="4"
           maxlength="30"
+          autocomplete="current-password"
           required
         >
         <button type="button" class="btn btn-ghost absolute right-1.5 h-10 min-h-10 rounded-full px-4 text-sm font-extrabold text-slate-950 hover:bg-slate-100 dark:text-white dark:hover:bg-white/10" (click)="onVisibilityToggle()">

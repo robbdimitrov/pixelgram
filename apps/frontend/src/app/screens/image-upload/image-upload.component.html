@@ -75,6 +75,7 @@
           class="min-h-52 flex-1 resize-none border-0 bg-transparent px-6 py-5 text-base leading-7 text-slate-950 placeholder:text-slate-400 shadow-none outline-none focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-slate-500 sm:px-8"
           placeholder="Write a caption..."
           [maxlength]="maxDescriptionLength"
+          autocomplete="off"
         ></textarea>
 
         @if (errorMessage()) {

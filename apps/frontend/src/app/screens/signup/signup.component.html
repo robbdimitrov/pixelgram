@@ -26,6 +26,7 @@
         [(ngModel)]="nameValue"
         appFormInput
         placeholder="John Doe"
+        autocomplete="name"
         required
       >
       @if (name.invalid && (name.touched || form.submitted)) {
@@ -45,6 +46,7 @@
         [(ngModel)]="usernameValue"
         appFormInput
         placeholder="johndoe"
+        autocomplete="username"
         required
       >
       @if (username.invalid && (username.touched || form.submitted)) {
@@ -65,6 +67,7 @@
         appFormInput
         placeholder="johndoe@mail.com"
         pattern="[^@]+@[^@]+\.[^@]+"
+        autocomplete="email"
         required
       >
       @if (email.invalid && (email.touched || form.submitted)) {
@@ -94,6 +97,7 @@
           placeholder="Password"
           minlength="8"
           maxlength="30"
+          autocomplete="new-password"
           required
         >
         <button type="button" class="btn btn-ghost absolute right-1.5 h-10 min-h-10 rounded-full px-4 text-sm font-extrabold text-slate-950 hover:bg-slate-100 dark:text-white dark:hover:bg-white/10" (click)="onVisibilityToggle()">
