@@ -125,7 +125,7 @@ func (c *Client) GetUserWithID(ctx context.Context, userID string) (users.UserCr
 	return user, true, nil
 }
 
-func (c *Client) GetUser(ctx context.Context, userID string) (users.User, bool, error) {
+func (c *Client) GetUser(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
 	if !c.breaker.allow() {
 		return users.User{}, false, store.ErrUnavailable
 	}
@@ -138,12 +138,17 @@ func (c *Client) GetUser(ctx context.Context, userID string) (users.User, bool, 
 			`SELECT id, name, username, email, avatar, bio,
 			(SELECT count(*) FROM posts WHERE user_id = users.id) AS posts,
 			(SELECT count(*) FROM likes WHERE user_id = id) AS likes,
+			(SELECT count(*) FROM follows WHERE followee_id = id) AS followers,
+			(SELECT count(*) FROM follows WHERE follower_id = id) AS following,
+			EXISTS (SELECT 1 FROM follows WHERE follower_id = $2 AND followee_id = id) AS is_following,
 			created
 			FROM users WHERE id = $1`,
-			userID,
+			userID, currentUserID,
 		).Scan(
 			&user.ID, &user.Name, &user.Username, &user.Email,
-			&avatar, &bio, &user.Posts, &user.Likes, &user.Created,
+			&avatar, &bio, &user.Posts, &user.Likes,
+			&user.Followers, &user.Following, &user.IsFollowing,
+			&user.Created,
 		)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -158,6 +163,38 @@ func (c *Client) GetUser(ctx context.Context, userID string) (users.User, bool, 
 	user.Avatar = nullableString(avatar)
 	user.Bio = nullableString(bio)
 	return user, true, nil
+}
+
+func (c *Client) FollowUser(ctx context.Context, followerID, followeeID string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(
+		ctx,
+		`INSERT INTO follows (follower_id, followee_id)
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM users WHERE id = $2)
+		ON CONFLICT DO NOTHING`,
+		followerID, followeeID,
+	)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
+}
+
+func (c *Client) UnfollowUser(ctx context.Context, followerID, followeeID string) error {
+	if !c.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	_, err := c.pool.Exec(ctx, `DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID)
+	if err != nil {
+		c.breaker.failure(err)
+		return err
+	}
+	c.breaker.success()
+	return nil
 }
 
 func (c *Client) UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
@@ -410,6 +447,19 @@ func (c *Client) GetFeed(ctx context.Context, page, limit int, currentUserID str
 		`SELECT `+postColumns+`
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
+		WHERE
+			(
+				EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
+				AND (
+					posts.user_id = $1
+					OR EXISTS (SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = posts.user_id)
+				)
+			)
+			OR
+			(
+				NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
+				AND posts.user_id != $1
+			)
 		ORDER BY posts.created DESC
 		LIMIT $2 OFFSET $3`,
 		currentUserID, limit, page*limit,

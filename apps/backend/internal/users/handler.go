@@ -16,23 +16,28 @@ import (
 
 type Store interface {
 	CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error)
-	GetUser(ctx context.Context, userID string) (User, bool, error)
+	GetUser(ctx context.Context, userID, currentUserID string) (User, bool, error)
 	GetUserWithID(ctx context.Context, userID string) (UserCredentials, bool, error)
 	UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (UpdateUserResult, error)
 	UpdatePassword(ctx context.Context, userID, passwordHash string) error
 	DeleteOtherSessions(ctx context.Context, userID, currentSessionID string) error
+	FollowUser(ctx context.Context, followerID, followeeID string) error
+	UnfollowUser(ctx context.Context, followerID, followeeID string) error
 }
 
 type User struct {
-	ID       int       `json:"id"`
-	Name     string    `json:"name"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	Avatar   *string   `json:"avatar"`
-	Bio      *string   `json:"bio"`
-	Posts    int       `json:"posts"`
-	Likes    int       `json:"likes"`
-	Created  time.Time `json:"created"`
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Username    string    `json:"username"`
+	Email       string    `json:"email"`
+	Avatar      *string   `json:"avatar"`
+	Bio         *string   `json:"bio"`
+	Posts       int       `json:"posts"`
+	Likes       int       `json:"likes"`
+	Followers   int       `json:"followers"`
+	Following   int       `json:"following"`
+	IsFollowing bool      `json:"isFollowing"`
+	Created     time.Time `json:"created"`
 }
 
 type UserCredentials struct {
@@ -104,8 +109,9 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := r.PathValue("userId")
+	currentUserID, _ := httpx.UserID(r)
 
-	user, found, err := h.Store.GetUser(ctx, userID)
+	user, found, err := h.Store.GetUser(ctx, userID, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -235,6 +241,39 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 
 	currentSessionID, _ := httpx.GetSessionCookie(r)
 	if err := h.Store.DeleteOtherSessions(ctx, userID, currentSessionID); err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
+	h.updateFollow(w, r, h.Store.FollowUser)
+}
+
+func (h Handler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
+	h.updateFollow(w, r, h.Store.UnfollowUser)
+}
+
+func (h Handler) updateFollow(w http.ResponseWriter, r *http.Request, update func(context.Context, string, string) error) {
+	ctx := r.Context()
+	currentUserID, ok := httpx.UserID(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	targetUserID := r.PathValue("userId")
+	if currentUserID == targetUserID {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Cannot follow yourself.")
+		return
+	}
+
+	if err := update(ctx, currentUserID, targetUserID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			httpx.WriteMessage(w, http.StatusNotFound, "User Not Found")
+			return
+		}
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}

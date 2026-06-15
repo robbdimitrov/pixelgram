@@ -11,6 +11,9 @@ export interface UserDto {
   bio: string | null;
   posts: number;
   likes: number;
+  followers: number;
+  following: number;
+  isFollowing: boolean;
   created: string;
 }
 
@@ -24,6 +27,9 @@ export class User {
     public bio: string | null,
     public posts: number,
     public likes: number,
+    public followers: number,
+    public following: number,
+    public isFollowing: boolean,
     public created: Date
   ) {}
 }

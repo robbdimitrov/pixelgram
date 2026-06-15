@@ -165,7 +165,7 @@ func (noopSessionAuthStore) RefreshSession(_ context.Context, _ string) (httpx.S
 type noopUserStore struct{}
 
 func (noopUserStore) CreateUser(_ context.Context, _, _, _, _ string) (int, error) { return 0, nil }
-func (noopUserStore) GetUser(_ context.Context, _ string) (users.User, bool, error) {
+func (noopUserStore) GetUser(_ context.Context, _, _ string) (users.User, bool, error) {
 	return users.User{}, false, nil
 }
 func (noopUserStore) GetUserWithID(_ context.Context, _ string) (users.UserCredentials, bool, error) {
@@ -176,6 +176,8 @@ func (noopUserStore) UpdateUser(_ context.Context, _, _, _, _, _ string, _ *stri
 }
 func (noopUserStore) UpdatePassword(_ context.Context, _, _ string) error      { return nil }
 func (noopUserStore) DeleteOtherSessions(_ context.Context, _, _ string) error { return nil }
+func (noopUserStore) FollowUser(_ context.Context, _, _ string) error          { return nil }
+func (noopUserStore) UnfollowUser(_ context.Context, _, _ string) error        { return nil }
 
 type noopSessionStore struct{}
 

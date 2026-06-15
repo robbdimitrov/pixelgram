@@ -39,7 +39,7 @@ func (s *fakeStore) CreateUser(_ context.Context, name, username, email, passwor
 	return s.id, s.err
 }
 
-func (s *fakeStore) GetUser(_ context.Context, _ string) (User, bool, error) {
+func (s *fakeStore) GetUser(_ context.Context, _, _ string) (User, bool, error) {
 	return s.user, s.found, s.err
 }
 
@@ -61,6 +61,14 @@ func (s *fakeStore) UpdatePassword(_ context.Context, userID, passwordHash strin
 
 func (s *fakeStore) DeleteOtherSessions(_ context.Context, userID, _ string) error {
 	s.deletedOtherUserID = userID
+	return s.err
+}
+
+func (s *fakeStore) FollowUser(_ context.Context, _, _ string) error {
+	return s.err
+}
+
+func (s *fakeStore) UnfollowUser(_ context.Context, _, _ string) error {
 	return s.err
 }
 
@@ -362,5 +370,47 @@ func TestUpdatePassword(t *testing.T) {
 	}
 	if store.deletedOtherUserID != "1" {
 		t.Fatalf("deleted sessions for user %q, want 1", store.deletedOtherUserID)
+	}
+}
+
+func TestFollowUser(t *testing.T) {
+	handler := Handler{Store: &fakeStore{}}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/users/2/follow", nil)
+	req.SetPathValue("userId", "2")
+	req = httpx.WithUserID(req, "1")
+
+	handler.FollowUser(res, req)
+
+	if res.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
+	}
+}
+
+func TestFollowSelf(t *testing.T) {
+	handler := Handler{Store: &fakeStore{}}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/users/1/follow", nil)
+	req.SetPathValue("userId", "1")
+	req = httpx.WithUserID(req, "1")
+
+	handler.FollowUser(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+}
+
+func TestUnfollowUser(t *testing.T) {
+	handler := Handler{Store: &fakeStore{}}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodDelete, "/users/2/follow", nil)
+	req.SetPathValue("userId", "2")
+	req = httpx.WithUserID(req, "1")
+
+	handler.UnfollowUser(res, req)
+
+	if res.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
 	}
 }

@@ -11,6 +11,9 @@ export function mapUser(user: UserDto): User {
     user.bio,
     user.posts,
     user.likes,
+    user.followers ?? 0,
+    user.following ?? 0,
+    user.isFollowing ?? false,
     new Date(user.created)
   );
 }

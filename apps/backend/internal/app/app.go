@@ -38,6 +38,8 @@ func New(cfg Config, stores Stores) http.Handler {
 
 	protected.HandleFunc("GET /users/{userId}", userHandler.GetUser)
 	protected.HandleFunc("PUT /users/{userId}", userHandler.UpdateUser)
+	protected.HandleFunc("POST /users/{userId}/follow", userHandler.FollowUser)
+	protected.HandleFunc("DELETE /users/{userId}/follow", userHandler.UnfollowUser)
 	protected.HandleFunc("DELETE /sessions", sessionHandler.DeleteSession)
 	protected.HandleFunc("POST /uploads", uploadHandler.CreateFile)
 	protected.HandleFunc("POST /posts", postHandler.CreatePost)

@@ -41,6 +41,16 @@ export class APIClient {
     return this.http.put<void>(url, body);
   }
 
+  followUser(userId: number): Observable<void> {
+    const url = `/api/users/${userId}/follow`;
+    return this.http.post<void>(url, {});
+  }
+
+  unfollowUser(userId: number): Observable<void> {
+    const url = `/api/users/${userId}/follow`;
+    return this.http.delete<void>(url);
+  }
+
   // Sessions
 
   loginUser(email: string, password: string): Observable<UserIdDto> {

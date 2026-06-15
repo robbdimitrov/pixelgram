@@ -3,6 +3,7 @@ import {RouterLink} from '@angular/router';
 import {LucideSettings} from '@lucide/angular';
 
 import {User} from '../../../models/user.model';
+import {APIClient} from '../../../services/api-client.service';
 import {SessionService} from '../../../services/session.service';
 import {ImagePipe} from '../../../shared/pipes/image.pipe';
 import {PluralizePipe} from '../../../shared/pipes/pluralize.pipe';
@@ -15,10 +16,38 @@ import {PluralizePipe} from '../../../shared/pipes/pluralize.pipe';
 })
 export class ProfileHeaderComponent {
   private session = inject(SessionService);
+  private apiClient = inject(APIClient);
 
   user = input.required<User>();
 
   isCurrentUser() {
     return this.session.userId() === this.user().id;
+  }
+
+  toggleFollow() {
+    const user = this.user();
+    if (this.isCurrentUser()) {
+      return;
+    }
+
+    if (user.isFollowing) {
+      user.isFollowing = false;
+      user.followers -= 1;
+      this.apiClient.unfollowUser(user.id).subscribe({
+        error: () => {
+          user.isFollowing = true;
+          user.followers += 1;
+        }
+      });
+    } else {
+      user.isFollowing = true;
+      user.followers += 1;
+      this.apiClient.followUser(user.id).subscribe({
+        error: () => {
+          user.isFollowing = false;
+          user.followers -= 1;
+        }
+      });
+    }
   }
 }

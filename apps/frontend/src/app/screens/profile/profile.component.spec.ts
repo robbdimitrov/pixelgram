@@ -66,6 +66,9 @@ describe('ProfileComponent', () => {
       bio: null,
       posts: 0,
       likes: 0,
+      followers: 0,
+      following: 0,
+      isFollowing: false,
       created: new Date()
     });
     postsResponse.next([]);
