@@ -12,13 +12,9 @@ import (
 	"time"
 
 	"pixelgram/backend/internal/app"
-	"pixelgram/backend/internal/comments"
-	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/posts"
-	"pixelgram/backend/internal/sessions"
+	"pixelgram/backend/internal/noop"
 	"pixelgram/backend/internal/store/postgres"
-	"pixelgram/backend/internal/users"
 )
 
 func main() {
@@ -27,12 +23,12 @@ func main() {
 	port := getenv("PORT", "8080")
 	databaseURL := os.Getenv("DATABASE_URL")
 
-	stores, closeStores, err := openStores(databaseURL)
+	repositories, closeRepositories, err := openRepositories(databaseURL)
 	if err != nil {
-		slog.Error("failed to initialize stores", "error", err)
+		slog.Error("failed to initialize repositories", "error", err)
 		os.Exit(1)
 	}
-	defer closeStores()
+	defer closeRepositories()
 
 	rateLimiter := openRateLimiter(databaseURL)
 	startRateLimiterCleanup(rateLimiter)
@@ -40,7 +36,7 @@ func main() {
 	handler := app.New(app.Config{
 		ImageDir:    getenv("IMAGE_DIR", "/tmp"),
 		RateLimiter: rateLimiter,
-	}, stores)
+	}, repositories)
 
 	addr := ":" + port
 	slog.Info("starting backend", "addr", addr)
@@ -86,35 +82,35 @@ func setupLogger() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 }
 
-func openStores(databaseURL string) (app.Stores, func(), error) {
+func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 	if databaseURL == "" {
-		return app.Stores{
-			SessionAuth: noopSessionAuthStore{},
-			Users:       noopUserStore{},
-			Sessions:    noopSessionStore{},
-			Uploads:     noopUploadStore{},
-			Posts:       noopPostStore{},
-			Comments:    noopCommentStore{},
+		return app.Repositories{
+			SessionAuth: noop.SessionAuth{},
+			Users:       noop.Users{},
+			Sessions:    noop.Sessions{},
+			Uploads:     noop.Uploads{},
+			Posts:       noop.Posts{},
+			Comments:    noop.Comments{},
 		}, func() {}, nil
 	}
 
 	sessionSecret := os.Getenv("SESSION_HASH_SECRET")
 	if sessionSecret == "" {
-		return app.Stores{}, func() {}, errors.New("SESSION_HASH_SECRET is required when DATABASE_URL is set")
+		return app.Repositories{}, func() {}, errors.New("SESSION_HASH_SECRET is required when DATABASE_URL is set")
 	}
 
 	client, err := postgres.New(context.Background(), databaseURL, sessionSecret)
 	if err != nil {
-		return app.Stores{}, func() {}, err
+		return app.Repositories{}, func() {}, err
 	}
 
-	return app.Stores{
+	return app.Repositories{
 		SessionAuth: client,
-		Users:       client,
-		Sessions:    client,
-		Uploads:     client,
-		Posts:       client,
-		Comments:    client,
+		Users:       postgres.NewUserRepository(client),
+		Sessions:    postgres.NewSessionRepository(client),
+		Uploads:     postgres.NewUploadRepository(client),
+		Posts:       postgres.NewPostRepository(client),
+		Comments:    postgres.NewCommentRepository(client),
 	}, client.Close, nil
 }
 
@@ -153,93 +149,4 @@ func envInt(key string, fallback int) int {
 		return fallback
 	}
 	return n
-}
-
-// --- noop stores for dev mode (DATABASE_URL unset) ---
-
-type noopSessionAuthStore struct{}
-
-func (noopSessionAuthStore) RefreshSession(_ context.Context, _ string) (httpx.Session, error) {
-	return httpx.Session{}, nil
-}
-
-type noopUserStore struct{}
-
-func (noopUserStore) CreateUser(_ context.Context, _, _, _, _ string) (int, error) { return 0, nil }
-func (noopUserStore) GetUserByUsername(_ context.Context, _, _ string) (users.User, bool, error) {
-	return users.User{}, false, nil
-}
-func (noopUserStore) GetUserByID(_ context.Context, _, _ string) (users.User, bool, error) {
-	return users.User{}, false, nil
-}
-func (noopUserStore) GetUserWithID(_ context.Context, _ string) (users.UserCredentials, bool, error) {
-	return users.UserCredentials{}, false, nil
-}
-func (noopUserStore) UpdateUser(_ context.Context, _, _, _, _, _ string, _ *string) (users.UpdateUserResult, error) {
-	return users.UpdateUserResult{}, nil
-}
-func (noopUserStore) UpdatePassword(_ context.Context, _, _ string) error      { return nil }
-func (noopUserStore) DeleteOtherSessions(_ context.Context, _, _ string) error { return nil }
-func (noopUserStore) FollowUser(_ context.Context, _, _ string) error          { return nil }
-func (noopUserStore) UnfollowUser(_ context.Context, _, _ string) error        { return nil }
-
-type noopSessionStore struct{}
-
-func (noopSessionStore) DeleteExpiredSessions(_ context.Context) error      { return nil }
-func (noopSessionStore) DeleteExpiredLoginFailures(_ context.Context) error { return nil }
-func (noopSessionStore) GetLoginFailures(_ context.Context, _ []string) ([]sessions.LoginFailure, error) {
-	return nil, nil
-}
-func (noopSessionStore) RecordLoginFailure(_ context.Context, _ string, _ time.Time) error {
-	return nil
-}
-func (noopSessionStore) ClearLoginFailures(_ context.Context, _ []string) error { return nil }
-func (noopSessionStore) GetUserWithEmail(_ context.Context, _ string) (sessions.UserCredentials, bool, error) {
-	return sessions.UserCredentials{}, false, nil
-}
-func (noopSessionStore) CreateSession(_ context.Context, _ string, _ int, _ time.Time) (sessions.CreatedSession, error) {
-	return sessions.CreatedSession{}, nil
-}
-func (noopSessionStore) DeleteSession(_ context.Context, _ string) error { return nil }
-
-type noopUploadStore struct{}
-
-func (noopUploadStore) DeleteExpiredUploads(_ context.Context) ([]string, error)  { return nil, nil }
-func (noopUploadStore) CreateUpload(_ context.Context, _, _ string) (bool, error) { return false, nil }
-
-type noopPostStore struct{}
-
-func (noopPostStore) CreatePost(_ context.Context, _, _ string, _ *string) (string, bool, error) {
-	return "", false, nil
-}
-func (noopPostStore) GetFeed(_ context.Context, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
-	return nil, nil, nil
-}
-func (noopPostStore) GetPosts(_ context.Context, _ string, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
-	return nil, nil, nil
-}
-func (noopPostStore) GetLikedPosts(_ context.Context, _ string, _ *compat.Cursor, _ int, _ string) ([]posts.Post, *compat.Cursor, error) {
-	return nil, nil, nil
-}
-func (noopPostStore) GetPost(_ context.Context, _, _ string) (posts.Post, bool, error) {
-	return posts.Post{}, false, nil
-}
-func (noopPostStore) DeletePost(_ context.Context, _, _ string) (string, bool, error) {
-	return "", false, nil
-}
-func (noopPostStore) PostExists(_ context.Context, _ string) (bool, error) { return false, nil }
-func (noopPostStore) LikePost(_ context.Context, _, _ string) error        { return nil }
-func (noopPostStore) UnlikePost(_ context.Context, _, _ string) error      { return nil }
-
-type noopCommentStore struct{}
-
-func (noopCommentStore) PostExists(_ context.Context, _ string) (bool, error) { return false, nil }
-func (noopCommentStore) CreateComment(_ context.Context, _, _, _ string) (comments.Comment, error) {
-	return comments.Comment{}, nil
-}
-func (noopCommentStore) ListComments(_ context.Context, _ string, _ *compat.Cursor, _ int) ([]comments.Comment, *compat.Cursor, error) {
-	return nil, nil, nil
-}
-func (noopCommentStore) DeleteComment(_ context.Context, _, _, _ string) (bool, error) {
-	return false, nil
 }

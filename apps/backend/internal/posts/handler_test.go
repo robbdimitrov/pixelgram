@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/pagination"
+	"pixelgram/backend/internal/uploads"
 )
 
 const testPublicID = "550e8400-e29b-41d4-a716-446655440000"
@@ -29,29 +30,29 @@ type fakeStore struct {
 	liked           bool
 	unliked         bool
 	requestedUser   string
-	requestedCursor *compat.Cursor
+	requestedCursor *pagination.Cursor
 	requestedLimit  int
-	nextCursor      *compat.Cursor
+	nextCursor      *pagination.Cursor
 }
 
 func (s *fakeStore) CreatePost(_ context.Context, _ string, _ string, _ *string) (string, bool, error) {
 	return s.createdID, s.created, s.err
 }
 
-func (s *fakeStore) GetFeed(_ context.Context, cursor *compat.Cursor, limit int, _ string) ([]Post, *compat.Cursor, error) {
+func (s *fakeStore) GetFeed(_ context.Context, cursor *pagination.Cursor, limit int, _ string) ([]Post, *pagination.Cursor, error) {
 	s.requestedCursor = cursor
 	s.requestedLimit = limit
 	return s.posts, s.nextCursor, s.err
 }
 
-func (s *fakeStore) GetPosts(_ context.Context, userID string, cursor *compat.Cursor, limit int, _ string) ([]Post, *compat.Cursor, error) {
+func (s *fakeStore) GetPosts(_ context.Context, userID string, cursor *pagination.Cursor, limit int, _ string) ([]Post, *pagination.Cursor, error) {
 	s.requestedUser = userID
 	s.requestedCursor = cursor
 	s.requestedLimit = limit
 	return s.posts, s.nextCursor, s.err
 }
 
-func (s *fakeStore) GetLikedPosts(_ context.Context, _ string, _ *compat.Cursor, _ int, _ string) ([]Post, *compat.Cursor, error) {
+func (s *fakeStore) GetLikedPosts(_ context.Context, _ string, _ *pagination.Cursor, _ int, _ string) ([]Post, *pagination.Cursor, error) {
 	return s.posts, s.nextCursor, s.err
 }
 
@@ -78,7 +79,7 @@ func (s *fakeStore) UnlikePost(_ context.Context, _ string, _ string) error {
 }
 
 func TestCreatePostMissingFilename(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
+	handler := Handler{Service: NewService(&fakeStore{}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(`{}`))
 	req = httpx.WithUserID(req, "1")
@@ -94,7 +95,7 @@ func TestCreatePostMissingFilename(t *testing.T) {
 }
 
 func TestCreatePostInvalidUpload(t *testing.T) {
-	handler := Handler{Store: &fakeStore{created: false}}
+	handler := Handler{Service: NewService(&fakeStore{created: false}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(`{"filename":"upload"}`))
 	req = httpx.WithUserID(req, "1")
@@ -110,7 +111,7 @@ func TestCreatePostInvalidUpload(t *testing.T) {
 }
 
 func TestCreatePostSuccess(t *testing.T) {
-	handler := Handler{Store: &fakeStore{createdID: testPublicID, created: true}}
+	handler := Handler{Service: NewService(&fakeStore{createdID: testPublicID, created: true}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(`{"filename":"upload","description":"hi"}`))
 	req = httpx.WithUserID(req, "1")
@@ -126,15 +127,15 @@ func TestCreatePostSuccess(t *testing.T) {
 }
 
 func TestGetFeedPagination(t *testing.T) {
-	cursor := compat.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
-	nextCursor := compat.Cursor{Created: time.Date(2026, 6, 14, 10, 0, 0, 0, time.UTC), ID: 21}
+	cursor := pagination.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
+	nextCursor := pagination.Cursor{Created: time.Date(2026, 6, 14, 10, 0, 0, 0, time.UTC), ID: 21}
 	store := &fakeStore{
 		posts:      []Post{{ID: 1, Filename: "a"}},
 		nextCursor: &nextCursor,
 	}
-	handler := Handler{Store: store}
+	handler := Handler{Service: NewService(store, nil)}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts?cursor="+compat.EncodeCursor(cursor)+"&limit=500", nil)
+	req := httptest.NewRequest(http.MethodGet, "/posts?cursor="+pagination.EncodeCursor(cursor)+"&limit=500", nil)
 	req = httpx.WithUserID(req, "1")
 
 	handler.GetFeed(res, req)
@@ -145,13 +146,13 @@ func TestGetFeedPagination(t *testing.T) {
 	if store.requestedCursor == nil || *store.requestedCursor != cursor || store.requestedLimit != 50 {
 		t.Fatalf("pagination = cursor %+v limit %d", store.requestedCursor, store.requestedLimit)
 	}
-	if !strings.Contains(res.Body.String(), `"nextCursor":"`+compat.EncodeCursor(nextCursor)+`"`) {
+	if !strings.Contains(res.Body.String(), `"nextCursor":"`+pagination.EncodeCursor(nextCursor)+`"`) {
 		t.Fatalf("body = %q", res.Body.String())
 	}
 }
 
 func TestGetFeedInvalidPagination(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
+	handler := Handler{Service: NewService(&fakeStore{}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/posts?cursor=invalid", nil)
 	req = httpx.WithUserID(req, "1")
@@ -164,11 +165,11 @@ func TestGetFeedInvalidPagination(t *testing.T) {
 }
 
 func TestGetPostsPagination(t *testing.T) {
-	cursor := compat.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
+	cursor := pagination.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
 	store := &fakeStore{posts: []Post{{ID: 1, Filename: "a"}}}
-	handler := Handler{Store: store}
+	handler := Handler{Service: NewService(store, nil)}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/users/test/posts?cursor="+compat.EncodeCursor(cursor)+"&limit=25", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/test/posts?cursor="+pagination.EncodeCursor(cursor)+"&limit=25", nil)
 	req.SetPathValue("username", "test")
 	req = httpx.WithUserID(req, "1")
 
@@ -186,7 +187,7 @@ func TestGetPostsPagination(t *testing.T) {
 }
 
 func TestGetPostNotFound(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
+	handler := Handler{Service: NewService(&fakeStore{}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/posts/"+testPublicID, nil)
 	req.SetPathValue("publicId", testPublicID)
@@ -200,7 +201,7 @@ func TestGetPostNotFound(t *testing.T) {
 }
 
 func TestGetPostRejectsMalformedUUID(t *testing.T) {
-	handler := Handler{Store: &fakeStore{found: true}}
+	handler := Handler{Service: NewService(&fakeStore{found: true}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/posts/not-a-uuid", nil)
 	req.SetPathValue("publicId", "not-a-uuid")
@@ -219,7 +220,10 @@ func TestDeletePostDeletesFile(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, filename), []byte("image"), 0o600); err != nil {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
-	handler := Handler{Store: &fakeStore{deleted: true, deletedFile: filename}, ImageDir: dir}
+	handler := Handler{Service: NewService(
+		&fakeStore{deleted: true, deletedFile: filename},
+		uploads.Files{ImageDir: dir},
+	)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/posts/"+testPublicID, nil)
 	req.SetPathValue("publicId", testPublicID)
@@ -236,7 +240,7 @@ func TestDeletePostDeletesFile(t *testing.T) {
 }
 
 func TestDeletePostForbidden(t *testing.T) {
-	handler := Handler{Store: &fakeStore{found: true}}
+	handler := Handler{Service: NewService(&fakeStore{found: true}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/posts/"+testPublicID, nil)
 	req.SetPathValue("publicId", testPublicID)
@@ -250,7 +254,7 @@ func TestDeletePostForbidden(t *testing.T) {
 }
 
 func TestLikePostNotFound(t *testing.T) {
-	handler := Handler{Store: &fakeStore{exists: false}}
+	handler := Handler{Service: NewService(&fakeStore{exists: false}, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/posts/"+testPublicID+"/likes", nil)
 	req.SetPathValue("publicId", testPublicID)
@@ -265,7 +269,7 @@ func TestLikePostNotFound(t *testing.T) {
 
 func TestUnlikePostSuccess(t *testing.T) {
 	store := &fakeStore{exists: true}
-	handler := Handler{Store: store}
+	handler := Handler{Service: NewService(store, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/posts/"+testPublicID+"/likes", nil)
 	req.SetPathValue("publicId", testPublicID)
@@ -283,7 +287,7 @@ func TestUnlikePostSuccess(t *testing.T) {
 
 func TestLikePostSuccess(t *testing.T) {
 	store := &fakeStore{exists: true}
-	handler := Handler{Store: store}
+	handler := Handler{Service: NewService(store, nil)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/posts/"+testPublicID+"/likes", nil)
 	req.SetPathValue("publicId", testPublicID)

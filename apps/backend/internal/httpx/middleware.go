@@ -137,11 +137,10 @@ func OriginGuard(next http.Handler) http.Handler {
 
 func RequireSession(store SessionStore) func(http.Handler) http.Handler {
 	allowed := map[string]bool{
-		http.MethodPost + " /sessions":   true,
-		http.MethodDelete + " /sessions": true,
-		http.MethodPost + " /users":      true,
-		http.MethodGet + " /health":      true,
-		http.MethodOptions + " /":        true,
+		http.MethodPost + " /sessions": true,
+		http.MethodPost + " /users":    true,
+		http.MethodGet + " /health":    true,
+		http.MethodOptions + " /":      true,
 	}
 
 	return func(next http.Handler) http.Handler {

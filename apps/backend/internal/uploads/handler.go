@@ -16,15 +16,12 @@ import (
 
 const fileLimit = 1_000_000
 
-type Store interface {
-	DeleteExpiredUploads(ctx context.Context) ([]string, error)
-	// CreateUpload atomically records a pending upload, returning false if the
-	// user is already at the pending-upload cap (no row inserted).
-	CreateUpload(ctx context.Context, userID, filename string) (bool, error)
+type Application interface {
+	Register(ctx context.Context, command RegisterCommand) (RegisterResult, error)
 }
 
 type Handler struct {
-	Store    Store
+	Service  Application
 	ImageDir string
 }
 
@@ -54,21 +51,14 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expired, err := h.Store.DeleteExpiredUploads(ctx)
+	result, err := h.Service.Register(ctx, RegisterCommand{UserID: userID, Filename: filename})
+	deleteUploadFiles(h.ImageDir, result.ExpiredFilenames)
 	if err != nil {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
 	}
-	deleteUploadFiles(h.ImageDir, expired)
-
-	created, err := h.Store.CreateUpload(ctx, userID, filename)
-	if err != nil {
-		DeleteUploadFile(h.ImageDir, filename)
-		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
-		return
-	}
-	if !created {
+	if !result.Created {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusTooManyRequests, "Too many pending uploads. Create posts with existing uploads or try again later.")
 		return
@@ -172,6 +162,14 @@ func uploadPath(imageDir, filename string) string {
 
 func DeleteUploadFile(imageDir, filename string) {
 	_ = os.Remove(uploadPath(imageDir, filename))
+}
+
+type Files struct {
+	ImageDir string
+}
+
+func (f Files) Delete(filename string) {
+	DeleteUploadFile(f.ImageDir, filename)
 }
 
 func deleteUploadFiles(imageDir string, filenames []string) {

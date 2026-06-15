@@ -1,4 +1,4 @@
-package compat
+package pagination
 
 import (
 	"net/url"

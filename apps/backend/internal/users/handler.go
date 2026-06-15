@@ -6,59 +6,31 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/uploads"
+	"pixelgram/backend/internal/validation"
 )
 
-type Store interface {
-	CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error)
+type HandlerService interface {
+	CreateUser(ctx context.Context, command CreateUserCommand) (int, error)
 	GetUserByUsername(ctx context.Context, username, currentUserID string) (User, bool, error)
 	GetUserByID(ctx context.Context, userID, currentUserID string) (User, bool, error)
-	GetUserWithID(ctx context.Context, userID string) (UserCredentials, bool, error)
-	UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (UpdateUserResult, error)
-	UpdatePassword(ctx context.Context, userID, passwordHash string) error
-	DeleteOtherSessions(ctx context.Context, userID, currentSessionID string) error
-	FollowUser(ctx context.Context, followerID, followeeID string) error
-	UnfollowUser(ctx context.Context, followerID, followeeID string) error
-}
-
-type User struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	Username    string    `json:"username"`
-	Email       string    `json:"email"`
-	Avatar      *string   `json:"avatar"`
-	Bio         *string   `json:"bio"`
-	Posts       int       `json:"posts"`
-	Likes       int       `json:"likes"`
-	Followers   int       `json:"followers"`
-	Following   int       `json:"following"`
-	IsFollowing bool      `json:"isFollowing"`
-	Created     time.Time `json:"created"`
-}
-
-type UserCredentials struct {
-	ID           int
-	PasswordHash string
-}
-
-type UpdateUserResult struct {
-	Updated      bool
-	UnusedAvatar string
+	UpdateProfile(ctx context.Context, command UpdateProfileCommand) (UpdateProfileOutcome, error)
+	ChangePassword(ctx context.Context, command ChangePasswordCommand) (ChangePasswordOutcome, error)
+	FollowUser(ctx context.Context, command FollowCommand) error
+	UnfollowUser(ctx context.Context, command FollowCommand) error
 }
 
 type Handler struct {
-	Store    Store
-	ImageDir string
+	Service HandlerService
+}
+
+func NewHandler(service HandlerService) Handler {
+	return Handler{Service: service}
 }
 
 func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	var body struct {
 		Name     string `json:"name"`
 		Username string `json:"username"`
@@ -77,34 +49,27 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Name, username, email and password are required.")
 		return
 	}
-	if !compat.ValidUsername(username) {
+	if !validation.ValidUsername(username) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
 	}
-
 	if len(body.Password) < 8 || len(body.Password) > 128 {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Password must be between 8 and 128 characters long.")
 		return
 	}
-
-	if !compat.ValidEmail(email) {
+	if !validation.ValidEmail(email) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid email address.")
 		return
 	}
 
-	passwordHash, err := auth.HashPassword(body.Password, auth.DefaultPasswordParams)
-	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Could not create user. Please try again.")
-		return
-	}
-
-	id, err := h.Store.CreateUser(ctx, name, username, email, passwordHash)
+	id, err := h.Service.CreateUser(r.Context(), CreateUserCommand{
+		Name: name, Username: username, Email: email, Password: body.Password,
+	})
 	if err != nil {
 		if errors.Is(err, store.ErrConflict) {
 			httpx.WriteMessage(w, http.StatusConflict, "User with this username or email already exists.")
 			return
 		}
-
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Could not create user. Please try again.")
 		return
 	}
@@ -113,11 +78,10 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	username := strings.ToLower(r.PathValue("username"))
 	currentUserID, _ := httpx.UserID(r)
 
-	user, found, err := h.Store.GetUserByUsername(ctx, username, currentUserID)
+	user, found, err := h.Service.GetUserByUsername(r.Context(), username, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -127,7 +91,6 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Email is private: only expose it on the requester's own profile.
 	if currentUserID, ok := httpx.UserID(r); !ok || currentUserID != strconv.Itoa(user.ID) {
 		user.Email = ""
 	}
@@ -142,7 +105,7 @@ func (h Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, found, err := h.Store.GetUserByID(r.Context(), currentUserID, currentUserID)
+	user, found, err := h.Service.GetUserByID(r.Context(), currentUserID, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -156,7 +119,6 @@ func (h Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	userID := r.PathValue("userId")
 	currentUserID, ok := httpx.UserID(r)
 	if !ok {
@@ -193,11 +155,11 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Name and username are required.")
 		return
 	}
-	if !compat.ValidUsername(username) {
+	if !validation.ValidUsername(username) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
 	}
-	if !compat.ValidEmail(email) {
+	if !validation.ValidEmail(email) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid email address.")
 		return
 	}
@@ -206,13 +168,14 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if body.Avatar != nil {
 		avatar = *body.Avatar
 	}
-
 	if body.Bio != nil && len([]rune(*body.Bio)) > 300 {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Bio must be 300 characters or fewer.")
 		return
 	}
 
-	result, err := h.Store.UpdateUser(ctx, userID, name, username, email, avatar, body.Bio)
+	outcome, err := h.Service.UpdateProfile(r.Context(), UpdateProfileCommand{
+		UserID: userID, Name: name, Username: username, Email: email, Avatar: avatar, Bio: body.Bio,
+	})
 	if err != nil {
 		if errors.Is(err, store.ErrConflict) {
 			httpx.WriteMessage(w, http.StatusConflict, "This username or email is already in use.")
@@ -221,19 +184,15 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if !result.Updated {
+	if outcome == UpdateProfileInvalidAvatar {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Avatar upload is invalid or expired.")
 		return
 	}
 
-	if result.UnusedAvatar != "" {
-		uploads.DeleteUploadFile(h.ImageDir, result.UnusedAvatar)
-	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, oldPassword, password string) {
-	ctx := r.Context()
 	if oldPassword == "" || password == "" {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Both password and the current password are required.")
 		return
@@ -243,35 +202,20 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 		return
 	}
 
-	user, found, err := h.Store.GetUserWithID(ctx, userID)
+	currentSessionID, _ := httpx.GetSessionCookie(r)
+	outcome, err := h.Service.ChangePassword(r.Context(), ChangePasswordCommand{
+		UserID: userID, CurrentPassword: oldPassword, NewPassword: password, CurrentSessionID: currentSessionID,
+	})
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if !found {
+	switch outcome {
+	case ChangePasswordUserNotFound:
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 		return
-	}
-
-	valid, err := auth.VerifyPassword(oldPassword, user.PasswordHash)
-	if err != nil || !valid {
+	case ChangePasswordWrongPassword:
 		httpx.WriteMessage(w, http.StatusBadRequest, "Wrong password. Enter the correct current password.")
-		return
-	}
-
-	passwordHash, err := auth.HashPassword(password, auth.DefaultPasswordParams)
-	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	if err := h.Store.UpdatePassword(ctx, userID, passwordHash); err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-
-	currentSessionID, _ := httpx.GetSessionCookie(r)
-	if err := h.Store.DeleteOtherSessions(ctx, userID, currentSessionID); err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
@@ -279,15 +223,18 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 }
 
 func (h Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
-	h.updateFollow(w, r, h.Store.FollowUser)
+	h.updateFollow(w, r, h.Service.FollowUser)
 }
 
 func (h Handler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	h.updateFollow(w, r, h.Store.UnfollowUser)
+	h.updateFollow(w, r, h.Service.UnfollowUser)
 }
 
-func (h Handler) updateFollow(w http.ResponseWriter, r *http.Request, update func(context.Context, string, string) error) {
-	ctx := r.Context()
+func (h Handler) updateFollow(
+	w http.ResponseWriter,
+	r *http.Request,
+	update func(context.Context, FollowCommand) error,
+) {
 	currentUserID, ok := httpx.UserID(r)
 	if !ok {
 		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
@@ -299,7 +246,8 @@ func (h Handler) updateFollow(w http.ResponseWriter, r *http.Request, update fun
 		return
 	}
 
-	if err := update(ctx, currentUserID, targetUserID); err != nil {
+	err := update(r.Context(), FollowCommand{FollowerID: currentUserID, FolloweeID: targetUserID})
+	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			httpx.WriteMessage(w, http.StatusNotFound, "User Not Found")
 			return

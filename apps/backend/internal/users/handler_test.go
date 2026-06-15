@@ -9,131 +9,102 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/auth"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/store"
 )
 
-type fakeStore struct {
-	id                 int
-	err                error
-	created            bool
-	name               string
-	username           string
-	email              string
-	hash               string
-	user               User
-	found              bool
-	credentials        UserCredentials
-	updated            UpdateUserResult
-	updatedPassword    string
-	deletedOtherUserID string
+type fakeService struct {
+	createID             int
+	createErr            error
+	createCommand        CreateUserCommand
+	user                 User
+	found                bool
+	getErr               error
+	profileCommand       UpdateProfileCommand
+	profileOutcome       UpdateProfileOutcome
+	profileErr           error
+	passwordCommand      ChangePasswordCommand
+	passwordOutcome      ChangePasswordOutcome
+	passwordErr          error
+	followCommand        FollowCommand
+	followErr            error
+	unfollowCommand      FollowCommand
+	unfollowErr          error
+	getByUsernameCurrent string
+	getByID              string
 }
 
-func (s *fakeStore) CreateUser(_ context.Context, name, username, email, passwordHash string) (int, error) {
-	s.created = true
-	s.name = name
-	s.username = username
-	s.email = email
-	s.hash = passwordHash
-	return s.id, s.err
+func (s *fakeService) CreateUser(_ context.Context, command CreateUserCommand) (int, error) {
+	s.createCommand = command
+	return s.createID, s.createErr
 }
 
-func (s *fakeStore) GetUserByUsername(_ context.Context, _, _ string) (User, bool, error) {
-	return s.user, s.found, s.err
+func (s *fakeService) GetUserByUsername(_ context.Context, _, currentUserID string) (User, bool, error) {
+	s.getByUsernameCurrent = currentUserID
+	return s.user, s.found, s.getErr
 }
 
-func (s *fakeStore) GetUserByID(_ context.Context, _, _ string) (User, bool, error) {
-	return s.user, s.found, s.err
+func (s *fakeService) GetUserByID(_ context.Context, userID, _ string) (User, bool, error) {
+	s.getByID = userID
+	return s.user, s.found, s.getErr
 }
 
-func (s *fakeStore) GetUserWithID(_ context.Context, _ string) (UserCredentials, bool, error) {
-	return s.credentials, s.found, s.err
+func (s *fakeService) UpdateProfile(_ context.Context, command UpdateProfileCommand) (UpdateProfileOutcome, error) {
+	s.profileCommand = command
+	return s.profileOutcome, s.profileErr
 }
 
-func (s *fakeStore) UpdateUser(_ context.Context, _, name, username, email, _ string, _ *string) (UpdateUserResult, error) {
-	s.name = name
-	s.username = username
-	s.email = email
-	return s.updated, s.err
+func (s *fakeService) ChangePassword(_ context.Context, command ChangePasswordCommand) (ChangePasswordOutcome, error) {
+	s.passwordCommand = command
+	return s.passwordOutcome, s.passwordErr
 }
 
-func (s *fakeStore) UpdatePassword(_ context.Context, userID, passwordHash string) error {
-	s.updatedPassword = passwordHash
-	return s.err
+func (s *fakeService) FollowUser(_ context.Context, command FollowCommand) error {
+	s.followCommand = command
+	return s.followErr
 }
 
-func (s *fakeStore) DeleteOtherSessions(_ context.Context, userID, _ string) error {
-	s.deletedOtherUserID = userID
-	return s.err
-}
-
-func (s *fakeStore) FollowUser(_ context.Context, _, _ string) error {
-	return s.err
-}
-
-func (s *fakeStore) UnfollowUser(_ context.Context, _, _ string) error {
-	return s.err
+func (s *fakeService) UnfollowUser(_ context.Context, command FollowCommand) error {
+	s.unfollowCommand = command
+	return s.unfollowErr
 }
 
 func TestCreateUserValidation(t *testing.T) {
 	tests := []struct {
-		name   string
-		body   string
-		status int
-		msg    string
+		name    string
+		body    string
+		message string
 	}{
-		{
-			name:   "missing field",
-			body:   `{"name":"Test","username":"test","email":"test@example.com"}`,
-			status: http.StatusBadRequest,
-			msg:    "Name, username, email and password are required.",
-		},
-		{
-			name:   "short password",
-			body:   `{"name":"Test","username":"test","email":"test@example.com","password":"short"}`,
-			status: http.StatusBadRequest,
-			msg:    "Password must be between 8 and 128 characters long.",
-		},
-		{
-			name:   "long password",
-			body:   `{"name":"Test","username":"test","email":"test@example.com","password":"` + strings.Repeat("a", 129) + `"}`,
-			status: http.StatusBadRequest,
-			msg:    "Password must be between 8 and 128 characters long.",
-		},
-		{
-			name:   "invalid email",
-			body:   `{"name":"Test","username":"test","email":"invalid","password":"password123"}`,
-			status: http.StatusBadRequest,
-			msg:    "Invalid email address.",
-		},
+		{"missing field", `{"name":"Test","username":"test","email":"test@example.com"}`, "Name, username, email and password are required."},
+		{"invalid username", `{"name":"Test","username":"bad-name","email":"test@example.com","password":"password123"}`, "Username must be 3-30 characters"},
+		{"short password", `{"name":"Test","username":"test","email":"test@example.com","password":"short"}`, "Password must be between 8 and 128 characters long."},
+		{"long password", `{"name":"Test","username":"test","email":"test@example.com","password":"` + strings.Repeat("a", 129) + `"}`, "Password must be between 8 and 128 characters long."},
+		{"invalid email", `{"name":"Test","username":"test","email":"invalid","password":"password123"}`, "Invalid email address."},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := &fakeStore{}
-			handler := Handler{Store: store}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := &fakeService{}
 			res := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(test.body))
 
-			handler.CreateUser(res, req)
+			NewHandler(service).CreateUser(res, req)
 
-			if res.Code != tt.status {
-				t.Fatalf("status = %d, want %d", res.Code, tt.status)
+			if res.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
 			}
-			if !strings.Contains(res.Body.String(), tt.msg) {
-				t.Fatalf("body = %q, want message %q", res.Body.String(), tt.msg)
+			if !strings.Contains(res.Body.String(), test.message) {
+				t.Fatalf("body = %q, want message %q", res.Body.String(), test.message)
 			}
-			if store.created {
-				t.Fatal("invalid request should not create user")
+			if service.createCommand != (CreateUserCommand{}) {
+				t.Fatal("invalid request reached service")
 			}
 		})
 	}
 }
 
-func TestCreateUserTrimsAndNormalizes(t *testing.T) {
-	store := &fakeStore{id: 12}
-	handler := Handler{Store: store}
+func TestCreateUserNormalizesInput(t *testing.T) {
+	service := &fakeService{createID: 12}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{
 		"name":" Test User ",
@@ -142,332 +113,288 @@ func TestCreateUserTrimsAndNormalizes(t *testing.T) {
 		"password":" password123 "
 	}`))
 
-	handler.CreateUser(res, req)
+	NewHandler(service).CreateUser(res, req)
 
-	if res.Code != http.StatusCreated {
-		t.Fatalf("status = %d, want %d; body=%s", res.Code, http.StatusCreated, res.Body.String())
+	if res.Code != http.StatusCreated || strings.TrimSpace(res.Body.String()) != `{"id":12}` {
+		t.Fatalf("response = %d %q", res.Code, res.Body.String())
 	}
-	if store.name != "Test User" || store.username != "test" || store.email != "test@example.com" {
-		t.Fatalf("stored normalized fields = %q %q %q", store.name, store.username, store.email)
+	want := CreateUserCommand{
+		Name: "Test User", Username: "test", Email: "test@example.com", Password: " password123 ",
 	}
-	if !strings.HasPrefix(store.hash, "$argon2id$") {
-		t.Fatalf("stored password hash = %q", store.hash)
-	}
-	if strings.TrimSpace(res.Body.String()) != `{"id":12}` {
-		t.Fatalf("body = %q", res.Body.String())
+	if service.createCommand != want {
+		t.Fatalf("command = %#v, want %#v", service.createCommand, want)
 	}
 }
 
-func TestCreateUserConflict(t *testing.T) {
-	handler := Handler{Store: &fakeStore{err: store.ErrConflict}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{
-		"name":"Test",
-		"username":"test",
-		"email":"test@example.com",
-		"password":"password123"
-	}`))
-
-	handler.CreateUser(res, req)
-
-	if res.Code != http.StatusConflict {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusConflict)
+func TestCreateUserErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		status  int
+		message string
+	}{
+		{"conflict", store.ErrConflict, http.StatusConflict, "User with this username or email already exists."},
+		{"internal", errors.New("database unavailable"), http.StatusInternalServerError, "Could not create user. Please try again."},
 	}
-	if !strings.Contains(res.Body.String(), "User with this username or email already exists.") {
-		t.Fatalf("body = %q", res.Body.String())
-	}
-}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := &fakeService{createErr: test.err}
+			res := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(
+				`{"name":"Test","username":"test","email":"test@example.com","password":"password123"}`,
+			))
 
-func TestCreateUserRejectsInvalidUsername(t *testing.T) {
-	store := &fakeStore{}
-	handler := Handler{Store: store}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{
-		"name":"Test",
-		"username":"bad-name",
-		"email":"test@example.com",
-		"password":"password123"
-	}`))
+			NewHandler(service).CreateUser(res, req)
 
-	handler.CreateUser(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
-	}
-	if store.created {
-		t.Fatal("invalid username should not create user")
+			if res.Code != test.status || !strings.Contains(res.Body.String(), test.message) {
+				t.Fatalf("response = %d %q", res.Code, res.Body.String())
+			}
+		})
 	}
 }
 
-func TestCreateUserStoreError(t *testing.T) {
-	handler := Handler{Store: &fakeStore{err: errors.New("database unavailable")}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{
-		"name":"Test",
-		"username":"test",
-		"email":"test@example.com",
-		"password":"password123"
-	}`))
-
-	handler.CreateUser(res, req)
-
-	if res.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusInternalServerError)
-	}
-}
-
-func TestGetUser(t *testing.T) {
-	avatar := "avatar.jpg"
-	bio := "hello"
-	handler := Handler{Store: &fakeStore{
+func TestGetUserHidesEmailFromOtherUsers(t *testing.T) {
+	service := &fakeService{
 		found: true,
 		user: User{
-			ID:       1,
-			Name:     "Test",
-			Username: "test",
-			Email:    "test@example.com",
-			Avatar:   &avatar,
-			Bio:      &bio,
-			Posts:    2,
-			Likes:    3,
-			Created:  time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			ID: 2, Username: "test", Email: "private@example.com",
+			Created: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
-	}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/users/test", nil)
-	req.SetPathValue("username", "test")
-
-	handler.GetUser(res, req)
-
-	if res.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
 	}
-	if !strings.Contains(res.Body.String(), `"username":"test"`) {
-		t.Fatalf("body = %q", res.Body.String())
+	res := httptest.NewRecorder()
+	req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/users/test", nil), "1")
+	req.SetPathValue("username", "TEST")
+
+	NewHandler(service).GetUser(res, req)
+
+	if res.Code != http.StatusOK || strings.Contains(res.Body.String(), "private@example.com") {
+		t.Fatalf("response = %d %q", res.Code, res.Body.String())
+	}
+	if service.getByUsernameCurrent != "1" {
+		t.Fatalf("current user ID = %q, want 1", service.getByUsernameCurrent)
 	}
 }
 
 func TestGetUserNotFound(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/users/missing", nil)
 	req.SetPathValue("username", "missing")
 
-	handler.GetUser(res, req)
+	NewHandler(&fakeService{}).GetUser(res, req)
 
-	if res.Code != http.StatusNotFound {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
+	if res.Code != http.StatusNotFound || !strings.Contains(res.Body.String(), "Not Found") {
+		t.Fatalf("response = %d %q", res.Code, res.Body.String())
 	}
 }
 
 func TestGetCurrentUserUsesSessionIdentity(t *testing.T) {
-	handler := Handler{Store: &fakeStore{
-		found: true,
-		user:  User{ID: 7, Username: "test", Email: "private@example.com"},
-	}}
+	service := &fakeService{found: true, user: User{ID: 7, Email: "private@example.com"}}
 	res := httptest.NewRecorder()
 	req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/users/me", nil), "7")
 
-	handler.GetCurrentUser(res, req)
+	NewHandler(service).GetCurrentUser(res, req)
 
-	if res.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	if res.Code != http.StatusOK || !strings.Contains(res.Body.String(), `"email":"private@example.com"`) {
+		t.Fatalf("response = %d %q", res.Code, res.Body.String())
 	}
-	if !strings.Contains(res.Body.String(), `"email":"private@example.com"`) {
-		t.Fatalf("body = %q", res.Body.String())
+	if service.getByID != "7" {
+		t.Fatalf("user ID = %q, want 7", service.getByID)
 	}
 }
 
-func TestUpdateUserForbidden(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/users/2", strings.NewReader(`{}`))
-	req.SetPathValue("userId", "2")
-	req = httpx.WithUserID(req, "1")
+func TestUpdateUserAuthorization(t *testing.T) {
+	tests := []struct {
+		name   string
+		userID string
+		status int
+	}{
+		{"unauthorized", "", http.StatusUnauthorized},
+		{"forbidden", "1", http.StatusForbidden},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/users/2", strings.NewReader(`{}`))
+			req.SetPathValue("userId", "2")
+			if test.userID != "" {
+				req = httpx.WithUserID(req, test.userID)
+			}
 
-	handler.UpdateUser(res, req)
+			NewHandler(&fakeService{}).UpdateUser(res, req)
 
-	if res.Code != http.StatusForbidden {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusForbidden)
+			if res.Code != test.status {
+				t.Fatalf("status = %d, want %d", res.Code, test.status)
+			}
+		})
 	}
 }
 
 func TestUpdateUserProfile(t *testing.T) {
-	store := &fakeStore{updated: UpdateUserResult{Updated: true}}
-	handler := Handler{Store: store}
+	service := &fakeService{}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
-		"name":" Test User ",
-		"username":" Test ",
-		"email":" Test@Example.COM "
+		"name":" Test User ","username":" Test ","email":" Test@Example.COM ","avatar":"avatar.jpg"
 	}`))
 	req.SetPathValue("userId", "1")
 	req = httpx.WithUserID(req, "1")
 
-	handler.UpdateUser(res, req)
+	NewHandler(service).UpdateUser(res, req)
 
 	if res.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want %d; body=%s", res.Code, http.StatusNoContent, res.Body.String())
+		t.Fatalf("response = %d %q", res.Code, res.Body.String())
 	}
-	if store.name != "Test User" || store.username != "test" || store.email != "test@example.com" {
-		t.Fatalf("stored normalized fields = %q %q %q", store.name, store.username, store.email)
-	}
-}
-
-func TestUpdateUserConflict(t *testing.T) {
-	handler := Handler{Store: &fakeStore{err: store.ErrConflict}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
-		"name":"Test",
-		"username":"existing",
-		"email":"test@example.com"
-	}`))
-	req.SetPathValue("userId", "1")
-	req = httpx.WithUserID(req, "1")
-
-	handler.UpdateUser(res, req)
-
-	if res.Code != http.StatusConflict {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusConflict)
-	}
-	if !strings.Contains(res.Body.String(), "This username or email is already in use.") {
-		t.Fatalf("body = %q", res.Body.String())
+	if service.profileCommand.Name != "Test User" ||
+		service.profileCommand.Username != "test" ||
+		service.profileCommand.Email != "test@example.com" ||
+		service.profileCommand.Avatar != "avatar.jpg" {
+		t.Fatalf("command = %#v", service.profileCommand)
 	}
 }
 
-func TestUpdateUserInvalidAvatar(t *testing.T) {
-	handler := Handler{Store: &fakeStore{updated: UpdateUserResult{Updated: false}}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
-		"name":"Test",
-		"username":"test",
-		"email":"test@example.com",
-		"avatar":"missing.jpg"
-	}`))
-	req.SetPathValue("userId", "1")
-	req = httpx.WithUserID(req, "1")
-
-	handler.UpdateUser(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+func TestUpdateUserProfileOutcomes(t *testing.T) {
+	tests := []struct {
+		name    string
+		outcome UpdateProfileOutcome
+		err     error
+		status  int
+		message string
+	}{
+		{"invalid avatar", UpdateProfileInvalidAvatar, nil, http.StatusBadRequest, "Avatar upload is invalid or expired."},
+		{"conflict", UpdateProfileUpdated, store.ErrConflict, http.StatusConflict, "This username or email is already in use."},
+		{"internal", UpdateProfileUpdated, errors.New("failed"), http.StatusInternalServerError, "Internal Server Error"},
 	}
-	if !strings.Contains(res.Body.String(), "Avatar upload is invalid or expired.") {
-		t.Fatalf("body = %q", res.Body.String())
-	}
-}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := &fakeService{profileOutcome: test.outcome, profileErr: test.err}
+			res := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(
+				`{"name":"Test","username":"test","email":"test@example.com"}`,
+			))
+			req.SetPathValue("userId", "1")
+			req = httpx.WithUserID(req, "1")
 
-func TestUpdatePasswordWrongPassword(t *testing.T) {
-	oldHash, err := auth.HashPassword("old-password", auth.DefaultPasswordParams)
-	if err != nil {
-		t.Fatalf("HashPassword returned error: %v", err)
-	}
-	handler := Handler{Store: &fakeStore{
-		found:       true,
-		credentials: UserCredentials{ID: 1, PasswordHash: oldHash},
-	}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
-		"oldPassword":"wrong-password",
-		"password":"new-password"
-	}`))
-	req.SetPathValue("userId", "1")
-	req = httpx.WithUserID(req, "1")
+			NewHandler(service).UpdateUser(res, req)
 
-	handler.UpdateUser(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
-	}
-	if !strings.Contains(res.Body.String(), "Wrong password") {
-		t.Fatalf("body = %q", res.Body.String())
+			if res.Code != test.status || !strings.Contains(res.Body.String(), test.message) {
+				t.Fatalf("response = %d %q", res.Code, res.Body.String())
+			}
+		})
 	}
 }
 
-func TestUpdatePassword(t *testing.T) {
-	oldHash, err := auth.HashPassword("old-password", auth.DefaultPasswordParams)
-	if err != nil {
-		t.Fatalf("HashPassword returned error: %v", err)
+func TestUpdatePasswordOutcomes(t *testing.T) {
+	tests := []struct {
+		name    string
+		outcome ChangePasswordOutcome
+		err     error
+		status  int
+		message string
+	}{
+		{"changed", ChangePasswordChanged, nil, http.StatusNoContent, ""},
+		{"missing user", ChangePasswordUserNotFound, nil, http.StatusNotFound, "Not Found"},
+		{"wrong password", ChangePasswordWrongPassword, nil, http.StatusBadRequest, "Wrong password"},
+		{"internal", ChangePasswordChanged, errors.New("failed"), http.StatusInternalServerError, "Internal Server Error"},
 	}
-	store := &fakeStore{
-		found:       true,
-		credentials: UserCredentials{ID: 1, PasswordHash: oldHash},
-	}
-	handler := Handler{Store: store}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
-		"oldPassword":"old-password",
-		"password":"new-password"
-	}`))
-	req.SetPathValue("userId", "1")
-	req.AddCookie(&http.Cookie{Name: "session", Value: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
-	req = httpx.WithUserID(req, "1")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := &fakeService{passwordOutcome: test.outcome, passwordErr: test.err}
+			res := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(
+				`{"oldPassword":"old-password","password":"new-password"}`,
+			))
+			req.SetPathValue("userId", "1")
+			req.AddCookie(&http.Cookie{Name: "session", Value: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
+			req = httpx.WithUserID(req, "1")
 
-	handler.UpdateUser(res, req)
+			NewHandler(service).UpdateUser(res, req)
 
-	if res.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want %d; body=%s", res.Code, http.StatusNoContent, res.Body.String())
-	}
-	if store.updatedPassword == "" {
-		t.Fatal("expected password hash update")
-	}
-	if store.deletedOtherUserID != "1" {
-		t.Fatalf("deleted sessions for user %q, want 1", store.deletedOtherUserID)
-	}
-}
-
-func TestFollowUser(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users/2/follow", nil)
-	req.SetPathValue("userId", "2")
-	req = httpx.WithUserID(req, "1")
-
-	handler.FollowUser(res, req)
-
-	if res.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
+			if res.Code != test.status || !strings.Contains(res.Body.String(), test.message) {
+				t.Fatalf("response = %d %q", res.Code, res.Body.String())
+			}
+			if test.err == nil && service.passwordCommand.CurrentSessionID != "AAAAAAAAAAAAAAAAAAAAAAAAAAAA" {
+				t.Fatalf("session ID = %q", service.passwordCommand.CurrentSessionID)
+			}
+		})
 	}
 }
 
-func TestFollowSelf(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users/1/follow", nil)
-	req.SetPathValue("userId", "1")
-	req = httpx.WithUserID(req, "1")
+func TestFollowRoutes(t *testing.T) {
+	service := &fakeService{}
+	handler := NewHandler(service)
 
-	handler.FollowUser(res, req)
+	followRes := httptest.NewRecorder()
+	followReq := httpx.WithUserID(httptest.NewRequest(http.MethodPost, "/users/2/follow", nil), "1")
+	followReq.SetPathValue("userId", "2")
+	handler.FollowUser(followRes, followReq)
 
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	unfollowRes := httptest.NewRecorder()
+	unfollowReq := httpx.WithUserID(httptest.NewRequest(http.MethodDelete, "/users/2/follow", nil), "1")
+	unfollowReq.SetPathValue("userId", "2")
+	handler.UnfollowUser(unfollowRes, unfollowReq)
+
+	want := FollowCommand{FollowerID: "1", FolloweeID: "2"}
+	if followRes.Code != http.StatusNoContent || unfollowRes.Code != http.StatusNoContent {
+		t.Fatalf("statuses = %d, %d", followRes.Code, unfollowRes.Code)
+	}
+	if service.followCommand != want || service.unfollowCommand != want {
+		t.Fatalf("commands = %#v, %#v", service.followCommand, service.unfollowCommand)
 	}
 }
 
-func TestFollowUserNotFound(t *testing.T) {
-	handler := Handler{Store: &fakeStore{err: store.ErrNotFound}}
+func TestFollowUserErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		current string
+		target  string
+		err     error
+		status  int
+		message string
+	}{
+		{"unauthorized", "", "2", nil, http.StatusUnauthorized, "Unauthorized"},
+		{"self", "1", "1", nil, http.StatusBadRequest, "Cannot follow yourself."},
+		{"not found", "1", "2", store.ErrNotFound, http.StatusNotFound, "User Not Found"},
+		{"internal", "1", "2", errors.New("failed"), http.StatusInternalServerError, "Internal Server Error"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := &fakeService{followErr: test.err}
+			res := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/users/"+test.target+"/follow", nil)
+			req.SetPathValue("userId", test.target)
+			if test.current != "" {
+				req = httpx.WithUserID(req, test.current)
+			}
+
+			NewHandler(service).FollowUser(res, req)
+
+			if res.Code != test.status || !strings.Contains(res.Body.String(), test.message) {
+				t.Fatalf("response = %d %q", res.Code, res.Body.String())
+			}
+		})
+	}
+}
+
+func TestRegisterRoutes(t *testing.T) {
+	service := &fakeService{createID: 1}
+	handler := NewHandler(service)
+	public := http.NewServeMux()
+	protected := http.NewServeMux()
+	RegisterPublicRoutes(public, handler)
+	RegisterProtectedRoutes(protected, handler)
+
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users/999/follow", nil)
-	req.SetPathValue("userId", "999")
-	req = httpx.WithUserID(req, "1")
+	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(
+		`{"name":"Test","username":"test","email":"test@example.com","password":"password123"}`,
+	))
+	public.ServeHTTP(res, req)
+	if res.Code != http.StatusCreated {
+		t.Fatalf("public route status = %d", res.Code)
+	}
 
-	handler.FollowUser(res, req)
-
+	res = httptest.NewRecorder()
+	req = httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/users/me", nil), "1")
+	protected.ServeHTTP(res, req)
 	if res.Code != http.StatusNotFound {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
-	}
-}
-
-func TestUnfollowUser(t *testing.T) {
-	handler := Handler{Store: &fakeStore{}}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/users/2/follow", nil)
-	req.SetPathValue("userId", "2")
-	req = httpx.WithUserID(req, "1")
-
-	handler.UnfollowUser(res, req)
-
-	if res.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
+		t.Fatalf("protected route status = %d", res.Code)
 	}
 }

@@ -1,0 +1,100 @@
+package users
+
+import (
+	"context"
+
+	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/uploads"
+)
+
+type Service struct {
+	repository Repository
+	imageDir   string
+}
+
+var _ HandlerService = (*Service)(nil)
+
+func NewService(repository Repository, imageDir string) *Service {
+	return &Service{repository: repository, imageDir: imageDir}
+}
+
+func (s *Service) CreateUser(ctx context.Context, command CreateUserCommand) (int, error) {
+	passwordHash, err := auth.HashPassword(command.Password, auth.DefaultPasswordParams)
+	if err != nil {
+		return 0, err
+	}
+
+	return s.repository.CreateUser(
+		ctx,
+		command.Name,
+		command.Username,
+		command.Email,
+		passwordHash,
+	)
+}
+
+func (s *Service) GetUserByUsername(ctx context.Context, username, currentUserID string) (User, bool, error) {
+	return s.repository.GetUserByUsername(ctx, username, currentUserID)
+}
+
+func (s *Service) GetUserByID(ctx context.Context, userID, currentUserID string) (User, bool, error) {
+	return s.repository.GetUserByID(ctx, userID, currentUserID)
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, command UpdateProfileCommand) (UpdateProfileOutcome, error) {
+	result, err := s.repository.UpdateUser(
+		ctx,
+		command.UserID,
+		command.Name,
+		command.Username,
+		command.Email,
+		command.Avatar,
+		command.Bio,
+	)
+	if err != nil {
+		return UpdateProfileUpdated, err
+	}
+	if !result.Updated {
+		return UpdateProfileInvalidAvatar, nil
+	}
+
+	if result.UnusedAvatar != "" {
+		uploads.DeleteUploadFile(s.imageDir, result.UnusedAvatar)
+	}
+	return UpdateProfileUpdated, nil
+}
+
+func (s *Service) ChangePassword(ctx context.Context, command ChangePasswordCommand) (ChangePasswordOutcome, error) {
+	user, found, err := s.repository.GetUserWithID(ctx, command.UserID)
+	if err != nil {
+		return ChangePasswordChanged, err
+	}
+	if !found {
+		return ChangePasswordUserNotFound, nil
+	}
+
+	valid, err := auth.VerifyPassword(command.CurrentPassword, user.PasswordHash)
+	if err != nil || !valid {
+		return ChangePasswordWrongPassword, nil
+	}
+
+	passwordHash, err := auth.HashPassword(command.NewPassword, auth.DefaultPasswordParams)
+	if err != nil {
+		return ChangePasswordChanged, err
+	}
+	if err := s.repository.ChangePassword(
+		ctx, command.UserID, passwordHash, command.CurrentSessionID,
+	); err != nil {
+		return ChangePasswordChanged, err
+	}
+
+	return ChangePasswordChanged, nil
+}
+
+func (s *Service) FollowUser(ctx context.Context, command FollowCommand) error {
+	return s.repository.FollowUser(ctx, command.FollowerID, command.FolloweeID)
+}
+
+func (s *Service) UnfollowUser(ctx context.Context, command FollowCommand) error {
+	return s.repository.UnfollowUser(ctx, command.FollowerID, command.FolloweeID)
+}

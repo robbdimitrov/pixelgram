@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/compat"
+	"pixelgram/backend/internal/pagination"
 )
 
 const testPublicID = "550e8400-e29b-41d4-a716-446655440000"
 
 type fakeStore struct {
 	requestedPostID string
-	requestedCursor *compat.Cursor
+	requestedCursor *pagination.Cursor
 	requestedLimit  int
 }
 
@@ -26,7 +26,7 @@ func (s *fakeStore) CreateComment(context.Context, string, string, string) (Comm
 	return Comment{}, nil
 }
 
-func (s *fakeStore) ListComments(_ context.Context, postID string, cursor *compat.Cursor, limit int) ([]Comment, *compat.Cursor, error) {
+func (s *fakeStore) ListComments(_ context.Context, postID string, cursor *pagination.Cursor, limit int) ([]Comment, *pagination.Cursor, error) {
 	s.requestedPostID = postID
 	s.requestedCursor = cursor
 	s.requestedLimit = limit
@@ -38,11 +38,11 @@ func (s *fakeStore) DeleteComment(context.Context, string, string, string) (bool
 }
 
 func TestListCommentsPagination(t *testing.T) {
-	cursor := compat.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
+	cursor := pagination.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
 	store := &fakeStore{}
-	handler := Handler{Store: store}
+	handler := Handler{Service: NewService(store)}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts/"+testPublicID+"/comments?cursor="+compat.EncodeCursor(cursor)+"&limit=25", nil)
+	req := httptest.NewRequest(http.MethodGet, "/posts/"+testPublicID+"/comments?cursor="+pagination.EncodeCursor(cursor)+"&limit=25", nil)
 	req.SetPathValue("publicId", testPublicID)
 
 	handler.ListComments(res, req)

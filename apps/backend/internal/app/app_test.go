@@ -11,6 +11,43 @@ import (
 	"pixelgram/backend/internal/httpx"
 )
 
+func TestRouteContract(t *testing.T) {
+	want := []Route{
+		{Method: "GET", Path: "/health"},
+		{Method: "POST", Path: "/users"},
+		{Method: "POST", Path: "/sessions"},
+		{Method: "DELETE", Path: "/sessions"},
+		{Method: "GET", Path: "/uploads/"},
+		{Method: "GET", Path: "/users/me", Authenticated: true},
+		{Method: "GET", Path: "/users/{username}", Authenticated: true},
+		{Method: "PUT", Path: "/users/{userId}", Authenticated: true},
+		{Method: "POST", Path: "/users/{userId}/follow", Authenticated: true},
+		{Method: "DELETE", Path: "/users/{userId}/follow", Authenticated: true},
+		{Method: "POST", Path: "/uploads", Authenticated: true},
+		{Method: "POST", Path: "/posts", Authenticated: true},
+		{Method: "GET", Path: "/posts", Authenticated: true},
+		{Method: "GET", Path: "/users/{username}/posts", Authenticated: true},
+		{Method: "GET", Path: "/users/{username}/likes", Authenticated: true},
+		{Method: "GET", Path: "/posts/{publicId}", Authenticated: true},
+		{Method: "DELETE", Path: "/posts/{publicId}", Authenticated: true},
+		{Method: "POST", Path: "/posts/{publicId}/likes", Authenticated: true},
+		{Method: "DELETE", Path: "/posts/{publicId}/likes", Authenticated: true},
+		{Method: "GET", Path: "/posts/{publicId}/comments", Authenticated: true},
+		{Method: "POST", Path: "/posts/{publicId}/comments", Authenticated: true},
+		{Method: "DELETE", Path: "/posts/{publicId}/comments/{commentId}", Authenticated: true},
+	}
+
+	got := Routes()
+	if len(got) != len(want) {
+		t.Fatalf("route count = %d, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("route[%d] = %+v, want %+v", i, got[i], want[i])
+		}
+	}
+}
+
 type fakeSessionStore struct {
 	refreshSession httpx.Session
 	refreshErr     error
@@ -23,7 +60,7 @@ func (store *fakeSessionStore) RefreshSession(_ context.Context, _ string) (http
 }
 
 func TestHealthEndpoint(t *testing.T) {
-	app := New(Config{}, Stores{SessionAuth: &fakeSessionStore{}})
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{}})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -34,8 +71,20 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 }
 
+func TestLogoutDoesNotRequireAuthenticatedSession(t *testing.T) {
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{}})
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodDelete, "/sessions", nil)
+	app.ServeHTTP(res, req)
+
+	if res.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
+	}
+}
+
 func TestNotFoundJSON(t *testing.T) {
-	app := New(Config{}, Stores{SessionAuth: &fakeSessionStore{
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{
 		refreshSession: httpx.Session{ID: "hashed-session-id", UserID: "1"},
 	}})
 
@@ -54,7 +103,7 @@ func TestNotFoundJSON(t *testing.T) {
 
 func TestOriginGuardRejectsCrossOriginStateChangingRequests(t *testing.T) {
 	store := &fakeSessionStore{}
-	app := New(Config{}, Stores{SessionAuth: store})
+	app := New(Config{}, Repositories{SessionAuth: store})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader(`{}`))
@@ -71,7 +120,7 @@ func TestOriginGuardRejectsCrossOriginStateChangingRequests(t *testing.T) {
 }
 
 func TestOriginGuardRejectsMalformedOrigins(t *testing.T) {
-	app := New(Config{}, Stores{SessionAuth: &fakeSessionStore{}})
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{}})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader(`{}`))
@@ -84,7 +133,7 @@ func TestOriginGuardRejectsMalformedOrigins(t *testing.T) {
 }
 
 func TestSessionMissingCookie(t *testing.T) {
-	app := New(Config{}, Stores{SessionAuth: &fakeSessionStore{}})
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{}})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
@@ -97,7 +146,7 @@ func TestSessionMissingCookie(t *testing.T) {
 
 func TestSessionMalformedCookieClearsWithoutStore(t *testing.T) {
 	store := &fakeSessionStore{}
-	app := New(Config{}, Stores{SessionAuth: store})
+	app := New(Config{}, Repositories{SessionAuth: store})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
@@ -116,7 +165,7 @@ func TestSessionMalformedCookieClearsWithoutStore(t *testing.T) {
 }
 
 func TestSessionStoreErrorDoesNotClearCookie(t *testing.T) {
-	app := New(Config{}, Stores{SessionAuth: &fakeSessionStore{refreshErr: errors.New("database unavailable")}})
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{refreshErr: errors.New("database unavailable")}})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
@@ -132,7 +181,7 @@ func TestSessionStoreErrorDoesNotClearCookie(t *testing.T) {
 }
 
 func TestSessionInvalidClearsCookie(t *testing.T) {
-	app := New(Config{}, Stores{SessionAuth: &fakeSessionStore{}})
+	app := New(Config{}, Repositories{SessionAuth: &fakeSessionStore{}})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/images", nil)
@@ -151,7 +200,7 @@ func TestSessionValidRefreshesCookie(t *testing.T) {
 	store := &fakeSessionStore{
 		refreshSession: httpx.Session{ID: "hashed-session-id", UserID: "1"},
 	}
-	app := New(Config{}, Stores{SessionAuth: store})
+	app := New(Config{}, Repositories{SessionAuth: store})
 
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)

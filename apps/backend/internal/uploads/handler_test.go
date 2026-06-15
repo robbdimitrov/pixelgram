@@ -3,6 +3,7 @@ package uploads
 import (
 	"bytes"
 	"context"
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,7 @@ import (
 
 type fakeStore struct {
 	expired     []string
+	createErr   error
 	capacity    bool
 	err         error
 	created     bool
@@ -29,6 +31,9 @@ func (s *fakeStore) DeleteExpiredUploads(_ context.Context) ([]string, error) {
 }
 
 func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) (bool, error) {
+	if s.createErr != nil {
+		return false, s.createErr
+	}
 	if s.err != nil {
 		return false, s.err
 	}
@@ -41,8 +46,33 @@ func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) (bo
 	return true, nil
 }
 
+func TestCreateFileDeletesExpiredUploadsWhenCreateFails(t *testing.T) {
+	dir := t.TempDir()
+	expired := "expired-upload"
+	if err := os.WriteFile(filepath.Join(dir, expired), []byte{0xff, 0xd8, 0xff}, 0o600); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+	store := &fakeStore{expired: []string{expired}, createErr: errors.New("database unavailable")}
+	handler := Handler{Service: NewService(store), ImageDir: dir}
+	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
+	if err != nil {
+		t.Fatalf("multipartRequest returned error: %v", err)
+	}
+	req = httpx.WithUserID(req, "1")
+	res := httptest.NewRecorder()
+
+	handler.CreateFile(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+	if _, err := os.Stat(filepath.Join(dir, expired)); !os.IsNotExist(err) {
+		t.Fatalf("expected expired upload to be deleted, stat err=%v", err)
+	}
+}
+
 func TestCreateFileMissingFile(t *testing.T) {
-	handler := Handler{Store: &fakeStore{capacity: true}, ImageDir: t.TempDir()}
+	handler := Handler{Service: NewService(&fakeStore{capacity: true}), ImageDir: t.TempDir()}
 	req, err := multipartRequest(nil)
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -62,7 +92,7 @@ func TestCreateFileMissingFile(t *testing.T) {
 
 func TestCreateFileRejectsNonImage(t *testing.T) {
 	store := &fakeStore{capacity: true}
-	handler := Handler{Store: store, ImageDir: t.TempDir()}
+	handler := Handler{Service: NewService(store), ImageDir: t.TempDir()}
 	req, err := multipartRequest([]byte("not an image"))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -85,7 +115,7 @@ func TestCreateFileRejectsNonImage(t *testing.T) {
 
 func TestCreateFileAcceptsImageSignature(t *testing.T) {
 	store := &fakeStore{capacity: true}
-	handler := Handler{Store: store, ImageDir: t.TempDir()}
+	handler := Handler{Service: NewService(store), ImageDir: t.TempDir()}
 	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -113,7 +143,7 @@ func TestCreateFileDeletesExpiredUploads(t *testing.T) {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
 	store := &fakeStore{capacity: true, expired: []string{expired}}
-	handler := Handler{Store: store, ImageDir: dir}
+	handler := Handler{Service: NewService(store), ImageDir: dir}
 	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -133,7 +163,7 @@ func TestCreateFileDeletesExpiredUploads(t *testing.T) {
 
 func TestCreateFileRejectsQuotaExhaustion(t *testing.T) {
 	store := &fakeStore{capacity: false}
-	handler := Handler{Store: store, ImageDir: t.TempDir()}
+	handler := Handler{Service: NewService(store), ImageDir: t.TempDir()}
 	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -152,7 +182,7 @@ func TestCreateFileRejectsQuotaExhaustion(t *testing.T) {
 }
 
 func TestCreateFileRejectsOversizedUpload(t *testing.T) {
-	handler := Handler{Store: &fakeStore{capacity: true}, ImageDir: t.TempDir()}
+	handler := Handler{Service: NewService(&fakeStore{capacity: true}), ImageDir: t.TempDir()}
 	req, err := multipartRequest(append([]byte{0xff, 0xd8, 0xff}, bytes.Repeat([]byte("x"), fileLimit)...))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)

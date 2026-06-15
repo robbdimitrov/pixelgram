@@ -29,9 +29,12 @@ lint:
 	@test -z "$$(gofmt -l $$(find apps/backend -name '*.go'))"
 	@cd apps/frontend && npm run lint
 
-.PHONY: test
+.PHONY: test test-integration
 test:
 	@echo "Testing backend..."
 	@cd apps/backend && go test ./...
 	@echo "Testing frontend..."
 	@cd apps/frontend && npm test
+
+test-integration:
+	@./scripts/test-backend-integration.sh

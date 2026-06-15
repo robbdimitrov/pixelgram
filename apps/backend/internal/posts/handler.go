@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"pixelgram/backend/internal/compat"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/uploads"
+	"pixelgram/backend/internal/validation"
 )
 
 type Post struct {
@@ -28,21 +28,19 @@ type Post struct {
 	Created     time.Time `json:"created"`
 }
 
-type Store interface {
-	CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error)
-	GetFeed(ctx context.Context, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
-	GetPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
-	GetLikedPosts(ctx context.Context, userID string, cursor *compat.Cursor, limit int, currentUserID string) ([]Post, *compat.Cursor, error)
-	GetPost(ctx context.Context, postID, currentUserID string) (Post, bool, error)
-	DeletePost(ctx context.Context, postID, userID string) (string, bool, error)
-	PostExists(ctx context.Context, postID string) (bool, error)
-	LikePost(ctx context.Context, postID, userID string) error
-	UnlikePost(ctx context.Context, postID, userID string) error
+type Application interface {
+	CreatePost(ctx context.Context, command CreatePostCommand) (CreatePostResult, error)
+	GetFeed(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error)
+	GetPosts(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error)
+	GetLikedPosts(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error)
+	GetPost(ctx context.Context, publicID, currentUserID string) (Post, bool, error)
+	DeletePost(ctx context.Context, command DeletePostCommand) error
+	LikePost(ctx context.Context, publicID, userID string) error
+	UnlikePost(ctx context.Context, publicID, userID string) error
 }
 
 type Handler struct {
-	Store    Store
-	ImageDir string
+	Service Application
 }
 
 func (h Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
@@ -68,29 +66,33 @@ func (h Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	if body.Description != "" {
 		description = &body.Description
 	}
-	publicID, created, err := h.Store.CreatePost(ctx, userID, body.Filename, description)
+	result, err := h.Service.CreatePost(ctx, CreatePostCommand{
+		UserID: userID, Filename: body.Filename, Description: description,
+	})
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if !created {
+	if !result.Created {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Upload is invalid or expired.")
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, map[string]string{"publicId": publicID})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]string{"publicId": result.PublicID})
 }
 
 func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
-	pagination, ok := compat.ParsePagination(r.URL.Query())
+	page, ok := pagination.ParsePagination(r.URL.Query())
 	if !ok {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid pagination parameters.")
 		return
 	}
 
-	items, nextCursor, err := h.Store.GetFeed(ctx, pagination.Cursor, pagination.Limit, currentUserID)
+	items, nextCursor, err := h.Service.GetFeed(ctx, ListQuery{
+		Cursor: page.Cursor, Limit: page.Limit, CurrentUserID: currentUserID,
+	})
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -100,23 +102,26 @@ func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GetPosts(w http.ResponseWriter, r *http.Request) {
-	h.getPostList(w, r, h.Store.GetPosts)
+	h.getPostList(w, r, h.Service.GetPosts)
 }
 
 func (h Handler) GetLikedPosts(w http.ResponseWriter, r *http.Request) {
-	h.getPostList(w, r, h.Store.GetLikedPosts)
+	h.getPostList(w, r, h.Service.GetLikedPosts)
 }
 
-func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, string, *compat.Cursor, int, string) ([]Post, *compat.Cursor, error)) {
+func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(context.Context, ListQuery) ([]Post, *pagination.Cursor, error)) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
-	pagination, ok := compat.ParsePagination(r.URL.Query())
+	page, ok := pagination.ParsePagination(r.URL.Query())
 	if !ok {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid pagination parameters.")
 		return
 	}
 
-	items, nextCursor, err := fetch(ctx, strings.ToLower(r.PathValue("username")), pagination.Cursor, pagination.Limit, currentUserID)
+	items, nextCursor, err := fetch(ctx, ListQuery{
+		Username: strings.ToLower(r.PathValue("username")), Cursor: page.Cursor,
+		Limit: page.Limit, CurrentUserID: currentUserID,
+	})
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 		return
@@ -129,19 +134,19 @@ func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(
 	writePostPage(w, items, nextCursor)
 }
 
-func writePostPage(w http.ResponseWriter, items []Post, nextCursor *compat.Cursor) {
-	httpx.WriteJSON(w, http.StatusOK, compat.NewCursorPage(items, nextCursor))
+func writePostPage(w http.ResponseWriter, items []Post, nextCursor *pagination.Cursor) {
+	httpx.WriteJSON(w, http.StatusOK, pagination.NewCursorPage(items, nextCursor))
 }
 
 func (h Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	currentUserID, _ := httpx.UserID(r)
 	publicID := r.PathValue("publicId")
-	if !compat.ValidUUID(publicID) {
+	if !validation.ValidUUID(publicID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
-	post, found, err := h.Store.GetPost(ctx, publicID, currentUserID)
+	post, found, err := h.Service.GetPost(ctx, publicID, currentUserID)
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -158,57 +163,44 @@ func (h Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	publicID := r.PathValue("publicId")
-	if !compat.ValidUUID(publicID) {
+	if !validation.ValidUUID(publicID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
-	filename, deleted, err := h.Store.DeletePost(ctx, publicID, userID)
-	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	if deleted {
-		uploads.DeleteUploadFile(h.ImageDir, filename)
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	if _, found, err := h.Store.GetPost(ctx, publicID, userID); err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-	} else if found {
+	err := h.Service.DeletePost(ctx, DeletePostCommand{PublicID: publicID, UserID: userID})
+	if errors.Is(err, store.ErrForbidden) {
 		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
-	} else {
+	} else if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
+	} else if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+	} else {
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
 func (h Handler) LikePost(w http.ResponseWriter, r *http.Request) {
-	h.updateLike(w, r, h.Store.LikePost)
+	h.updateLike(w, r, h.Service.LikePost)
 }
 
 func (h Handler) UnlikePost(w http.ResponseWriter, r *http.Request) {
-	h.updateLike(w, r, h.Store.UnlikePost)
+	h.updateLike(w, r, h.Service.UnlikePost)
 }
 
 func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(context.Context, string, string) error) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
 	publicID := r.PathValue("publicId")
-	if !compat.ValidUUID(publicID) {
+	if !validation.ValidUUID(publicID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid post ID.")
 		return
 	}
-	exists, err := h.Store.PostExists(ctx, publicID)
-	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	if !exists {
+	err := update(ctx, publicID, userID)
+	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
 		return
 	}
-
-	if err := update(ctx, publicID, userID); err != nil {
+	if err != nil {
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
