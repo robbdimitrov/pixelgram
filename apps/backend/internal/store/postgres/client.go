@@ -169,18 +169,27 @@ func (c *Client) FollowUser(ctx context.Context, followerID, followeeID string) 
 	if !c.breaker.allow() {
 		return store.ErrUnavailable
 	}
-	_, err := c.pool.Exec(
+	var targetExists bool
+	err := c.pool.QueryRow(
 		ctx,
-		`INSERT INTO follows (follower_id, followee_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM users WHERE id = $2)
-		ON CONFLICT DO NOTHING`,
+		`WITH target AS (
+			SELECT id FROM users WHERE id = $2
+		), inserted AS (
+			INSERT INTO follows (follower_id, followee_id)
+			SELECT $1, id FROM target
+			ON CONFLICT DO NOTHING
+		)
+		SELECT EXISTS (SELECT 1 FROM target)`,
 		followerID, followeeID,
-	)
+	).Scan(&targetExists)
 	if err != nil {
 		c.breaker.failure(err)
 		return err
 	}
 	c.breaker.success()
+	if !targetExists {
+		return store.ErrNotFound
+	}
 	return nil
 }
 

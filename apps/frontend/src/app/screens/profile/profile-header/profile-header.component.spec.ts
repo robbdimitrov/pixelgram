@@ -3,7 +3,7 @@ import {ProfileHeaderComponent} from './profile-header.component';
 import {APIClient} from '../../../services/api-client.service';
 import {SessionService} from '../../../services/session.service';
 import {User} from '../../../models/user.model';
-import {of, throwError} from 'rxjs';
+import {of, Subject, throwError} from 'rxjs';
 import {provideRouter} from '@angular/router';
 
 describe('ProfileHeaderComponent', () => {
@@ -66,6 +66,32 @@ describe('ProfileHeaderComponent', () => {
     expect(apiClientSpy.followUser).toHaveBeenCalledWith(2);
     expect(user.followers).toBe(10);
     expect(user.isFollowing).toBe(false);
+  });
+
+  it('should ignore additional toggles while a follow request is pending', () => {
+    const followResponse = new Subject<void>();
+    apiClientSpy.followUser.mockReturnValue(followResponse);
+
+    const user = new User(2, 'Test User', 'testuser', 'test@test.com', null, null, 0, 0, 10, 5, false, new Date());
+    fixture.componentRef.setInput('user', user);
+    fixture.detectChanges();
+
+    const followButton: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    followButton.click();
+    fixture.detectChanges();
+
+    expect(followButton.disabled).toBe(true);
+    component.toggleFollow();
+
+    expect(apiClientSpy.followUser).toHaveBeenCalledTimes(1);
+    expect(apiClientSpy.unfollowUser).not.toHaveBeenCalled();
+    expect(user.followers).toBe(11);
+    expect(user.isFollowing).toBe(true);
+
+    followResponse.complete();
+    fixture.detectChanges();
+
+    expect(followButton.disabled).toBe(false);
   });
 
   it('should toggle unfollow and decrement followers optimistically', () => {

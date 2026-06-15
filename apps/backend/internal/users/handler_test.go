@@ -401,6 +401,20 @@ func TestFollowSelf(t *testing.T) {
 	}
 }
 
+func TestFollowUserNotFound(t *testing.T) {
+	handler := Handler{Store: &fakeStore{err: store.ErrNotFound}}
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/users/999/follow", nil)
+	req.SetPathValue("userId", "999")
+	req = httpx.WithUserID(req, "1")
+
+	handler.FollowUser(res, req)
+
+	if res.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
+	}
+}
+
 func TestUnfollowUser(t *testing.T) {
 	handler := Handler{Store: &fakeStore{}}
 	res := httptest.NewRecorder()

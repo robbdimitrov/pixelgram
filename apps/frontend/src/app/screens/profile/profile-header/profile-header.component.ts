@@ -1,6 +1,7 @@
-import {Component, inject, input} from '@angular/core';
+import {Component, inject, input, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {LucideSettings} from '@lucide/angular';
+import {finalize} from 'rxjs';
 
 import {User} from '../../../models/user.model';
 import {APIClient} from '../../../services/api-client.service';
@@ -19,6 +20,7 @@ export class ProfileHeaderComponent {
   private apiClient = inject(APIClient);
 
   user = input.required<User>();
+  isFollowPending = signal(false);
 
   isCurrentUser() {
     return this.session.userId() === this.user().id;
@@ -26,14 +28,17 @@ export class ProfileHeaderComponent {
 
   toggleFollow() {
     const user = this.user();
-    if (this.isCurrentUser()) {
+    if (this.isCurrentUser() || this.isFollowPending()) {
       return;
     }
+    this.isFollowPending.set(true);
 
     if (user.isFollowing) {
       user.isFollowing = false;
       user.followers -= 1;
-      this.apiClient.unfollowUser(user.id).subscribe({
+      this.apiClient.unfollowUser(user.id).pipe(
+        finalize(() => this.isFollowPending.set(false))
+      ).subscribe({
         error: () => {
           user.isFollowing = true;
           user.followers += 1;
@@ -42,7 +47,9 @@ export class ProfileHeaderComponent {
     } else {
       user.isFollowing = true;
       user.followers += 1;
-      this.apiClient.followUser(user.id).subscribe({
+      this.apiClient.followUser(user.id).pipe(
+        finalize(() => this.isFollowPending.set(false))
+      ).subscribe({
         error: () => {
           user.isFollowing = false;
           user.followers -= 1;

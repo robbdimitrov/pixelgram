@@ -32,6 +32,7 @@
           [class.dark:text-white]="user().isFollowing"
           [class.dark:hover:bg-white/30]="user().isFollowing"
           (click)="toggleFollow()"
+          [disabled]="isFollowPending()"
           >
           {{user().isFollowing ? 'Unfollow' : 'Follow'}}
         </button>
