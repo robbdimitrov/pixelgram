@@ -9,13 +9,14 @@ import {PaginationService} from '../../../../../shared/services/pagination.servi
 import {Comment} from '../../../models/comment.model';
 import {ImagePipe} from '../../../../../shared/ui/pipes/image.pipe';
 import {RelativeDatePipe} from '../../../../../shared/ui/pipes/relative-date.pipe';
+import {AvatarStyleDirective} from '../../../../../shared/ui/directives/avatar-style.directive';
 
 @Component({
   selector: 'app-comments',
   templateUrl: './comments.component.html',
   providers: [PaginationService],
   standalone: true,
-  imports: [RouterLink, FormsModule, ImagePipe, RelativeDatePipe, LucideSend, LucideTrash2]
+  imports: [RouterLink, FormsModule, ImagePipe, RelativeDatePipe, LucideSend, LucideTrash2, AvatarStyleDirective]
 })
 export class CommentsComponent implements OnInit {
   private postService = inject(PostService);

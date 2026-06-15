@@ -25,7 +25,7 @@
 
   @for (comment of comments(); track comment.id) {
     <div class="group flex items-start gap-3">
-      <a [routerLink]="'/@' + comment.username" class="relative mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white">
+      <a [routerLink]="'/@' + comment.username" appAvatarStyle="sm">
         <img class="h-full w-full object-cover" [src]="comment.avatar | image" [alt]="comment.username" loading="lazy" decoding="async">
       </a>
       <div class="min-w-0 flex-1 text-sm leading-6">
