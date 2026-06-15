@@ -6,6 +6,7 @@ import {concatMap} from 'rxjs/operators';
 import {LucideSquarePlus} from '@lucide/angular';
 
 import {PostService} from '../../services/post.service';
+import {CardStyleDirective} from '../../../../shared/ui/directives/card-style.directive';
 import {
   maxUploadSizeBytes,
   resizeImageForUpload,
@@ -16,7 +17,7 @@ import {
   selector: 'app-upload',
   templateUrl: './image-upload.component.html',
   standalone: true,
-  imports: [FormsModule, NgClass, LucideSquarePlus]
+  imports: [FormsModule, NgClass, LucideSquarePlus, CardStyleDirective]
 })
 export class ImageUploadComponent {
   private router = inject(Router);

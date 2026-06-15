@@ -7,12 +7,13 @@ import {UserService} from '../../services/user.service';
 import {AuthService} from '../../../auth/services/auth.service';
 import {SessionService} from '../../../auth/session.service';
 import {ThemePreference, ThemeService} from '../../../../core/theme.service';
+import {CardStyleDirective} from '../../../../shared/ui/directives/card-style.directive';
 
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   standalone: true,
-  imports: [RouterLink, NgClass, LucideChevronRight]
+  imports: [RouterLink, NgClass, LucideChevronRight, CardStyleDirective]
 })
 export class SettingsComponent {
   private userService = inject(UserService);

@@ -6,6 +6,7 @@ import {finalize} from 'rxjs';
 
 import {UserService} from '../../../services/user.service';
 import {SessionService} from '../../../../auth/session.service';
+import {CardStyleDirective} from '../../../../../shared/ui/directives/card-style.directive';
 import {
   FormInputStyleDirective,
   PrimaryActionStyleDirective
@@ -15,7 +16,7 @@ import {
   selector: 'app-change-password',
   templateUrl: './change-password.component.html',
   standalone: true,
-  imports: [FormsModule, RouterLink, FormInputStyleDirective, PrimaryActionStyleDirective, LucideArrowLeft]
+  imports: [FormsModule, RouterLink, FormInputStyleDirective, PrimaryActionStyleDirective, LucideArrowLeft, CardStyleDirective]
 })
 export class ChangePasswordComponent {
   private userService = inject(UserService);

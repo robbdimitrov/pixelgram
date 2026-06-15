@@ -9,12 +9,13 @@ import {SessionService} from '../../../../auth/session.service';
 import {ImagePipe} from '../../../../../shared/ui/pipes/image.pipe';
 import {PluralizePipe} from '../../../../../shared/ui/pipes/pluralize.pipe';
 import {AvatarStyleDirective} from '../../../../../shared/ui/directives/avatar-style.directive';
+import {CardStyleDirective} from '../../../../../shared/ui/directives/card-style.directive';
 
 @Component({
   selector: 'app-profile-header',
   templateUrl: './profile-header.component.html',
   standalone: true,
-  imports: [RouterLink, ImagePipe, PluralizePipe, LucideSettings, AvatarStyleDirective]
+  imports: [RouterLink, ImagePipe, PluralizePipe, LucideSettings, AvatarStyleDirective, CardStyleDirective]
 })
 export class ProfileHeaderComponent {
   private session = inject(SessionService);

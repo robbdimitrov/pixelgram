@@ -21,13 +21,13 @@ import {
   supportedUploadMimeTypes
 } from '../../../../../shared/utils/image-resizer';
 import {AvatarStyleDirective} from '../../../../../shared/ui/directives/avatar-style.directive';
+import {CardStyleDirective} from '../../../../../shared/ui/directives/card-style.directive';
 
 @Component({
   selector: 'app-edit-profile',
   templateUrl: './edit-profile.component.html',
   standalone: true,
-  imports: [
-    FormsModule,
+  imports: [FormsModule,
     RouterLink,
     ImagePipe,
     FormInputStyleDirective,
@@ -37,8 +37,7 @@ import {AvatarStyleDirective} from '../../../../../shared/ui/directives/avatar-s
     LucideArrowLeft,
     LucideTrash2,
     LucideCamera,
-    AvatarStyleDirective
-  ]
+    AvatarStyleDirective, CardStyleDirective]
 })
 export class EditProfileComponent implements OnInit {
   private userService = inject(UserService);

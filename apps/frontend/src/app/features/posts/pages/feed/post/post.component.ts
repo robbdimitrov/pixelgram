@@ -10,13 +10,14 @@ import {PluralizePipe} from '../../../../../shared/ui/pipes/pluralize.pipe';
 import {RelativeDatePipe} from '../../../../../shared/ui/pipes/relative-date.pipe';
 import {CommentsComponent} from '../comments/comments.component';
 import {AvatarStyleDirective} from '../../../../../shared/ui/directives/avatar-style.directive';
+import {CardStyleDirective} from '../../../../../shared/ui/directives/card-style.directive';
 
 @Component({
   selector: 'app-post',
   templateUrl: './post.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgClass, ImagePipe, PluralizePipe, RelativeDatePipe, CommentsComponent, LucideHeart, LucideMessageCircle, LucideTrash2, AvatarStyleDirective]
+  imports: [RouterLink, NgClass, ImagePipe, PluralizePipe, RelativeDatePipe, CommentsComponent, LucideHeart, LucideMessageCircle, LucideTrash2, AvatarStyleDirective, CardStyleDirective]
 })
 export class PostComponent {
   private readonly fallbackImage = '/assets/placeholder.svg';

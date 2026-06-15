@@ -1,4 +1,4 @@
-<div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-lg shadow-slate-900/5 transition-colors dark:border-white/10 dark:bg-slate-950 dark:text-white">
+<div appCardStyle class="w-full overflow-hidden shadow-lg shadow-slate-900/5 transition-colors">
   <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-6 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:pr-20">
     <div class="flex items-center gap-3">
       <a [routerLink]="'/@' + post().username" appAvatarStyle="md">
@@ -108,7 +108,7 @@
   (click)="deleteModal.close()"
 >
   <div
-    class="w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl dark:border-white/10 dark:bg-slate-950 dark:text-white"
+    appCardStyle class="w-full p-6 shadow-2xl"
     (click)="$event.stopPropagation()"
   >
     <div class="grid gap-3">
