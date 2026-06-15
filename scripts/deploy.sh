@@ -113,7 +113,7 @@ build_images() {
   log "building images"
   export DOCKER_BUILDKIT=1
   make -C "${ROOT}"
-  if docker container inspect pixelgram-control-plane >/dev/null 2>&1; then
+  if docker container inspect --format '{{.State.Running}}' pixelgram-control-plane 2>/dev/null | grep -qx true; then
     log "loading images into kind node"
     docker save localhost:5000/pixelgram/backend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/pixelgram/database | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
