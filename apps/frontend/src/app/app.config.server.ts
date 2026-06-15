@@ -3,7 +3,7 @@ import {provideServerRendering, withRoutes} from '@angular/ssr';
 
 import {appConfig} from './app.config';
 import {serverRoutes} from './app.routes.server';
-import {BACKEND_URL} from './shared/tokens';
+import {BACKEND_URL} from './core/tokens';
 
 const serverConfig: ApplicationConfig = {
   providers: [

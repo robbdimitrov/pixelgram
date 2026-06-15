@@ -1,5 +1,5 @@
-import {User, UserDto} from '../../models/user.model';
-import {Post, PostDto} from '../../models/post.model';
+import {User, UserDto} from '../../features/users/models/user.model';
+import {Post, PostDto} from '../../features/posts/models/post.model';
 
 export function mapUser(user: UserDto): User {
   return new User(

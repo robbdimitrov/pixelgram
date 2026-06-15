@@ -1,6 +1,6 @@
 import {Routes, UrlMatchResult, UrlSegment} from '@angular/router';
 
-import {authGuard} from './shared/auth-guard.service';
+import {authGuard} from './core/auth-guard.service';
 
 const usernamePattern = /^[a-z0-9._]{3,30}$/;
 
@@ -32,27 +32,27 @@ export const routes: Routes = [
   },
   {
     path: 'feed',
-    loadComponent: () => import('./screens/feed/feed.component').then((m) => m.FeedComponent),
+    loadComponent: () => import('./features/posts/pages/feed/feed.component').then((m) => m.FeedComponent),
     canActivate: [authGuard]
   },
   {
     path: 'posts/:publicId',
-    loadComponent: () => import('./screens/feed/feed.component').then((m) => m.FeedComponent),
+    loadComponent: () => import('./features/posts/pages/feed/feed.component').then((m) => m.FeedComponent),
     canActivate: [authGuard]
   },
   {
     matcher: profileLikesMatcher,
-    loadComponent: () => import('./screens/feed/feed.component').then((m) => m.FeedComponent),
+    loadComponent: () => import('./features/posts/pages/feed/feed.component').then((m) => m.FeedComponent),
     canActivate: [authGuard]
   },
   {
     matcher: profileMatcher,
-    loadComponent: () => import('./screens/profile/profile.component').then((m) => m.ProfileComponent),
+    loadComponent: () => import('./features/users/pages/profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [authGuard]
   },
   {
     path: 'upload',
-    loadComponent: () => import('./screens/image-upload/image-upload.component').then((m) => m.ImageUploadComponent),
+    loadComponent: () => import('./features/posts/pages/image-upload/image-upload.component').then((m) => m.ImageUploadComponent),
     canActivate: [authGuard]
   },
   {
@@ -69,29 +69,29 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () => import('./screens/settings/settings.component').then((m) => m.SettingsComponent)
+        loadComponent: () => import('./features/users/pages/settings/settings.component').then((m) => m.SettingsComponent)
       },
       {
         path: 'profile',
-        loadComponent: () => import('./screens/settings/edit-profile/edit-profile.component').then((m) => m.EditProfileComponent)
+        loadComponent: () => import('./features/users/pages/settings/edit-profile/edit-profile.component').then((m) => m.EditProfileComponent)
       },
       {
         path: 'password',
-        loadComponent: () => import('./screens/settings/change-password/change-password.component').then((m) => m.ChangePasswordComponent)
+        loadComponent: () => import('./features/users/pages/settings/change-password/change-password.component').then((m) => m.ChangePasswordComponent)
       }
     ]
   },
   {
     path: 'login',
-    loadComponent: () => import('./screens/signup/login.component').then((m) => m.LoginComponent)
+    loadComponent: () => import('./features/auth/pages/signup/login.component').then((m) => m.LoginComponent)
   },
   {
     path: 'signup',
-    loadComponent: () => import('./screens/signup/signup.component').then((m) => m.SignupComponent)
+    loadComponent: () => import('./features/auth/pages/signup/signup.component').then((m) => m.SignupComponent)
   },
   {
     path: 'not-found',
-    loadComponent: () => import('./screens/not-found/not-found.component').then((m) => m.NotFoundComponent)
+    loadComponent: () => import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent)
   },
   {
     path: '**',

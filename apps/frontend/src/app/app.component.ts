@@ -1,8 +1,8 @@
 import {Component, inject} from '@angular/core';
 import {RouterOutlet} from '@angular/router';
 
-import {NavbarComponent} from './shared/components/navbar.component';
-import {ThemeService} from './services/theme.service';
+import {NavbarComponent} from './shared/ui/components/navbar.component';
+import {ThemeService} from './core/theme.service';
 
 @Component({
   selector: 'app-root',
