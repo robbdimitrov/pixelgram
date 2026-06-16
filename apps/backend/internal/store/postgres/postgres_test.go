@@ -160,7 +160,7 @@ func TestPostgresRepositoryFeedSelectionAndStableOrdering(t *testing.T) {
 	if cursor != nil {
 		t.Fatalf("GetFeed(no follows) cursor = %+v, want nil", cursor)
 	}
-	assertIDs(t, postIDs(withoutFollows), []int{followedSecond.ID, otherPost.ID, followedFirst.ID})
+	assertIDs(t, postIDs(withoutFollows), []int{followedSecond.ID, otherPost.ID, followedFirst.ID, viewerPost.ID})
 
 	if err := client.FollowUser(ctx, stringID(viewerID), stringID(followedID)); err != nil {
 		t.Fatalf("FollowUser() error = %v", err)

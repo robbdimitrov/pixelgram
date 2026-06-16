@@ -70,15 +70,13 @@ func (r *PostRepository) GetFeed(ctx context.Context, cursor *pagination.Cursor,
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
 	return r.queryPostPage(ctx, `SELECT `+postColumns+`, posts.created AS cursor_created
 		FROM posts JOIN users u ON u.id = posts.user_id
-		WHERE ((
-				EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
-				AND (posts.user_id = $1 OR EXISTS (
-					SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = posts.user_id
-				))
-			) OR (
-				NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
-				AND posts.user_id != $1
-			))
+		WHERE (
+			posts.user_id = $1
+			OR EXISTS (
+				SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = posts.user_id
+			)
+			OR NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
+		)
 		AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
 		ORDER BY posts.created DESC, posts.id DESC LIMIT $5`,
 		limit, currentUserID, hasCursor, cursorCreated, cursorID, limit+1)
