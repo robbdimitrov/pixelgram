@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/validation"
 )
@@ -16,6 +17,8 @@ type HandlerService interface {
 	CreateUser(ctx context.Context, command CreateUserCommand) (int, error)
 	GetUserByUsername(ctx context.Context, username, currentUserID string) (User, bool, error)
 	GetUserByID(ctx context.Context, userID, currentUserID string) (User, bool, error)
+	ListFollowers(ctx context.Context, query ListQuery) ([]User, *pagination.Cursor, error)
+	ListFollowing(ctx context.Context, query ListQuery) ([]User, *pagination.Cursor, error)
 	UpdateProfile(ctx context.Context, command UpdateProfileCommand) (UpdateProfileOutcome, error)
 	ChangePassword(ctx context.Context, command ChangePasswordCommand) (ChangePasswordOutcome, error)
 	FollowUser(ctx context.Context, command FollowCommand) error
@@ -96,6 +99,47 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, user)
+}
+
+func (h Handler) ListFollowers(w http.ResponseWriter, r *http.Request) {
+	h.listUsers(w, r, h.Service.ListFollowers)
+}
+
+func (h Handler) ListFollowing(w http.ResponseWriter, r *http.Request) {
+	h.listUsers(w, r, h.Service.ListFollowing)
+}
+
+func (h Handler) listUsers(
+	w http.ResponseWriter,
+	r *http.Request,
+	fetch func(context.Context, ListQuery) ([]User, *pagination.Cursor, error),
+) {
+	currentUserID, _ := httpx.UserID(r)
+	page, ok := pagination.ParsePagination(r.URL.Query())
+	if !ok {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid pagination parameters.")
+		return
+	}
+
+	items, nextCursor, err := fetch(r.Context(), ListQuery{
+		Username: strings.ToLower(r.PathValue("username")), CurrentUserID: currentUserID,
+		Cursor: page.Cursor, Limit: page.Limit,
+	})
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
+		return
+	}
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	for i := range items {
+		if strconv.Itoa(items[i].ID) != currentUserID {
+			items[i].Email = ""
+		}
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, pagination.NewCursorPage(items, nextCursor))
 }
 
 func (h Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {

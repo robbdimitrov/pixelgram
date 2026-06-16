@@ -14,6 +14,22 @@ export function profileLikesMatcher(segments: UrlSegment[]): UrlMatchResult | nu
     : null;
 }
 
+export function profileConnectionsMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments.length !== 2 || !['followers', 'following'].includes(segments[1].path)) {
+    return null;
+  }
+  const username = segments[0].path.startsWith('@') ? segments[0].path.slice(1) : '';
+  return usernamePattern.test(username)
+    ? {
+        consumed: segments,
+        posParams: {
+          username: new UrlSegment(username, {}),
+          mode: new UrlSegment(segments[1].path, {})
+        }
+      }
+    : null;
+}
+
 export function profileMatcher(segments: UrlSegment[]): UrlMatchResult | null {
   if (segments.length !== 1) {
     return null;
@@ -43,6 +59,11 @@ export const routes: Routes = [
   {
     matcher: profileLikesMatcher,
     loadComponent: () => import('./features/posts/pages/feed/feed.component').then((m) => m.FeedComponent),
+    canActivate: [authGuard]
+  },
+  {
+    matcher: profileConnectionsMatcher,
+    loadComponent: () => import('./features/users/pages/profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [authGuard]
   },
   {

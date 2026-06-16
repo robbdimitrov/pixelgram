@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/uploads"
 )
 
@@ -39,6 +40,14 @@ func (s *Service) GetUserByUsername(ctx context.Context, username, currentUserID
 
 func (s *Service) GetUserByID(ctx context.Context, userID, currentUserID string) (User, bool, error) {
 	return s.repository.GetUserByID(ctx, userID, currentUserID)
+}
+
+func (s *Service) ListFollowers(ctx context.Context, query ListQuery) ([]User, *pagination.Cursor, error) {
+	return s.repository.ListFollowers(ctx, query.Username, query.Cursor, query.Limit, query.CurrentUserID)
+}
+
+func (s *Service) ListFollowing(ctx context.Context, query ListQuery) ([]User, *pagination.Cursor, error) {
+	return s.repository.ListFollowing(ctx, query.Username, query.Cursor, query.Limit, query.CurrentUserID)
 }
 
 func (s *Service) UpdateProfile(ctx context.Context, command UpdateProfileCommand) (UpdateProfileOutcome, error) {

@@ -30,6 +30,12 @@ func (Users) GetUserByUsername(context.Context, string, string) (users.User, boo
 func (Users) GetUserByID(context.Context, string, string) (users.User, bool, error) {
 	return users.User{}, false, nil
 }
+func (Users) ListFollowers(context.Context, string, *pagination.Cursor, int, string) ([]users.User, *pagination.Cursor, error) {
+	return nil, nil, nil
+}
+func (Users) ListFollowing(context.Context, string, *pagination.Cursor, int, string) ([]users.User, *pagination.Cursor, error) {
+	return nil, nil, nil
+}
 func (Users) GetUserWithID(context.Context, string) (users.UserCredentials, bool, error) {
 	return users.UserCredentials{}, false, nil
 }

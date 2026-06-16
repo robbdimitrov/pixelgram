@@ -1,6 +1,10 @@
 package users
 
-import "time"
+import (
+	"time"
+
+	"pixelgram/backend/internal/pagination"
+)
 
 type User struct {
 	ID          int       `json:"id"`
@@ -53,6 +57,13 @@ type ChangePasswordCommand struct {
 type FollowCommand struct {
 	FollowerID string
 	FolloweeID string
+}
+
+type ListQuery struct {
+	Username      string
+	CurrentUserID string
+	Cursor        *pagination.Cursor
+	Limit         int
 }
 
 type UpdateProfileOutcome uint8

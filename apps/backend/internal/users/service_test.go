@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/pagination"
 )
 
 type fakeRepository struct {
@@ -16,6 +17,9 @@ type fakeRepository struct {
 	createErr             error
 	createdPasswordHash   string
 	user                  User
+	users                 []User
+	nextCursor            *pagination.Cursor
+	listQuery             ListQuery
 	found                 bool
 	err                   error
 	credentials           UserCredentials
@@ -39,6 +43,16 @@ func (r *fakeRepository) GetUserByUsername(_ context.Context, _, _ string) (User
 
 func (r *fakeRepository) GetUserByID(_ context.Context, _, _ string) (User, bool, error) {
 	return r.user, r.found, r.err
+}
+
+func (r *fakeRepository) ListFollowers(_ context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]User, *pagination.Cursor, error) {
+	r.listQuery = ListQuery{Username: username, CurrentUserID: currentUserID, Cursor: cursor, Limit: limit}
+	return r.users, r.nextCursor, r.err
+}
+
+func (r *fakeRepository) ListFollowing(_ context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]User, *pagination.Cursor, error) {
+	r.listQuery = ListQuery{Username: username, CurrentUserID: currentUserID, Cursor: cursor, Limit: limit}
+	return r.users, r.nextCursor, r.err
 }
 
 func (r *fakeRepository) GetUserWithID(_ context.Context, _ string) (UserCredentials, bool, error) {
@@ -209,5 +223,22 @@ func TestServiceFollowCommands(t *testing.T) {
 	}
 	if repository.followCommand != command || repository.unfollowCommand != command {
 		t.Fatalf("commands = %#v, %#v", repository.followCommand, repository.unfollowCommand)
+	}
+}
+
+func TestServiceListFollowers(t *testing.T) {
+	cursor := &pagination.Cursor{ID: 7}
+	repository := &fakeRepository{users: []User{{ID: 2}}, nextCursor: cursor}
+	service := NewService(repository, "")
+
+	items, next, err := service.ListFollowers(context.Background(), ListQuery{
+		Username: "test", CurrentUserID: "1", Cursor: cursor, Limit: 20,
+	})
+
+	if err != nil || len(items) != 1 || next != cursor {
+		t.Fatalf("ListFollowers() = %#v, %#v, %v", items, next, err)
+	}
+	if repository.listQuery.Username != "test" || repository.listQuery.CurrentUserID != "1" || repository.listQuery.Limit != 20 {
+		t.Fatalf("query = %#v", repository.listQuery)
 	}
 }

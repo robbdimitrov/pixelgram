@@ -82,6 +82,84 @@ describe('ProfileComponent', () => {
     expect(fixture.nativeElement.textContent.replace(/\s+/g, ' ')).toContain('No uploads yet');
   });
 
+  it('loads and renders followers in follower mode', () => {
+    const userService = {
+      getUserByUsername: vi.fn().mockReturnValue(of(new User(
+        20, 'Profile Test', 'profiletest', 'profile@example.com',
+        null, null, 0, 0, 1, 0, false, new Date()
+      ))),
+      getFollowers: vi.fn().mockReturnValue(of({
+        items: [new User(
+          30, 'Follower User', 'follower', '',
+          null, 'Short bio', 0, 0, 0, 0, false, new Date()
+        )],
+        nextCursor: null
+      })),
+      getFollowing: vi.fn(),
+      followUser: vi.fn().mockReturnValue(of(undefined)),
+      unfollowUser: vi.fn().mockReturnValue(of(undefined))
+    };
+    const postService = {
+      getPosts: vi.fn()
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        {provide: UserService, useValue: userService},
+        {provide: PostService, useValue: postService},
+        {provide: SessionService, useValue: {userId: () => 20}},
+        {provide: ActivatedRoute, useValue: {params: of({username: 'profiletest', mode: 'followers'})}}
+      ]
+    });
+
+    const fixture = TestBed.createComponent(ProfileComponent);
+    fixture.detectChanges();
+
+    expect(userService.getFollowers).toHaveBeenCalledWith('profiletest', null);
+    expect(postService.getPosts).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Follower User');
+    expect(fixture.nativeElement.textContent).toContain('Short bio');
+  });
+
+  it('updates current user following count without removing follower rows', () => {
+    const userService = {
+      getUserByUsername: vi.fn().mockReturnValue(of(new User(
+        20, 'Profile Test', 'profiletest', 'profile@example.com',
+        null, null, 0, 0, 1, 2, false, new Date()
+      ))),
+      getFollowers: vi.fn().mockReturnValue(of({
+        items: [new User(
+          30, 'Follower User', 'follower', '',
+          null, null, 0, 0, 0, 0, false, new Date()
+        )],
+        nextCursor: null
+      })),
+      getFollowing: vi.fn(),
+      followUser: vi.fn().mockReturnValue(of(undefined)),
+      unfollowUser: vi.fn().mockReturnValue(of(undefined))
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        {provide: UserService, useValue: userService},
+        {provide: PostService, useValue: {getPosts: vi.fn()}},
+        {provide: SessionService, useValue: {userId: () => 20}},
+        {provide: ActivatedRoute, useValue: {params: of({username: 'profiletest', mode: 'followers'})}}
+      ]
+    });
+
+    const fixture = TestBed.createComponent(ProfileComponent);
+    fixture.detectChanges();
+
+    const followButton: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    followButton.click();
+    fixture.detectChanges();
+
+    expect(userService.followUser).toHaveBeenCalledWith(30);
+    expect(fixture.nativeElement.textContent).toContain('Follower User');
+    expect(fixture.nativeElement.textContent.replace(/\s+/g, ' ')).toContain('3 following');
+  });
+
   it('should reset pagination and fetch each profile from a fresh cursor', () => {
     const params = new Subject<Record<string, string>>();
     const userService = {

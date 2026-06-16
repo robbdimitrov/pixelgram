@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/store"
 )
 
@@ -18,6 +19,9 @@ type fakeService struct {
 	createErr            error
 	createCommand        CreateUserCommand
 	user                 User
+	users                []User
+	nextCursor           *pagination.Cursor
+	listQuery            ListQuery
 	found                bool
 	getErr               error
 	profileCommand       UpdateProfileCommand
@@ -47,6 +51,16 @@ func (s *fakeService) GetUserByUsername(_ context.Context, _, currentUserID stri
 func (s *fakeService) GetUserByID(_ context.Context, userID, _ string) (User, bool, error) {
 	s.getByID = userID
 	return s.user, s.found, s.getErr
+}
+
+func (s *fakeService) ListFollowers(_ context.Context, query ListQuery) ([]User, *pagination.Cursor, error) {
+	s.listQuery = query
+	return s.users, s.nextCursor, s.getErr
+}
+
+func (s *fakeService) ListFollowing(_ context.Context, query ListQuery) ([]User, *pagination.Cursor, error) {
+	s.listQuery = query
+	return s.users, s.nextCursor, s.getErr
 }
 
 func (s *fakeService) UpdateProfile(_ context.Context, command UpdateProfileCommand) (UpdateProfileOutcome, error) {
@@ -199,6 +213,66 @@ func TestGetCurrentUserUsesSessionIdentity(t *testing.T) {
 	}
 	if service.getByID != "7" {
 		t.Fatalf("user ID = %q, want 7", service.getByID)
+	}
+}
+
+func TestListFollowersUsesPaginationAndHidesOtherUserEmail(t *testing.T) {
+	cursor := pagination.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
+	nextCursor := pagination.Cursor{Created: time.Date(2026, 6, 14, 10, 0, 0, 0, time.UTC), ID: 21}
+	service := &fakeService{
+		users: []User{
+			{ID: 1, Username: "viewer", Email: "viewer@example.com", Created: cursor.Created},
+			{ID: 2, Username: "other", Email: "other@example.com", Created: cursor.Created},
+		},
+		nextCursor: &nextCursor,
+	}
+	res := httptest.NewRecorder()
+	req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/users/test/followers?cursor="+pagination.EncodeCursor(cursor)+"&limit=500", nil), "1")
+	req.SetPathValue("username", "TEST")
+
+	NewHandler(service).ListFollowers(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %q", res.Code, res.Body.String())
+	}
+	if service.listQuery.Username != "test" || service.listQuery.CurrentUserID != "1" ||
+		service.listQuery.Cursor == nil || *service.listQuery.Cursor != cursor || service.listQuery.Limit != 50 {
+		t.Fatalf("query = %#v", service.listQuery)
+	}
+	if !strings.Contains(res.Body.String(), `"email":"viewer@example.com"`) ||
+		strings.Contains(res.Body.String(), "other@example.com") {
+		t.Fatalf("body = %q", res.Body.String())
+	}
+	if !strings.Contains(res.Body.String(), `"nextCursor":"`+pagination.EncodeCursor(nextCursor)+`"`) {
+		t.Fatalf("body missing next cursor: %q", res.Body.String())
+	}
+}
+
+func TestListUsersErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		url     string
+		err     error
+		status  int
+		message string
+	}{
+		{"invalid cursor", "/users/test/following?cursor=invalid", nil, http.StatusBadRequest, "Invalid pagination parameters."},
+		{"missing user", "/users/test/following", store.ErrNotFound, http.StatusNotFound, "Not Found"},
+		{"internal", "/users/test/following", errors.New("failed"), http.StatusInternalServerError, "Internal Server Error"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			service := &fakeService{getErr: test.err}
+			res := httptest.NewRecorder()
+			req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, test.url, nil), "1")
+			req.SetPathValue("username", "test")
+
+			NewHandler(service).ListFollowing(res, req)
+
+			if res.Code != test.status || !strings.Contains(res.Body.String(), test.message) {
+				t.Fatalf("response = %d %q", res.Code, res.Body.String())
+			}
+		})
 	}
 }
 

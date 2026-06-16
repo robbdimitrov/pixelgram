@@ -4,13 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"pixelgram/backend/internal/database"
+	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/users"
 )
+
+const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,
+	(SELECT count(*) FROM posts WHERE user_id = u.id) AS posts,
+	(SELECT count(*) FROM likes WHERE user_id = u.id) AS likes,
+	(SELECT count(*) FROM follows WHERE followee_id = u.id) AS followers,
+	(SELECT count(*) FROM follows WHERE follower_id = u.id) AS following,
+	EXISTS (SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = u.id) AS is_following,
+	u.created`
 
 type UserRepository struct {
 	db *database.DB
@@ -67,6 +77,44 @@ func (r *UserRepository) GetUserByID(ctx context.Context, userID, currentUserID 
 	return r.getUser(ctx, "id", userID, currentUserID)
 }
 
+func (r *UserRepository) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
+	exists, err := r.usernameExists(ctx, username)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !exists {
+		return nil, nil, store.ErrNotFound
+	}
+	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+	return r.queryUserPage(ctx, `SELECT `+userColumns+`, f.created AS cursor_created
+		FROM follows f
+		JOIN users target ON target.id = f.followee_id
+		JOIN users u ON u.id = f.follower_id
+		WHERE target.username = $2
+		AND (NOT $3 OR (f.created, u.id) < ($4, $5))
+		ORDER BY f.created DESC, u.id DESC LIMIT $6`,
+		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
+}
+
+func (r *UserRepository) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
+	exists, err := r.usernameExists(ctx, username)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !exists {
+		return nil, nil, store.ErrNotFound
+	}
+	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+	return r.queryUserPage(ctx, `SELECT `+userColumns+`, f.created AS cursor_created
+		FROM follows f
+		JOIN users target ON target.id = f.follower_id
+		JOIN users u ON u.id = f.followee_id
+		WHERE target.username = $2
+		AND (NOT $3 OR (f.created, u.id) < ($4, $5))
+		ORDER BY f.created DESC, u.id DESC LIMIT $6`,
+		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
+}
+
 func (r *UserRepository) getUser(ctx context.Context, column, value, currentUserID string) (users.User, bool, error) {
 	if err := r.db.Allow(); err != nil {
 		return users.User{}, false, store.ErrUnavailable
@@ -98,6 +146,74 @@ func (r *UserRepository) getUser(ctx context.Context, column, value, currentUser
 	user.Avatar = database.NullableString(avatar)
 	user.Bio = database.NullableString(bio)
 	return user, true, nil
+}
+
+func (r *UserRepository) usernameExists(ctx context.Context, username string) (bool, error) {
+	if err := r.db.Allow(); err != nil {
+		return false, store.ErrUnavailable
+	}
+	var exists bool
+	err := r.db.Retry(ctx, func() error {
+		return r.db.Pool().QueryRow(ctx,
+			`SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`, username).Scan(&exists)
+	})
+	if err != nil {
+		r.db.Failure(err)
+		return false, err
+	}
+	r.db.Success()
+	return exists, nil
+}
+
+func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit int, args ...any) ([]users.User, *pagination.Cursor, error) {
+	if err := r.db.Allow(); err != nil {
+		return nil, nil, store.ErrUnavailable
+	}
+	type row struct {
+		user          users.User
+		cursorCreated time.Time
+	}
+	var result []row
+	err := r.db.Retry(ctx, func() error {
+		rows, err := r.db.Pool().Query(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		result = []row{}
+		for rows.Next() {
+			var item row
+			var avatar, bio sql.NullString
+			if err := rows.Scan(&item.user.ID, &item.user.Name, &item.user.Username,
+				&item.user.Email, &avatar, &bio, &item.user.Posts, &item.user.Likes,
+				&item.user.Followers, &item.user.Following, &item.user.IsFollowing,
+				&item.user.Created, &item.cursorCreated); err != nil {
+				return err
+			}
+			item.user.Avatar = database.NullableString(avatar)
+			item.user.Bio = database.NullableString(bio)
+			result = append(result, item)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		r.db.Failure(err)
+		return nil, nil, err
+	}
+	r.db.Success()
+	hasMore := len(result) > limit
+	if hasMore {
+		result = result[:limit]
+	}
+	items := make([]users.User, len(result))
+	for i, item := range result {
+		items[i] = item.user
+	}
+	if !hasMore {
+		return items, nil, nil
+	}
+	last := result[len(result)-1]
+	return items, &pagination.Cursor{Created: last.cursorCreated, ID: last.user.ID}, nil
 }
 
 func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID string) error {

@@ -97,6 +97,14 @@ func commentIDs(items []comments.Comment) []int {
 	return ids
 }
 
+func userIDs(items []users.User) []int {
+	ids := make([]int, len(items))
+	for i, item := range items {
+		ids[i] = item.ID
+	}
+	return ids
+}
+
 func assertIDs(t *testing.T, got, want []int) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
@@ -244,6 +252,84 @@ func TestPostgresRepositoryProfilePostCursorPagination(t *testing.T) {
 
 	if _, _, err := client.GetPosts(ctx, "missing_user", nil, 2, stringID(viewerID)); !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("GetPosts(missing user) error = %v, want not found", err)
+	}
+}
+
+func TestPostgresRepositoryFollowListCursorPagination(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	profileID := createTestUser(t, client, "follow_profile")
+	viewerID := createTestUser(t, client, "follow_viewer")
+	followerAID := createTestUser(t, client, "follower_a")
+	followerBID := createTestUser(t, client, "follower_b")
+	followerCID := createTestUser(t, client, "follower_c")
+	followedAID := createTestUser(t, client, "followed_a")
+	followedBID := createTestUser(t, client, "followed_b")
+	followedCID := createTestUser(t, client, "followed_c")
+	base := time.Date(2026, 6, 15, 11, 30, 0, 0, time.UTC)
+
+	follows := []struct {
+		follower int
+		followee int
+		created  time.Time
+	}{
+		{followerAID, profileID, base},
+		{followerBID, profileID, base.Add(time.Minute)},
+		{followerCID, profileID, base.Add(2 * time.Minute)},
+		{profileID, followedAID, base},
+		{profileID, followedBID, base.Add(time.Minute)},
+		{profileID, followedCID, base.Add(2 * time.Minute)},
+		{viewerID, followerBID, base.Add(3 * time.Minute)},
+		{viewerID, followedBID, base.Add(3 * time.Minute)},
+	}
+	for _, follow := range follows {
+		if _, err := client.db.Pool().Exec(
+			ctx,
+			`INSERT INTO follows (follower_id, followee_id, created) VALUES ($1, $2, $3)`,
+			follow.follower, follow.followee, follow.created,
+		); err != nil {
+			t.Fatalf("insert follow error = %v", err)
+		}
+	}
+
+	var followers []users.User
+	var cursor *pagination.Cursor
+	for {
+		items, next, err := client.ListFollowers(ctx, "user_follow_profile", cursor, 2, stringID(viewerID))
+		if err != nil {
+			t.Fatalf("ListFollowers(cursor %+v) error = %v", cursor, err)
+		}
+		followers = append(followers, items...)
+		if next == nil {
+			break
+		}
+		cursor = next
+	}
+	assertIDs(t, userIDs(followers), []int{followerCID, followerBID, followerAID})
+	if !followers[1].IsFollowing || followers[0].IsFollowing || followers[2].IsFollowing {
+		t.Fatalf("follower isFollowing flags = %#v", followers)
+	}
+
+	var following []users.User
+	cursor = nil
+	for {
+		items, next, err := client.ListFollowing(ctx, "user_follow_profile", cursor, 2, stringID(viewerID))
+		if err != nil {
+			t.Fatalf("ListFollowing(cursor %+v) error = %v", cursor, err)
+		}
+		following = append(following, items...)
+		if next == nil {
+			break
+		}
+		cursor = next
+	}
+	assertIDs(t, userIDs(following), []int{followedCID, followedBID, followedAID})
+	if !following[1].IsFollowing || following[0].IsFollowing || following[2].IsFollowing {
+		t.Fatalf("following isFollowing flags = %#v", following)
+	}
+
+	if _, _, err := client.ListFollowers(ctx, "missing_user", nil, 2, stringID(viewerID)); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("ListFollowers(missing user) error = %v, want not found", err)
 	}
 }
 
@@ -743,6 +829,14 @@ func (c *Client) GetUserByUsername(ctx context.Context, username, currentUserID 
 
 func (c *Client) GetUserByID(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
 	return NewUserRepository(c).GetUserByID(ctx, userID, currentUserID)
+}
+
+func (c *Client) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
+	return NewUserRepository(c).ListFollowers(ctx, username, cursor, limit, currentUserID)
+}
+
+func (c *Client) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
+	return NewUserRepository(c).ListFollowing(ctx, username, cursor, limit, currentUserID)
 }
 
 func (c *Client) FollowUser(ctx context.Context, followerID, followeeID string) error {
