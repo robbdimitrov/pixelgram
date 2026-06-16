@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal, ViewChild} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {NgClass} from '@angular/common';
 import {LucideHeart, LucideMessageCircle, LucideTrash2} from '@lucide/angular';
@@ -32,6 +32,8 @@ export class PostComponent {
   singleView = input(false);
   isLikeAnimating = signal(false);
 
+  @ViewChild(CommentsComponent) commentsComponent?: CommentsComponent;
+
   constructor() {
     this.destroyRef.onDestroy(() => {
       if (this.likeAnimationTimeout) {
@@ -57,6 +59,18 @@ export class PostComponent {
 
   isOwnedByCurrentUser() {
     return this.session.userId() === this.post().userId;
+  }
+
+  onCommentsClick(event: Event) {
+    if (this.singleView()) {
+      event.preventDefault();
+      this.commentsComponent?.focusInput();
+    }
+  }
+
+  onCommentCountChange(delta: number) {
+    const post = this.post();
+    post.comments = Math.max(0, post.comments + delta);
   }
 
   isDescriptionPresent() {

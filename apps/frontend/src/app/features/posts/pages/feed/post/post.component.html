@@ -75,6 +75,7 @@
         class="group inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
         [routerLink]="['/posts', post().publicId]"
         aria-label="View comments"
+        (click)="onCommentsClick($event)"
       >
         <svg lucideMessageCircle class="h-5 w-5"></svg>
         {{post().comments}} {{post().comments | pluralize:'comment'}}
@@ -96,7 +97,7 @@
 
     @if (singleView()) {
       <div class="border-t border-slate-100 pt-4 dark:border-white/10">
-        <app-comments [publicId]="post().publicId"></app-comments>
+        <app-comments [publicId]="post().publicId" (countChange)="onCommentCountChange($event)"></app-comments>
       </div>
     }
   </div>

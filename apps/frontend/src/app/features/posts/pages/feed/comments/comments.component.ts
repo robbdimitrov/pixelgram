@@ -1,4 +1,4 @@
-import {Component, inject, input, OnInit, signal} from '@angular/core';
+import {Component, inject, input, output, OnInit, signal, ViewChild, ElementRef} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {LucideSend, LucideTrash2} from '@lucide/angular';
@@ -24,10 +24,17 @@ export class CommentsComponent implements OnInit {
   private pagination = inject<PaginationService<Comment>>(PaginationService);
 
   publicId = input.required<string>();
+  countChange = output<number>();
 
   newCommentBody = '';
   isSubmitting = signal(false);
   isLoadingMore = signal(false);
+
+  @ViewChild('commentInput') commentInput?: ElementRef<HTMLInputElement>;
+
+  focusInput() {
+    this.commentInput?.nativeElement.focus();
+  }
 
   ngOnInit() {
     this.loadPage();
@@ -64,6 +71,7 @@ export class CommentsComponent implements OnInit {
         this.pagination.data.set([comment, ...this.pagination.data()]);
         this.newCommentBody = '';
         this.isSubmitting.set(false);
+        this.countChange.emit(1);
       },
       error: () => {
         this.isSubmitting.set(false);
@@ -74,11 +82,13 @@ export class CommentsComponent implements OnInit {
   onDelete(comment: Comment) {
     const index = this.pagination.data().indexOf(comment);
     this.pagination.data.update(curr => curr.filter((c) => c.id !== comment.id));
+    this.countChange.emit(-1);
     this.postService.deleteComment(this.publicId(), comment.id).subscribe({
       error: () => {
         const restored = [...this.pagination.data()];
         restored.splice(index, 0, comment);
         this.pagination.data.set(restored);
+        this.countChange.emit(1);
       }
     });
   }
