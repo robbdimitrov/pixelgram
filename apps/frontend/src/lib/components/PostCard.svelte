@@ -13,13 +13,13 @@
     singleView = false,
     comments: initialComments = [],
     nextCommentsCursor: initialNextCommentsCursor = null
-  } = $props<{
+  }: {
     post: Post;
     currentUserId: number;
     singleView?: boolean;
     comments?: Comment[];
     nextCommentsCursor?: string | null;
-  }>();
+  } = $props();
 
   let liked = $state(initialPost.liked);
   let likes = $state(initialPost.likes);

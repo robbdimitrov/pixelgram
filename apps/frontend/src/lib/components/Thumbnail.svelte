@@ -3,7 +3,7 @@
   import { imageUrl } from '$lib/utils/imageUrl';
   import type { Post } from '$lib/types';
 
-  let { post } = $props<{ post: Post }>();
+  let { post }: { post: Post } = $props();
 </script>
 
 <a

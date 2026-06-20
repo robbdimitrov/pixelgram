@@ -9,11 +9,11 @@
     profileUser = $bindable(),
     isCurrentUser,
     isFollowPending = $bindable(false)
-  } = $props<{
+  }: {
     profileUser: User;
     isCurrentUser: boolean;
     isFollowPending?: boolean;
-  }>();
+  } = $props();
 </script>
 
 <div class="flex w-full flex-col items-center gap-6 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white sm:px-8 md:flex-row md:items-start">

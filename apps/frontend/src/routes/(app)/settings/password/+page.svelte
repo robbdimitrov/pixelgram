@@ -3,7 +3,7 @@
   import { ArrowLeft } from '@lucide/svelte';
   import type { ActionData } from './$types';
 
-  let { form } = $props<{ form: ActionData }>();
+  let { form }: { form: ActionData } = $props();
 
   let showOldPassword = $state(false);
   let showNewPassword = $state(false);

@@ -6,7 +6,7 @@
 
   const MAX_DESCRIPTION = 1000;
 
-  let { form } = $props<{ form: ActionData }>();
+  let { form }: { form: ActionData } = $props();
 
   let imagePreview = $state('');
   let errorMessage = $state(form?.error ?? '');

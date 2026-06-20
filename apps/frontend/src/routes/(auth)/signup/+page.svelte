@@ -2,7 +2,7 @@
   import { enhance } from '$app/forms';
   import type { ActionData } from './$types';
 
-  let { form } = $props<{ form: ActionData }>();
+  let { form }: { form: ActionData } = $props();
 
   let showPassword = $state(false);
   let submitting = $state(false);

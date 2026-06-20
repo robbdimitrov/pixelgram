@@ -11,14 +11,14 @@
     actionLabel = '',
     actionRoute = '',
     actionStyle = 'primary'
-  } = $props<{
+  }: {
     icon?: Icon;
     title: string;
     description: string;
     actionLabel?: string;
     actionRoute?: string;
     actionStyle?: ButtonStyle;
-  }>();
+  } = $props();
 </script>
 
 <div class="flex w-full flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/15 dark:bg-slate-950 dark:text-white sm:px-8">

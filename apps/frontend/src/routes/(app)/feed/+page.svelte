@@ -7,10 +7,10 @@
   import type { PageData } from './$types';
   import type { Post } from '$lib/types';
 
-  let { data } = $props<{ data: PageData }>();
+  let { data }: { data: PageData } = $props();
 
   const pagination = createPagination(
-    { items: data.posts, nextCursor: data.nextCursor },
+    () => ({ items: data.posts, nextCursor: data.nextCursor }),
     async (cursor) => {
       const res = await fetch(`/feed?cursor=${encodeURIComponent(cursor)}`);
       return fetchJson<{ items: Post[]; nextCursor: string | null }>(res);

@@ -9,9 +9,9 @@
   import type { PageData } from './$types';
   import type { User } from '$lib/types';
 
-  let { data } = $props<{ data: PageData }>();
+  let { data }: { data: PageData } = $props();
 
-  let profileUser = $state(data.profileUser);
+  let profileUser = $derived(data.profileUser);
   let isFollowPending = $state(false);
   let pendingFollowIds = $state(new Set<number>());
   let followingOverrides = $state(new Map<number, boolean>());
@@ -20,7 +20,7 @@
   const username = $derived(profileUser.username);
 
   const pagination = createPagination(
-    { items: data.users, nextCursor: data.nextCursor },
+    () => ({ items: data.users, nextCursor: data.nextCursor }),
     async (cursor) => {
       const res = await fetch(`/@${username}/${data.mode}?cursor=${encodeURIComponent(cursor)}`);
       return fetchJson<{ items: User[]; nextCursor: string | null }>(res);

@@ -8,13 +8,13 @@
   import type { PageData } from './$types';
   import type { Post } from '$lib/types';
 
-  let { data } = $props<{ data: PageData }>();
+  let { data }: { data: PageData } = $props();
 
   let profileUser = $derived(data.profileUser);
   let isFollowPending = $state(false);
 
   const pagination = createPagination(
-    { items: data.posts, nextCursor: data.nextCursor },
+    () => ({ items: data.posts, nextCursor: data.nextCursor }),
     async (cursor) => {
       const res = await fetch(`/@${data.profileUser.username}?cursor=${encodeURIComponent(cursor)}`);
       return fetchJson<{ items: Post[]; nextCursor: string | null }>(res);

@@ -5,7 +5,7 @@
   import { imageUrl } from '$lib/utils/imageUrl';
   import type { PageData, ActionData } from './$types';
 
-  let { data, form } = $props<{ data: PageData; form: ActionData }>();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
   const user = data.currentUser;
 
