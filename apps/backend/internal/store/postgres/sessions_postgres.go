@@ -11,7 +11,6 @@ import (
 	"pixelgram/backend/internal/database"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/sessions"
-	"pixelgram/backend/internal/store"
 )
 
 const sessionTTL = 7 * 24 * time.Hour
@@ -25,50 +24,40 @@ func NewSessionRepository(client *Client) *SessionRepository {
 }
 
 func (r *SessionRepository) FindLoginCredentialsByEmail(ctx context.Context, email string) (*sessions.UserCredentials, error) {
-	if err := r.db.Allow(); err != nil {
-		return nil, store.ErrUnavailable
-	}
 	var credentials sessions.UserCredentials
-	err := r.db.Retry(ctx, func() error {
+	err := r.db.Read(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx, `SELECT id, password FROM users WHERE email = $1`, email).
 			Scan(&credentials.ID, &credentials.PasswordHash)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		r.db.Success()
 		return nil, nil
 	}
 	if err != nil {
-		r.db.Failure(err)
 		return nil, err
 	}
-	r.db.Success()
 	return &credentials, nil
 }
 
 func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
-	if err := r.db.Allow(); err != nil {
-		return sessions.CreatedSession{}, store.ErrUnavailable
-	}
 	var session sessions.CreatedSession
-	err := r.db.Pool().QueryRow(ctx, `INSERT INTO sessions (id, user_id, expires_at)
-		VALUES ($1, $2, $3) RETURNING user_id`,
-		r.db.HashSession(sessionID), userID, expiresAt).Scan(&session.UserID)
+	err := r.db.Write(ctx, func() error {
+		return r.db.Pool().QueryRow(ctx, `INSERT INTO sessions (id, user_id, expires_at)
+			VALUES ($1, $2, $3) RETURNING user_id`,
+			r.db.HashSession(sessionID), userID, expiresAt).Scan(&session.UserID)
+	})
 	if err != nil {
-		r.db.Failure(err)
 		return sessions.CreatedSession{}, err
 	}
-	r.db.Success()
 	return session, nil
 }
 
 func (r *SessionRepository) RefreshSession(ctx context.Context, sessionID string) (httpx.Session, error) {
-	if err := r.db.Allow(); err != nil {
-		return httpx.Session{}, store.ErrUnavailable
-	}
 	hashed := r.db.HashSession(sessionID)
 	var session httpx.Session
 	var userID int
-	err := r.db.Retry(ctx, func() error {
+	// Read (retried): the UPDATE only re-stamps expires_at to a deterministic
+	// window, so a retry on transient contention is idempotent.
+	err := r.db.Read(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx, `WITH refreshed AS (
 			  UPDATE sessions SET expires_at = $2
 			  WHERE id = $1 AND expires_at > now() AND expires_at < $3
@@ -84,14 +73,11 @@ func (r *SessionRepository) RefreshSession(ctx context.Context, sessionID string
 			Scan(&session.ID, &userID)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		r.db.Success()
 		return httpx.Session{}, nil
 	}
 	if err != nil {
-		r.db.Failure(err)
 		return httpx.Session{}, err
 	}
-	r.db.Success()
 	session.UserID = strconv.Itoa(userID)
 	return session, nil
 }
@@ -109,11 +95,8 @@ func (r *SessionRepository) DeleteExpiredLoginFailures(ctx context.Context) erro
 }
 
 func (r *SessionRepository) GetLoginFailures(ctx context.Context, keys []string) ([]sessions.LoginFailure, error) {
-	if err := r.db.Allow(); err != nil {
-		return nil, store.ErrUnavailable
-	}
 	var failures []sessions.LoginFailure
-	err := r.db.Retry(ctx, func() error {
+	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx,
 			`SELECT key, count, reset_at FROM login_failures WHERE key = ANY($1)`, keys)
 		if err != nil {
@@ -131,10 +114,8 @@ func (r *SessionRepository) GetLoginFailures(ctx context.Context, keys []string)
 		return rows.Err()
 	})
 	if err != nil {
-		r.db.Failure(err)
 		return nil, err
 	}
-	r.db.Success()
 	return failures, nil
 }
 
@@ -156,15 +137,10 @@ func (r *SessionRepository) ClearLoginFailures(ctx context.Context, keys []strin
 }
 
 func (r *SessionRepository) exec(ctx context.Context, query string, args ...any) error {
-	if err := r.db.Allow(); err != nil {
-		return store.ErrUnavailable
-	}
-	if _, err := r.db.Pool().Exec(ctx, query, args...); err != nil {
-		r.db.Failure(err)
+	return r.db.Write(ctx, func() error {
+		_, err := r.db.Pool().Exec(ctx, query, args...)
 		return err
-	}
-	r.db.Success()
-	return nil
+	})
 }
 
 var (

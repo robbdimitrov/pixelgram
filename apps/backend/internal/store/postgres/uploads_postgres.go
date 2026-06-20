@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/uploads"
 )
 
@@ -19,45 +18,43 @@ func NewUploadRepository(client *Client) *UploadRepository {
 }
 
 func (r *UploadRepository) CreateUpload(ctx context.Context, userID, filename string) (bool, error) {
-	if err := r.db.Allow(); err != nil {
-		return false, store.ErrUnavailable
-	}
-	tag, err := r.db.Pool().Exec(ctx, `INSERT INTO uploads (user_id, filename)
-		SELECT $1, $2
-		WHERE (SELECT count(*) FROM uploads WHERE user_id = $1) < $3`,
-		userID, filename, maxPendingUploads)
-	if err != nil {
-		r.db.Failure(err)
-		return false, err
-	}
-	r.db.Success()
-	return tag.RowsAffected() > 0, nil
+	var created bool
+	err := r.db.Write(ctx, func() error {
+		tag, err := r.db.Pool().Exec(ctx, `INSERT INTO uploads (user_id, filename)
+			SELECT $1, $2
+			WHERE (SELECT count(*) FROM uploads WHERE user_id = $1) < $3`,
+			userID, filename, maxPendingUploads)
+		if err != nil {
+			return err
+		}
+		created = tag.RowsAffected() > 0
+		return nil
+	})
+	return created, err
 }
 
 func (r *UploadRepository) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
-	if err := r.db.Allow(); err != nil {
-		return nil, store.ErrUnavailable
-	}
-	rows, err := r.db.Pool().Query(ctx, `DELETE FROM uploads
-		WHERE created <= now() - $1::interval RETURNING filename`, "1 hour")
-	if err != nil {
-		r.db.Failure(err)
-		return nil, err
-	}
-	defer rows.Close()
-	filenames := []string{}
-	for rows.Next() {
-		var filename string
-		if err := rows.Scan(&filename); err != nil {
-			return nil, err
+	var filenames []string
+	err := r.db.Write(ctx, func() error {
+		rows, err := r.db.Pool().Query(ctx, `DELETE FROM uploads
+			WHERE created <= now() - $1::interval RETURNING filename`, "1 hour")
+		if err != nil {
+			return err
 		}
-		filenames = append(filenames, filename)
-	}
-	if err := rows.Err(); err != nil {
-		r.db.Failure(err)
+		defer rows.Close()
+		filenames = []string{}
+		for rows.Next() {
+			var filename string
+			if err := rows.Scan(&filename); err != nil {
+				return err
+			}
+			filenames = append(filenames, filename)
+		}
+		return rows.Err()
+	})
+	if err != nil {
 		return nil, err
 	}
-	r.db.Success()
 	return filenames, nil
 }
 

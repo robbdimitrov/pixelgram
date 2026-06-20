@@ -52,23 +52,35 @@ func (db *DB) Pool() *pgxpool.Pool {
 	return db.pool
 }
 
-func (db *DB) Allow() error {
+// Read runs a read-only operation through the circuit breaker with retry.
+// pgx.ErrNoRows is treated as a healthy outcome, not a breaker failure, so
+// callers can inspect the returned error for it without tripping the breaker.
+func (db *DB) Read(ctx context.Context, fn func() error) error {
 	if !db.breaker.allow() {
 		return store.ErrUnavailable
 	}
-	return nil
+	err := withRetry(ctx, db.retryCfg, fn)
+	db.record(err)
+	return err
 }
 
-func (db *DB) Success() {
-	db.breaker.success()
+// Write runs a mutating operation through the circuit breaker without retry,
+// since writes may be non-idempotent.
+func (db *DB) Write(ctx context.Context, fn func() error) error {
+	if !db.breaker.allow() {
+		return store.ErrUnavailable
+	}
+	err := fn()
+	db.record(err)
+	return err
 }
 
-func (db *DB) Failure(err error) {
+func (db *DB) record(err error) {
+	if err == nil || errors.Is(err, pgx.ErrNoRows) {
+		db.breaker.success()
+		return
+	}
 	db.breaker.failure(err)
-}
-
-func (db *DB) Retry(ctx context.Context, fn func() error) error {
-	return withRetry(ctx, db.retryCfg, fn)
 }
 
 func (db *DB) HashSession(sessionID string) string {

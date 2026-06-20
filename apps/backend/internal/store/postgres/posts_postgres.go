@@ -31,38 +31,30 @@ func NewPostRepository(client *Client) *PostRepository {
 }
 
 func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error) {
-	if err := r.db.Allow(); err != nil {
-		return "", false, store.ErrUnavailable
-	}
-	tx, err := r.db.Pool().Begin(ctx)
-	if err != nil {
-		r.db.Failure(err)
-		return "", false, err
-	}
-	defer database.Rollback(ctx, tx)
-	var consumed string
-	err = tx.QueryRow(ctx, `DELETE FROM uploads WHERE user_id = $1 AND filename = $2
-		RETURNING filename`, userID, filename).Scan(&consumed)
+	var publicID string
+	err := r.db.Write(ctx, func() error {
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+		var consumed string
+		if err := tx.QueryRow(ctx, `DELETE FROM uploads WHERE user_id = $1 AND filename = $2
+			RETURNING filename`, userID, filename).Scan(&consumed); err != nil {
+			return err
+		}
+		if err := tx.QueryRow(ctx, `INSERT INTO posts (user_id, filename, description)
+			VALUES ($1, $2, $3) RETURNING public_id`, userID, filename, description).Scan(&publicID); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		r.db.Success()
 		return "", false, nil
 	}
 	if err != nil {
-		r.db.Failure(err)
 		return "", false, err
 	}
-	var publicID string
-	err = tx.QueryRow(ctx, `INSERT INTO posts (user_id, filename, description)
-		VALUES ($1, $2, $3) RETURNING public_id`, userID, filename, description).Scan(&publicID)
-	if err != nil {
-		r.db.Failure(err)
-		return "", false, err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		r.db.Failure(err)
-		return "", false, err
-	}
-	r.db.Success()
 	return publicID, true, nil
 }
 
@@ -83,7 +75,7 @@ func (r *PostRepository) GetFeed(ctx context.Context, cursor *pagination.Cursor,
 }
 
 func (r *PostRepository) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	exists, err := r.usernameExists(ctx, username)
+	exists, err := usernameExists(ctx, r.db, username)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,7 +92,7 @@ func (r *PostRepository) GetPosts(ctx context.Context, username string, cursor *
 }
 
 func (r *PostRepository) GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	exists, err := r.usernameExists(ctx, username)
+	exists, err := usernameExists(ctx, r.db, username)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,23 +109,6 @@ func (r *PostRepository) GetLikedPosts(ctx context.Context, username string, cur
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
-func (r *PostRepository) usernameExists(ctx context.Context, username string) (bool, error) {
-	if err := r.db.Allow(); err != nil {
-		return false, store.ErrUnavailable
-	}
-	var exists bool
-	err := r.db.Retry(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx,
-			`SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`, username).Scan(&exists)
-	})
-	if err != nil {
-		r.db.Failure(err)
-		return false, err
-	}
-	r.db.Success()
-	return exists, nil
-}
-
 func (r *PostRepository) GetPost(ctx context.Context, postID, currentUserID string) (posts.Post, bool, error) {
 	result, err := r.queryPosts(ctx, `SELECT `+postColumns+`
 		FROM posts JOIN users u ON u.id = posts.user_id
@@ -148,53 +123,38 @@ func (r *PostRepository) GetPost(ctx context.Context, postID, currentUserID stri
 }
 
 func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) (string, bool, error) {
-	if err := r.db.Allow(); err != nil {
-		return "", false, store.ErrUnavailable
-	}
-	tx, err := r.db.Pool().Begin(ctx)
-	if err != nil {
-		r.db.Failure(err)
-		return "", false, err
-	}
-	defer database.Rollback(ctx, tx)
 	var filename string
-	err = tx.QueryRow(ctx, `DELETE FROM posts WHERE public_id = $1 AND user_id = $2
-		RETURNING filename`, postID, userID).Scan(&filename)
+	err := r.db.Write(ctx, func() error {
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+		if err := tx.QueryRow(ctx, `DELETE FROM posts WHERE public_id = $1 AND user_id = $2
+			RETURNING filename`, postID, userID).Scan(&filename); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		r.db.Success()
 		return "", false, nil
 	}
 	if err != nil {
-		r.db.Failure(err)
 		return "", false, err
 	}
-	if _, err = tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename); err != nil {
-		r.db.Failure(err)
-		return "", false, err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		r.db.Failure(err)
-		return "", false, err
-	}
-	r.db.Success()
 	return filename, true, nil
 }
 
 func (r *PostRepository) PostExists(ctx context.Context, postID string) (bool, error) {
-	if err := r.db.Allow(); err != nil {
-		return false, store.ErrUnavailable
-	}
 	var exists bool
-	err := r.db.Retry(ctx, func() error {
+	err := r.db.Read(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx,
 			`SELECT EXISTS (SELECT 1 FROM posts WHERE public_id = $1)`, postID).Scan(&exists)
 	})
-	if err != nil {
-		r.db.Failure(err)
-		return false, err
-	}
-	r.db.Success()
-	return exists, nil
+	return exists, err
 }
 
 func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) error {
@@ -209,23 +169,15 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 }
 
 func (r *PostRepository) exec(ctx context.Context, query string, args ...any) error {
-	if err := r.db.Allow(); err != nil {
-		return store.ErrUnavailable
-	}
-	if _, err := r.db.Pool().Exec(ctx, query, args...); err != nil {
-		r.db.Failure(err)
+	return r.db.Write(ctx, func() error {
+		_, err := r.db.Pool().Exec(ctx, query, args...)
 		return err
-	}
-	r.db.Success()
-	return nil
+	})
 }
 
 func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...any) ([]posts.Post, error) {
-	if err := r.db.Allow(); err != nil {
-		return nil, store.ErrUnavailable
-	}
 	var result []posts.Post
-	err := r.db.Retry(ctx, func() error {
+	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx, query, args...)
 		if err != nil {
 			return err
@@ -247,23 +199,18 @@ func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...a
 		return rows.Err()
 	})
 	if err != nil {
-		r.db.Failure(err)
 		return nil, err
 	}
-	r.db.Success()
 	return result, nil
 }
 
 func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *pagination.Cursor, error) {
-	if err := r.db.Allow(); err != nil {
-		return nil, nil, store.ErrUnavailable
-	}
 	type row struct {
 		post          posts.Post
 		cursorCreated time.Time
 	}
 	var result []row
-	err := r.db.Retry(ctx, func() error {
+	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx, query, args...)
 		if err != nil {
 			return err
@@ -286,10 +233,8 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 		return rows.Err()
 	})
 	if err != nil {
-		r.db.Failure(err)
 		return nil, nil, err
 	}
-	r.db.Success()
 	hasMore := len(result) > limit
 	if hasMore {
 		result = result[:limit]

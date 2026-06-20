@@ -27,3 +27,14 @@ func NewWithDB(db *database.DB) *Client {
 func (c *Client) Close() {
 	c.db.Close()
 }
+
+// usernameExists reports whether a user with the given username exists. Shared
+// by the user and post repositories, which both gate lookups on it.
+func usernameExists(ctx context.Context, db *database.DB, username string) (bool, error) {
+	var exists bool
+	err := db.Read(ctx, func() error {
+		return db.Pool().QueryRow(ctx,
+			`SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`, username).Scan(&exists)
+	})
+	return exists, err
+}
