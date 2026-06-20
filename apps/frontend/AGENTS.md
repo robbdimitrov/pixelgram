@@ -55,7 +55,7 @@ BACKEND_URL=http://localhost:8080 node build
 
 - Resize large JPEG, PNG, GIF, and WEBP files before upload, targeting less than 900 KB. The backend still enforces the 1 MB hard limit.
 - Upload the file first, then create the image record with `POST /images` using the returned filename.
-- Image bytes are served directly by the backend through `/uploads/{key}` and never pass through the Node process.
+- Image bytes are served same-origin by `src/routes/uploads/[key]/+server.ts`, which streams them from the backend through `apiClient` without buffering. The browser only ever talks to this origin, so `img-src 'self'` holds with no ingress rule for `/uploads`.
 - Use `imageUrl()` for image paths. CSP keeps `img-src 'self'`.
 
 ## SSR and Browser Security
