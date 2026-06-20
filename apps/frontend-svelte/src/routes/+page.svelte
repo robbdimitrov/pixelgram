@@ -1,1 +1,1 @@
-<h1>Pixelgram</h1>
+<!-- redirected by +page.server.ts -->
