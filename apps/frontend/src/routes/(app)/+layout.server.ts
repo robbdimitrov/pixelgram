@@ -4,8 +4,6 @@ import { getCurrent } from '$lib/server/api/users';
 
 export const load: LayoutServerLoad = async ({ fetch }) => {
   const currentUser = await getCurrent(fetch);
-  if (!currentUser) {
-    throw redirect(303, '/login');
-  }
+  if (!currentUser) throw redirect(303, '/login');
   return { currentUser };
 };

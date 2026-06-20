@@ -3,7 +3,9 @@
   import { createPagination } from '$lib/createPagination.svelte';
   import ProfileHeader from '$lib/components/ProfileHeader.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
+  import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
   import { imageUrl } from '$lib/utils/imageUrl';
+  import { fetchJson } from '$lib/utils/clientFetch';
   import type { PageData } from './$types';
   import type { User } from '$lib/types';
 
@@ -12,6 +14,7 @@
   let profileUser = $state(data.profileUser);
   let isFollowPending = $state(false);
   let pendingFollowIds = $state(new Set<number>());
+  let followingOverrides = $state(new Map<number, boolean>());
 
   const isCurrentUser = $derived(data.currentUser.id === profileUser.id);
   const username = $derived(profileUser.username);
@@ -20,7 +23,7 @@
     { items: data.users, nextCursor: data.nextCursor },
     async (cursor) => {
       const res = await fetch(`/@${username}/${data.mode}?cursor=${encodeURIComponent(cursor)}`);
-      return res.json() as Promise<{ items: User[]; nextCursor: string | null }>;
+      return fetchJson<{ items: User[]; nextCursor: string | null }>(res);
     }
   );
 
@@ -46,6 +49,7 @@
   {#if pagination.items.length > 0}
     <div class="mx-auto flex w-full max-w-xl flex-col gap-3">
       {#each pagination.items as user (user.id)}
+        {@const isFollowing = followingOverrides.get(user.id) ?? user.isFollowing}
         <div class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950">
           <a
             href="/@{user.username}"
@@ -63,23 +67,27 @@
           {#if data.currentUser.id !== user.id}
             <form
               method="POST"
-              action="/@{username}?/{user.isFollowing ? 'unfollow' : 'follow'}"
+              action="/@{username}?/{isFollowing ? 'unfollow' : 'follow'}"
               use:enhance={() => {
-                pendingFollowIds = new Set([...pendingFollowIds, user.id]);
-                return async () => {
-                  pendingFollowIds = new Set([...pendingFollowIds].filter((id) => id !== user.id));
+                pendingFollowIds.add(user.id);
+                followingOverrides.set(user.id, !isFollowing);
+                return async ({ result }) => {
+                  pendingFollowIds.delete(user.id);
+                  if (result.type === 'error' || result.type === 'failure') {
+                    followingOverrides.set(user.id, isFollowing);
+                  }
                 };
               }}
             >
               <button
                 type="submit"
                 disabled={pendingFollowIds.has(user.id)}
-                class="btn btn-sm h-9 min-h-9 shrink-0 rounded-full px-4 text-xs font-extrabold {user.isFollowing ? 'btn-outline' : 'btn-neutral'}"
+                class="btn btn-sm h-9 min-h-9 shrink-0 rounded-full px-4 text-xs font-extrabold {isFollowing ? 'btn-outline' : 'btn-neutral'}"
               >
                 {#if pendingFollowIds.has(user.id)}
                   <span class="loading loading-spinner loading-xs"></span>
                 {:else}
-                  {user.isFollowing ? 'Unfollow' : 'Follow'}
+                  {isFollowing ? 'Unfollow' : 'Follow'}
                 {/if}
               </button>
             </form>
@@ -101,18 +109,11 @@
   {/if}
 
   {#if !pagination.done && pagination.items.length > 0}
-    <div class="flex justify-center">
-      <button
-        class="btn btn-outline btn-primary rounded-xl px-8 font-bold transition-transform hover:scale-105 active:scale-95"
-        onclick={() => pagination.more()}
-        disabled={pagination.loading}
-      >
-        {#if pagination.loading}
-          <span class="loading loading-spinner"></span>
-        {:else}
-          Load More
-        {/if}
-      </button>
+    <div class="flex flex-col items-center gap-2">
+      {#if pagination.error}
+        <p class="text-sm text-error">{pagination.error}</p>
+      {/if}
+      <LoadMoreButton loading={pagination.loading} onclick={pagination.more} />
     </div>
   {/if}
 </div>

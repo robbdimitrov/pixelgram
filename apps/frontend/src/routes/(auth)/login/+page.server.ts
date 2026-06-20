@@ -27,7 +27,6 @@ export const actions: Actions = {
         path: '/',
         httpOnly: true,
         sameSite: 'lax',
-        secure: false,  // set to true in prod behind HTTPS
         maxAge: c.maxAge
       });
     }

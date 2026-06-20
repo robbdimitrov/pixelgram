@@ -36,8 +36,8 @@ export const actions: Actions = {
     const data = await request.formData();
     const body = (data.get('body') as string ?? '').trim();
     if (!body) return { success: false };
-    await createComment(fetch, params.publicId, body);
-    return { success: true };
+    const comment = await createComment(fetch, params.publicId, body);
+    return { success: true, comment };
   },
   deleteComment: async ({ fetch, request, params }) => {
     const data = await request.formData();

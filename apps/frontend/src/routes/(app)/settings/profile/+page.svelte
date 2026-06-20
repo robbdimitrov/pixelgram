@@ -60,12 +60,6 @@
     </div>
   {/if}
 
-  {#if form?.error}
-    <div class="rounded-2xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
-      {form.error}
-    </div>
-  {/if}
-
   <form
     method="POST"
     enctype="multipart/form-data"

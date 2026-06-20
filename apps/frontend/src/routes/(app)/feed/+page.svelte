@@ -2,6 +2,8 @@
   import { createPagination } from '$lib/createPagination.svelte';
   import PostCard from '$lib/components/PostCard.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
+  import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+  import { fetchJson } from '$lib/utils/clientFetch';
   import type { PageData } from './$types';
   import type { Post } from '$lib/types';
 
@@ -11,7 +13,7 @@
     { items: data.posts, nextCursor: data.nextCursor },
     async (cursor) => {
       const res = await fetch(`/feed?cursor=${encodeURIComponent(cursor)}`);
-      return res.json() as Promise<{ items: Post[]; nextCursor: string | null }>;
+      return fetchJson<{ items: Post[]; nextCursor: string | null }>(res);
     }
   );
 </script>
@@ -38,16 +40,9 @@
   </div>
 
   {#if !pagination.done && pagination.items.length > 0}
-    <button
-      class="btn btn-outline btn-primary rounded-xl px-8 font-bold transition-transform hover:scale-105 active:scale-95"
-      onclick={() => pagination.more()}
-      disabled={pagination.loading}
-    >
-      {#if pagination.loading}
-        <span class="loading loading-spinner"></span>
-      {:else}
-        Load More
-      {/if}
-    </button>
+    {#if pagination.error}
+      <p class="text-sm text-error">{pagination.error}</p>
+    {/if}
+    <LoadMoreButton loading={pagination.loading} onclick={pagination.more} />
   {/if}
 </div>

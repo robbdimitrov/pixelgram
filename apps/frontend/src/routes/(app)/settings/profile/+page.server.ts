@@ -8,9 +8,7 @@ export const load: PageServerLoad = ({ parent }) => parent();
 export const actions: Actions = {
   default: async ({ fetch, request }) => {
     const currentUser = await getCurrent(fetch);
-    if (!currentUser) {
-      throw redirect(303, '/login');
-    }
+    if (!currentUser) throw redirect(303, '/login');
 
     const data = await request.formData();
     const name = (data.get('name') as string ?? '').trim();
@@ -36,7 +34,12 @@ export const actions: Actions = {
       avatarFilename = uploaded.filename;
     }
 
-    await updateUser(fetch, currentUser.id, name, username, email, avatarFilename, bio);
+    try {
+      await updateUser(fetch, currentUser.id, name, username, email, avatarFilename, bio);
+    } catch {
+      return fail(400, { error: 'Could not save profile. Please check your details and try again.' });
+    }
+
     throw redirect(303, '/settings');
   }
 };

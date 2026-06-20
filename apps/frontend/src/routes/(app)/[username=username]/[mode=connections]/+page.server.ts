@@ -1,9 +1,10 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getByUsername, getFollowers, getFollowing } from '$lib/server/api/users';
+import { stripAt } from '$lib/server/username';
 
 export const load: PageServerLoad = async ({ fetch, params }) => {
-  const username = params.username.slice(1);
+  const username = stripAt(params.username);
   const mode = params.mode as 'followers' | 'following';
 
   const profileUser = await getByUsername(fetch, username);
