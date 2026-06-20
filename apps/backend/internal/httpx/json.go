@@ -9,8 +9,6 @@ import (
 
 const JSONBodyLimit = 100 * 1024
 
-var ErrEmptyJSONBody = errors.New("empty json body")
-
 func WriteJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
@@ -49,20 +47,5 @@ func jsonDecodeError(err error) (int, string) {
 	if errors.As(err, &maxBytesError) {
 		return http.StatusRequestEntityTooLarge, "Request body is too large."
 	}
-
-	if errors.Is(err, io.EOF) || errors.Is(err, ErrEmptyJSONBody) {
-		return http.StatusBadRequest, "Malformed JSON request body."
-	}
-
-	var syntaxError *json.SyntaxError
-	if errors.As(err, &syntaxError) {
-		return http.StatusBadRequest, "Malformed JSON request body."
-	}
-
-	var unmarshalTypeError *json.UnmarshalTypeError
-	if errors.As(err, &unmarshalTypeError) {
-		return http.StatusBadRequest, "Malformed JSON request body."
-	}
-
 	return http.StatusBadRequest, "Malformed JSON request body."
 }

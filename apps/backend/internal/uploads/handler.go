@@ -43,8 +43,15 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	header := make([]byte, 12)
-	n, _ := f.Read(header)
+	// io.ReadFull avoids a short read leaving header partially populated, which
+	// could falsely reject a valid image (e.g. WEBP needs bytes at offset 8).
+	n, err := io.ReadFull(f, header)
 	f.Close()
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		DeleteUploadFile(h.ImageDir, filename)
+		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
+		return
+	}
 	if !isImage(header[:n]) {
 		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusBadRequest, "Only image uploads are allowed.")

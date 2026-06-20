@@ -91,7 +91,9 @@ func Logger(next http.Handler) http.Handler {
 
 func SecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		// 0 disables the legacy XSS auditor; it has its own injection vectors
+		// and is superseded by the Content-Security-Policy below.
+		w.Header().Set("X-XSS-Protection", "0")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 		w.Header().Set("Referrer-Policy", "no-referrer")
