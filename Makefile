@@ -20,6 +20,11 @@ frontend:
 	docker build -t $(IMAGE_PREFIX)/frontend apps/frontend
 	docker push $(IMAGE_PREFIX)/frontend
 
+.PHONY: frontend-svelte
+frontend-svelte:
+	docker build -t $(IMAGE_PREFIX)/frontend-svelte apps/frontend-svelte
+	docker push $(IMAGE_PREFIX)/frontend-svelte
+
 .PHONY: format
 format:
 	@gofmt -w $$(find apps/backend -name '*.go')
