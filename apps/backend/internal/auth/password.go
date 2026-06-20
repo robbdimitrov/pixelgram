@@ -35,6 +35,17 @@ var DefaultPasswordParams = PasswordParams{
 	Parallelism: 1,
 }
 
+// decoyHash is a valid Argon2id hash computed once at startup with the default
+// parameters. Login verifies against it when no account matches the supplied
+// email so the password-checking step costs the same whether or not the
+// account exists, closing a user-enumeration timing oracle.
+var decoyHash, _ = HashPassword("decoy password — never matches a real login", DefaultPasswordParams)
+
+// DecoyHash returns the process-wide decoy Argon2id hash.
+func DecoyHash() string {
+	return decoyHash
+}
+
 func HashPassword(password string, params PasswordParams) (string, error) {
 	if params.Memory == 0 || params.Iterations == 0 || params.Parallelism == 0 {
 		return "", ErrInvalidHash

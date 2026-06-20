@@ -20,6 +20,7 @@ type Service struct {
 	now               func() time.Time
 	generateSessionID func() (string, error)
 	verifyPassword    func(string, string) (bool, error)
+	decoyHash         string
 }
 
 func NewService(repository Repository) *Service {
@@ -28,6 +29,7 @@ func NewService(repository Repository) *Service {
 		now:               time.Now,
 		generateSessionID: auth.GenerateSessionID,
 		verifyPassword:    auth.VerifyPassword,
+		decoyHash:         auth.DecoyHash(),
 	}
 }
 
@@ -54,14 +56,18 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 		return LoginOutput{}, err
 	}
 
-	valid := false
+	// Always run password verification — against a decoy hash when no account
+	// matches — so login latency doesn't reveal whether the email is registered
+	// (user-enumeration timing oracle).
+	hash := s.decoyHash
 	if credentials != nil {
-		valid, err = s.verifyPassword(input.Password, credentials.PasswordHash)
-		if err != nil {
-			valid = false
-		}
+		hash = credentials.PasswordHash
 	}
-	if !valid {
+	verified, err := s.verifyPassword(input.Password, hash)
+	if err != nil {
+		verified = false
+	}
+	if credentials == nil || !verified {
 		s.recordLoginFailures(ctx, keys)
 		return LoginOutput{}, ErrInvalidCredentials
 	}

@@ -140,6 +140,35 @@ func TestServiceLoginInvalidCredentialsRecordsBothKeys(t *testing.T) {
 	}
 }
 
+func TestServiceLoginVerifiesDecoyHashForUnknownAccount(t *testing.T) {
+	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
+	repository := &fakeRepository{} // no credentials: account does not exist
+	service := newTestService(repository, now)
+	called := false
+	var gotHash string
+	service.verifyPassword = func(_, hash string) (bool, error) {
+		called = true
+		gotHash = hash
+		return false, nil
+	}
+
+	_, err := service.Login(context.Background(), LoginInput{
+		Email:    "nobody@example.com",
+		Password: "password123",
+		ClientIP: "192.0.2.1",
+	})
+
+	if !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("Login() error = %v, want ErrInvalidCredentials", err)
+	}
+	if !called {
+		t.Fatal("password verification must run even for a missing account (timing oracle)")
+	}
+	if gotHash != service.decoyHash {
+		t.Fatalf("verified hash = %q, want decoy hash", gotHash)
+	}
+}
+
 func TestServiceLoginSuccessCreatesSessionAndClearsFailures(t *testing.T) {
 	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
 	repository := &fakeRepository{
