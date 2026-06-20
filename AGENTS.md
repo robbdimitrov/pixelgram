@@ -121,6 +121,7 @@ The backend reads `PORT` (defaults to `8080`).
 - **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Themes configured CSS-first via `@plugin "daisyui/theme"` in `src/app.css`. Use `@theme` for custom tokens.
 - **Frontend icons**: use `@lucide/svelte` icons. Do not add ad hoc inline SVG unless Lucide cannot represent the needed symbol.
 - **Frontend layout**: keep page widths intentional: `max-w-xl` for auth/settings/feed/single-post-like flows and `max-w-5xl` for profile grids, upload creation, and app-shell alignment.
+- **Frontend dependencies**: do not add a package when a maintained platform, SvelteKit, or existing project primitive handles the requirement clearly. Every new dependency must justify its maintenance, security, and bundle/runtime cost; remove direct dependencies that are no longer imported.
 
 ## Shared Style
 

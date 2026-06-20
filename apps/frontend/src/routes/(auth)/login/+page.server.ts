@@ -1,7 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { parse as parseSetCookie } from 'set-cookie-parser';
 import type { Actions } from './$types';
-import { login } from '$lib/server/api/auth';
+import { applySessionCookie, login } from '$lib/server/api/auth';
 
 export const actions: Actions = {
   default: async ({ request, fetch, cookies }) => {
@@ -19,16 +18,9 @@ export const actions: Actions = {
       return fail(res.status, { error: 'Invalid email or password.' });
     }
 
-    // handleFetch rewrites /api/ → BACKEND_URL (cross-origin) so Set-Cookie is NOT auto-applied.
-    // We must manually parse and re-emit it.
-    const setCookieHeader = res.headers.get('set-cookie') ?? '';
-    for (const c of parseSetCookie(setCookieHeader, { map: false })) {
-      cookies.set(c.name, c.value, {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: c.maxAge
-      });
+    // handleFetch targets BACKEND_URL, so the backend cookie must be re-emitted by SvelteKit.
+    if (!applySessionCookie(res.headers, cookies)) {
+      return fail(502, { error: 'Could not establish a session. Please try again.' });
     }
 
     throw redirect(303, '/feed');

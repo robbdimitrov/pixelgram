@@ -1,7 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { parse as parseSetCookie } from 'set-cookie-parser';
 import type { Actions } from './$types';
-import { createUser, login } from '$lib/server/api/auth';
+import { applySessionCookie, createUser, login } from '$lib/server/api/auth';
 
 export const actions: Actions = {
   default: async ({ request, fetch, cookies }) => {
@@ -25,14 +24,8 @@ export const actions: Actions = {
       throw redirect(303, '/login');
     }
 
-    const setCookieHeader = res.headers.get('set-cookie') ?? '';
-    for (const c of parseSetCookie(setCookieHeader, { map: false })) {
-      cookies.set(c.name, c.value, {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: c.maxAge
-      });
+    if (!applySessionCookie(res.headers, cookies)) {
+      return fail(502, { error: 'Account created, but sign-in failed. Please log in.' });
     }
 
     throw redirect(303, '/feed');

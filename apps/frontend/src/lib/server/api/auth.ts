@@ -1,5 +1,26 @@
+import type { Cookies } from '@sveltejs/kit';
 import type { UserIdDto } from '$lib/types';
 import { unwrap } from './http';
+
+const sessionCookiePattern = /^session=([A-Za-z0-9+/=]{28})(?:;|$)/;
+const maxAgePattern = /(?:^|;\s*)Max-Age=(\d+)(?:;|$)/i;
+
+export function applySessionCookie(headers: Headers, cookies: Pick<Cookies, 'set'>): boolean {
+  for (const header of headers.getSetCookie()) {
+    const sessionID = sessionCookiePattern.exec(header)?.[1];
+    const maxAge = Number(maxAgePattern.exec(header)?.[1]);
+    if (!sessionID || !Number.isSafeInteger(maxAge) || maxAge <= 0) continue;
+
+    cookies.set('session', sessionID, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge
+    });
+    return true;
+  }
+  return false;
+}
 
 export async function createUser(
   fetch: typeof globalThis.fetch,
