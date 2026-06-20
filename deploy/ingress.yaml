@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend
+  labels:
+    app: pixelgram
+    tier: frontend
+  annotations:
+    # Uploads stream through the frontend BFF, so the request body reaches the
+    # ingress. Allow the backend's 1 MB image limit plus multipart overhead.
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+spec:
+  ingressClassName: nginx
+  # The SvelteKit server is the only public entry point; it proxies /api and
+  # /uploads to the backend in-cluster, so no backend routes are exposed here.
+  rules:
+    - host: pixelgram.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080
+  # Production TLS — enable with an ingress-managed certificate (e.g. cert-manager):
+  # tls:
+  #   - hosts:
+  #       - pixelgram.localhost
+  #     secretName: pixelgram-tls
