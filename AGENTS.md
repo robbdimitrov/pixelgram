@@ -126,6 +126,7 @@ The backend reads `PORT` (defaults to `8080`).
 
 - Follow **SOLID**, **KISS**, **DRY**, **YAGNI**, and the **Pareto principle** when writing code and refactoring: keep changes focused, prefer simple local patterns, avoid duplicated logic, add abstractions only when they remove real complexity, and never build for hypothetical future needs.
 - Prefer one-liner solutions when they are readable, maintainable, and as optimal or better than a multi-line equivalent. Concise code is not a goal in itself — only collapse to a single line when it doesn't sacrifice clarity.
+- Hold every change to a high bar: correct, secure, maintainable, and free of obvious bugs before it lands. When reviewing or writing code, actively look for improvements — leaner algorithms, better-fit data structures, or established design patterns that simplify the problem. Reach for battle-proven solutions (stdlib, platform primitives, well-known patterns) before rolling custom logic.
 - Use standard initialisms in Go names (`ID`, `URL`, `HTTP`, `DB`). Generated identifiers are exempt.
 - HTTP APIs return JSON consistently, including errors. Use symbolic `http.Status*` constants.
 - Type API boundaries explicitly. Prefer `unknown` over `any`, map transport DTOs deliberately, and keep strict TypeScript enabled.
