@@ -53,7 +53,7 @@ kubectl delete namespace pixelgram
 - Prefer concise code only when it remains clear and maintainable.
 - Use standard-library, platform, and established project primitives before introducing custom implementations or dependencies.
 - Keep changes cohesive. Resolve directly related defects discovered in the code being changed, but do not expand into unrelated cleanup.
-- Comments explain constraints, invariants, security decisions, or non-obvious intent. Do not narrate straightforward code, preserve implementation history, or use comments to compensate for unclear names and structure.
+- Comments are concise and explain constraints, invariants, security decisions, or non-obvious intent. Do not narrate straightforward code, preserve implementation history, or use comments to compensate for unclear names and structure.
 - Regenerate generated code instead of editing it manually.
 - Write behavior-oriented tests focused on critical paths, complex logic, and high-risk failure modes rather than chasing coverage percentages.
 - Services must remain stateless and correct with multiple replicas.
