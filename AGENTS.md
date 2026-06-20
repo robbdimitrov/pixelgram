@@ -136,3 +136,18 @@ The backend reads `PORT` (defaults to `8080`).
 - New migrations use two-space indentation, paired up/down files, and corrective migrations rather than rewriting applied history.
 - Microservices must be stateless and designed to work properly in multi-replica environments.
 - Frontend API response handling must tolerate `204 No Content` and non-JSON error bodies; the central `unwrap<T>()` helper in `src/lib/server/api/http.ts` handles this — always use it instead of calling `response.json()` directly.
+
+## Security (OWASP Top 10)
+
+Treat the OWASP Top 10 (2021) as a checklist for every change that touches a route, query, dependency, or deployment manifest. Each item lists the project's current control and the bar new code must meet.
+
+- **A01 Broken Access Control** — Auth is session-cookie based; `httpx.RequireSession` wraps the whole mux and only an explicit allowlist (`POST /sessions`, `POST /users`, `GET /health`, `OPTIONS`) is public. Enforce ownership in the store/handler (e.g. `WHERE user_id = $current`), never trust a client-supplied ID for authorization. New public routes must be registered before the auth layer *and* justified.
+- **A02 Cryptographic Failures** — Passwords use Argon2id (OWASP-min params, constant-time compare); session tokens are HMAC-SHA256-hashed before persistence; secrets come from k8s Secrets, never code or logs. Don't log credentials, tokens, or password hashes. Cookies are `HttpOnly` + `SameSite=Strict` + `Secure` (behind TLS/proxy).
+- **A03 Injection** — All SQL goes through `pgx` parameterized queries (`$1`, `$2`…). Never interpolate request data into SQL; the only interpolation allowed is internal constants (e.g. the `id`/`username` column in `getUser`), which must be commented as such. Validate identifiers (`validation.ValidUUID`, `ValidUsername`) before use.
+- **A04 Insecure Design** — Rate limiting (`httpx.RateLimit`, DB-backed token bucket), login-failure throttling, upload size/MIME enforcement, and a DB circuit breaker are first-class. New abuse-prone endpoints get a rate-limit policy in `rateLimitPolicy`.
+- **A05 Security Misconfiguration** — Security headers (`SecurityHeaders` middleware) and CSP (nonce mode on the frontend) are mandatory; containers run non-root, read-only rootfs, drop ALL caps, seccomp `RuntimeDefault`. `TRUST_PROXY` must only be set behind a header-overwriting proxy.
+- **A06 Vulnerable & Outdated Components** — Keep `go.mod` and `package.json` deps current; prefer stdlib/platform primitives over new dependencies. Justify every added dependency.
+- **A07 Identification & Authentication Failures** — Session IDs are CSPRNG (`crypto/rand`), length+charset validated, server-issued, rotated/expired with a sliding TTL; password change revokes other sessions. Brute force is throttled via `login_failures`.
+- **A08 Software & Data Integrity Failures** — Migrations are append-only paired up/down files applied by an init container; uploads are content-sniffed (magic bytes), not trusted by extension/MIME. Don't deserialize untrusted data into executable paths.
+- **A09 Logging & Monitoring Failures** — Structured `slog` JSON with propagated request IDs; log auth and rate-limit decisions. Never log secrets or full request bodies. Add logs for new security-relevant decisions.
+- **A10 Server-Side Request Forgery (SSRF)** — The backend makes no outbound requests from user input; the frontend BFF only rewrites `/api/*` to the fixed `BACKEND_URL`. Any new outbound fetch driven by user data must validate/allowlist the destination.
