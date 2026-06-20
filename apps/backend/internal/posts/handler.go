@@ -2,14 +2,12 @@ package posts
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/validation"
 )
 
@@ -122,12 +120,8 @@ func (h Handler) getPostList(w http.ResponseWriter, r *http.Request, fetch func(
 		Username: strings.ToLower(r.PathValue("username")), Cursor: page.Cursor,
 		Limit: page.Limit, CurrentUserID: currentUserID,
 	})
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-		return
-	}
 	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		httpx.WriteStoreError(w, err)
 		return
 	}
 
@@ -168,15 +162,11 @@ func (h Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := h.Service.DeletePost(ctx, DeletePostCommand{PublicID: publicID, UserID: userID})
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
-	} else if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-	} else if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-	} else {
-		w.WriteHeader(http.StatusNoContent)
+	if err != nil {
+		httpx.WriteStoreError(w, err)
+		return
 	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h Handler) LikePost(w http.ResponseWriter, r *http.Request) {
@@ -196,12 +186,8 @@ func (h Handler) updateLike(w http.ResponseWriter, r *http.Request, update func(
 		return
 	}
 	err := update(ctx, publicID, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-		return
-	}
 	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		httpx.WriteStoreError(w, err)
 		return
 	}
 

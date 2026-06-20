@@ -125,12 +125,8 @@ func (h Handler) listUsers(
 		Username: strings.ToLower(r.PathValue("username")), CurrentUserID: currentUserID,
 		Cursor: page.Cursor, Limit: page.Limit,
 	})
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-		return
-	}
 	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		httpx.WriteStoreError(w, err)
 		return
 	}
 	for i := range items {

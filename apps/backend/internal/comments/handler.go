@@ -2,14 +2,12 @@ package comments
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/validation"
 )
 
@@ -61,16 +59,8 @@ func (h Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	comment, err := h.Service.CreateComment(ctx, CreateCommentCommand{
 		PublicID: postID, UserID: userID, Body: body.Body,
 	})
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-		return
-	}
-	if errors.Is(err, store.ErrUnavailable) {
-		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Service Unavailable")
-		return
-	}
 	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		httpx.WriteStoreError(w, err)
 		return
 	}
 
@@ -92,16 +82,8 @@ func (h Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 	items, nextCursor, err := h.Service.ListComments(ctx, ListQuery{
 		PublicID: postID, Cursor: page.Cursor, Limit: page.Limit,
 	})
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-		return
-	}
-	if errors.Is(err, store.ErrUnavailable) {
-		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Service Unavailable")
-		return
-	}
 	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		httpx.WriteStoreError(w, err)
 		return
 	}
 
@@ -121,20 +103,8 @@ func (h Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	err := h.Service.DeleteComment(ctx, DeleteCommentCommand{
 		PublicID: postID, CommentID: commentID, UserID: userID,
 	})
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
-		return
-	}
-	if errors.Is(err, store.ErrUnavailable) {
-		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Service Unavailable")
-		return
-	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteMessage(w, http.StatusNotFound, "Not Found")
-		return
-	}
 	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		httpx.WriteStoreError(w, err)
 		return
 	}
 
