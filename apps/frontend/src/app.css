@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @plugin "daisyui";
 
+/*
+ * base-100 is the raised card surface, base-200 the page background, and
+ * base-300 borders/dividers. neutral is the inverted accent used by solid
+ * buttons (dark-on-light, flipped per theme), so components reference these
+ * tokens instead of hardcoding slate/white pairs with dark: variants.
+ */
 @plugin "daisyui/theme" {
 	name: 'light';
 	default: true;
@@ -8,10 +14,12 @@
 	--color-primary: #ff4a85;
 	--color-secondary: #8b5cf6;
 	--color-accent: #06b6d4;
-	--color-neutral: #1f2937;
-	--color-base-100: #f8fafc;
+	--color-neutral: #020617;
+	--color-neutral-content: #ffffff;
+	--color-base-100: #ffffff;
 	--color-base-200: #f1f5f9;
 	--color-base-300: #e2e8f0;
+	--color-base-content: #020617;
 	--color-info: #3abff8;
 	--color-success: #36d399;
 	--color-warning: #fbbd23;
@@ -24,10 +32,12 @@
 	--color-primary: #ff4a85;
 	--color-secondary: #a78bfa;
 	--color-accent: #22d3ee;
-	--color-neutral: #111827;
-	--color-base-100: #0b0f19;
+	--color-neutral: #ffffff;
+	--color-neutral-content: #020617;
+	--color-base-100: #020617;
 	--color-base-200: #151d30;
 	--color-base-300: #1e293b;
+	--color-base-content: #ffffff;
 	--color-info: #3abff8;
 	--color-success: #36d399;
 	--color-warning: #fbbd23;

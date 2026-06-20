@@ -21,8 +21,8 @@
   } = $props();
 </script>
 
-<div class="flex w-full flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-950 shadow-lg shadow-slate-900/5 dark:border-white/15 dark:bg-slate-950 dark:text-white sm:px-8">
-  <div class="grid h-14 w-14 place-items-center rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+<div class="flex w-full flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-300 bg-base-100 p-6 text-center text-base-content shadow-lg shadow-slate-900/5 sm:px-8">
+  <div class="grid h-14 w-14 place-items-center rounded-full bg-neutral text-neutral-content">
     {#if icon === 'camera'}
       <Camera class="h-6 w-6" />
     {:else if icon === 'heart'}
@@ -34,23 +34,11 @@
     {/if}
   </div>
   <h2 class="text-2xl font-black">{title}</h2>
-  <p class="max-w-sm text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
+  <p class="max-w-sm text-sm leading-6 text-base-content/70">{description}</p>
   {#if actionLabel && actionRoute}
     <a
       href={actionRoute}
-      class="btn inline-flex h-12 min-h-12 items-center justify-center rounded-full px-6 font-bold leading-none transition-all duration-150 active:scale-95"
-      class:border-0={actionStyle === 'primary'}
-      class:bg-slate-950={actionStyle === 'primary'}
-      class:text-white={actionStyle === 'primary'}
-      class:shadow-lg={actionStyle === 'primary'}
-      class:hover:bg-slate-800={actionStyle === 'primary'}
-      class:dark:bg-white={actionStyle === 'primary'}
-      class:dark:text-slate-950={actionStyle === 'primary'}
-      class:dark:hover:bg-slate-200={actionStyle === 'primary'}
-      class:border={actionStyle === 'outline'}
-      class:border-slate-300={actionStyle === 'outline'}
-      class:bg-transparent={actionStyle === 'outline'}
-      class:text-slate-900={actionStyle === 'outline'}
+      class="btn h-12 min-h-12 rounded-full px-6 font-bold transition-all duration-150 active:scale-95 {actionStyle === 'primary' ? 'btn-neutral shadow-lg' : 'btn-outline'}"
     >
       {actionLabel}
     </a>

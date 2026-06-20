@@ -20,25 +20,24 @@
 </svelte:head>
 
 <div class="mx-auto max-w-xl">
-  <div class="rounded-2xl border border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-slate-950 dark:text-white flex w-full flex-col gap-6 p-6 shadow-lg shadow-slate-900/5 sm:px-8">
+  <div class="rounded-2xl border border-base-300 bg-base-100 text-base-content flex w-full flex-col gap-6 p-6 shadow-lg shadow-slate-900/5 sm:px-8">
     <div class="grid gap-2 text-center sm:text-left">
-      <h1 class="text-2xl font-black text-slate-950 dark:text-white">Settings</h1>
-      <p class="text-xs text-slate-600 dark:text-slate-300">Manage your account settings, security and activity.</p>
+      <h1 class="text-2xl font-black text-base-content">Settings</h1>
+      <p class="text-xs text-base-content/70">Manage your account settings, security and activity.</p>
     </div>
 
     <ul class="flex flex-col gap-3">
-      <!-- Appearance -->
-      <li class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+      <li class="rounded-2xl border border-base-300 bg-base-200 p-4">
         <div class="flex flex-col gap-3">
           <div class="grid gap-2">
-            <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">Appearance</h2>
-            <p class="text-xs text-slate-600 dark:text-slate-400">Choose how PixelGram looks on this device.</p>
+            <h2 class="text-sm font-bold text-base-content">Appearance</h2>
+            <p class="text-xs text-base-content/60">Choose how PixelGram looks on this device.</p>
           </div>
-          <div class="grid grid-cols-3 gap-2 rounded-full bg-white p-1 dark:bg-slate-950">
+          <div class="grid grid-cols-3 gap-2 rounded-full bg-base-100 p-1">
             {#each options as opt (opt)}
               <button
                 type="button"
-                class="h-10 rounded-full text-xs font-black transition-colors {isActive(opt) ? 'bg-slate-950 text-white shadow-md dark:bg-white dark:text-slate-950' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'}"
+                class="h-10 rounded-full text-xs font-black transition-colors {isActive(opt) ? 'bg-neutral text-neutral-content shadow-md' : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'}"
                 onclick={() => theme.set(opt)}
               >
                 {optionTitle(opt)}
@@ -48,29 +47,26 @@
         </div>
       </li>
 
-      <!-- Edit Profile -->
       <li>
         <a
           href="/settings/profile"
-          class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
+          class="flex items-center justify-between rounded-2xl border border-base-300 bg-base-200 p-4 text-sm font-bold text-base-content transition-colors hover:border-base-content/20 hover:bg-base-300"
         >
           <span>Edit Profile</span>
-          <ChevronRight class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <ChevronRight class="h-4 w-4 text-base-content/60" />
         </a>
       </li>
 
-      <!-- Change Password -->
       <li>
         <a
           href="/settings/password"
-          class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
+          class="flex items-center justify-between rounded-2xl border border-base-300 bg-base-200 p-4 text-sm font-bold text-base-content transition-colors hover:border-base-content/20 hover:bg-base-300"
         >
           <span>Change Password</span>
-          <ChevronRight class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <ChevronRight class="h-4 w-4 text-base-content/60" />
         </a>
       </li>
 
-      <!-- Logout -->
       <li>
         <form method="POST" action="/logout" use:enhance>
           <button type="submit" class="btn btn-error btn-outline h-12 min-h-12 w-full rounded-full font-bold">

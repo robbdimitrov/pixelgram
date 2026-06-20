@@ -46,12 +46,12 @@
   const currentAvatar = $derived(avatarPreview || (!removeAvatar ? imageUrl(user.avatar) : '/assets/placeholder.svg'));
 </script>
 
-<div class="rounded-2xl border border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-slate-950 dark:text-white mx-auto flex max-w-xl flex-col gap-6 p-6 shadow-lg shadow-slate-900/5 sm:px-8">
-  <div class="flex items-center gap-3 border-b border-slate-200 pb-4 dark:border-white/10">
-    <a href="/settings" class="btn btn-ghost btn-circle btn-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white" title="Back to Settings">
+<div class="rounded-2xl border border-base-300 bg-base-100 text-base-content mx-auto flex max-w-xl flex-col gap-6 p-6 shadow-lg shadow-slate-900/5 sm:px-8">
+  <div class="flex items-center gap-3 border-b border-base-300 pb-4">
+    <a href="/settings" class="btn btn-ghost btn-circle btn-sm text-base-content/60 transition-colors hover:bg-base-200 hover:text-base-content" title="Back to Settings">
       <ArrowLeft class="h-5 w-5" />
     </a>
-    <h1 class="text-2xl font-black text-slate-950 dark:text-white">Edit Profile</h1>
+    <h1 class="text-2xl font-black text-base-content">Edit Profile</h1>
   </div>
 
   {#if errorMessage}
@@ -79,12 +79,11 @@
       };
     }}
   >
-    <!-- Avatar -->
     <div class="flex flex-col items-center gap-3">
       <div class="relative">
         <label
           for="avatar-input"
-          class="group relative block cursor-pointer overflow-hidden rounded-full border border-slate-200 dark:border-white/15 shadow-md h-24 w-24 sm:h-28 sm:w-28 transition-transform hover:scale-[1.02]"
+          class="group relative block cursor-pointer overflow-hidden rounded-full border border-base-300 shadow-md h-24 w-24 sm:h-28 sm:w-28 transition-transform hover:scale-[1.02]"
           title="Change Avatar"
         >
           <img class="h-full w-full object-cover" src={currentAvatar} alt="Profile avatar" />
@@ -95,10 +94,10 @@
         </label>
 
         {#if avatarPreview || (user.avatar && !removeAvatar)}
-          <div class="absolute bottom-0 right-0 rounded-full bg-white dark:bg-slate-950 shadow-sm">
+          <div class="absolute bottom-0 right-0 rounded-full bg-base-100 shadow-sm">
             <button
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-all duration-150 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 active:scale-95 dark:border-white/15 dark:text-slate-500 dark:hover:border-rose-900/50 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-base-300 text-base-content/50 transition-all duration-150 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 active:scale-95 dark:hover:border-rose-900/50 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
               title="Remove avatar"
               onclick={handleRemoveAvatar}
             >
@@ -107,7 +106,7 @@
           </div>
         {/if}
       </div>
-      <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Tap image to change</span>
+      <span class="text-xs font-medium text-base-content/60">Tap image to change</span>
     </div>
 
     <!-- Hidden file input (not submitted — we inject manually via enhance) -->
@@ -126,7 +125,7 @@
     <div class="grid gap-4">
       <div class="form-control grid gap-2">
         <label for="name" class="label p-0">
-          <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Full Name</span>
+          <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/80">Full Name</span>
         </label>
         <input
           type="text"
@@ -136,13 +135,13 @@
           placeholder="Enter your name"
           autocomplete="name"
           required
-          class="input input-bordered w-full rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none dark:border-white/15 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white/30"
+          class="input input-bordered w-full rounded-xl"
         />
       </div>
 
       <div class="form-control grid gap-2">
         <label for="username" class="label p-0">
-          <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Username</span>
+          <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/80">Username</span>
         </label>
         <input
           type="text"
@@ -154,13 +153,13 @@
           minlength="3"
           maxlength="30"
           required
-          class="input input-bordered w-full rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none dark:border-white/15 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white/30"
+          class="input input-bordered w-full rounded-xl"
         />
       </div>
 
       <div class="form-control grid gap-2">
         <label for="email" class="label p-0">
-          <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Email Address</span>
+          <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/80">Email Address</span>
         </label>
         <input
           type="email"
@@ -170,13 +169,13 @@
           placeholder="Enter email"
           autocomplete="email"
           required
-          class="input input-bordered w-full rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none dark:border-white/15 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white/30"
+          class="input input-bordered w-full rounded-xl"
         />
       </div>
 
       <div class="form-control grid gap-2">
         <label for="bio" class="label p-0">
-          <span class="label-text text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Bio</span>
+          <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/80">Bio</span>
         </label>
         <textarea
           id="bio"
@@ -185,7 +184,7 @@
           placeholder="Tell people about yourself..."
           maxlength="300"
           autocomplete="off"
-          class="textarea textarea-bordered h-24 w-full resize-none rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none dark:border-white/15 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white/30"
+          class="textarea textarea-bordered h-24 w-full resize-none rounded-xl"
         ></textarea>
       </div>
     </div>
@@ -193,7 +192,7 @@
     <button
       type="submit"
       disabled={isSubmitting}
-      class="btn h-12 min-h-12 w-full rounded-full border-0 bg-slate-950 text-base font-extrabold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+      class="btn btn-neutral h-12 min-h-12 w-full rounded-full text-base font-extrabold shadow-lg shadow-slate-900/15"
     >
       {isSubmitting ? 'Saving Profile...' : 'Save Profile Details'}
     </button>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { Heart, MessageCircle, Trash2, Send } from '@lucide/svelte';
+  import Avatar from '$lib/components/Avatar.svelte';
   import { imageUrl } from '$lib/utils/imageUrl';
   import { relativeDate } from '$lib/utils/relativeDate';
   import { pluralize } from '$lib/utils/pluralize';
@@ -54,19 +55,16 @@
   }
 </script>
 
-<div class="w-full overflow-hidden shadow-lg shadow-slate-900/5 transition-colors rounded-2xl border border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-slate-950 dark:text-white">
-  <!-- Header: avatar + username + delete button -->
-  <div class="relative flex items-center border-b border-slate-200 bg-slate-50/80 px-6 py-4 pr-16 dark:border-white/10 dark:bg-white/5 sm:pr-20">
+<div class="w-full overflow-hidden shadow-lg shadow-slate-900/5 transition-colors rounded-2xl border border-base-300 bg-base-100 text-base-content">
+  <div class="relative flex items-center border-b border-base-300 bg-base-200/80 px-6 py-4 pr-16 sm:pr-20">
     <div class="flex items-center gap-3">
-      <a href="/@{initialPost.username}" class="relative shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-white/15 h-11 w-11 transition-colors hover:border-slate-950 dark:hover:border-white">
-        <img class="h-full w-full object-cover" src={imageUrl(initialPost.avatar)} alt={initialPost.username} loading="lazy" decoding="async" />
-      </a>
+      <Avatar username={initialPost.username} avatar={initialPost.avatar} />
       <div class="flex flex-col">
-        <a href="/@{initialPost.username}" class="text-base font-bold leading-6 text-slate-950 transition-colors hover:text-primary dark:text-white">
+        <a href="/@{initialPost.username}" class="text-base font-bold leading-6 text-base-content transition-colors hover:text-primary">
           {initialPost.username}
         </a>
         {#if initialPost.name}
-          <span class="text-sm leading-5 text-slate-500 dark:text-slate-400">{initialPost.name}</span>
+          <span class="text-sm leading-5 text-base-content/60">{initialPost.name}</span>
         {/if}
       </div>
     </div>
@@ -74,7 +72,7 @@
     {#if currentUserId === initialPost.userId}
       <button
         type="button"
-        class="absolute right-5 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:text-slate-500 dark:hover:text-rose-400 sm:right-6"
+        class="absolute right-5 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:hover:text-rose-400 sm:right-6"
         title="Delete post"
         aria-label="Delete post"
         onclick={() => (showDeleteModal = true)}
@@ -84,8 +82,7 @@
     {/if}
   </div>
 
-  <!-- Image -->
-  <div class="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+  <div class="relative aspect-square w-full overflow-hidden bg-base-200">
     <img
       class="h-full w-full cursor-pointer object-cover transition-transform duration-700 hover:scale-[1.03]"
       src={imageUrl(initialPost.filename)}
@@ -97,10 +94,8 @@
     />
   </div>
 
-  <!-- Actions + meta -->
   <div class="flex flex-col gap-4 p-6">
     <div class="flex items-center gap-5">
-      <!-- Like form (mini-form → named action on single post page) -->
       <form
         method="POST"
         action="/posts/{initialPost.publicId}?/{liked ? 'unlike' : 'like'}"
@@ -120,7 +115,7 @@
       >
         <button
           type="submit"
-          class="group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors active:scale-95 {liked ? 'text-rose-500 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}"
+          class="group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors active:scale-95 {liked ? 'text-rose-500 dark:text-rose-400' : 'text-base-content/60'}"
           aria-label={liked ? 'Unlike post' : 'Like post'}
           aria-pressed={liked}
         >
@@ -135,7 +130,7 @@
 
       <a
         href="/posts/{initialPost.publicId}"
-        class="group inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        class="group inline-flex items-center gap-1.5 text-sm font-semibold text-base-content/60 transition-colors hover:text-base-content"
         aria-label="View comments"
       >
         <MessageCircle class="h-5 w-5" />
@@ -145,25 +140,24 @@
 
     {#if initialPost.description && initialPost.description.length > 0}
       <div class="text-base leading-7">
-        <a href="/@{initialPost.username}" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">
+        <a href="/@{initialPost.username}" class="mr-1.5 font-bold text-base-content hover:underline">
           {initialPost.username}
         </a>
-        <span class="whitespace-pre-wrap text-slate-700 dark:text-slate-300">{initialPost.description}</span>
+        <span class="whitespace-pre-wrap text-base-content/70">{initialPost.description}</span>
       </div>
     {/if}
 
-    <span class="text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
+    <span class="text-[11px] font-bold uppercase tracking-[0.05em] text-base-content/60">
       {relativeDate(initialPost.created, 'long')}
     </span>
 
     {#if singleView}
-      <div class="border-t border-slate-100 pt-4 dark:border-white/10">
-        <!-- Comment form -->
+      <div class="border-t border-base-300 pt-4">
         <div class="flex flex-col gap-4">
           <form
             method="POST"
             action="/posts/{initialPost.publicId}?/comment"
-            class="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-white/10"
+            class="flex items-center gap-3 border-b border-base-300 pb-4"
             use:enhance={() => {
               isSubmittingComment = true;
               return async ({ result }) => {
@@ -180,7 +174,7 @@
               type="text"
               name="body"
               bind:value={newCommentBody}
-              class="min-w-0 flex-1 bg-transparent text-sm text-slate-950 placeholder:text-slate-400 focus:outline-none dark:text-white dark:placeholder:text-slate-500"
+              class="min-w-0 flex-1 bg-transparent text-sm text-base-content placeholder:text-base-content/40 focus:outline-none"
               placeholder="Add a comment…"
               maxlength="400"
               autocomplete="off"
@@ -199,16 +193,13 @@
             </button>
           </form>
 
-          <!-- Comments list -->
           {#each comments as comment (comment.id)}
             <div class="group flex items-start gap-3">
-              <a href="/@{comment.username}" class="relative shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-white/15 h-8 w-8 mt-0.5 transition-colors hover:border-slate-950 dark:hover:border-white">
-                <img class="h-full w-full object-cover" src={imageUrl(comment.avatar)} alt={comment.username} loading="lazy" decoding="async" />
-              </a>
+              <Avatar username={comment.username} avatar={comment.avatar} size="h-8 w-8" class="mt-0.5" />
               <div class="min-w-0 flex-1 text-sm leading-6">
-                <a href="/@{comment.username}" class="mr-1.5 font-bold text-slate-950 hover:underline dark:text-white">{comment.username}</a>
-                <span class="break-words whitespace-pre-wrap text-slate-700 dark:text-slate-300">{comment.body}</span>
-                <div class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{relativeDate(comment.created)}</div>
+                <a href="/@{comment.username}" class="mr-1.5 font-bold text-base-content hover:underline">{comment.username}</a>
+                <span class="break-words whitespace-pre-wrap text-base-content/70">{comment.body}</span>
+                <div class="mt-0.5 text-xs text-base-content/50">{relativeDate(comment.created)}</div>
               </div>
               {#if currentUserId === comment.userId}
                 <form
@@ -231,7 +222,7 @@
                   <input type="hidden" name="commentId" value={comment.id} />
                   <button
                     type="submit"
-                    class="-mr-2 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:text-slate-500 dark:hover:text-rose-400"
+                    class="-mr-2 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base-content/50 transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:hover:text-rose-400"
                     aria-label="Delete comment"
                     title="Delete comment"
                   >
@@ -245,7 +236,7 @@
           {#if nextCommentsCursor}
             <button
               type="button"
-              class="self-start text-sm font-semibold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+              class="self-start text-sm font-semibold text-base-content/60 hover:text-base-content"
               disabled={isLoadingMoreComments}
               onclick={loadMoreComments}
             >
@@ -262,7 +253,6 @@
   </div>
 </div>
 
-<!-- Delete post modal -->
 {#if showDeleteModal}
   <div
     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-[2px]"
@@ -271,7 +261,7 @@
     onkeydown={(e) => e.key === 'Escape' && (showDeleteModal = false)}
   >
     <div
-      class="w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl dark:border-white/10 dark:bg-slate-950 dark:text-white"
+      class="w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-base-300 bg-base-100 p-6 text-base-content shadow-2xl"
       role="dialog"
       aria-modal="true"
       aria-labelledby="delete-modal-title"
@@ -281,7 +271,7 @@
     >
       <div class="grid gap-3">
         <h3 id="delete-modal-title" class="text-xl font-black">Delete post?</h3>
-        <p class="text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <p class="text-sm leading-6 text-base-content/70">
           This will permanently remove this photo from your profile and feed.
         </p>
       </div>

@@ -7,8 +7,8 @@
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-base-200 p-4">
-  <div class="flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-950 shadow-xl shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950 dark:text-white">
-    <div class="grid h-16 w-16 place-items-center rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+  <div class="flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border border-base-300 bg-base-100 p-8 text-center text-base-content shadow-xl shadow-slate-900/5">
+    <div class="grid h-16 w-16 place-items-center rounded-full bg-neutral text-neutral-content">
       <span class="text-2xl font-black">{page.status}</span>
     </div>
     <div class="grid gap-2">
@@ -21,13 +21,13 @@
           Something went wrong
         {/if}
       </h1>
-      <p class="text-sm leading-6 text-slate-600 dark:text-slate-300">
+      <p class="text-sm leading-6 text-base-content/70">
         {page.error?.message ?? 'An unexpected error occurred.'}
       </p>
     </div>
     <a
       href="/feed"
-      class="btn h-11 min-h-11 rounded-full border-0 bg-slate-950 px-6 font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+      class="btn btn-neutral h-11 min-h-11 rounded-full px-6 font-bold"
     >
       Back to Feed
     </a>

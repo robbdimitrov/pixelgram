@@ -4,7 +4,7 @@
   import ProfileHeader from '$lib/components/ProfileHeader.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-  import { imageUrl } from '$lib/utils/imageUrl';
+  import Avatar from '$lib/components/Avatar.svelte';
   import { fetchJson } from '$lib/utils/clientFetch';
   import type { PageData } from './$types';
   import type { User } from '$lib/types';
@@ -38,7 +38,7 @@
 <div class="mx-auto flex max-w-5xl flex-col gap-6">
   <ProfileHeader {profileUser} {isCurrentUser} bind:isFollowPending />
 
-  <div class="h-px w-full bg-slate-200 dark:bg-white/10" aria-hidden="true"></div>
+  <div class="h-px w-full bg-base-300" aria-hidden="true"></div>
 
   <div class="tabs tabs-bordered justify-center font-bold">
     <a class="tab" href="/@{username}">Posts</a>
@@ -50,18 +50,13 @@
     <div class="mx-auto flex w-full max-w-xl flex-col gap-3">
       {#each pagination.items as user (user.id)}
         {@const isFollowing = followingOverrides.get(user.id) ?? user.isFollowing}
-        <div class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950">
-          <a
-            href="/@{user.username}"
-            class="relative mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 transition-colors hover:border-slate-950 dark:border-white/15 dark:hover:border-white"
-          >
-            <img class="h-full w-full object-cover" src={imageUrl(user.avatar)} alt={user.username} loading="lazy" />
-          </a>
+        <div class="flex items-start gap-3 rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm shadow-slate-900/5">
+          <Avatar username={user.username} avatar={user.avatar} size="h-8 w-8" class="mt-0.5" />
           <a href="/@{user.username}" class="min-w-0 flex-1">
-            <div class="truncate text-sm font-black text-slate-950 dark:text-white">{user.name || user.username}</div>
-            <div class="truncate text-xs font-bold text-slate-500 dark:text-slate-400">@{user.username}</div>
+            <div class="truncate text-sm font-black text-base-content">{user.name || user.username}</div>
+            <div class="truncate text-xs font-bold text-base-content/60">@{user.username}</div>
             {#if user.bio}
-              <p class="mt-2 max-h-10 overflow-hidden text-sm leading-5 text-slate-600 dark:text-slate-300">{user.bio}</p>
+              <p class="mt-2 max-h-10 overflow-hidden text-sm leading-5 text-base-content/70">{user.bio}</p>
             {/if}
           </a>
           {#if data.currentUser.id !== user.id}

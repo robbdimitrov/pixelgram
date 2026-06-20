@@ -32,7 +32,7 @@
 <div class="mx-auto flex max-w-5xl flex-col gap-6">
   <ProfileHeader {profileUser} {isCurrentUser} bind:isFollowPending />
 
-  <div class="h-px w-full bg-slate-200 dark:bg-white/10" aria-hidden="true"></div>
+  <div class="h-px w-full bg-base-300" aria-hidden="true"></div>
 
   <div class="tabs tabs-bordered justify-center font-bold">
     <a class="tab tab-active" href="/@{username}">Posts</a>
