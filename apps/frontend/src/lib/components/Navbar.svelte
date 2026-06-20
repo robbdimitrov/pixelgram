@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Camera, Home, SquarePlus, User } from '@lucide/svelte';
   import type { User as UserType } from '$lib/types';
 
-  let { currentUser } = $props<{ currentUser: UserType }>();
+  let { currentUser }: { currentUser: UserType } = $props();
 
   function isActive(path: string) {
-    return $page.url.pathname === path || $page.url.pathname.startsWith(path + '/');
+    return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
   }
 </script>
 
