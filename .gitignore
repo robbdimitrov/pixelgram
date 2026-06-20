@@ -4,7 +4,8 @@ Thumbs.db
 
 # Build
 dist
-.angular/
+build/
+.svelte-kit/
 
 # Dependency directory
 node_modules
