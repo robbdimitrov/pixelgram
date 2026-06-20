@@ -9,11 +9,13 @@ import {
   deleteComment,
   deletePost
 } from '$lib/server/api/posts';
+import { apiClient } from '$lib/server/api/client';
 
-export const load: PageServerLoad = async ({ fetch, params }) => {
+export const load: PageServerLoad = async ({ fetch, cookies, params }) => {
+  const api = apiClient({ fetch, cookies });
   const [post, commentsPage] = await Promise.all([
-    getPost(fetch, params.publicId),
-    getComments(fetch, params.publicId)
+    getPost(api, params.publicId),
+    getComments(api, params.publicId)
   ]);
   if (!post) throw error(404, 'Post not found');
   return {
@@ -24,29 +26,29 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 };
 
 export const actions: Actions = {
-  like: async ({ fetch, params }) => {
-    await likePost(fetch, params.publicId);
+  like: async ({ fetch, cookies, params }) => {
+    await likePost(apiClient({ fetch, cookies }), params.publicId);
     return { success: true };
   },
-  unlike: async ({ fetch, params }) => {
-    await unlikePost(fetch, params.publicId);
+  unlike: async ({ fetch, cookies, params }) => {
+    await unlikePost(apiClient({ fetch, cookies }), params.publicId);
     return { success: true };
   },
-  comment: async ({ fetch, request, params }) => {
+  comment: async ({ fetch, cookies, request, params }) => {
     const data = await request.formData();
     const body = (data.get('body') as string ?? '').trim();
     if (!body) return { success: false };
-    const comment = await createComment(fetch, params.publicId, body);
+    const comment = await createComment(apiClient({ fetch, cookies }), params.publicId, body);
     return { success: true, comment };
   },
-  deleteComment: async ({ fetch, request, params }) => {
+  deleteComment: async ({ fetch, cookies, request, params }) => {
     const data = await request.formData();
     const commentId = Number(data.get('commentId'));
-    await deleteComment(fetch, params.publicId, commentId);
+    await deleteComment(apiClient({ fetch, cookies }), params.publicId, commentId);
     return { success: true };
   },
-  deletePost: async ({ fetch, params }) => {
-    await deletePost(fetch, params.publicId);
+  deletePost: async ({ fetch, cookies, params }) => {
+    await deletePost(apiClient({ fetch, cookies }), params.publicId);
     throw redirect(303, '/feed');
   }
 };

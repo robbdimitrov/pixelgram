@@ -2,12 +2,14 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getCurrent, updateUser } from '$lib/server/api/users';
 import { uploadImage } from '$lib/server/api/posts';
+import { apiClient } from '$lib/server/api/client';
 
 export const load: PageServerLoad = ({ parent }) => parent();
 
 export const actions: Actions = {
-  default: async ({ fetch, request }) => {
-    const currentUser = await getCurrent(fetch);
+  default: async ({ fetch, cookies, request }) => {
+    const api = apiClient({ fetch, cookies });
+    const currentUser = await getCurrent(api);
     if (!currentUser) throw redirect(303, '/login');
 
     const data = await request.formData();
@@ -27,7 +29,7 @@ export const actions: Actions = {
     if (removeAvatar) {
       avatarFilename = '';
     } else if (file instanceof File && file.size > 0) {
-      const uploaded = await uploadImage(fetch, file);
+      const uploaded = await uploadImage(api, file);
       if (!uploaded) {
         return fail(500, { error: 'Could not upload avatar. Please try again.' });
       }
@@ -35,7 +37,7 @@ export const actions: Actions = {
     }
 
     try {
-      await updateUser(fetch, currentUser.id, name, username, email, avatarFilename, bio);
+      await updateUser(api, currentUser.id, name, username, email, avatarFilename, bio);
     } catch {
       return fail(400, { error: 'Could not save profile. Please check your details and try again.' });
     }

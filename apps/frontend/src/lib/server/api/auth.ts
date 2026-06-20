@@ -1,6 +1,7 @@
 import type { Cookies } from '@sveltejs/kit';
 import type { UserIdDto } from '$lib/types';
 import { unwrap } from './http';
+import type { ApiClient } from './client';
 
 const sessionCookiePattern = /^session=([A-Za-z0-9+/=]{28})(?:;|$)/;
 const maxAgePattern = /(?:^|;\s*)Max-Age=(\d+)(?:;|$)/i;
@@ -23,13 +24,13 @@ export function applySessionCookie(headers: Headers, cookies: Pick<Cookies, 'set
 }
 
 export async function createUser(
-  fetch: typeof globalThis.fetch,
+  fetch: ApiClient,
   name: string,
   username: string,
   email: string,
   password: string
 ): Promise<UserIdDto | null> {
-  const res = await fetch('/api/users', {
+  const res = await fetch('/users', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name, username: username.trim().toLowerCase(), email, password })
@@ -38,18 +39,18 @@ export async function createUser(
 }
 
 export async function login(
-  fetch: typeof globalThis.fetch,
+  fetch: ApiClient,
   email: string,
   password: string
 ): Promise<Response> {
-  return fetch('/api/sessions', {
+  return fetch('/sessions', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password })
   });
 }
 
-export async function logout(fetch: typeof globalThis.fetch): Promise<null> {
-  const res = await fetch('/api/sessions', { method: 'DELETE' });
+export async function logout(fetch: ApiClient): Promise<null> {
+  const res = await fetch('/sessions', { method: 'DELETE' });
   return unwrap<null>(res);
 }

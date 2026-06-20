@@ -1,10 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { getCurrent, changePassword } from '$lib/server/api/users';
+import { apiClient } from '$lib/server/api/client';
 
 export const actions: Actions = {
-  default: async ({ fetch, request }) => {
-    const currentUser = await getCurrent(fetch);
+  default: async ({ fetch, cookies, request }) => {
+    const api = apiClient({ fetch, cookies });
+    const currentUser = await getCurrent(api);
     if (!currentUser) throw redirect(303, '/login');
 
     const data = await request.formData();
@@ -20,7 +22,7 @@ export const actions: Actions = {
     }
 
     try {
-      await changePassword(fetch, currentUser.id, oldPassword, password);
+      await changePassword(api, currentUser.id, oldPassword, password);
     } catch (e) {
       const status = (e as { status?: number }).status;
       return fail(400, {

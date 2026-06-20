@@ -55,16 +55,16 @@ describe('getCursorPage', () => {
 		const fetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
 		);
-		await getCursorPage(fetch, '/api/posts', null, map);
-		expect(fetch).toHaveBeenCalledWith('/api/posts');
+		await getCursorPage(fetch, '/posts', null, map);
+		expect(fetch).toHaveBeenCalledWith('/posts');
 	});
 
 	it('appends encoded cursor as query param', async () => {
 		const fetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
 		);
-		await getCursorPage(fetch, '/api/posts', 'abc==', map);
-		expect(fetch).toHaveBeenCalledWith('/api/posts?cursor=abc%3D%3D');
+		await getCursorPage(fetch, '/posts', 'abc==', map);
+		expect(fetch).toHaveBeenCalledWith('/posts?cursor=abc%3D%3D');
 	});
 
 	it('maps each DTO through the mapper and returns nextCursor', async () => {
@@ -72,7 +72,7 @@ describe('getCursorPage', () => {
 		const fetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ items: dtos, nextCursor: 'next' }), { status: 200 })
 		);
-		const page = await getCursorPage(fetch, '/api/posts', null, map);
+		const page = await getCursorPage(fetch, '/posts', null, map);
 		expect(page.items).toEqual([
 			{ id: 1, label: 'a', mapped: true },
 			{ id: 2, label: 'b', mapped: true }
@@ -84,13 +84,13 @@ describe('getCursorPage', () => {
 		const fetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
 		);
-		const page = await getCursorPage(fetch, '/api/posts', null, map);
+		const page = await getCursorPage(fetch, '/posts', null, map);
 		expect(page.items).toEqual([]);
 		expect(page.nextCursor).toBeNull();
 	});
 
 	it('propagates error on non-ok response', async () => {
 		const fetch = vi.fn().mockResolvedValue(new Response('Forbidden', { status: 403 }));
-		await expect(getCursorPage(fetch, '/api/posts', null, map)).rejects.toThrow();
+		await expect(getCursorPage(fetch, '/posts', null, map)).rejects.toThrow();
 	});
 });

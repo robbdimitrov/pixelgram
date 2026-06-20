@@ -1,7 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { CursorPage } from '$lib/types';
-
-type Fetch = typeof globalThis.fetch;
+import type { ApiClient } from './client';
 
 export async function unwrap<T>(res: Response): Promise<T | null> {
   if (res.status === 204) return null;
@@ -14,7 +13,7 @@ export async function unwrap<T>(res: Response): Promise<T | null> {
 }
 
 export async function getCursorPage<Dto, T>(
-  fetch: Fetch,
+  fetch: ApiClient,
   url: string,
   cursor: string | null | undefined,
   map: (dto: Dto) => T

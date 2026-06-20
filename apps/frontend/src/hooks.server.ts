@@ -1,15 +1,4 @@
-import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-
-export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
-  if (request.url.startsWith(`${event.url.origin}/api/`)) {
-    const target = request.url.replace(`${event.url.origin}/api`, env.BACKEND_URL ?? 'http://localhost:8080');
-    const headers = new Headers(request.headers);
-    headers.set('cookie', event.request.headers.get('cookie') ?? '');
-    request = new Request(target, new Request(request, { headers }));
-  }
-  return fetch(request);
-};
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const res = await resolve(event);

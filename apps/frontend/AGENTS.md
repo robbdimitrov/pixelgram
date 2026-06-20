@@ -32,8 +32,8 @@ BACKEND_URL=http://localhost:8080 node build
 - Writes use form actions in `+page.server.ts` with `<form method="POST" use:enhance>`.
 - Client-driven pagination uses a purposeful per-list `+server.ts` endpoint returning JSON.
 - Do not add a generic API proxy or fetch data on component mount.
-- `src/hooks.server.ts` rewrites `/api/*` to the fixed `BACKEND_URL` and forwards the inbound cookie for authenticated server-side requests.
-- The browser must not call the backend directly. CSP `connect-src 'self'` preserves the BFF boundary.
+- Server-side reads and writes go through `apiClient(event)` in `src/lib/server/api/client.ts`, which resolves backend-relative paths against `BACKEND_URL` and forwards only the session cookie. These calls run in the Node server, never the browser, so they never involve CORS.
+- The browser must not call the backend directly; it talks only to this SvelteKit server, which is the BFF. CSP `connect-src 'self'` enforces the boundary, which keeps the session cookie `httpOnly`, keeps the backend API off the public surface, and contains XSS exfiltration to this origin.
 - Use the central `unwrap<T>()` helper in `src/lib/server/api/http.ts` for API responses. It handles `204 No Content` and non-JSON error bodies; do not call `response.json()` directly.
 
 ## Svelte and TypeScript

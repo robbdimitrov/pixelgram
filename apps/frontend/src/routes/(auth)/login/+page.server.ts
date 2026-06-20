@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { applySessionCookie, login } from '$lib/server/api/auth';
+import { apiClient } from '$lib/server/api/client';
 
 export const actions: Actions = {
   default: async ({ request, fetch, cookies }) => {
@@ -12,13 +13,13 @@ export const actions: Actions = {
       return fail(400, { error: 'Email and password are required.' });
     }
 
-    const res = await login(fetch, email, password);
+    const res = await login(apiClient({ fetch, cookies }), email, password);
 
     if (!res.ok) {
       return fail(res.status, { error: 'Invalid email or password.' });
     }
 
-    // handleFetch targets BACKEND_URL, so the backend cookie must be re-emitted by SvelteKit.
+    // The backend sets the session cookie on its own origin, so SvelteKit must re-emit it here.
     if (!applySessionCookie(res.headers, cookies)) {
       return fail(502, { error: 'Could not establish a session. Please try again.' });
     }

@@ -1,40 +1,39 @@
 import type { User, UserDto, CursorPage } from '$lib/types';
 import { mapUser } from '$lib/utils/mappers';
 import { unwrap, getCursorPage } from './http';
+import type { ApiClient } from './client';
 
-type Fetch = typeof globalThis.fetch;
-
-export async function getByUsername(fetch: Fetch, username: string): Promise<User | null> {
-  const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
+export async function getByUsername(fetch: ApiClient, username: string): Promise<User | null> {
+  const res = await fetch(`/users/${encodeURIComponent(username)}`);
   const dto = await unwrap<UserDto>(res);
   return dto ? mapUser(dto) : null;
 }
 
-export async function getCurrent(fetch: Fetch): Promise<User | null> {
-  const res = await fetch('/api/users/me');
+export async function getCurrent(fetch: ApiClient): Promise<User | null> {
+  const res = await fetch('/users/me');
   if (res.status === 401) return null;
   const dto = await unwrap<UserDto>(res);
   return dto ? mapUser(dto) : null;
 }
 
 export async function getFollowers(
-  fetch: Fetch,
+  fetch: ApiClient,
   username: string,
   cursor?: string | null
 ): Promise<CursorPage<User>> {
-  return getCursorPage(fetch, `/api/users/${encodeURIComponent(username)}/followers`, cursor, mapUser);
+  return getCursorPage(fetch, `/users/${encodeURIComponent(username)}/followers`, cursor, mapUser);
 }
 
 export async function getFollowing(
-  fetch: Fetch,
+  fetch: ApiClient,
   username: string,
   cursor?: string | null
 ): Promise<CursorPage<User>> {
-  return getCursorPage(fetch, `/api/users/${encodeURIComponent(username)}/following`, cursor, mapUser);
+  return getCursorPage(fetch, `/users/${encodeURIComponent(username)}/following`, cursor, mapUser);
 }
 
 export async function updateUser(
-  fetch: Fetch,
+  fetch: ApiClient,
   userId: number,
   name: string,
   username: string,
@@ -42,7 +41,7 @@ export async function updateUser(
   avatar: string,
   bio: string
 ): Promise<null> {
-  const res = await fetch(`/api/users/${userId}`, {
+  const res = await fetch(`/users/${userId}`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name, username: username.trim().toLowerCase(), email, avatar, bio })
@@ -51,12 +50,12 @@ export async function updateUser(
 }
 
 export async function changePassword(
-  fetch: Fetch,
+  fetch: ApiClient,
   userId: number,
   oldPassword: string,
   password: string
 ): Promise<null> {
-  const res = await fetch(`/api/users/${userId}`, {
+  const res = await fetch(`/users/${userId}`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ password, oldPassword })
@@ -64,12 +63,12 @@ export async function changePassword(
   return unwrap<null>(res);
 }
 
-export async function followUser(fetch: Fetch, userId: number): Promise<null> {
-  const res = await fetch(`/api/users/${userId}/follow`, { method: 'POST', body: '' });
+export async function followUser(fetch: ApiClient, userId: number): Promise<null> {
+  const res = await fetch(`/users/${userId}/follow`, { method: 'POST', body: '' });
   return unwrap<null>(res);
 }
 
-export async function unfollowUser(fetch: Fetch, userId: number): Promise<null> {
-  const res = await fetch(`/api/users/${userId}/follow`, { method: 'DELETE' });
+export async function unfollowUser(fetch: ApiClient, userId: number): Promise<null> {
+  const res = await fetch(`/users/${userId}/follow`, { method: 'DELETE' });
   return unwrap<null>(res);
 }

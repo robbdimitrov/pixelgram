@@ -1,9 +1,11 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { applySessionCookie, createUser, login } from '$lib/server/api/auth';
+import { apiClient } from '$lib/server/api/client';
 
 export const actions: Actions = {
   default: async ({ request, fetch, cookies }) => {
+    const api = apiClient({ fetch, cookies });
     const data = await request.formData();
     const name = (data.get('name') as string ?? '').trim();
     const username = (data.get('username') as string ?? '').trim().toLowerCase();
@@ -14,12 +16,12 @@ export const actions: Actions = {
       return fail(400, { error: 'All fields are required.' });
     }
 
-    const created = await createUser(fetch, name, username, email, password);
+    const created = await createUser(api, name, username, email, password);
     if (!created) {
       return fail(400, { error: 'Could not create account. Please try again.' });
     }
 
-    const res = await login(fetch, email, password);
+    const res = await login(api, email, password);
     if (!res.ok) {
       throw redirect(303, '/login');
     }
