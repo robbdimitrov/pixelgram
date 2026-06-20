@@ -1,54 +1,45 @@
-// @ts-check
-const { FlatCompat } = require('@eslint/eslintrc');
-const path = require('path');
+import js from '@eslint/js';
+import ts from 'typescript-eslint';
+import svelte from 'eslint-plugin-svelte';
+import prettier from 'eslint-config-prettier';
+import globals from 'globals';
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  resolvePluginsRelativeTo: __dirname
-});
-
-module.exports = [
-  {
-    ignores: ['projects/**/*', 'dist/**/*', 'coverage/**/*', 'node_modules/**/*']
-  },
-  ...compat.config({
-    overrides: [
-      {
-        files: ['*.ts'],
-        parserOptions: {
-          project: ['tsconfig.json'],
-          createDefaultProgram: true
-        },
-        extends: [
-          'plugin:@angular-eslint/recommended',
-          'plugin:@angular-eslint/template/process-inline-templates'
-        ],
-        rules: {
-          '@angular-eslint/directive-selector': [
-            'error',
-            {
-              type: 'attribute',
-              prefix: 'app',
-              style: 'camelCase'
-            }
-          ],
-          '@angular-eslint/component-selector': [
-            'error',
-            {
-              type: 'element',
-              prefix: 'app',
-              style: 'kebab-case'
-            }
-          ],
-          '@angular-eslint/prefer-standalone': 'off',
-          '@angular-eslint/prefer-inject': 'off'
-        }
-      },
-      {
-        files: ['*.html'],
-        extends: ['plugin:@angular-eslint/template/recommended'],
-        rules: {}
-      }
-    ]
-  })
+/** @type {import('eslint').Linter.Config[]} */
+export default [
+	js.configs.recommended,
+	...ts.configs.recommended,
+	...svelte.configs['flat/recommended'],
+	prettier,
+	...svelte.configs['flat/prettier'],
+	{
+		languageOptions: {
+			globals: {
+				...globals.browser,
+				...globals.node
+			}
+		}
+	},
+	{
+		files: ['**/*.svelte'],
+		languageOptions: {
+			parserOptions: {
+				parser: ts.parser
+			}
+		}
+	},
+	{
+		files: ['**/*.svelte.ts'],
+		languageOptions: {
+			parser: ts.parser
+		}
+	},
+	{
+		ignores: ['build/', '.svelte-kit/', 'dist/']
+	},
+	{
+		files: ['**/*.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	}
 ];

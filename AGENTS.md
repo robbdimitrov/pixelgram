@@ -5,7 +5,7 @@
 Three services, deployed via Kubernetes:
 - `apps/backend` — Go API (`net/http`, `pgx`)
 - `apps/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
-- `apps/frontend` — Angular SSR app (TypeScript, Tailwind CSS, DaisyUI, SCSS entrypoint; Node/Express server)
+- `apps/frontend` — SvelteKit 2 SSR app (Svelte 5 runes, TypeScript strict, Vite, `@sveltejs/adapter-node`, Tailwind v4 CSS-first, DaisyUI 5, `@lucide/svelte`)
 
 Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
 
@@ -52,7 +52,7 @@ kubectl delete namespace pixelgram
 cd apps/backend && go fmt ./...
 
 # Frontend (from apps/frontend)
-npm run lint          # ng lint (ESLint with @angular-eslint)
+npm run lint          # ESLint + Prettier check
 ```
 
 ### Backend dev server (not Docker)
@@ -66,28 +66,26 @@ cd apps/backend && go run ./cmd/api
 ### Frontend dev server (not Docker)
 
 ```sh
-cd apps/frontend && npm start
-# SSR dev server; browser XHR proxied via proxy.conf.json → localhost:8080
+cd apps/frontend && npm run dev
+# Vite dev server; handleFetch rewrites /api/ → BACKEND_URL
 ```
 
-To target the backend deployed in kind without rebuilding the frontend image:
+To target the backend deployed in kind:
 
 ```sh
 kubectl port-forward service/backend 8080:8080 -n pixelgram
-cd apps/frontend && npm start
+cd apps/frontend && BACKEND_URL=http://localhost:8080 npm run dev
 ```
 
 To run the production SSR bundle locally (after `npm run build`):
 
 ```sh
-cd apps/frontend && BACKEND_URL=http://localhost:8080 npm run serve:ssr
+cd apps/frontend && BACKEND_URL=http://localhost:8080 node build
 ```
-
-If local `8080` is occupied by the frontend port-forward, use another backend port with a temporary Angular proxy config.
 
 ### Tests
 
-The active Go backend uses Go tests. The frontend uses Jest. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
+The active Go backend uses Go tests. The frontend uses Vitest. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
 
 ```sh
 make test
@@ -114,14 +112,14 @@ The backend reads `PORT` (defaults to `8080`).
 - **Auth**: session-based via a `session` cookie (not JWT). Auth middleware is applied before routes.
 - **Password hashing**: Argon2id PHC hashes via `golang.org/x/crypto/argon2` (not bcrypt).
 - **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
-- **Frontend SSR server**: the Angular SSR Node/Express server (`src/server.ts`) replaces nginx. It serves `RenderMode.Server` for all routes, proxies `/api/` → `BACKEND_URL` (env var; default `http://backend:8080`), applies CSP/security headers with a per-request nonce for inline scripts, and sets cache headers for static assets. Runs as uid 1000, `readOnlyRootFilesystem`, port 8080. Health probe path is `/health`. During dev, `proxy.conf.json` handles browser XHR proxy for `/api/`.
-- **Theme cookie**: `ThemeService` writes a `theme` cookie alongside `localStorage` so SSR can apply `data-theme` on `<html>` without FOUC. Server reads the cookie from the inbound `Request` token.
-- **`serverApiInterceptor`**: server-only `HttpInterceptorFn` (first in interceptor array) that rewrites `/api/…` → `${BACKEND_URL}/…` and forwards the inbound `Cookie` header so SSR fetches are authenticated.
-- **HTTP transfer cache**: `provideClientHydration(withHttpTransferCacheOptions({filter: GET-only}))` serializes server-side GETs into the HTML; the client reuses them — no double-fetch after hydration.
+- **Frontend SSR**: `@sveltejs/adapter-node` runs the SvelteKit app as a Node.js server. `src/hooks.server.ts` handles all cross-cutting concerns: `handleFetch` rewrites `/api/*` → `${BACKEND_URL}/*` and forwards the inbound `cookie` header so server-side `load` functions and form actions reach the backend authenticated. `handle` adds security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`). CSP with nonce is configured in `svelte.config.js` (`kit.csp` mode: `'nonce'`). Runs as uid 1000, `readOnlyRootFilesystem`, port 8080. Health probe path is `/health`.
+- **BFF data-flow**: reads → `+page.server.ts` `load`; writes → form actions in `+page.server.ts` (`<form method="POST" use:enhance>`). Client-driven "load more" → purposeful per-list `+server.ts` GET returning JSON. No generic `/api` proxy. No fetch-on-mount in components.
+- **Image serving**: image bytes go through the ingress directly to the backend via `/uploads/{key}` — they never pass through the Node process. `imageUrl()` helper returns `/uploads/${filename}`. CSP `img-src 'self'`. The `connect-src 'self'` constraint means the browser never directly calls `/api/*`.
+- **Theme cookie**: `src/lib/theme.ts` writes a `theme` cookie alongside `localStorage`. An inline `<script nonce="...">` in `app.html` reads the cookie before paint and sets `data-theme` on `<html>` — no FOUC. The root `+layout.server.ts` exposes the theme from the cookie to layout data.
 - **Database migrations**: `apps/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `apps/database/migrations/`.
 - **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
-- **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Do not add inline `style` attributes or custom component SCSS/CSS for redesign work; use Tailwind config/theme tokens when styling needs to be shared.
-- **Frontend icons**: use Lucide Angular icons for UI icons. Do not add ad hoc inline SVG icons unless Lucide cannot represent the needed symbol.
+- **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Themes configured CSS-first via `@plugin "daisyui/theme"` in `src/app.css`. Use `@theme` for custom tokens.
+- **Frontend icons**: use `@lucide/svelte` icons. Do not add ad hoc inline SVG unless Lucide cannot represent the needed symbol.
 - **Frontend layout**: keep page widths intentional: `max-w-xl` for auth/settings/feed/single-post-like flows and `max-w-5xl` for profile grids, upload creation, and app-shell alignment.
 
 ## Shared Style
@@ -135,4 +133,4 @@ The backend reads `PORT` (defaults to `8080`).
 - Write behavior-oriented tests with typed fakes and framework-native HTTP test utilities.
 - New migrations use two-space indentation, paired up/down files, and corrective migrations rather than rewriting applied history.
 - Microservices must be stateless and designed to work properly in multi-replica environments.
-- Frontend API response handling must tolerate `204 No Content` and non-JSON error bodies; avoid calling `response.json()` unconditionally.
+- Frontend API response handling must tolerate `204 No Content` and non-JSON error bodies; the central `unwrap<T>()` helper in `src/lib/server/api/http.ts` handles this — always use it instead of calling `response.json()` directly.

@@ -1,14 +1,17 @@
-FROM node:26.2.0-alpine AS builder
-WORKDIR /usr/src/app
+FROM node:22-alpine AS builder
+WORKDIR /app
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:26.2.0-alpine
-ENV NODE_ENV=production PORT=8080
-WORKDIR /usr/src/app
-COPY --from=builder /usr/src/app/dist ./dist
-USER node
+FROM node:22-alpine AS runner
+WORKDIR /app
+RUN addgroup -S pixelgram && adduser -S -G pixelgram pixelgram
+COPY --from=builder --chown=pixelgram:pixelgram /app/build ./build
+COPY --from=builder --chown=pixelgram:pixelgram /app/package*.json ./
+RUN npm ci --omit=dev
+USER pixelgram
+ENV PORT=8080
 EXPOSE 8080
-CMD ["node", "dist/server/server.mjs"]
+CMD ["node", "build"]
