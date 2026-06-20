@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+	name: 'light';
+	default: true;
+	color-scheme: light;
+	--color-primary: #ff4a85;
+	--color-secondary: #8b5cf6;
+	--color-accent: #06b6d4;
+	--color-neutral: #1f2937;
+	--color-base-100: #f8fafc;
+	--color-base-200: #f1f5f9;
+	--color-base-300: #e2e8f0;
+	--color-info: #3abff8;
+	--color-success: #36d399;
+	--color-warning: #fbbd23;
+	--color-error: #f87171;
+}
+
+@plugin "daisyui/theme" {
+	name: 'dark';
+	color-scheme: dark;
+	--color-primary: #ff4a85;
+	--color-secondary: #a78bfa;
+	--color-accent: #22d3ee;
+	--color-neutral: #111827;
+	--color-base-100: #0b0f19;
+	--color-base-200: #151d30;
+	--color-base-300: #1e293b;
+	--color-info: #3abff8;
+	--color-success: #36d399;
+	--color-warning: #fbbd23;
+	--color-error: #f87171;
+}
+
+@theme {
+	--shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+	--shadow-glass-dark: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+	--shadow-glass-glow: 0 0 15px rgba(255, 51, 102, 0.2);
+	--animate-like-pop: like-pop 220ms ease-out;
+
+	@keyframes like-pop {
+		0% {
+			transform: scale(1);
+		}
+		45% {
+			transform: scale(1.18);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+}
