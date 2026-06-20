@@ -8,6 +8,10 @@
   let submitting = $state(false);
 </script>
 
+<svelte:head>
+  <title>Sign up — PixelGram</title>
+</svelte:head>
+
 <section class="mx-auto grid w-full max-w-xl gap-6 rounded-2xl border border-slate-200 bg-white/90 p-6 text-slate-950 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90 dark:text-white dark:shadow-black/35 sm:px-8">
   <div class="grid gap-3">
     <span class="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Join PixelGram</span>

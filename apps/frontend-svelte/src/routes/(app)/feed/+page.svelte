@@ -16,6 +16,10 @@
   );
 </script>
 
+<svelte:head>
+  <title>Feed — PixelGram</title>
+</svelte:head>
+
 <div class="mx-auto flex max-w-xl flex-col items-center gap-6">
   {#if pagination.items.length === 0}
     <EmptyState

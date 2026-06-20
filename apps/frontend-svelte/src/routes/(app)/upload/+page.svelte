@@ -49,6 +49,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Create Post — PixelGram</title>
+</svelte:head>
+
 <div class="mx-auto max-w-5xl">
   <div class="rounded-2xl border border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-slate-950 dark:text-white overflow-hidden shadow-xl shadow-slate-900/5">
     <div class="flex min-h-16 items-center justify-between border-b border-slate-200 px-6 dark:border-white/10 sm:px-8">

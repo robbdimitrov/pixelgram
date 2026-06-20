@@ -15,6 +15,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Settings — PixelGram</title>
+</svelte:head>
+
 <div class="mx-auto max-w-xl">
   <div class="rounded-2xl border border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-slate-950 dark:text-white flex w-full flex-col gap-6 p-6 shadow-lg shadow-slate-900/5 sm:px-8">
     <div class="grid gap-2 text-center sm:text-left">

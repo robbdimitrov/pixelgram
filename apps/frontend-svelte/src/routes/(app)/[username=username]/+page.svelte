@@ -23,6 +23,10 @@
   const username = $derived(profileUser.username);
 </script>
 
+<svelte:head>
+  <title>@{data.profileUser.username} — PixelGram</title>
+</svelte:head>
+
 <div class="mx-auto flex max-w-5xl flex-col gap-6">
   <ProfileHeader {profileUser} {isCurrentUser} bind:isFollowPending />
 
