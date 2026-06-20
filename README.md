@@ -1,6 +1,6 @@
 # Pixelgram
 
-**Pixelgram** is a full-stack image-sharing platform built with a production-grade architecture. Combining a robust Go API with a modern Angular frontend, it provides a seamless experience for users to upload, browse, and interact with images.
+**Pixelgram** is a full-stack image-sharing platform built with a production-grade architecture. Combining a robust Go API with a modern SvelteKit frontend, it provides a seamless experience for users to upload, browse, and interact with images.
 
 [![Pixelgram Rewrite: Glassmorphic Redesign via Multi-Model AI Refactor](https://img.youtube.com/vi/nTqpn376k_g/maxresdefault.jpg)](https://www.youtube.com/watch?v=nTqpn376k_g)
 
@@ -11,7 +11,7 @@
 - **Production-Ready & HA**: Fully containerized, stateless service designed for High Availability deployments on Kubernetes.
 - **Resilience**: Built-in rate limiting, circuit breaker and retry-with-backoff protecting the API and the database layer.
 - **Observability**: Structured JSON logging with request ID propagation across the request lifecycle.
-- **Modern Frontend**: Built with Angular, Tailwind CSS, DaisyUI and Lucide icons.
+- **Modern Frontend**: Built with SvelteKit, Tailwind CSS, DaisyUI and Lucide icons.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ graph TD
     Browser["Browser"]
 
     subgraph cluster ["Kubernetes Cluster"]
-        Web["Frontend<br>(Angular SSR)"]:::frontend
+        Web["Frontend<br>(SvelteKit SSR)"]:::frontend
         API["Backend API<br>(Go)"]:::backend
 
         subgraph data ["Data & Storage"]
@@ -47,7 +47,7 @@ graph TD
 | --- | --- | --- |
 | [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
 | [database](/apps/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
-| [frontend](/apps/frontend) | TypeScript | Angular SSR application styled with Tailwind CSS and DaisyUI. |
+| [frontend](/apps/frontend) | TypeScript | SvelteKit SSR application styled with Tailwind CSS and DaisyUI. |
 
 ## Deploy
 

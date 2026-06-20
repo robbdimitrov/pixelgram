@@ -1,33 +1,33 @@
-# AGENTS.md
+# Pixelgram
 
 ## Architecture
 
-Three services, deployed via Kubernetes:
-- `apps/backend` — Go API (`net/http`, `pgx`)
-- `apps/database` — Migration image (`migrate/migrate`); runs as an init container in the backend deployment
-- `apps/frontend` — SvelteKit 2 SSR app (Svelte 5 runes, TypeScript strict, Vite, `@sveltejs/adapter-node`, Tailwind v4 CSS-first, DaisyUI 5, `@lucide/svelte`)
+Three services are deployed through Kubernetes:
 
-Each active service has its own `Dockerfile` and dependencies. No monorepo tooling (no npm workspaces).
+- `apps/backend` — Go API using `net/http` and `pgx`
+- `apps/database` — `migrate/migrate` migration image, run as a backend init container
+- `apps/frontend` — SvelteKit 2 SSR application using Svelte 5, strict TypeScript, Vite, adapter-node, Tailwind v4, DaisyUI 5, and Lucide
+
+Each service owns its dependencies and Dockerfile. There is no monorepo or npm workspace tooling.
+
+Before changing files under `apps/backend/` or `apps/frontend/`, read that directory's `AGENTS.md`.
 
 ## Commands
 
-### Build (Docker images)
-
 ```sh
-make              # build all: backend, frontend
-make backend      # build only the backend image
-make frontend     # build only the frontend image
+make                     # build and push all images
+make backend             # backend image
+make database            # migration image
+make frontend            # frontend image
+make lint                # backend formatting check and frontend lint
+make test                # backend and frontend unit tests
+make test-integration    # PostgreSQL integration tests
+./scripts/deploy.sh      # preferred local kind deployment
 ```
 
 Images are tagged `localhost:5000/pixelgram/<service>`.
 
-### Deploy
-
-```sh
-./scripts/deploy.sh        # preferred local kind deploy
-```
-
-Manual deployment:
+### Manual Kubernetes workflow
 
 ```sh
 kubectl create namespace pixelgram
@@ -35,120 +35,71 @@ kubectl create secret generic database-credentials -n pixelgram \
   --from-literal=postgres-password="$(openssl rand -hex 32)" \
   --from-literal=session-hash-secret="$(openssl rand -hex 32)"
 kubectl apply -f ./deploy -n pixelgram
-kubectl port-forward service/frontend 8080 -n pixelgram   # access at localhost:8080
+kubectl port-forward service/frontend 8080 -n pixelgram
 ```
 
-### Cleanup
+Cleanup:
 
 ```sh
 kubectl delete -f ./deploy -n pixelgram
 kubectl delete namespace pixelgram
 ```
 
-### Lint
+## Engineering Standards
 
-```sh
-# Backend
-cd apps/backend && go fmt ./...
+- Follow SOLID, KISS, DRY, YAGNI, and the Pareto principle. Keep changes focused, prefer simple local patterns, and do not build for hypothetical requirements.
+- Before adding code, search for an existing abstraction, helper, or platform primitive to extend or compose. Add an abstraction only when it removes concrete complexity or duplication.
+- Name variables, functions, types, and constants precisely. Avoid vague names and non-standard abbreviations. Use named constants for repeated or policy-significant values.
+- Prefer concise code only when it remains clear and maintainable.
+- Use standard-library, platform, and established project primitives before introducing custom implementations or dependencies.
+- Keep changes cohesive. Resolve directly related defects discovered in the code being changed, but do not expand into unrelated cleanup.
+- Comments explain constraints, invariants, security decisions, or non-obvious intent. Do not narrate straightforward code, preserve implementation history, or use comments to compensate for unclear names and structure.
+- Regenerate generated code instead of editing it manually.
+- Write behavior-oriented tests focused on critical paths, complex logic, and high-risk failure modes rather than chasing coverage percentages.
+- Services must remain stateless and correct with multiple replicas.
 
-# Frontend (from apps/frontend)
-npm run lint          # ESLint + Prettier check
-```
+## Git and Commits
 
-### Backend dev server (not Docker)
+- Use one logical change per commit. Do not bundle unrelated fixes, refactors, or infrastructure changes. Tests required by a behavior change belong in the same commit.
+- Write commit subjects in imperative present tense.
+- Commit messages are a single line, at most 72 characters, with no body, trailers, or issue references.
+- Review the staged diff before committing and ensure it contains only the intended change.
+- Create commits only when the user explicitly requests them.
 
-When `DATABASE_URL` is unset, the backend automatically uses noop stores — useful for local handler testing without a real DB:
+## Secure Engineering
 
-```sh
-cd apps/backend && go run ./cmd/api
-```
+Security controls are design constraints, not review-time additions.
 
-### Frontend dev server (not Docker)
+- Validate untrusted data at the boundary where it enters the system and bound external reads before parsing or allocation.
+- Authorization defaults to deny. Keep ownership checks next to the protected data operation and make them atomic where practical.
+- Use parameterized queries exclusively. Never interpolate request data into SQL.
+- Keep secrets out of code, committed configuration, URLs, client storage, and logs.
+- Use standard-library cryptography and constant-time comparisons for credentials, MACs, and tokens. Do not invent cryptographic protocols.
+- Make cross-replica check-then-act operations atomic with transactions, locks, or database constraints. Retried writes and event processing must be idempotent.
+- Every outbound network call requires an explicit timeout, bounded response read, deliberate retry policy, destination validation where user-influenced, and safe error handling.
+- Never render user-controlled HTML directly. Validate user-controlled URLs against an explicit scheme and origin policy.
+- Use structured logging without secrets, credentials, request bodies, unnecessary personal data, or user-controlled text in log messages.
+- Keep dependencies current and justify each new dependency's maintenance, security, and runtime cost.
+- Containers run non-root with a read-only root filesystem, all capabilities dropped, and `seccompProfile: RuntimeDefault`.
 
-```sh
-cd apps/frontend && npm run dev
-# Vite dev server; handleFetch rewrites /api/ → BACKEND_URL
-```
+## Database Migrations
 
-To target the backend deployed in kind:
+- Migrations live in `apps/database/migrations/` and use paired `NNNNNN_description.up.sql` and `.down.sql` files.
+- Use two-space indentation.
+- Applied migration history is append-only. Fix deployed schemas with corrective migrations rather than rewriting existing files.
+- Migrations run through the backend deployment's init container and must complete before the backend starts.
 
-```sh
-kubectl port-forward service/backend 8080:8080 -n pixelgram
-cd apps/frontend && BACKEND_URL=http://localhost:8080 npm run dev
-```
+## Definition of Done
 
-To run the production SSR bundle locally (after `npm run build`):
+Implementation is not completion. Before reporting a change as complete:
 
-```sh
-cd apps/frontend && BACKEND_URL=http://localhost:8080 node build
-```
-
-### Tests
-
-The active Go backend uses Go tests. The frontend uses Vitest. Apply the 80/20 rule (Pareto principle) to testing: focus your testing effort on the 20% of the code (critical paths, complex logic, and high-risk areas) that provides 80% of the value and coverage, rather than wastefully chasing 100% coverage.
-
-```sh
-make test
-```
-
-## Environment variables (backend)
-
-Set in `deploy/backend.yaml`:
-- `DATABASE_URL` — PostgreSQL connection string
-- `IMAGE_DIR` — path for uploaded image storage
-- `SESSION_HASH_SECRET` — used to hash persisted session tokens
-
-The backend reads `PORT` (defaults to `8080`).
-
-## Backend navigation
-
-- Routes: `internal/app/app.go`
-- Store interfaces: each domain package (`users/`, `posts/`, `comments/`, `sessions/`, `uploads/`)
-- Postgres implementation: `internal/store/postgres/client.go`
-- Session auth middleware (`httpx.RequireSession`) wraps the whole mux; routes that need to be public must be handled before that layer.
-
-## Key conventions
-
-- **Auth**: session-based via a `session` cookie (not JWT). Auth middleware is applied before routes.
-- **Password hashing**: Argon2id PHC hashes via `golang.org/x/crypto/argon2` (not bcrypt).
-- **Image uploads**: the frontend resizes large JPEG/PNG/GIF/WEBP files before upload, targeting <900KB. The backend still enforces a hard 1MB `POST /uploads` multipart limit. To create a post, upload the file first, then create the image record (`POST /images` with the returned filename).
-- **Frontend SSR**: `@sveltejs/adapter-node` runs the SvelteKit app as a Node.js server. `src/hooks.server.ts` handles all cross-cutting concerns: `handleFetch` rewrites `/api/*` → `${BACKEND_URL}/*` and forwards the inbound `cookie` header so server-side `load` functions and form actions reach the backend authenticated. `handle` adds security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`). CSP with nonce is configured in `svelte.config.js` (`kit.csp` mode: `'nonce'`). Runs as uid 1000, `readOnlyRootFilesystem`, port 8080. Health probe path is `/health`.
-- **BFF data-flow**: reads → `+page.server.ts` `load`; writes → form actions in `+page.server.ts` (`<form method="POST" use:enhance>`). Client-driven "load more" → purposeful per-list `+server.ts` GET returning JSON. No generic `/api` proxy. No fetch-on-mount in components.
-- **Image serving**: image bytes go through the ingress directly to the backend via `/uploads/{key}` — they never pass through the Node process. `imageUrl()` helper returns `/uploads/${filename}`. CSP `img-src 'self'`. The `connect-src 'self'` constraint means the browser never directly calls `/api/*`.
-- **Theme cookie**: `src/lib/theme.ts` writes a `theme` cookie alongside `localStorage`. An inline `<script nonce="...">` in `app.html` reads the cookie before paint and sets `data-theme` on `<html>` — no FOUC. The root `+layout.server.ts` exposes the theme from the cookie to layout data.
-- **Database migrations**: `apps/database/` contains a `migrate/migrate`-based image. It runs as a k8s init container in the backend deployment, so migrations always complete before the backend starts. Add new migrations as `NNNNNN_description.up.sql` / `.down.sql` pairs in `apps/database/migrations/`.
-- **Commit messages**: use a single line, max 72 chars. No body, no trailers, no issue refs.
-- **Frontend styling**: prefer DaisyUI and Tailwind utility classes in templates. Themes configured CSS-first via `@plugin "daisyui/theme"` in `src/app.css`. Use `@theme` for custom tokens.
-- **Frontend icons**: use `@lucide/svelte` icons. Do not add ad hoc inline SVG unless Lucide cannot represent the needed symbol.
-- **Frontend layout**: keep page widths intentional: `max-w-xl` for auth/settings/feed/single-post-like flows and `max-w-5xl` for profile grids, upload creation, and app-shell alignment.
-- **Frontend dependencies**: do not add a package when a maintained platform, SvelteKit, or existing project primitive handles the requirement clearly. Every new dependency must justify its maintenance, security, and bundle/runtime cost; remove direct dependencies that are no longer imported.
-
-## Shared Style
-
-- Follow **SOLID**, **KISS**, **DRY**, **YAGNI**, and the **Pareto principle** when writing code and refactoring: keep changes focused, prefer simple local patterns, avoid duplicated logic, add abstractions only when they remove real complexity, and never build for hypothetical future needs.
-- Prefer one-liner solutions when they are readable, maintainable, and as optimal or better than a multi-line equivalent. Concise code is not a goal in itself — only collapse to a single line when it doesn't sacrifice clarity.
-- Hold every change to a high bar: correct, secure, maintainable, and free of obvious bugs before it lands. When reviewing or writing code, actively look for improvements — leaner algorithms, better-fit data structures, or established design patterns that simplify the problem. Reach for battle-proven solutions (stdlib, platform primitives, well-known patterns) before rolling custom logic.
-- Use standard initialisms in Go names (`ID`, `URL`, `HTTP`, `DB`). Generated identifiers are exempt.
-- HTTP APIs return JSON consistently, including errors. Use symbolic `http.Status*` constants.
-- Type API boundaries explicitly. Prefer `unknown` over `any`, map transport DTOs deliberately, and keep strict TypeScript enabled.
-- Comments explain constraints or intent. Do not preserve implementation history, temporary reasoning, or narration of obvious code.
-- Keep handwritten Go `gofmt`-clean. Regenerate generated code instead of editing it manually.
-- Write behavior-oriented tests with typed fakes and framework-native HTTP test utilities.
-- New migrations use two-space indentation, paired up/down files, and corrective migrations rather than rewriting applied history.
-- Microservices must be stateless and designed to work properly in multi-replica environments.
-- Frontend API response handling must tolerate `204 No Content` and non-JSON error bodies; the central `unwrap<T>()` helper in `src/lib/server/api/http.ts` handles this — always use it instead of calling `response.json()` directly.
-
-## Security (OWASP Top 10)
-
-Treat the OWASP Top 10 (2021) as a checklist for every change that touches a route, query, dependency, or deployment manifest. Each item lists the project's current control and the bar new code must meet.
-
-- **A01 Broken Access Control** — Auth is session-cookie based; `httpx.RequireSession` wraps the whole mux and only an explicit allowlist (`POST /sessions`, `POST /users`, `GET /health`, `OPTIONS`) is public. Enforce ownership in the store/handler (e.g. `WHERE user_id = $current`), never trust a client-supplied ID for authorization. New public routes must be registered before the auth layer *and* justified.
-- **A02 Cryptographic Failures** — Passwords use Argon2id (OWASP-min params, constant-time compare); session tokens are HMAC-SHA256-hashed before persistence; secrets come from k8s Secrets, never code or logs. Don't log credentials, tokens, or password hashes. Cookies are `HttpOnly` + `SameSite=Strict` + `Secure` (behind TLS/proxy).
-- **A03 Injection** — All SQL goes through `pgx` parameterized queries (`$1`, `$2`…). Never interpolate request data into SQL; the only interpolation allowed is internal constants (e.g. the `id`/`username` column in `getUser`), which must be commented as such. Validate identifiers (`validation.ValidUUID`, `ValidUsername`) before use.
-- **A04 Insecure Design** — Rate limiting (`httpx.RateLimit`, DB-backed token bucket), login-failure throttling, upload size/MIME enforcement, and a DB circuit breaker are first-class. New abuse-prone endpoints get a rate-limit policy in `rateLimitPolicy`.
-- **A05 Security Misconfiguration** — Security headers (`SecurityHeaders` middleware) and CSP (nonce mode on the frontend) are mandatory; containers run non-root, read-only rootfs, drop ALL caps, seccomp `RuntimeDefault`. `TRUST_PROXY` must only be set behind a header-overwriting proxy.
-- **A06 Vulnerable & Outdated Components** — Keep `go.mod` and `package.json` deps current; prefer stdlib/platform primitives over new dependencies. Justify every added dependency.
-- **A07 Identification & Authentication Failures** — Session IDs are CSPRNG (`crypto/rand`), length+charset validated, server-issued, rotated/expired with a sliding TTL; password change revokes other sessions. Brute force is throttled via `login_failures`.
-- **A08 Software & Data Integrity Failures** — Migrations are append-only paired up/down files applied by an init container; uploads are content-sniffed (magic bytes), not trusted by extension/MIME. Don't deserialize untrusted data into executable paths.
-- **A09 Logging & Monitoring Failures** — Structured `slog` JSON with propagated request IDs; log auth and rate-limit decisions. Never log secrets or full request bodies. Add logs for new security-relevant decisions.
-- **A10 Server-Side Request Forgery (SSRF)** — The backend makes no outbound requests from user input; the frontend BFF only rewrites `/api/*` to the fixed `BACKEND_URL`. Any new outbound fetch driven by user data must validate/allowlist the destination.
+1. Identify every untrusted input touched, where it is validated, and what size or resource bounds apply.
+2. Confirm the authentication, authorization, and ownership checks gating each protected operation.
+3. Confirm every check-then-act sequence is atomic where concurrent requests or replicas can race.
+4. Confirm external calls have timeouts, bounded responses, deliberate retry policies, and safe error handling.
+5. Confirm background work has panic recovery, the correct context lifetime, and cross-replica coordination where needed.
+6. Test how crafted input could expose data, inject content, bypass limits, or create disproportionate work.
+7. Add behavior-oriented tests for the critical success and failure paths.
+8. Review the complete diff in context for correctness, security, unnecessary complexity, duplication, inconsistent naming, stale comments, and accidental unrelated changes.
+9. Fix issues found during review, then run the relevant formatters, linters, tests, and build checks in proportion to the change's risk.
+10. Report any verification that could not be run and any remaining risk explicitly. Do not describe partially verified work as fully complete.

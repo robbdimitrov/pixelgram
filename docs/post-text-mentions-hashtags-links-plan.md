@@ -35,7 +35,7 @@
 - Hashtag syntax: `#` followed by `a-z`, `0-9`, or `_`, length 1-50.
 - Mention syntax follows existing username rules: `@` plus `a-z`, `0-9`, `.`, or `_`, length 3-30.
 - Hashtag pages list posts by newest first with existing cursor pagination.
-- User-entered text must be rendered from escaped tokens and explicit Angular link elements, not raw trusted HTML.
+- User-entered text must be rendered from escaped tokens and explicit Svelte link elements, not raw trusted HTML.
 
 ## Test Plan
 
