@@ -1,6 +1,6 @@
 import type { User, UserDto, CursorPage } from '$lib/types';
 import { mapUser } from '$lib/utils/mappers';
-import { unwrap } from './http';
+import { unwrap, getCursorPage } from './http';
 
 type Fetch = typeof globalThis.fetch;
 
@@ -22,7 +22,7 @@ export async function getFollowers(
   username: string,
   cursor?: string | null
 ): Promise<CursorPage<User>> {
-  return getUserPage(fetch, `/api/users/${encodeURIComponent(username)}/followers`, cursor);
+  return getCursorPage(fetch, `/api/users/${encodeURIComponent(username)}/followers`, cursor, mapUser);
 }
 
 export async function getFollowing(
@@ -30,7 +30,7 @@ export async function getFollowing(
   username: string,
   cursor?: string | null
 ): Promise<CursorPage<User>> {
-  return getUserPage(fetch, `/api/users/${encodeURIComponent(username)}/following`, cursor);
+  return getCursorPage(fetch, `/api/users/${encodeURIComponent(username)}/following`, cursor, mapUser);
 }
 
 export async function updateUser(
@@ -72,18 +72,4 @@ export async function followUser(fetch: Fetch, userId: number): Promise<null> {
 export async function unfollowUser(fetch: Fetch, userId: number): Promise<null> {
   const res = await fetch(`/api/users/${userId}/follow`, { method: 'DELETE' });
   return unwrap<null>(res);
-}
-
-async function getUserPage(
-  fetch: Fetch,
-  url: string,
-  cursor?: string | null
-): Promise<CursorPage<User>> {
-  const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-  const res = await fetch(`${url}${params}`);
-  const page = await unwrap<{ items: UserDto[]; nextCursor: string | null }>(res);
-  return {
-    items: (page?.items ?? []).map(mapUser),
-    nextCursor: page?.nextCursor ?? null
-  };
 }

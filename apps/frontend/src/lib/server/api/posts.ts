@@ -1,11 +1,11 @@
 import type { Post, PostDto, PostIdDto, ImageFilenameDto, Comment, CommentDto, CursorPage } from '$lib/types';
 import { mapPost, mapComment } from '$lib/utils/mappers';
-import { unwrap } from './http';
+import { unwrap, getCursorPage } from './http';
 
 type Fetch = typeof globalThis.fetch;
 
 export async function getFeed(fetch: Fetch, cursor?: string | null): Promise<CursorPage<Post>> {
-  return getPostPage(fetch, '/api/posts', cursor);
+  return getCursorPage(fetch, '/api/posts', cursor, mapPost);
 }
 
 export async function getUserPosts(
@@ -13,7 +13,7 @@ export async function getUserPosts(
   username: string,
   cursor?: string | null
 ): Promise<CursorPage<Post>> {
-  return getPostPage(fetch, `/api/users/${encodeURIComponent(username)}/posts`, cursor);
+  return getCursorPage(fetch, `/api/users/${encodeURIComponent(username)}/posts`, cursor, mapPost);
 }
 
 export async function getLikedPosts(
@@ -21,7 +21,7 @@ export async function getLikedPosts(
   username: string,
   cursor?: string | null
 ): Promise<CursorPage<Post>> {
-  return getPostPage(fetch, `/api/users/${encodeURIComponent(username)}/likes`, cursor);
+  return getCursorPage(fetch, `/api/users/${encodeURIComponent(username)}/likes`, cursor, mapPost);
 }
 
 export async function getPost(fetch: Fetch, publicId: string): Promise<Post | null> {
@@ -63,13 +63,7 @@ export async function getComments(
   publicId: string,
   cursor?: string | null
 ): Promise<CursorPage<Comment>> {
-  const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-  const res = await fetch(`/api/posts/${publicId}/comments${params}`);
-  const page = await unwrap<{ items: CommentDto[]; nextCursor: string | null }>(res);
-  return {
-    items: (page?.items ?? []).map(mapComment),
-    nextCursor: page?.nextCursor ?? null
-  };
+  return getCursorPage(fetch, `/api/posts/${publicId}/comments`, cursor, mapComment);
 }
 
 export async function createComment(
@@ -100,18 +94,4 @@ export async function uploadImage(fetch: Fetch, file: File): Promise<ImageFilena
   formData.append('image', file, file.name);
   const res = await fetch('/api/uploads', { method: 'POST', body: formData });
   return unwrap<ImageFilenameDto>(res);
-}
-
-async function getPostPage(
-  fetch: Fetch,
-  url: string,
-  cursor?: string | null
-): Promise<CursorPage<Post>> {
-  const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-  const res = await fetch(`${url}${params}`);
-  const page = await unwrap<{ items: PostDto[]; nextCursor: string | null }>(res);
-  return {
-    items: (page?.items ?? []).map(mapPost),
-    nextCursor: page?.nextCursor ?? null
-  };
 }

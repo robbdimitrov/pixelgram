@@ -1,5 +1,10 @@
+const formatters: Partial<Record<string, Intl.RelativeTimeFormat>> = {};
+
+function getFormatter(style: 'long' | 'short' | 'narrow') {
+  return (formatters[style] ??= new Intl.RelativeTimeFormat('en', { numeric: 'auto', style }));
+}
+
 export function relativeDate(value: Date | string, style: 'long' | 'short' | 'narrow' = 'narrow'): string {
-  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto', style });
   const date = new Date(value);
   const seconds = Math.round((date.getTime() - Date.now()) / 1000);
   const absoluteSeconds = Math.abs(seconds);
@@ -16,6 +21,7 @@ export function relativeDate(value: Date | string, style: 'long' | 'short' | 'na
     { amount: Number.POSITIVE_INFINITY, name: 'year' }
   ] as const;
 
+  const formatter = getFormatter(style);
   let duration = seconds;
   for (const division of divisions) {
     if (Math.abs(duration) < division.amount) {

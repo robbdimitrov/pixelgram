@@ -4,6 +4,7 @@
   import { imageUrl } from '$lib/utils/imageUrl';
   import { relativeDate } from '$lib/utils/relativeDate';
   import { pluralize } from '$lib/utils/pluralize';
+  import { fetchJson } from '$lib/utils/clientFetch';
   import type { Post, Comment } from '$lib/types';
 
   let {
@@ -44,7 +45,7 @@
     isLoadingMoreComments = true;
     try {
       const res = await fetch(`/posts/${initialPost.publicId}/comments?cursor=${encodeURIComponent(nextCommentsCursor)}`);
-      const data = await res.json() as { items: Comment[]; nextCursor: string | null };
+      const data = await fetchJson<{ items: Comment[]; nextCursor: string | null }>(res);
       comments = [...comments, ...data.items];
       nextCommentsCursor = data.nextCursor;
     } finally {
@@ -167,9 +168,10 @@
               isSubmittingComment = true;
               return async ({ result }) => {
                 isSubmittingComment = false;
-                if (result.type !== 'error' && result.type !== 'failure') {
-                  newCommentBody = '';
+                if (result.type === 'success' && result.data?.comment) {
+                  comments = [...comments, result.data.comment as Comment];
                   commentCount += 1;
+                  newCommentBody = '';
                 }
               };
             }}
