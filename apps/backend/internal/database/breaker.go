@@ -8,6 +8,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"pixelgram/backend/internal/env"
 )
 
 type circuitBreaker struct {
@@ -23,8 +25,8 @@ type circuitBreaker struct {
 func newCircuitBreaker(name string) *circuitBreaker {
 	return &circuitBreaker{
 		name:             name,
-		failureThreshold: envInt("CIRCUIT_FAILURE_THRESHOLD", 5),
-		cooldown:         time.Duration(envInt("CIRCUIT_COOLDOWN_SECONDS", 30)) * time.Second,
+		failureThreshold: env.Int("CIRCUIT_FAILURE_THRESHOLD", 5),
+		cooldown:         time.Duration(env.Int("CIRCUIT_COOLDOWN_SECONDS", 30)) * time.Second,
 		state:            "closed",
 	}
 }

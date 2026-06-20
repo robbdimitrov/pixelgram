@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	"pixelgram/backend/internal/app"
+	"pixelgram/backend/internal/env"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/noop"
 	"pixelgram/backend/internal/store/postgres"
@@ -20,7 +20,7 @@ import (
 func main() {
 	setupLogger()
 
-	port := getenv("PORT", "8080")
+	port := env.String("PORT", "8080")
 	databaseURL := os.Getenv("DATABASE_URL")
 
 	repositories, closeRepositories, err := openRepositories(databaseURL)
@@ -30,11 +30,15 @@ func main() {
 	}
 	defer closeRepositories()
 
-	rateLimiter := openRateLimiter(databaseURL)
+	rateLimiter, err := openRateLimiter(databaseURL)
+	if err != nil {
+		slog.Error("failed to initialize rate limiter", "error", err)
+		os.Exit(1)
+	}
 	startRateLimiterCleanup(rateLimiter)
 
 	handler := app.New(app.Config{
-		ImageDir:    getenv("IMAGE_DIR", "/tmp"),
+		ImageDir:    env.String("IMAGE_DIR", "/tmp"),
 		RateLimiter: rateLimiter,
 	}, repositories)
 
@@ -114,16 +118,16 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 	}, client.Close, nil
 }
 
-func openRateLimiter(databaseURL string) httpx.RateLimiterStore {
+func openRateLimiter(databaseURL string) (httpx.RateLimiterStore, error) {
 	if databaseURL == "" {
-		return httpx.NoopRateLimiterStore{}
+		return httpx.NoopRateLimiterStore{}, nil
 	}
 	return httpx.NewPostgresRateLimiterStore(databaseURL)
 }
 
 func startRateLimiterCleanup(store httpx.RateLimiterStore) {
-	interval := time.Duration(envInt("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", 60)) * time.Minute
-	maxAge := time.Duration(envInt("RATE_LIMIT_MAX_AGE_HOURS", 24)) * time.Hour
+	interval := time.Duration(env.Int("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", 60)) * time.Minute
+	maxAge := time.Duration(env.Int("RATE_LIMIT_MAX_AGE_HOURS", 24)) * time.Hour
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -133,20 +137,4 @@ func startRateLimiterCleanup(store httpx.RateLimiterStore) {
 			}
 		}
 	}()
-}
-
-func getenv(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
-	}
-	return value
-}
-
-func envInt(key string, fallback int) int {
-	n, err := strconv.Atoi(os.Getenv(key))
-	if err != nil || n <= 0 {
-		return fallback
-	}
-	return n
 }

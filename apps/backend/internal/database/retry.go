@@ -3,9 +3,9 @@ package database
 import (
 	"context"
 	"log/slog"
-	"os"
-	"strconv"
 	"time"
+
+	"pixelgram/backend/internal/env"
 )
 
 type retryConfig struct {
@@ -15,8 +15,8 @@ type retryConfig struct {
 
 func defaultRetryConfig() retryConfig {
 	return retryConfig{
-		maxAttempts: envInt("POSTGRES_RETRY_MAX_ATTEMPTS", 3),
-		baseBackoff: time.Duration(envInt("POSTGRES_RETRY_BACKOFF_MS", 100)) * time.Millisecond,
+		maxAttempts: env.Int("POSTGRES_RETRY_MAX_ATTEMPTS", 3),
+		baseBackoff: time.Duration(env.Int("POSTGRES_RETRY_BACKOFF_MS", 100)) * time.Millisecond,
 	}
 }
 
@@ -38,12 +38,4 @@ func withRetry(ctx context.Context, cfg retryConfig, fn func() error) error {
 		}
 	}
 	return err
-}
-
-func envInt(key string, fallback int) int {
-	value, err := strconv.Atoi(os.Getenv(key))
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
 }

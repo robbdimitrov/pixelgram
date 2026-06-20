@@ -3,16 +3,18 @@ package httpx
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"pixelgram/backend/internal/env"
 )
 
 type RateLimitPolicy struct {
@@ -36,27 +38,25 @@ type PostgresRateLimiterStore struct {
 	failOpen bool
 }
 
-func NewPostgresRateLimiterStore(databaseURL string) *PostgresRateLimiterStore {
-	failOpen := envBool("RATE_LIMIT_FAIL_OPEN", false)
+func NewPostgresRateLimiterStore(databaseURL string) (*PostgresRateLimiterStore, error) {
+	failOpen := env.Bool("RATE_LIMIT_FAIL_OPEN", false)
 	if databaseURL == "" {
 		slog.Warn("database url not set for rate limiter", "fail_open", failOpen)
-		return &PostgresRateLimiterStore{failOpen: failOpen}
+		return &PostgresRateLimiterStore{failOpen: failOpen}, nil
 	}
 
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
-		slog.Error("rate limiter: unable to parse database url", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("rate limiter: parse database url: %w", err)
 	}
 	config.MaxConns = 5
 
 	db, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		slog.Error("rate limiter: unable to connect to database", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("rate limiter: connect to database: %w", err)
 	}
 
-	return &PostgresRateLimiterStore{db: db, failOpen: failOpen}
+	return &PostgresRateLimiterStore{db: db, failOpen: failOpen}, nil
 }
 
 func (s *PostgresRateLimiterStore) Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error) {
@@ -163,11 +163,11 @@ func rateLimitPolicy(r *http.Request) (RateLimitPolicy, bool) {
 	}
 	switch {
 	case r.Method == http.MethodPost && (r.URL.Path == "/sessions" || r.URL.Path == "/users" || r.URL.Path == "/uploads"):
-		return RateLimitPolicy{Name: "strict", Burst: envInt("RATE_LIMIT_STRICT_BURST", 5), Rate: envFloat("RATE_LIMIT_STRICT_RATE", 0.2)}, false
+		return RateLimitPolicy{Name: "strict", Burst: env.Int("RATE_LIMIT_STRICT_BURST", 5), Rate: env.Float("RATE_LIMIT_STRICT_RATE", 0.2)}, false
 	case r.Method == http.MethodGet || r.Method == http.MethodHead:
-		return RateLimitPolicy{Name: "read", Burst: envInt("RATE_LIMIT_READ_BURST", 120), Rate: envFloat("RATE_LIMIT_READ_RATE", 2)}, false
+		return RateLimitPolicy{Name: "read", Burst: env.Int("RATE_LIMIT_READ_BURST", 120), Rate: env.Float("RATE_LIMIT_READ_RATE", 2)}, false
 	default:
-		return RateLimitPolicy{Name: "mutation", Burst: envInt("RATE_LIMIT_MUTATION_BURST", 30), Rate: envFloat("RATE_LIMIT_MUTATION_RATE", 1)}, false
+		return RateLimitPolicy{Name: "mutation", Burst: env.Int("RATE_LIMIT_MUTATION_BURST", 30), Rate: env.Float("RATE_LIMIT_MUTATION_RATE", 1)}, false
 	}
 }
 
@@ -187,7 +187,7 @@ func rateLimitKey(r *http.Request, policy RateLimitPolicy) string {
 // enabled when the backend sits behind a proxy that overwrites the header
 // (see the frontend nginx config); otherwise clients can spoof their IP and
 // bypass IP-based rate limiting.
-var trustProxy = envBool("TRUST_PROXY", false)
+var trustProxy = env.Bool("TRUST_PROXY", false)
 
 // ClientIP extracts the client IP, preferring X-Forwarded-For only when the
 // deployment is configured to trust an upstream proxy.
@@ -202,32 +202,4 @@ func ClientIP(r *http.Request) string {
 		return host
 	}
 	return r.RemoteAddr
-}
-
-func envInt(key string, fallback int) int {
-	value, err := strconv.Atoi(os.Getenv(key))
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
-}
-
-func envFloat(key string, fallback float64) float64 {
-	value, err := strconv.ParseFloat(os.Getenv(key), 64)
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
-}
-
-func envBool(key string, fallback bool) bool {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
-	}
-	parsed, err := strconv.ParseBool(value)
-	if err != nil {
-		return fallback
-	}
-	return parsed
 }
