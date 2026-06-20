@@ -19,8 +19,6 @@
 		"@sveltejs/kit": "^2.21.4",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",
 		"@tailwindcss/vite": "^4.1.10",
-		"@testing-library/jest-dom": "^6.9.1",
-		"@testing-library/svelte": "^5.3.1",
 		"@types/set-cookie-parser": "^2.4.10",
 		"daisyui": "^5.0.43",
 		"eslint": "^9.28.0",
