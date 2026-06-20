@@ -49,6 +49,7 @@ kubectl delete namespace pixelgram
 
 - Follow SOLID, KISS, DRY, YAGNI, and the Pareto principle. Keep changes focused, prefer simple local patterns, and do not build for hypothetical requirements.
 - Before adding code, search for an existing abstraction, helper, or platform primitive to extend or compose. Add an abstraction only when it removes concrete complexity or duplication.
+- Match the conventions, idioms, structure, and naming of the surrounding code so the codebase reads as if written by one person. Follow established patterns over personal preference.
 - Name variables, functions, types, and constants precisely. Avoid vague names and non-standard abbreviations. Use named constants for repeated or policy-significant values.
 - Prefer concise code only when it remains clear and maintainable.
 - Use standard-library, platform, and established project primitives before introducing custom implementations or dependencies.
