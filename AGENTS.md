@@ -103,7 +103,7 @@ The backend reads `PORT` (defaults to `8080`).
 ## Backend navigation
 
 - Routes: `internal/app/app.go`
-- Store interfaces: each domain package (`users/`, `images/`, `sessions/`, `uploads/`)
+- Store interfaces: each domain package (`users/`, `posts/`, `comments/`, `sessions/`, `uploads/`)
 - Postgres implementation: `internal/store/postgres/client.go`
 - Session auth middleware (`httpx.RequireSession`) wraps the whole mux; routes that need to be public must be handled before that layer.
 
