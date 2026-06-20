@@ -1,0 +1,42 @@
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { getCurrent, updateUser } from '$lib/server/api/users';
+import { uploadImage } from '$lib/server/api/posts';
+
+export const load: PageServerLoad = ({ parent }) => parent();
+
+export const actions: Actions = {
+  default: async ({ fetch, request }) => {
+    const currentUser = await getCurrent(fetch);
+    if (!currentUser) {
+      throw redirect(303, '/login');
+    }
+
+    const data = await request.formData();
+    const name = (data.get('name') as string ?? '').trim();
+    const username = (data.get('username') as string ?? '').trim().toLowerCase();
+    const email = (data.get('email') as string ?? '').trim();
+    const bio = (data.get('bio') as string ?? '').trim();
+    const removeAvatar = data.get('removeAvatar') === 'true';
+    const file = data.get('avatar');
+
+    if (!name || !username || !email) {
+      return fail(400, { error: 'Name, username, and email are required.' });
+    }
+
+    let avatarFilename = currentUser.avatar ?? '';
+
+    if (removeAvatar) {
+      avatarFilename = '';
+    } else if (file instanceof File && file.size > 0) {
+      const uploaded = await uploadImage(fetch, file);
+      if (!uploaded) {
+        return fail(500, { error: 'Could not upload avatar. Please try again.' });
+      }
+      avatarFilename = uploaded.filename;
+    }
+
+    await updateUser(fetch, currentUser.id, name, username, email, avatarFilename, bio);
+    throw redirect(303, '/settings');
+  }
+};
