@@ -103,6 +103,13 @@ spec:
             secretKeyRef:
               name: database-credentials
               key: s3-secret-key
+        - name: DRAGONFLY_URL
+          value: redis://cache:6379
+        - name: DRAGONFLY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: dragonfly-password
         - name: TRUST_PROXY
           value: "true"
         - name: SESSION_HASH_SECRET
