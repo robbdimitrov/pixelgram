@@ -81,7 +81,7 @@ limit `256Mi`.
 
 ## Phase 1 — SeaweedFS object storage
 
-### 1.1 blobstore package
+### 1.1 blobstore package [DONE]
 - **Files:** new `apps/backend/internal/blobstore/blobstore.go`, `s3.go`,
   `memory.go`, `blobstore_test.go`.
 - **Change:** define the interface
