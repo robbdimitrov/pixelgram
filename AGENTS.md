@@ -62,7 +62,8 @@ kubectl delete namespace pixelgram
 ## Git and Commits
 
 - Use one logical change per commit. Do not bundle unrelated fixes, refactors, or infrastructure changes. Tests required by a behavior change belong in the same commit.
-- Write commit subjects in imperative present tense.
+- Write commit subjects in Conventional Commits format (`type(scope): description`)
+  using imperative present tense. Include a scope when it adds useful context.
 - Commit messages are a single line, at most 72 characters, with no body, trailers, or issue references.
 - Review the staged diff before committing and ensure it contains only the intended change.
 - Create commits only when the user explicitly requests them.
