@@ -7,11 +7,14 @@
 
 ## Features
 
-- **Monolithic Backend**: Single Go service handling users, sessions, images, likes and uploads, backed by PostgreSQL.
-- **Production-Ready & HA**: Fully containerized, stateless service designed for High Availability deployments on Kubernetes.
-- **Resilience**: Built-in rate limiting, circuit breaker and retry-with-backoff protecting the API and the database layer.
-- **Observability**: Structured JSON logging with request ID propagation across the request lifecycle.
-- **Modern Frontend**: Built with SvelteKit, Tailwind CSS, DaisyUI and Lucide icons.
+- **Image sharing**: Upload, browse, like, and comment on images with a responsive feed and profile pages.
+- **Rich text**: Captions, comments, and bios render `@mention`, `#hashtag`, and URL links. Compose typeahead suggests users and hashtags as you type.
+- **Global search**: Search users, posts, and hashtags with paginated results. A leading `#` scopes results to hashtag-filtered posts.
+- **Object storage**: Image bytes are stored in SeaweedFS (S3-compatible), decoupled from the database and served with `Cache-Control` and `ETag` headers.
+- **Cache layer**: Dragonfly (Redis-protocol) backs rate-limit token buckets and login-failure counters, keeping the hot path off Postgres.
+- **Search index**: Meilisearch holds a derived search index fed by a transactional outbox — every post, user, and hashtag change is indexed asynchronously without blocking the write path.
+- **Production-ready**: Stateless Go API, Argon2id password hashing with bounded concurrency, absolute session lifetimes, dependency-aware readiness probe, structured JSON logging, circuit breaker and retry-with-backoff on every database call.
+- **HA-ready**: Ships at `replicas: 1` but correct at `replicas: N`. No shared in-process state; the outbox worker uses `SELECT FOR UPDATE SKIP LOCKED` with LISTEN/NOTIFY so replicas coordinate without a central lock.
 
 ## Architecture
 
@@ -20,24 +23,33 @@ graph TD
     Browser["Browser"]
 
     subgraph cluster ["Kubernetes Cluster"]
-        Web["Frontend<br>(SvelteKit SSR)"]:::frontend
+        Web["Frontend / BFF<br>(SvelteKit SSR)"]:::frontend
         API["Backend API<br>(Go)"]:::backend
+        Worker["Outbox Worker<br>(in-process)"]:::backend
 
         subgraph data ["Data & Storage"]
-            DB[("PostgreSQL<br>(StatefulSet)")]:::database
-            Vol[("Image Storage<br>(PVC)")]:::storage
+            DB[("PostgreSQL<br>source of truth")]:::database
+            Cache[("Dragonfly<br>rate limits + login throttle")]:::cache
+            Blob[("SeaweedFS / S3<br>image objects")]:::storage
+            Search[("Meilisearch<br>derived search index")]:::search
         end
     end
 
-    Browser -->|HTTP| Web
-    Web -->|REST API| API
-    API -->|SQL| DB
-    API -->|File I/O| Vol
+    Browser -->|HTTPS, same-origin| Web
+    Web -->|REST, session cookie| API
+    API -->|SQL + outbox row in tx| DB
+    API -->|token buckets / counters| Cache
+    API -->|S3 API| Blob
+    API -->|query| Search
+    Worker -->|SELECT ... SKIP LOCKED| DB
+    Worker -->|upsert / delete| Search
 
     classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
     classDef backend fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
     classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
     classDef storage fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    classDef cache fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
+    classDef search fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff
 
     style cluster fill:transparent,stroke:#64748b
     style data fill:transparent,stroke:transparent
@@ -45,9 +57,17 @@ graph TD
 
 | Service | Language | Description |
 | --- | --- | --- |
-| [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes and uploads. |
+| [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes, and uploads. |
 | [database](/apps/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
 | [frontend](/apps/frontend) | TypeScript | SvelteKit SSR application styled with Tailwind CSS and DaisyUI. |
+
+### Infrastructure
+
+Three in-cluster datastores run as `StatefulSet`s alongside the application:
+
+- **Dragonfly** — Redis-protocol cache backing rate-limit token buckets and login-failure counters. Ephemeral; the API fails open on unavailability.
+- **SeaweedFS** — S3-compatible object store holding image bytes. The API streams blobs directly; no image data touches Postgres.
+- **Meilisearch** — Derived search index. Postgres is the only source of truth; Meilisearch is populated and kept current by the transactional outbox worker. The index can be rebuilt at any time by replaying the outbox.
 
 ## Deploy
 
