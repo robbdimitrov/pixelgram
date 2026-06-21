@@ -15,6 +15,7 @@ import (
 	"pixelgram/backend/internal/env"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/noop"
+	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
 )
@@ -35,6 +36,12 @@ func main() {
 	blobs, err := openBlobStore(context.Background(), databaseURL)
 	if err != nil {
 		slog.Error("failed to initialize blob store", "error", err)
+		os.Exit(1)
+	}
+
+	meili, err := openMeiliClient(context.Background(), databaseURL)
+	if err != nil {
+		slog.Error("failed to initialize search client", "error", err)
 		os.Exit(1)
 	}
 
@@ -59,6 +66,7 @@ func main() {
 		RateLimiter:   rateLimiter,
 		LoginThrottle: loginThrottle,
 		Readiness:     readiness,
+		Meili:         meili,
 	}, repositories)
 
 	addr := ":" + port
@@ -136,6 +144,15 @@ func openRepositories(databaseURL string) (app.Repositories, func(context.Contex
 		Comments:    postgres.NewCommentRepository(client),
 		Search:      postgres.NewSearchRepository(client),
 	}, client.Ping, client.Close, nil
+}
+
+func openMeiliClient(ctx context.Context, databaseURL string) (*search.MeiliClient, error) {
+	if databaseURL == "" {
+		return nil, nil
+	}
+	meiliURL := env.String("MEILI_URL", "http://search:7700")
+	masterKey := os.Getenv("MEILI_MASTER_KEY")
+	return search.NewMeiliClient(ctx, meiliURL, masterKey)
 }
 
 func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, error) {
