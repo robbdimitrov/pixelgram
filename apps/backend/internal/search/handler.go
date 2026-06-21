@@ -6,12 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"pixelgram/backend/internal/httpx"
 )
+
+// hashtagNameRe matches valid hashtag names as stored in the database.
+// Using this against user input prevents filter injection into Meilisearch.
+var hashtagNameRe = regexp.MustCompile(`^[A-Za-z0-9_]{1,50}$`)
 
 const (
 	maxQueryLen  = 50
@@ -75,8 +80,7 @@ func (h Handler) SearchHashtags(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, results)
 }
 
-// Search handles GET /search?q=&type=&cursor= for full paginated search.
-// Meilisearch is required; returns 503 when not configured.
+// Search requires Meilisearch; returns 503 when not configured.
 func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 	if h.Meili == nil {
 		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Search service unavailable.")
@@ -146,8 +150,10 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 		searchQ := q
 		if strings.HasPrefix(q, "#") {
 			tag := q[1:]
-			// tag comes from a constrained user input (1-50 chars, no interpolated SQL);
-			// Meilisearch filter syntax expects a quoted string literal.
+			if !hashtagNameRe.MatchString(tag) {
+				httpx.WriteMessage(w, http.StatusBadRequest, "Invalid hashtag.")
+				return
+			}
 			filter = fmt.Sprintf(`hashtags = "%s"`, tag)
 			searchQ = ""
 		}
@@ -180,7 +186,6 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// meiliSearchUsers queries the users index and maps hits to UserResult.
 func meiliSearchUsers(ctx context.Context, mc *MeiliClient, q string) ([]UserResult, error) {
 	hits, err := meiliSearch(ctx, mc, "users", q, "", 0, typeaheadLen)
 	if err != nil {
@@ -197,7 +202,6 @@ func meiliSearchUsers(ctx context.Context, mc *MeiliClient, q string) ([]UserRes
 	return results, nil
 }
 
-// meiliSearchHashtags queries the hashtags index and maps hits to HashtagResult.
 func meiliSearchHashtags(ctx context.Context, mc *MeiliClient, q string) ([]HashtagResult, error) {
 	hits, err := meiliSearch(ctx, mc, "hashtags", q, "", 0, typeaheadLen)
 	if err != nil {
@@ -213,7 +217,6 @@ func meiliSearchHashtags(ctx context.Context, mc *MeiliClient, q string) ([]Hash
 	return results, nil
 }
 
-// meiliSearch executes a search against the given index and returns raw hits.
 func meiliSearch(ctx context.Context, mc *MeiliClient, index, q, filter string, offset, limit int) ([]map[string]any, error) {
 	params := map[string]any{
 		"q":      q,
@@ -234,13 +237,11 @@ func meiliSearch(ctx context.Context, mc *MeiliClient, index, q, filter string, 
 	return hits, nil
 }
 
-// encodeCursor base64-encodes an integer offset as the next page cursor.
 func encodeCursor(offset int) string {
 	return base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(offset)))
 }
 
-// decodeCursor decodes a base64 cursor back to an integer offset.
-// An empty cursor returns 0 (first page).
+// An empty cursor returns offset 0 (first page).
 func decodeCursor(cursor string) (int, error) {
 	if cursor == "" {
 		return 0, nil
@@ -256,14 +257,12 @@ func decodeCursor(cursor string) (int, error) {
 	return n, nil
 }
 
-// stringField extracts a string value from a map by key, returning "" if absent.
 func stringField(m map[string]any, key string) string {
 	v, _ := m[key].(string)
 	return v
 }
 
-// intField extracts a numeric value from a map by key, returning 0 if absent.
-// Meilisearch returns numbers as float64.
+// Meilisearch returns JSON numbers as float64.
 func intField(m map[string]any, key string) int {
 	v, _ := m[key].(float64)
 	return int(v)

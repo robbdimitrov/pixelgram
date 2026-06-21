@@ -67,6 +67,9 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('post', $1)`, publicID); err != nil {
 			return err
 		}
+		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {
+			return err
+		}
 		return tx.Commit(ctx)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -159,6 +162,9 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('post', $1)`, postID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {
 			return err
 		}
 		return tx.Commit(ctx)

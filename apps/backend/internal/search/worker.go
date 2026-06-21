@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -14,9 +15,11 @@ import (
 )
 
 const (
-	workerInterval  = time.Second
-	workerBatchSize = 100
-	workerMaxFails  = 5
+	workerMinInterval = time.Second
+	workerMaxInterval = 30 * time.Second
+	workerTickTimeout = 30 * time.Second
+	workerBatchSize   = 100
+	workerMaxFails    = 5
 )
 
 // Worker drains the search_outbox and syncs documents to Meilisearch.
@@ -31,7 +34,9 @@ func NewWorker(db *database.DB, meili *MeiliClient) *Worker {
 	return &Worker{db: db, meili: meili}
 }
 
-// Run processes outbox rows on each tick until ctx is cancelled.
+// Run processes outbox rows until ctx is cancelled. It holds a dedicated LISTEN
+// connection so writes wake the worker immediately via pg_notify; the fallback
+// timer catches any notifications missed during connection loss or restart.
 func (w *Worker) Run(ctx context.Context) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -39,15 +44,71 @@ func (w *Worker) Run(ctx context.Context) {
 		}
 	}()
 
-	ticker := time.NewTicker(workerInterval)
-	defer ticker.Stop()
+	// Dedicated connection: pool connections release their LISTEN state when
+	// returned to the pool, so LISTEN must live on a pinned connection.
+	conn, err := w.db.Pool().Acquire(ctx)
+	if err != nil {
+		slog.Error("search worker: failed to acquire listen connection", "error", err)
+		return
+	}
+	defer conn.Release()
+
+	if _, err := conn.Exec(ctx, "LISTEN search_outbox"); err != nil {
+		slog.Error("search worker: failed to listen on search_outbox", "error", err)
+		return
+	}
+
+	// notifC is buffered so a burst of notifications coalesces into one pending
+	// wakeup rather than queuing unbounded work items.
+	notifC := make(chan struct{}, 1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			if _, err := conn.Conn().WaitForNotification(ctx); err != nil {
+				return // ctx cancelled or connection lost; fallback timer takes over
+			}
+			select {
+			case notifC <- struct{}{}:
+			default:
+			}
+		}
+	}()
+	// wg.Wait is registered after conn.Release so it runs before it in LIFO
+	// order, ensuring the goroutine exits before the connection is returned.
+	defer wg.Wait()
+
+	interval := workerMinInterval // first tick drains any rows from before startup
+	timer := time.NewTimer(interval)
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			w.tick(ctx)
+		case <-notifC:
+			// Stop and drain the timer so it doesn't fire redundantly after we
+			// handle this notification, then tick and re-arm at the new interval.
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+			if w.tick(ctx) {
+				interval = workerMinInterval
+			} else {
+				interval = workerMaxInterval
+			}
+			timer.Reset(interval)
+		case <-timer.C:
+			if w.tick(ctx) {
+				interval = workerMinInterval
+			} else {
+				interval = workerMaxInterval
+			}
+			timer.Reset(interval)
 		}
 	}
 }
@@ -59,78 +120,104 @@ type outboxRow struct {
 	attempts   int
 }
 
-func (w *Worker) tick(ctx context.Context) {
+// tick processes one batch. Returns true if any rows were found (so the caller
+// can reset the backoff), false on an empty batch or error.
+func (w *Worker) tick(ctx context.Context) (foundWork bool) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			slog.Error("search worker tick panicked", "panic", recovered)
 		}
 	}()
 
-	var rows []outboxRow
-	err := w.db.Write(ctx, func() error {
-		dbRows, err := w.db.Pool().Query(ctx,
+	// Cap total lock-hold time so a slow Meilisearch cannot park a Postgres
+	// transaction — and its row locks — indefinitely.
+	tickCtx, cancel := context.WithTimeout(ctx, workerTickTimeout)
+	defer cancel()
+
+	// The entire tick runs inside one transaction so the FOR UPDATE SKIP LOCKED
+	// row locks are held from the SELECT through the final DELETE/UPDATE.
+	// This prevents duplicate processing when multiple replicas are running.
+	err := w.db.Write(tickCtx, func() error {
+		tx, err := w.db.Pool().Begin(tickCtx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(tickCtx, tx)
+
+		dbRows, err := tx.Query(tickCtx,
 			`SELECT id, entity_type, entity_id, attempts FROM search_outbox
 			ORDER BY id FOR UPDATE SKIP LOCKED LIMIT $1`, workerBatchSize)
 		if err != nil {
 			return err
 		}
-		defer dbRows.Close()
-		rows = rows[:0]
+		var rows []outboxRow
 		for dbRows.Next() {
 			var r outboxRow
 			if err := dbRows.Scan(&r.id, &r.entityType, &r.entityID, &r.attempts); err != nil {
+				dbRows.Close()
 				return err
 			}
 			rows = append(rows, r)
 		}
-		return dbRows.Err()
-	})
-	if err != nil || len(rows) == 0 {
-		if err != nil {
-			slog.Warn("search worker: failed to fetch outbox rows", "error", err)
+		dbRows.Close()
+		if err := dbRows.Err(); err != nil {
+			return err
 		}
-		return
-	}
+		if len(rows) == 0 {
+			return nil
+		}
+		foundWork = true
 
-	// Coalesce by (entity_type, entity_id), keeping the max id per entity so
-	// a later write supersedes an earlier one for the same entity.
-	type entityKey struct {
-		entityType string
-		entityID   string
-	}
-	type coalesced struct {
-		maxID    int
-		ids      []int
-		attempts int
-	}
-	byEntity := make(map[entityKey]*coalesced, len(rows))
-	for _, r := range rows {
-		key := entityKey{r.entityType, r.entityID}
-		c := byEntity[key]
-		if c == nil {
-			c = &coalesced{}
-			byEntity[key] = c
+		// Coalesce by (entity_type, entity_id), keeping the max id per entity so
+		// a later write supersedes an earlier one for the same entity.
+		type entityKey struct {
+			entityType string
+			entityID   string
 		}
-		c.ids = append(c.ids, r.id)
-		if r.id > c.maxID {
-			c.maxID = r.id
+		type coalesced struct {
+			ids      []int
+			attempts int
+		}
+		// Rows are ordered by id ASC; overwriting attempts on each occurrence
+		// means the last (highest-id) row's value is kept.
+		byEntity := make(map[entityKey]*coalesced, len(rows))
+		for _, r := range rows {
+			key := entityKey{r.entityType, r.entityID}
+			c := byEntity[key]
+			if c == nil {
+				c = &coalesced{}
+				byEntity[key] = c
+			}
+			c.ids = append(c.ids, r.id)
 			c.attempts = r.attempts
 		}
-	}
 
-	for key, c := range byEntity {
-		if err := w.syncEntity(ctx, key.entityType, key.entityID); err != nil {
-			slog.Warn("search worker: sync failed", "entity_type", key.entityType)
-			if c.attempts+1 >= workerMaxFails {
-				slog.Warn("search worker: dead-lettering entity", "entity_type", key.entityType, "attempts", c.attempts+1)
-				w.deleteRows(ctx, c.ids)
+		for key, c := range byEntity {
+			if err := w.syncEntity(tickCtx, key.entityType, key.entityID); err != nil {
+				slog.Warn("search worker: sync failed", "entity_type", key.entityType, "entity_id", key.entityID)
+				if c.attempts+1 >= workerMaxFails {
+					slog.Warn("search worker: dead-lettering entity", "entity_type", key.entityType, "entity_id", key.entityID, "attempts", c.attempts+1)
+					if _, err := tx.Exec(tickCtx, `DELETE FROM search_outbox WHERE id = ANY($1)`, c.ids); err != nil {
+						return err
+					}
+				} else {
+					if _, err := tx.Exec(tickCtx, `UPDATE search_outbox SET attempts = attempts + 1 WHERE id = ANY($1)`, c.ids); err != nil {
+						return err
+					}
+				}
 			} else {
-				w.incrementAttempts(ctx, c.ids)
+				if _, err := tx.Exec(tickCtx, `DELETE FROM search_outbox WHERE id = ANY($1)`, c.ids); err != nil {
+					return err
+				}
 			}
-		} else {
-			w.deleteRows(ctx, c.ids)
 		}
+
+		return tx.Commit(tickCtx)
+	})
+	if err != nil {
+		slog.Warn("search worker: tick failed", "error", err)
 	}
+	return foundWork
 }
 
 func (w *Worker) syncEntity(ctx context.Context, entityType, entityID string) error {
@@ -162,30 +249,25 @@ func (w *Worker) syncPost(ctx context.Context, publicID string) error {
 			Scan(&id, &username, &description, &created)
 	})
 	if err == nil {
-		// Fetch hashtags for the post.
-		var tagErr error
-		_ = w.db.Read(ctx, func() error {
+		if err := w.db.Read(ctx, func() error {
 			rows, err := w.db.Pool().Query(ctx,
 				`SELECT h.name FROM hashtags h
 				JOIN post_hashtags ph ON ph.hashtag_id = h.id
 				WHERE ph.post_id = $1`, id)
 			if err != nil {
-				tagErr = err
 				return err
 			}
 			defer rows.Close()
 			for rows.Next() {
 				var tag string
 				if err := rows.Scan(&tag); err != nil {
-					tagErr = err
 					return err
 				}
 				hashtags = append(hashtags, tag)
 			}
 			return rows.Err()
-		})
-		if tagErr != nil {
-			return tagErr
+		}); err != nil {
+			return err
 		}
 
 		doc := map[string]any{
@@ -255,22 +337,6 @@ func (w *Worker) syncHashtag(ctx context.Context, name string) error {
 		return w.meili.DeleteDocument(ctx, "hashtags", name)
 	}
 	return err
-}
-
-func (w *Worker) deleteRows(ctx context.Context, ids []int) {
-	_ = w.db.Write(ctx, func() error {
-		_, err := w.db.Pool().Exec(ctx,
-			`DELETE FROM search_outbox WHERE id = ANY($1)`, ids)
-		return err
-	})
-}
-
-func (w *Worker) incrementAttempts(ctx context.Context, ids []int) {
-	_ = w.db.Write(ctx, func() error {
-		_, err := w.db.Pool().Exec(ctx,
-			`UPDATE search_outbox SET attempts = attempts + 1 WHERE id = ANY($1)`, ids)
-		return err
-	})
 }
 
 func isNoRows(err error) bool {

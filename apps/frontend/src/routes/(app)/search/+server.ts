@@ -4,7 +4,7 @@ import { search, type SearchType } from '$lib/server/api/search';
 import { apiClient } from '$lib/server/api/client';
 
 const VALID_TYPES = new Set<string>(['users', 'posts', 'hashtags']);
-const MAX_Q_LENGTH = 100;
+const MAX_Q_LENGTH = 50;
 
 export const GET: RequestHandler = async (event) => {
   const q = event.url.searchParams.get('q') ?? '';

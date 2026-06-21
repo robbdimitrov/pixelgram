@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { search, type SearchType } from '$lib/server/api/search';
 import { apiClient } from '$lib/server/api/client';
 
-const MAX_Q_LENGTH = 100;
+const MAX_Q_LENGTH = 50;
 
 function resolveType(q: string, param: string | null): SearchType {
   if (param === 'users' || param === 'posts' || param === 'hashtags') return param;
