@@ -46,7 +46,7 @@ Browser → nginx Ingress → frontend:8080 (SvelteKit SSR)
 - Feature modules: `users`, `sessions`, `posts`, `comments`, `uploads`, `search`.
 - Search outbox worker: drains `search_outbox` table and syncs to Meilisearch.
 - Session cleanup goroutine: sweeps expired sessions every hour.
-- Startup backfill: indexes all existing users, posts, and hashtags into Meilisearch on first replica (session-scoped advisory lock `774191` via `pg_try_advisory_lock` prevents concurrent runs; if the holding connection drops mid-backfill, PostgreSQL releases the lock and a second replica may acquire it and run concurrently).
+- Startup backfill: indexes all existing users, posts, and hashtags into Meilisearch on first replica. An advisory lock prevents redundant concurrent runs; concurrent runs are safe because all writes are idempotent upserts.
 
 ### Database (migrate/migrate)
 - Runs as init container in the backend pod before the backend starts.

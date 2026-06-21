@@ -15,6 +15,7 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
     ├── feed/               load: GET /posts
     ├── search/             load: GET /search?q=&type=
     ├── upload/             form action: POST /uploads → POST /posts
+    ├── suggest/            GET +server.ts — typeahead proxy: GET /users/search or /hashtags/search
     ├── logout/             form action: DELETE /sessions → delete session cookie → redirect /login (cookie deleted even if backend call fails)
     ├── settings/           layout → redirect to sub-routes
     │   ├── profile/        form action: PUT /users/{id}
