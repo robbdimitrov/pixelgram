@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { Camera, Home, SquarePlus, User } from '@lucide/svelte';
+  import { Camera, Home, Search, SquarePlus, User } from '@lucide/svelte';
   import type { User as UserType } from '$lib/types';
 
   let { currentUser }: { currentUser: UserType } = $props();
@@ -29,6 +29,18 @@
       aria-label="Home"
     >
       <Home class="h-5 w-5" />
+    </a>
+
+    <a
+      href="/search"
+      class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
+      class:bg-white={isActive('/search')}
+      class:text-slate-950={isActive('/search')}
+      class:shadow-md={isActive('/search')}
+      title="Search"
+      aria-label="Search"
+    >
+      <Search class="h-5 w-5" />
     </a>
 
     <a
