@@ -44,7 +44,10 @@
 ## Upload Security
 
 - File content is validated against magic bytes (not extension or MIME header): JPEG `\xff\xd8\xff`, PNG `\x89PNG\r\n\x1a\n`, GIF `GIF8`, WEBP `RIFF....WEBP`.
-- Multipart read is bounded to 1 MB + 1 byte; files exceeding 1 MB are rejected.
+- Multipart read is bounded to 1 MB + 1 byte; files exceeding 1 MB are rejected before any further processing.
+- All accepted images are decoded and re-encoded to JPEG at 90% quality. Re-encoding strips embedded metadata (EXIF, GPS coordinates, ICC profiles) and eliminates polyglot payloads that pass the magic byte check. Re-encoded output is rejected if it exceeds 1 MB.
+- Pixel dimensions are checked via `image.DecodeConfig` before full decode; images exceeding 25 MP (e.g. 5000×5000) are rejected to guard against decompression bombs.
+- All stored images have content type `image/jpeg` regardless of the original upload format.
 - Filenames are 32 lowercase hex characters generated from `crypto/rand`.
 - File serving validates the path segment against the 32-char hex pattern before proxying.
 

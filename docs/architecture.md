@@ -38,12 +38,13 @@ Browser → nginx Ingress → frontend:8080 (SvelteKit SSR)
 - Proxies all mutations through form actions using `use:enhance`.
 - Forwards `session` cookie to backend; re-emits it to the browser on login.
 - Streams image blobs through without buffering.
-- Resizes images client-side before upload (target < 900 KB; backend hard limit 1 MB).
+- Resizes all images client-side before upload via canvas re-encode to JPEG, targeting < 900 KB and max 1600 px on the longest side. Canvas encoding strips EXIF metadata. The backend hard limit is 1 MB.
 
 ### Backend (Go)
 - Stateless HTTP API; all state lives in PostgreSQL, S3, Dragonfly, and Meilisearch.
 - Auth boundary: `httpx.RequireSession` wraps all routes except the explicit public allowlist.
 - Feature modules: `users`, `sessions`, `posts`, `comments`, `uploads`, `search`.
+- Upload handler decodes and re-encodes images to JPEG, stripping EXIF/GPS metadata and enforcing a 25 MP pixel dimension limit before storage.
 - Search outbox worker: drains `search_outbox` table and syncs to Meilisearch.
 - Session cleanup goroutine: sweeps expired sessions every hour.
 - Startup backfill: indexes all existing users, posts, and hashtags into Meilisearch on first replica. An advisory lock prevents redundant concurrent runs; concurrent runs are safe because all writes are idempotent upserts.

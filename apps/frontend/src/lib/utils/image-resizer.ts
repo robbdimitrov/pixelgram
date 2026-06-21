@@ -55,7 +55,6 @@ export async function resizeImageForUpload(file: File): Promise<File> {
   if (!supportedUploadMimeTypes.includes(file.type)) {
     throw new Error('Choose a JPEG, PNG, GIF, or WEBP image.');
   }
-  if (file.size <= RESIZED_TARGET_BYTES) return file;
   const image = await loadImage(file);
   let { width, height } = targetSize(image.naturalWidth, image.naturalHeight, DEFAULT_MAX_DIMENSION);
   while (width >= 320 && height >= 320) {

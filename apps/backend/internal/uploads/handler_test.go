@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"image"
+	"image/jpeg"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +15,16 @@ import (
 	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/httpx"
 )
+
+func testJPEG(t *testing.T) []byte {
+	t.Helper()
+	img := image.NewGray(image.Rect(0, 0, 1, 1))
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, nil); err != nil {
+		t.Fatalf("testJPEG: %v", err)
+	}
+	return buf.Bytes()
+}
 
 type fakeStore struct {
 	expired     []string
@@ -92,7 +104,7 @@ func TestCreateFileAcceptsImageSignature(t *testing.T) {
 	db := &fakeStore{capacity: true}
 	store := blobstore.NewMemoryStore()
 	handler := Handler{Service: NewService(db), Store: store}
-	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
+	req, err := multipartRequest(testJPEG(t))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
 	}
@@ -122,7 +134,7 @@ func TestCreateFileDeletesExpiredUploads(t *testing.T) {
 	// Pre-populate the store so Delete has something to remove.
 	_ = store.Put(context.Background(), expired, "image/jpeg", bytes.NewReader([]byte{0xff}), 1)
 	handler := Handler{Service: NewService(db), Store: store}
-	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
+	req, err := multipartRequest(testJPEG(t))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
 	}
@@ -146,7 +158,7 @@ func TestCreateFileDeletesExpiredUploadsWhenCreateFails(t *testing.T) {
 	store := blobstore.NewMemoryStore()
 	_ = store.Put(context.Background(), expired, "image/jpeg", bytes.NewReader([]byte{0xff}), 1)
 	handler := Handler{Service: NewService(db), Store: store}
-	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
+	req, err := multipartRequest(testJPEG(t))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
 	}
@@ -167,7 +179,7 @@ func TestCreateFileDeletesExpiredUploadsWhenCreateFails(t *testing.T) {
 func TestCreateFileRejectsQuotaExhaustion(t *testing.T) {
 	store := blobstore.NewMemoryStore()
 	handler := Handler{Service: NewService(&fakeStore{capacity: false}), Store: store}
-	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
+	req, err := multipartRequest(testJPEG(t))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
 	}

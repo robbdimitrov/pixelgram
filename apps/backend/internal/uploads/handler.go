@@ -6,15 +6,24 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"image"
+	"image/jpeg"
+	_ "image/gif"
+	_ "image/png"
 	"io"
 	"net/http"
 	"strings"
+
+	_ "golang.org/x/image/webp"
 
 	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/httpx"
 )
 
-const fileLimit = 1_000_000
+const (
+	fileLimit      = 1_000_000
+	maxImagePixels = 25_000_000 // 5000×5000; guards against decompression bombs
+)
 
 type Application interface {
 	Register(ctx context.Context, command RegisterCommand) (RegisterResult, error)
@@ -47,7 +56,12 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contentType := http.DetectContentType(data)
+	data, err = processImage(data)
+	if err != nil {
+		status, message := uploadErrorResponse(err)
+		httpx.WriteMessage(w, status, message)
+		return
+	}
 
 	filename, err := randomFilename()
 	if err != nil {
@@ -68,7 +82,7 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Store.Put(ctx, filename, contentType, bytes.NewReader(data), int64(len(data))); err != nil {
+	if err := h.Store.Put(ctx, filename, "image/jpeg", bytes.NewReader(data), int64(len(data))); err != nil {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
 	}
@@ -151,12 +165,39 @@ func (f Files) Delete(filename string) {
 	_ = f.Store.Delete(context.Background(), filename)
 }
 
+// processImage decodes the image to check dimensions, then re-encodes to JPEG.
+// Re-encoding strips embedded metadata (EXIF, GPS, ICC profiles) and ensures
+// the file is a clean image rather than a polyglot or crafted payload.
+func processImage(data []byte) ([]byte, error) {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return nil, errProcessUpload
+	}
+	if cfg.Width*cfg.Height > maxImagePixels {
+		return nil, errImageTooLarge
+	}
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, errProcessUpload
+	}
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 90}); err != nil {
+		return nil, errProcessUpload
+	}
+	if buf.Len() > fileLimit {
+		return nil, errFileTooLarge
+	}
+	return buf.Bytes(), nil
+}
+
 func uploadErrorResponse(err error) (int, string) {
 	switch {
 	case errors.Is(err, errMissingFile):
 		return http.StatusBadRequest, "File missing from request."
 	case errors.Is(err, errFileTooLarge):
-		return http.StatusRequestEntityTooLarge, "Could not resize this image enough. Try a smaller image."
+		return http.StatusRequestEntityTooLarge, "File too large. Try a smaller image."
+	case errors.Is(err, errImageTooLarge):
+		return http.StatusBadRequest, "Image dimensions too large."
 	default:
 		return http.StatusBadRequest, "Could not process upload."
 	}
@@ -165,6 +206,7 @@ func uploadErrorResponse(err error) (int, string) {
 var (
 	errMissingFile   = errors.New("file missing")
 	errFileTooLarge  = errors.New("file too large")
+	errImageTooLarge = errors.New("image dimensions too large")
 	errProcessUpload = errors.New("could not process upload")
 )
 

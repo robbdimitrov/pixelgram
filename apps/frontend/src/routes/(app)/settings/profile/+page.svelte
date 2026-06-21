@@ -115,7 +115,7 @@
       type="file"
       id="avatar-input"
       name="avatar"
-      accept="image/*"
+      accept="image/jpeg,image/png,image/gif,image/webp"
       class="hidden"
       onchange={(e) => handleFileChange(e.currentTarget.files)}
     />

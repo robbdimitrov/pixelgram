@@ -25,24 +25,21 @@ graph TD
     subgraph cluster ["Kubernetes Cluster"]
         Web["Frontend / BFF<br>(SvelteKit SSR)"]:::frontend
         API["Backend API<br>(Go)"]:::backend
-        Worker["Outbox Worker<br>(in-process)"]:::backend
 
         subgraph data ["Data & Storage"]
             DB[("PostgreSQL<br>source of truth")]:::database
-            Cache[("Dragonfly<br>rate limits + login throttle")]:::cache
-            Blob[("SeaweedFS / S3<br>image objects")]:::storage
-            Search[("Meilisearch<br>derived search index")]:::search
+            Cache[("Dragonfly<br>rate limiting")]:::cache
+            Blob[("SeaweedFS<br>image objects")]:::storage
+            Search[("Meilisearch<br>search index")]:::search
         end
     end
 
-    Browser -->|HTTPS, same-origin| Web
-    Web -->|REST, session cookie| API
-    API -->|SQL + outbox row in tx| DB
-    API -->|token buckets / counters| Cache
-    API -->|S3 API| Blob
-    API -->|query| Search
-    Worker -->|SELECT ... SKIP LOCKED| DB
-    Worker -->|upsert / delete| Search
+    Browser --> Web
+    Web --> API
+    API --> DB
+    API --> Cache
+    API --> Blob
+    API --> Search
 
     classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
     classDef backend fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
