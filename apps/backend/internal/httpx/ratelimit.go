@@ -2,7 +2,6 @@ package httpx
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -11,11 +10,32 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/valkey-io/valkey-go"
 
 	"pixelgram/backend/internal/env"
 )
+
+// tokenBucketLua refills tokens based on elapsed time, decrements one, sets
+// the key TTL, and returns {1, 0} when allowed or {0, retry_ms} when denied.
+const tokenBucketLua = `
+local data   = redis.call('HMGET', KEYS[1], 't', 'l')
+local tokens = tonumber(data[1])
+local last   = tonumber(data[2])
+local now    = tonumber(ARGV[3])
+local burst  = tonumber(ARGV[1])
+local rate   = tonumber(ARGV[2])
+if not tokens then tokens = burst end
+if not last   then last   = now  end
+local elapsed = math.max(0, now - last)
+local refill  = math.floor(elapsed * rate / 1000)
+tokens = math.min(burst, tokens + refill)
+if tokens > 0 then
+  redis.call('HMSET', KEYS[1], 't', tokens - 1, 'l', now)
+  redis.call('PEXPIRE', KEYS[1], math.ceil(burst / rate * 1000) + 1000)
+  return {1, 0}
+end
+return {0, math.ceil(1000 / rate)}
+`
 
 type RateLimitPolicy struct {
 	Name  string
@@ -30,95 +50,62 @@ type RateLimitDecision struct {
 
 type RateLimiterStore interface {
 	Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error)
-	Cleanup(ctx context.Context, maxAge time.Duration) error
 }
 
-type PostgresRateLimiterStore struct {
-	db       *pgxpool.Pool
+type DragonflyRateLimiterStore struct {
+	client   valkey.Client
+	script   *valkey.Lua
 	failOpen bool
 }
 
-func NewPostgresRateLimiterStore(databaseURL string) (*PostgresRateLimiterStore, error) {
-	failOpen := env.Bool("RATE_LIMIT_FAIL_OPEN", false)
-	if databaseURL == "" {
-		slog.Warn("database url not set for rate limiter", "fail_open", failOpen)
-		return &PostgresRateLimiterStore{failOpen: failOpen}, nil
-	}
-
-	config, err := pgxpool.ParseConfig(databaseURL)
+func NewDragonflyRateLimiterStore(dragonflyURL, password string) (*DragonflyRateLimiterStore, error) {
+	opt, err := valkey.ParseURL(dragonflyURL)
 	if err != nil {
-		return nil, fmt.Errorf("rate limiter: parse database url: %w", err)
+		return nil, fmt.Errorf("rate limiter: parse dragonfly url: %w", err)
 	}
-	config.MaxConns = 5
-
-	db, err := pgxpool.NewWithConfig(context.Background(), config)
+	if password != "" {
+		opt.Password = password
+	}
+	client, err := valkey.NewClient(opt)
 	if err != nil {
-		return nil, fmt.Errorf("rate limiter: connect to database: %w", err)
+		return nil, fmt.Errorf("rate limiter: connect to dragonfly: %w", err)
 	}
-
-	return &PostgresRateLimiterStore{db: db, failOpen: failOpen}, nil
+	return &DragonflyRateLimiterStore{
+		client:   client,
+		script:   valkey.NewLuaScript(tokenBucketLua),
+		failOpen: env.Bool("RATE_LIMIT_FAIL_OPEN", false),
+	}, nil
 }
 
-func (s *PostgresRateLimiterStore) Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error) {
-	if s.db == nil {
-		return RateLimitDecision{Allowed: s.failOpen}, errors.New("rate limiter storage unavailable")
-	}
+func (s *DragonflyRateLimiterStore) Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 
-	tx, err := s.db.Begin(ctx)
-	if err != nil {
-		return RateLimitDecision{}, err
+	nowMs := time.Now().UnixMilli()
+	res := s.script.Exec(ctx, s.client,
+		[]string{identifier},
+		[]string{
+			strconv.Itoa(policy.Burst),
+			strconv.FormatFloat(policy.Rate, 'f', -1, 64),
+			strconv.FormatInt(nowMs, 10),
+		},
+	)
+	if err := res.Error(); err != nil {
+		return RateLimitDecision{Allowed: s.failOpen}, err
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
-
-	var tokens int
-	var elapsed float64
-	err = tx.QueryRow(ctx, `SELECT tokens, EXTRACT(EPOCH FROM now() - last_updated) FROM rate_limits WHERE id = $1 FOR UPDATE`, identifier).Scan(&tokens, &elapsed)
+	arr, err := res.ToArray()
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return RateLimitDecision{}, err
-		}
-		_, err = tx.Exec(ctx, `INSERT INTO rate_limits (id, tokens, last_updated) VALUES ($1, $2, now()) ON CONFLICT (id) DO NOTHING`, identifier, policy.Burst-1)
-		if err != nil {
-			return RateLimitDecision{}, err
-		}
-		if err := tx.Commit(ctx); err != nil {
-			return RateLimitDecision{}, err
-		}
+		return RateLimitDecision{Allowed: s.failOpen}, err
+	}
+	allowed, err := arr[0].ToInt64()
+	if err != nil {
+		return RateLimitDecision{Allowed: s.failOpen}, err
+	}
+	if allowed == 1 {
 		return RateLimitDecision{Allowed: true}, nil
 	}
-
-	newTokens := tokens + int(elapsed*policy.Rate)
-	if newTokens > policy.Burst {
-		newTokens = policy.Burst
-	}
-
-	if newTokens > 0 {
-		_, err = tx.Exec(ctx, `UPDATE rate_limits SET tokens = $1, last_updated = now() WHERE id = $2`, newTokens-1, identifier)
-		if err != nil {
-			return RateLimitDecision{}, err
-		}
-		if err := tx.Commit(ctx); err != nil {
-			return RateLimitDecision{}, err
-		}
-		return RateLimitDecision{Allowed: true}, nil
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return RateLimitDecision{}, err
-	}
-	retryAfter := time.Second
-	if policy.Rate > 0 {
-		retryAfter = time.Duration(float64(time.Second) / policy.Rate)
-	}
-	return RateLimitDecision{Allowed: false, RetryAfter: retryAfter}, nil
-}
-
-func (s *PostgresRateLimiterStore) Cleanup(ctx context.Context, maxAge time.Duration) error {
-	if s.db == nil {
-		return nil
-	}
-	_, err := s.db.Exec(ctx, `DELETE FROM rate_limits WHERE last_updated < now() - ($1 * interval '1 second')`, int64(maxAge.Seconds()))
-	return err
+	retryMs, _ := arr[1].ToInt64()
+	return RateLimitDecision{Allowed: false, RetryAfter: time.Duration(retryMs) * time.Millisecond}, nil
 }
 
 type NoopRateLimiterStore struct{}
@@ -126,8 +113,6 @@ type NoopRateLimiterStore struct{}
 func (NoopRateLimiterStore) Allow(_ context.Context, _ string, _ RateLimitPolicy) (RateLimitDecision, error) {
 	return RateLimitDecision{Allowed: true}, nil
 }
-
-func (NoopRateLimiterStore) Cleanup(_ context.Context, _ time.Duration) error { return nil }
 
 func RateLimit(store RateLimiterStore) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

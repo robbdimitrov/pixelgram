@@ -120,5 +120,3 @@ type denyAllStore struct{}
 func (denyAllStore) Allow(_ context.Context, _ string, _ RateLimitPolicy) (RateLimitDecision, error) {
 	return RateLimitDecision{Allowed: false, RetryAfter: 5 * time.Second}, nil
 }
-
-func (denyAllStore) Cleanup(_ context.Context, _ time.Duration) error { return nil }
