@@ -1,10 +1,13 @@
 package app
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
@@ -19,12 +22,13 @@ type Route struct {
 }
 
 type handlers struct {
-	users    users.Handler
-	sessions sessions.Handler
-	uploads  uploads.Handler
-	posts    posts.Handler
-	comments comments.Handler
-	search   search.Handler
+	users     users.Handler
+	sessions  sessions.Handler
+	uploads   uploads.Handler
+	posts     posts.Handler
+	comments  comments.Handler
+	search    search.Handler
+	readiness func(context.Context) error
 }
 
 type routeMux struct {
@@ -48,6 +52,7 @@ func registerRoutes(public, protected routeMux, h handlers) {
 	public.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
+	public.HandleFunc("GET /ready", readinessHandler(h.readiness))
 	users.RegisterPublicRoutes(public, h.users)
 	sessions.RegisterPublicRoutes(public, h.sessions)
 	uploads.RegisterPublicRoutes(public, h.uploads)
@@ -57,6 +62,20 @@ func registerRoutes(public, protected routeMux, h handlers) {
 	posts.RegisterRoutes(protected, h.posts)
 	comments.RegisterRoutes(protected, h.comments)
 	search.RegisterRoutes(protected, h.search)
+}
+
+func readinessHandler(check func(context.Context) error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if check != nil {
+			if err := check(ctx); err != nil {
+				httpx.WriteMessage(w, http.StatusServiceUnavailable, "Service unavailable")
+				return
+			}
+		}
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func Routes() []Route {

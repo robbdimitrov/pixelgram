@@ -489,7 +489,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `cap absolute session lifetime and sweep sessions off the login path`
 
-### 5.5 Dependency-aware readiness probe
+### 5.5 Dependency-aware readiness probe [DONE]
 - **Files:** `apps/backend/internal/app/routes.go`; `cmd/api/main.go`;
   `deploy/backend.yaml`.
 - **Change:** keep `/health` trivial for liveness/startup. Add a public, rate-limit-

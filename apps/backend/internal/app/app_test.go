@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"pixelgram/backend/internal/httpx"
 )
@@ -14,6 +15,7 @@ import (
 func TestRouteContract(t *testing.T) {
 	want := []Route{
 		{Method: "GET", Path: "/health"},
+		{Method: "GET", Path: "/ready"},
 		{Method: "POST", Path: "/users"},
 		{Method: "POST", Path: "/sessions"},
 		{Method: "DELETE", Path: "/sessions"},
@@ -72,6 +74,49 @@ func TestHealthEndpoint(t *testing.T) {
 
 	if res.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
+	}
+}
+
+func TestReadinessEndpointChecksDependencyWithTimeout(t *testing.T) {
+	store := &fakeSessionStore{}
+	app := New(Config{Readiness: func(ctx context.Context) error {
+		deadline, ok := ctx.Deadline()
+		if !ok {
+			t.Fatal("readiness context has no deadline")
+		}
+		remaining := time.Until(deadline)
+		if remaining <= 0 || remaining > 2*time.Second {
+			t.Fatalf("readiness deadline remaining = %v", remaining)
+		}
+		return nil
+	}}, Repositories{SessionAuth: store})
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/ready", nil)
+	app.ServeHTTP(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if store.refreshCalls != 0 {
+		t.Fatal("readiness endpoint required authentication")
+	}
+}
+
+func TestReadinessEndpointReportsDependencyFailure(t *testing.T) {
+	app := New(Config{Readiness: func(context.Context) error {
+		return errors.New("database unavailable")
+	}}, Repositories{SessionAuth: &fakeSessionStore{}})
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/ready", nil)
+	app.ServeHTTP(res, req)
+
+	if res.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusServiceUnavailable)
+	}
+	if strings.TrimSpace(res.Body.String()) != `{"message":"Service unavailable"}` {
+		t.Fatalf("body = %q", res.Body.String())
 	}
 }
 

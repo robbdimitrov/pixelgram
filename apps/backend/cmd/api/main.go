@@ -25,7 +25,7 @@ func main() {
 	port := env.String("PORT", "8080")
 	databaseURL := os.Getenv("DATABASE_URL")
 
-	repositories, closeRepositories, err := openRepositories(databaseURL)
+	repositories, readiness, closeRepositories, err := openRepositories(databaseURL)
 	if err != nil {
 		slog.Error("failed to initialize repositories", "error", err)
 		os.Exit(1)
@@ -52,6 +52,7 @@ func main() {
 	handler := app.New(app.Config{
 		Blobs:       blobs,
 		RateLimiter: rateLimiter,
+		Readiness:   readiness,
 	}, repositories)
 
 	addr := ":" + port
@@ -97,7 +98,7 @@ func setupLogger() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 }
 
-func openRepositories(databaseURL string) (app.Repositories, func(), error) {
+func openRepositories(databaseURL string) (app.Repositories, func(context.Context) error, func(), error) {
 	if databaseURL == "" {
 		return app.Repositories{
 			SessionAuth: noop.SessionAuth{},
@@ -107,17 +108,17 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 			Posts:       noop.Posts{},
 			Comments:    noop.Comments{},
 			Search:      noop.Search{},
-		}, func() {}, nil
+		}, func(context.Context) error { return nil }, func() {}, nil
 	}
 
 	sessionSecret := os.Getenv("SESSION_HASH_SECRET")
 	if sessionSecret == "" {
-		return app.Repositories{}, func() {}, errors.New("SESSION_HASH_SECRET is required when DATABASE_URL is set")
+		return app.Repositories{}, nil, func() {}, errors.New("SESSION_HASH_SECRET is required when DATABASE_URL is set")
 	}
 
 	client, err := postgres.New(context.Background(), databaseURL, sessionSecret)
 	if err != nil {
-		return app.Repositories{}, func() {}, err
+		return app.Repositories{}, nil, func() {}, err
 	}
 
 	return app.Repositories{
@@ -128,7 +129,7 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 		Posts:       postgres.NewPostRepository(client),
 		Comments:    postgres.NewCommentRepository(client),
 		Search:      postgres.NewSearchRepository(client),
-	}, client.Close, nil
+	}, client.Ping, client.Close, nil
 }
 
 func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, error) {

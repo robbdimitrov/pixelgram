@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"net/http"
 
 	"pixelgram/backend/internal/blobstore"
@@ -16,6 +17,7 @@ import (
 type Config struct {
 	Blobs       blobstore.Store
 	RateLimiter httpx.RateLimiterStore
+	Readiness   func(context.Context) error
 }
 
 type Repositories struct {
@@ -54,6 +56,7 @@ func New(cfg Config, repositories Repositories) http.Handler {
 		handlers{
 			users: userHandler, sessions: sessionHandler, uploads: uploadHandler,
 			posts: postHandler, comments: commentHandler, search: searchHandler,
+			readiness: cfg.Readiness,
 		},
 	)
 	protected.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

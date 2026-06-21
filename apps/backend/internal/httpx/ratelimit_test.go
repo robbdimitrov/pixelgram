@@ -80,14 +80,16 @@ func TestClientIPTrustProxy(t *testing.T) {
 }
 
 func TestRateLimitAllowsExemptPath(t *testing.T) {
-	handler := RateLimit(NoopRateLimiterStore{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := RateLimit(&denyAllStore{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNoContent)
+	for _, path := range []string{"/health", "/ready"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("%s status = %d, want %d", path, rec.Code, http.StatusNoContent)
+		}
 	}
 }
 
