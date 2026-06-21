@@ -2,9 +2,12 @@
   import { enhance } from '$app/forms';
   import { SquarePlus } from '@lucide/svelte';
   import { resizeImageForUpload, supportedUploadMimeTypes } from '$lib/utils/image-resizer';
+  import { activeToken } from '$lib/utils/activeToken';
+  import Typeahead from '$lib/components/Typeahead.svelte';
   import type { ActionData } from './$types';
 
   const MAX_DESCRIPTION = 1000;
+  const TYPEAHEAD_DEBOUNCE_MS = 150;
 
   let { form }: { form: ActionData } = $props();
 
@@ -15,6 +18,64 @@
   let description = $state('');
   let selectedFile = $state<File | undefined>(undefined);
   let fileInput = $state<HTMLInputElement | null>(null);
+  let descriptionTextarea = $state<HTMLTextAreaElement | null>(null);
+  let typeaheadItems = $state<unknown[]>([]);
+  let typeaheadToken = $state<{ trigger: '@' | '#'; query: string; start: number; end: number } | null>(null);
+  let debounceTimer = $state<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  async function fetchSuggestions(trigger: '@' | '#', query: string) {
+    const type = trigger === '@' ? 'users' : 'hashtags';
+    try {
+      const res = await fetch(`/suggest?type=${type}&q=${encodeURIComponent(query || ' ')}`);
+      if (!res.ok) { typeaheadItems = []; return; }
+      typeaheadItems = await res.json() as unknown[];
+    } catch {
+      typeaheadItems = [];
+    }
+  }
+
+  function displayItem(item: unknown): string {
+    if (typeaheadToken?.trigger === '@') {
+      const u = item as { username: string };
+      return u.username;
+    }
+    const h = item as { name: string };
+    return h.name;
+  }
+
+  function handleDescriptionInput(e: Event) {
+    const textarea = e.currentTarget as HTMLTextAreaElement;
+    const caret = textarea.selectionStart ?? description.length;
+    const token = activeToken(description, caret);
+    typeaheadToken = token;
+
+    clearTimeout(debounceTimer);
+    if (token && token.query.length > 0) {
+      debounceTimer = setTimeout(() => {
+        fetchSuggestions(token.trigger, token.query);
+      }, TYPEAHEAD_DEBOUNCE_MS);
+    } else {
+      typeaheadItems = [];
+    }
+  }
+
+  function handleTypeaheadSelect(value: string) {
+    if (!typeaheadToken) { typeaheadItems = []; return; }
+    const { trigger, start, end } = typeaheadToken;
+    // Replace [start, end) with trigger + value + trailing space.
+    description = description.slice(0, start) + trigger + value + ' ' + description.slice(end);
+    typeaheadItems = [];
+    typeaheadToken = null;
+
+    // Restore caret after the inserted text.
+    const newCaret = start + 1 + value.length + 1;
+    requestAnimationFrame(() => {
+      if (descriptionTextarea) {
+        descriptionTextarea.setSelectionRange(newCaret, newCaret);
+        descriptionTextarea.focus();
+      }
+    });
+  }
 
   async function selectFile(file: File | null | undefined) {
     errorMessage = '';
@@ -150,14 +211,25 @@
             <span class="rounded-full bg-base-300 px-3 py-1 text-xs font-bold text-base-content/60">{description.length}/{MAX_DESCRIPTION}</span>
           </div>
 
-          <textarea
-            name="description"
-            bind:value={description}
-            class="min-h-52 flex-1 resize-none border-0 bg-transparent px-6 py-5 text-base leading-7 text-base-content placeholder:text-base-content/40 shadow-none outline-none focus:outline-none focus:ring-0 sm:px-8"
-            placeholder="Write a caption..."
-            maxlength={MAX_DESCRIPTION}
-            autocomplete="off"
-          ></textarea>
+          <div class="relative flex-1">
+            <textarea
+              bind:this={descriptionTextarea}
+              name="description"
+              bind:value={description}
+              class="min-h-52 w-full resize-none border-0 bg-transparent px-6 py-5 text-base leading-7 text-base-content placeholder:text-base-content/40 shadow-none outline-none focus:outline-none focus:ring-0 sm:px-8"
+              placeholder="Write a caption..."
+              maxlength={MAX_DESCRIPTION}
+              autocomplete="off"
+              oninput={handleDescriptionInput}
+            ></textarea>
+            <div class="absolute left-6 sm:left-8">
+              <Typeahead
+                onselect={handleTypeaheadSelect}
+                items={typeaheadItems}
+                display={displayItem}
+              />
+            </div>
+          </div>
 
           {#if errorMessage}
             <div class="mx-6 mb-6 rounded-2xl bg-error/10 px-4 py-3 text-sm font-bold text-error sm:mx-8">

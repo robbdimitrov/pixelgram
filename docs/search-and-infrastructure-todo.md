@@ -307,7 +307,7 @@ limit `256Mi`.
 - **Verify:** frontend verify commands.
 - **Commit:** `render mentions, hashtags, and links in user text`
 
-### 3.5 Compose typeahead
+### 3.5 Compose typeahead [DONE]
 - **Files:** new `src/lib/components/Typeahead.svelte`; new
   `src/lib/utils/activeToken.ts`, `activeToken.test.ts`; new
   `src/routes/(app)/suggest/+server.ts`; new `src/lib/server/api/search.ts`; edit
