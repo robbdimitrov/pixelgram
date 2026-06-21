@@ -91,6 +91,16 @@ func TestRateLimitAllowsExemptPath(t *testing.T) {
 	}
 }
 
+func TestRateLimitPolicyUsesTypeaheadBucketForSearchEndpoints(t *testing.T) {
+	for _, path := range []string{"/users/search", "/hashtags/search", "/search"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		policy, exempt := rateLimitPolicy(req)
+		if exempt || policy.Name != "typeahead" || policy.Burst != 20 || policy.Rate != 5 {
+			t.Fatalf("%s policy = %+v, exempt %v", path, policy, exempt)
+		}
+	}
+}
+
 func TestRateLimitBlocksWhenDenied(t *testing.T) {
 	handler := RateLimit(&denyAllStore{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

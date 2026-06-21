@@ -6,6 +6,7 @@ import (
 
 	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/posts"
+	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/uploads"
 	"pixelgram/backend/internal/users"
@@ -23,6 +24,7 @@ type handlers struct {
 	uploads  uploads.Handler
 	posts    posts.Handler
 	comments comments.Handler
+	search   search.Handler
 }
 
 type routeMux struct {
@@ -54,6 +56,7 @@ func registerRoutes(public, protected routeMux, h handlers) {
 	uploads.RegisterProtectedRoutes(protected, h.uploads)
 	posts.RegisterRoutes(protected, h.posts)
 	comments.RegisterRoutes(protected, h.comments)
+	search.RegisterRoutes(protected, h.search)
 }
 
 func Routes() []Route {

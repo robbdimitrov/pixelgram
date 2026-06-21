@@ -164,6 +164,8 @@ func rateLimitPolicy(r *http.Request) (RateLimitPolicy, bool) {
 	switch {
 	case r.Method == http.MethodPost && (r.URL.Path == "/sessions" || r.URL.Path == "/users" || r.URL.Path == "/uploads"):
 		return RateLimitPolicy{Name: "strict", Burst: env.Int("RATE_LIMIT_STRICT_BURST", 5), Rate: env.Float("RATE_LIMIT_STRICT_RATE", 0.2)}, false
+	case r.Method == http.MethodGet && (r.URL.Path == "/users/search" || r.URL.Path == "/hashtags/search" || r.URL.Path == "/search"):
+		return RateLimitPolicy{Name: "typeahead", Burst: env.Int("RATE_LIMIT_TYPEAHEAD_BURST", 20), Rate: env.Float("RATE_LIMIT_TYPEAHEAD_RATE", 5)}, false
 	case r.Method == http.MethodGet || r.Method == http.MethodHead:
 		return RateLimitPolicy{Name: "read", Burst: env.Int("RATE_LIMIT_READ_BURST", 120), Rate: env.Float("RATE_LIMIT_READ_RATE", 2)}, false
 	default:

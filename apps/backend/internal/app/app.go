@@ -7,6 +7,7 @@ import (
 	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/posts"
+	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/uploads"
 	"pixelgram/backend/internal/users"
@@ -24,6 +25,7 @@ type Repositories struct {
 	Uploads     uploads.Repository
 	Posts       posts.Repository
 	Comments    comments.Repository
+	Search      search.Repository
 }
 
 func New(cfg Config, repositories Repositories) http.Handler {
@@ -43,6 +45,7 @@ func New(cfg Config, repositories Repositories) http.Handler {
 		repositories.Posts, uploads.Files{Store: cfg.Blobs},
 	)}
 	commentHandler := comments.Handler{Service: comments.NewService(repositories.Comments)}
+	searchHandler := search.Handler{Service: search.NewService(repositories.Search)}
 
 	public := http.NewServeMux()
 	registerRoutes(
@@ -50,7 +53,7 @@ func New(cfg Config, repositories Repositories) http.Handler {
 		routeMux{mux: protected, authenticated: true},
 		handlers{
 			users: userHandler, sessions: sessionHandler, uploads: uploadHandler,
-			posts: postHandler, comments: commentHandler,
+			posts: postHandler, comments: commentHandler, search: searchHandler,
 		},
 	)
 	protected.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

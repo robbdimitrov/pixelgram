@@ -37,6 +37,8 @@ func TestRouteContract(t *testing.T) {
 		{Method: "GET", Path: "/posts/{publicId}/comments", Authenticated: true},
 		{Method: "POST", Path: "/posts/{publicId}/comments", Authenticated: true},
 		{Method: "DELETE", Path: "/posts/{publicId}/comments/{commentId}", Authenticated: true},
+		{Method: "GET", Path: "/users/search", Authenticated: true},
+		{Method: "GET", Path: "/hashtags/search", Authenticated: true},
 	}
 
 	got := Routes()

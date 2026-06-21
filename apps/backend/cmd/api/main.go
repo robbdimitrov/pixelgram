@@ -102,6 +102,7 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 			Uploads:     noop.Uploads{},
 			Posts:       noop.Posts{},
 			Comments:    noop.Comments{},
+			Search:      noop.Search{},
 		}, func() {}, nil
 	}
 
@@ -122,6 +123,7 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 		Uploads:     postgres.NewUploadRepository(client),
 		Posts:       postgres.NewPostRepository(client),
 		Comments:    postgres.NewCommentRepository(client),
+		Search:      postgres.NewSearchRepository(client),
 	}, client.Close, nil
 }
 

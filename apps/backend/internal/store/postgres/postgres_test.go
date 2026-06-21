@@ -43,8 +43,8 @@ func openTestClient(t *testing.T) *Client {
 	}
 	t.Cleanup(client.Close)
 	_, err = client.db.Pool().Exec(context.Background(),
-		`TRUNCATE comments, likes, follows, posts, uploads, sessions,
-		 login_failures, users RESTART IDENTITY CASCADE`)
+		`TRUNCATE post_hashtags, hashtags, comments, likes, follows, posts,
+		 uploads, sessions, users RESTART IDENTITY CASCADE`)
 	if err != nil {
 		t.Fatalf("truncate error = %v", err)
 	}
@@ -647,6 +647,57 @@ func TestPostgresRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 	session, err = client.RefreshSession(ctx, expiredToken)
 	if err != nil || session.UserID != "" || session.ID != "" {
 		t.Fatalf("RefreshSession(expired) = %+v, %v; want zero session", session, err)
+	}
+}
+
+func TestSearchRepositoryTypeaheadResultsAndLimit(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	repository := NewSearchRepository(client)
+
+	for i := 0; i < 10; i++ {
+		userID := createTestUser(t, client, fmt.Sprintf("typeahead_%02d", i))
+		if _, err := client.db.Pool().Exec(
+			ctx,
+			`UPDATE users SET avatar = $1 WHERE id = $2`,
+			fmt.Sprintf("avatar-%02d", i),
+			userID,
+		); err != nil {
+			t.Fatalf("set avatar error = %v", err)
+		}
+		if _, err := client.db.Pool().Exec(
+			ctx,
+			`INSERT INTO hashtags (name) VALUES ($1)`,
+			fmt.Sprintf("typeahead_%02d", i),
+		); err != nil {
+			t.Fatalf("insert hashtag error = %v", err)
+		}
+	}
+
+	userResults, err := repository.SearchUsers(ctx, "typeahead")
+	if err != nil {
+		t.Fatalf("SearchUsers() error = %v", err)
+	}
+	if len(userResults) != 8 {
+		t.Fatalf("SearchUsers() result count = %d, want 8", len(userResults))
+	}
+	for _, result := range userResults {
+		if result.Username == "" || result.Avatar == nil {
+			t.Fatalf("SearchUsers() result = %+v, want username and avatar", result)
+		}
+	}
+
+	hashtagResults, err := repository.SearchHashtags(ctx, "typeahead")
+	if err != nil {
+		t.Fatalf("SearchHashtags() error = %v", err)
+	}
+	if len(hashtagResults) != 8 {
+		t.Fatalf("SearchHashtags() result count = %d, want 8", len(hashtagResults))
+	}
+	for _, result := range hashtagResults {
+		if result.Name == "" || result.PostCount != 0 {
+			t.Fatalf("SearchHashtags() result = %+v, want name and zero post count", result)
+		}
 	}
 }
 

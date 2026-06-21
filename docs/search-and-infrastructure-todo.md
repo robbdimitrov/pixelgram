@@ -274,7 +274,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands; integration.
 - **Commit:** `extract and persist post hashtags transactionally`
 
-### 3.3 Typeahead endpoints (Postgres-backed)
+### 3.3 Typeahead endpoints (Postgres-backed) [DONE]
 - **Files:** new `apps/backend/internal/search/` (`handler.go`, `service.go`,
   `repository.go`, `routes.go`, `domain.go`, tests);
   `internal/store/postgres/search_postgres.go`; `internal/noop/repositories.go`;

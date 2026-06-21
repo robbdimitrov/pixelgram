@@ -8,6 +8,7 @@ import (
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/posts"
+	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/uploads"
 	"pixelgram/backend/internal/users"
@@ -108,6 +109,15 @@ func (Comments) DeleteComment(context.Context, string, string, string) (bool, er
 	return false, nil
 }
 
+type Search struct{}
+
+func (Search) SearchUsers(context.Context, string) ([]search.UserResult, error) {
+	return []search.UserResult{}, nil
+}
+func (Search) SearchHashtags(context.Context, string) ([]search.HashtagResult, error) {
+	return []search.HashtagResult{}, nil
+}
+
 var (
 	_ httpx.SessionStore  = SessionAuth{}
 	_ users.Repository    = Users{}
@@ -115,4 +125,5 @@ var (
 	_ uploads.Repository  = Uploads{}
 	_ posts.Repository    = Posts{}
 	_ comments.Repository = Comments{}
+	_ search.Repository   = Search{}
 )
