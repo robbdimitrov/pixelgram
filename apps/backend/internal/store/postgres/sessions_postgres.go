@@ -9,11 +9,15 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"pixelgram/backend/internal/database"
+	"pixelgram/backend/internal/env"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/sessions"
 )
 
-const sessionTTL = 7 * 24 * time.Hour
+const (
+	sessionTTL                     = 7 * 24 * time.Hour
+	defaultSessionAbsoluteTTLHours = 720
+)
 
 type SessionRepository struct {
 	db *database.DB
@@ -53,6 +57,8 @@ func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string,
 
 func (r *SessionRepository) RefreshSession(ctx context.Context, sessionID string) (httpx.Session, error) {
 	hashed := r.db.HashSession(sessionID)
+	now := time.Now()
+	absoluteTTLHours := sessionAbsoluteTTLHours()
 	var session httpx.Session
 	var userID int
 	// Read (retried): the UPDATE only re-stamps expires_at to a deterministic
@@ -61,15 +67,17 @@ func (r *SessionRepository) RefreshSession(ctx context.Context, sessionID string
 		return r.db.Pool().QueryRow(ctx, `WITH refreshed AS (
 			  UPDATE sessions SET expires_at = $2
 			  WHERE id = $1 AND expires_at > now() AND expires_at < $3
+			    AND created >= now() - ($4 * interval '1 hour')
 			  RETURNING id, user_id
 			)
 			SELECT id, user_id FROM refreshed
 			UNION ALL
 			SELECT id, user_id FROM sessions
 			WHERE id = $1 AND expires_at > now()
+			  AND created >= now() - ($4 * interval '1 hour')
 			  AND NOT EXISTS (SELECT 1 FROM refreshed)
 			LIMIT 1`,
-			hashed, time.Now().Add(sessionTTL), time.Now().Add(sessionTTL/2)).
+			hashed, now.Add(sessionTTL), now.Add(sessionTTL/2), absoluteTTLHours).
 			Scan(&session.ID, &userID)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -83,7 +91,15 @@ func (r *SessionRepository) RefreshSession(ctx context.Context, sessionID string
 }
 
 func (r *SessionRepository) DeleteExpiredSessions(ctx context.Context) error {
-	return r.exec(ctx, `DELETE FROM sessions WHERE expires_at <= now()`)
+	return r.exec(ctx,
+		`DELETE FROM sessions
+		WHERE expires_at <= now() OR created < now() - ($1 * interval '1 hour')`,
+		sessionAbsoluteTTLHours(),
+	)
+}
+
+func sessionAbsoluteTTLHours() int {
+	return env.Int("SESSION_ABSOLUTE_TTL_HOURS", defaultSessionAbsoluteTTLHours)
 }
 
 func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string) error {

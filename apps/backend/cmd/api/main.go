@@ -15,6 +15,7 @@ import (
 	"pixelgram/backend/internal/env"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/noop"
+	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
 )
 
@@ -44,6 +45,10 @@ func main() {
 	}
 	startRateLimiterCleanup(rateLimiter)
 
+	signalContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	sessionCleanupDone := startSessionCleanup(signalContext, repositories.Sessions)
+
 	handler := app.New(app.Config{
 		Blobs:       blobs,
 		RateLimiter: rateLimiter,
@@ -64,9 +69,6 @@ func main() {
 		serverErrors <- server.ListenAndServe()
 	}()
 
-	signalContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
 	select {
 	case err := <-serverErrors:
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -76,6 +78,7 @@ func main() {
 	case <-signalContext.Done():
 		slog.Info("stopping backend")
 	}
+	stop()
 
 	shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -83,6 +86,7 @@ func main() {
 		slog.Error("failed to stop backend", "error", err)
 		os.Exit(1)
 	}
+	<-sessionCleanupDone
 }
 
 func setupLogger() {
@@ -160,4 +164,49 @@ func startRateLimiterCleanup(store httpx.RateLimiterStore) {
 			}
 		}
 	}()
+}
+
+type sessionSweeper interface {
+	DeleteExpiredSessions(ctx context.Context) error
+}
+
+func startSessionCleanup(ctx context.Context, repository sessions.Repository) <-chan struct{} {
+	ticker := time.NewTicker(time.Hour)
+	return runSessionCleanup(ctx, repository, ticker.C, ticker.Stop)
+}
+
+func runSessionCleanup(
+	ctx context.Context,
+	repository sessionSweeper,
+	ticks <-chan time.Time,
+	stopTicker func(),
+) <-chan struct{} {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		if stopTicker != nil {
+			defer stopTicker()
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticks:
+				sweepExpiredSessions(ctx, repository)
+			}
+		}
+	}()
+	return done
+}
+
+func sweepExpiredSessions(ctx context.Context, repository sessionSweeper) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			slog.Error("session cleanup panicked", "panic", recovered)
+		}
+	}()
+	if err := repository.DeleteExpiredSessions(ctx); err != nil {
+		slog.Warn("session cleanup failed", "error", err)
+	}
 }

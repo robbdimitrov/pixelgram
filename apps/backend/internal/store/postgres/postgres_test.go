@@ -648,6 +648,46 @@ func TestPostgresRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 	if err != nil || session.UserID != "" || session.ID != "" {
 		t.Fatalf("RefreshSession(expired) = %+v, %v; want zero session", session, err)
 	}
+
+	t.Setenv("SESSION_ABSOLUTE_TTL_HOURS", "1")
+	absoluteExpiredToken := "absolute-expired-session-token"
+	absoluteExpiry := time.Now().Add(24 * time.Hour).Truncate(time.Microsecond)
+	if _, err := client.CreateSession(ctx, absoluteExpiredToken, userID, absoluteExpiry); err != nil {
+		t.Fatalf("CreateSession(absolute expired) error = %v", err)
+	}
+	hashedAbsoluteExpired := auth.HashSessionToken(absoluteExpiredToken, testSessionSecret)
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`UPDATE sessions SET created = now() - interval '2 hours' WHERE id = $1`,
+		hashedAbsoluteExpired,
+	); err != nil {
+		t.Fatalf("age absolute-expired session error = %v", err)
+	}
+	session, err = client.RefreshSession(ctx, absoluteExpiredToken)
+	if err != nil || session.UserID != "" || session.ID != "" {
+		t.Fatalf("RefreshSession(absolute expired) = %+v, %v; want zero session", session, err)
+	}
+	var unchangedAbsoluteExpiry time.Time
+	if err := client.db.Pool().QueryRow(
+		ctx, `SELECT expires_at FROM sessions WHERE id = $1`, hashedAbsoluteExpired,
+	).Scan(&unchangedAbsoluteExpiry); err != nil {
+		t.Fatalf("absolute-expired expiry query error = %v", err)
+	}
+	if !unchangedAbsoluteExpiry.Equal(absoluteExpiry) {
+		t.Fatalf("absolute-expired expiry = %v, want unchanged %v", unchangedAbsoluteExpiry, absoluteExpiry)
+	}
+	if err := client.DeleteExpiredSessions(ctx); err != nil {
+		t.Fatalf("DeleteExpiredSessions() error = %v", err)
+	}
+	var remaining int
+	if err := client.db.Pool().QueryRow(
+		ctx, `SELECT count(*) FROM sessions WHERE id = $1`, hashedAbsoluteExpired,
+	).Scan(&remaining); err != nil {
+		t.Fatalf("absolute-expired session count error = %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("absolute-expired session count = %d, want 0", remaining)
+	}
 }
 
 func TestSearchRepositoryTypeaheadResultsAndLimit(t *testing.T) {

@@ -23,9 +23,11 @@ type fakeRepository struct {
 	deletedSessionID     string
 	updatedPasswordHash  string
 	updatePasswordErr    error
+	expiredSessionSweeps int
 }
 
 func (r *fakeRepository) DeleteExpiredSessions(context.Context) error {
+	r.expiredSessionSweeps++
 	return r.err
 }
 
@@ -211,6 +213,9 @@ func TestServiceLoginSuccessCreatesSessionAndClearsFailures(t *testing.T) {
 	}
 	if len(repository.clearedKeys) != 2 {
 		t.Fatalf("cleared keys = %v, want IP and email keys", repository.clearedKeys)
+	}
+	if repository.expiredSessionSweeps != 0 {
+		t.Fatalf("expired session sweeps = %d, want 0", repository.expiredSessionSweeps)
 	}
 }
 

@@ -42,9 +42,6 @@ func NewService(repository Repository) *Service {
 func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, error) {
 	keys := loginFailureKeys(input.ClientIP, input.Email)
 
-	if err := s.repository.DeleteExpiredSessions(ctx); err != nil {
-		return LoginOutput{}, err
-	}
 	if err := s.repository.DeleteExpiredLoginFailures(ctx); err != nil {
 		return LoginOutput{}, err
 	}

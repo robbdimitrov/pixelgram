@@ -476,7 +476,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `bound password length`
 
-### 5.4 Absolute session lifetime, sweep off the login path
+### 5.4 Absolute session lifetime, sweep off the login path [DONE]
 - **Files:** `internal/store/postgres/sessions_postgres.go`;
   `internal/sessions/service.go`; `cmd/api/main.go`.
 - **Change:** in `RefreshSession`, refuse to extend (treat as expired) any session
