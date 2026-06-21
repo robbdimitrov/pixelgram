@@ -207,7 +207,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `move login throttling to dragonfly`
 
-### 2.3 Drop the UNLOGGED tables
+### 2.3 Drop the UNLOGGED tables [DONE]
 - **Files:** delete `apps/database/migrations/000005_create_rate_limits.{up,down}.sql`;
   edit `000002_create_sessions.{up,down}.sql` to remove the `login_failures` table
   and `login_failures_reset_at_idx` (up) and the matching `DROP` (down).
