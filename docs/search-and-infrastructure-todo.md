@@ -467,7 +467,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `upgrade password hashes on login`
 
-### 5.3 Bound password length
+### 5.3 Bound password length [DONE]
 - **Files:** `apps/backend/internal/users/handler.go`;
   `internal/sessions/handler.go`; `internal/validation/validation.go`.
 - **Change:** reject passwords shorter than 8 or longer than 1024 bytes at the

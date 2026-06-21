@@ -56,8 +56,8 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
 	}
-	if len(body.Password) < 8 || len(body.Password) > 128 {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Password must be between 8 and 128 characters long.")
+	if !validation.ValidPassword(body.Password) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Password must be between 8 and 1024 characters long.")
 		return
 	}
 	if !validation.ValidEmail(email) {
@@ -237,8 +237,8 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 		httpx.WriteMessage(w, http.StatusBadRequest, "Both password and the current password are required.")
 		return
 	}
-	if len(password) < 8 || len(password) > 128 {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Password must be between 8 and 128 characters long.")
+	if !validation.ValidPassword(password) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Password must be between 8 and 1024 characters long.")
 		return
 	}
 

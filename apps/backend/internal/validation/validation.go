@@ -17,3 +17,7 @@ func ValidUsername(username string) bool {
 func ValidUUID(value string) bool {
 	return uuidPattern.MatchString(value)
 }
+
+func ValidPassword(p string) bool {
+	return len(p) >= 8 && len(p) <= 1024
+}

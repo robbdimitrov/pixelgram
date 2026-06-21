@@ -8,6 +8,7 @@ import (
 
 	"pixelgram/backend/internal/auth"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/validation"
 )
 
 type HandlerService interface {
@@ -35,6 +36,10 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	email := strings.ToLower(strings.TrimSpace(body.Email))
 	if email == "" || body.Password == "" {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Email and password are required.")
+		return
+	}
+	if !validation.ValidPassword(body.Password) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Password must be between 8 and 1024 characters long.")
 		return
 	}
 
