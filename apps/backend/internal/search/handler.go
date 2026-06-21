@@ -20,6 +20,7 @@ type Application interface {
 
 type Handler struct {
 	Service Application
+	Meili   *MeiliClient
 }
 
 func (h Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
