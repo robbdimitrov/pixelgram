@@ -256,7 +256,7 @@ limit `256Mi`.
 - **Verify:** up/down migrate cleanly.
 - **Commit:** `add hashtags and post_hashtags tables`
 
-### 3.2 Extraction helper and transactional tag writes
+### 3.2 Extraction helper and transactional tag writes [DONE]
 - **Files:** new `apps/backend/internal/posts/extract.go`, `extract_test.go`;
   `internal/posts/service.go`, `service_test.go`;
   `internal/store/postgres/posts_postgres.go`, `postgres_test.go`;

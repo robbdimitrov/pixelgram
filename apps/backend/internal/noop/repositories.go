@@ -72,7 +72,7 @@ func (Uploads) CreateUpload(context.Context, string, string) (bool, error) {
 
 type Posts struct{}
 
-func (Posts) CreatePost(context.Context, string, string, *string) (string, bool, error) {
+func (Posts) CreatePost(context.Context, string, string, *string, []string) (string, bool, error) {
 	return "", false, nil
 }
 func (Posts) GetFeed(context.Context, *pagination.Cursor, int, string) ([]posts.Post, *pagination.Cursor, error) {

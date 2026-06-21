@@ -31,7 +31,7 @@ type DeletePostCommand struct {
 }
 
 type Repository interface {
-	CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error)
+	CreatePost(ctx context.Context, userID, filename string, description *string, tags []string) (string, bool, error)
 	GetFeed(ctx context.Context, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
@@ -56,8 +56,12 @@ func NewService(repository Repository, files FileRepository) *Service {
 }
 
 func (s *Service) CreatePost(ctx context.Context, command CreatePostCommand) (CreatePostResult, error) {
+	var tags []string
+	if command.Description != nil {
+		tags = ExtractHashtags(*command.Description)
+	}
 	publicID, created, err := s.repository.CreatePost(
-		ctx, command.UserID, command.Filename, command.Description,
+		ctx, command.UserID, command.Filename, command.Description, tags,
 	)
 	return CreatePostResult{PublicID: publicID, Created: created}, err
 }

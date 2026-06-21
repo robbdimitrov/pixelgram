@@ -30,7 +30,7 @@ func NewPostRepository(client *Client) *PostRepository {
 	return &PostRepository{db: client.db}
 }
 
-func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error) {
+func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string, description *string, tags []string) (string, bool, error) {
 	var publicID string
 	err := r.db.Write(ctx, func() error {
 		tx, err := r.db.Pool().Begin(ctx)
@@ -43,9 +43,21 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			RETURNING filename`, userID, filename).Scan(&consumed); err != nil {
 			return err
 		}
+		var postID int
 		if err := tx.QueryRow(ctx, `INSERT INTO posts (user_id, filename, description)
-			VALUES ($1, $2, $3) RETURNING public_id`, userID, filename, description).Scan(&publicID); err != nil {
+			VALUES ($1, $2, $3) RETURNING id, public_id`, userID, filename, description).Scan(&postID, &publicID); err != nil {
 			return err
+		}
+		for _, tag := range tags {
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO hashtags (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`, tag); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO post_hashtags (post_id, hashtag_id)
+				SELECT $1, id FROM hashtags WHERE name = $2 ON CONFLICT DO NOTHING`, postID, tag); err != nil {
+				return err
+			}
 		}
 		return tx.Commit(ctx)
 	})

@@ -36,7 +36,7 @@ type fakeStore struct {
 	nextCursor      *pagination.Cursor
 }
 
-func (s *fakeStore) CreatePost(_ context.Context, _ string, _ string, _ *string) (string, bool, error) {
+func (s *fakeStore) CreatePost(_ context.Context, _ string, _ string, _ *string, _ []string) (string, bool, error) {
 	return s.createdID, s.created, s.err
 }
 

@@ -863,8 +863,8 @@ func (c *Client) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
 	return NewUploadRepository(c).DeleteExpiredUploads(ctx)
 }
 
-func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string) (string, bool, error) {
-	return NewPostRepository(c).CreatePost(ctx, userID, filename, description)
+func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string, tags ...string) (string, bool, error) {
+	return NewPostRepository(c).CreatePost(ctx, userID, filename, description, tags)
 }
 
 func (c *Client) GetFeed(ctx context.Context, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
