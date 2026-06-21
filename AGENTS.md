@@ -105,3 +105,8 @@ Implementation is not completion. Before reporting a change as complete:
 8. Review the complete diff in context for correctness, security, unnecessary complexity, duplication, inconsistent naming, stale comments, and accidental unrelated changes.
 9. Fix issues found during review, then run the relevant formatters, linters, tests, and build checks in proportion to the change's risk.
 10. Report any verification that could not be run and any remaining risk explicitly. Do not describe partially verified work as fully complete.
+
+## Specs
+
+- Before making any code changes, read the relevant spec in `docs/` (architecture, data-model, api, security, business-rules, design-system, frontend, or infrastructure).
+- Update the relevant spec to reflect any change — new endpoints, schema changes, rule additions, security controls, or infrastructure modifications — before marking work complete.

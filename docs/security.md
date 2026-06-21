@@ -1,0 +1,78 @@
+# Security
+
+## Session Model
+
+- Session IDs are generated with `crypto/rand` (21 bytes → 28-char base64 string).
+- The raw session ID is never stored. It is HMAC-SHA256 hashed with `SESSION_HASH_SECRET` before persistence.
+- The `session` cookie is `HttpOnly`, `SameSite=Strict`, `Secure` (when TLS is detected or `TRUST_PROXY=true` and `X-Forwarded-Proto: https`), `Path=/`, `Max-Age=604800` (7 days).
+- On every authenticated request, `RefreshSession` refreshes the sliding TTL only when the session is within the inner half of the TTL window (`expires_at < now + TTL/2`); sessions in the outer half are still validated but not re-stamped. Sessions expire 7 days after last use or 30 days (720 h, configurable via `SESSION_ABSOLUTE_TTL_HOURS`) after creation, whichever comes first.
+- A background goroutine sweeps expired sessions from PostgreSQL every hour.
+- Password changes revoke all other sessions for the user atomically in a single transaction.
+
+## Password Policy
+
+- Minimum 8 characters, maximum 1024 characters.
+- Hashed with Argon2id PHC format: `memory=19456 KiB`, `iterations=2`, `parallelism=1`, `saltSize=16 bytes`, `hashSize=32 bytes`.
+- Concurrent hash operations are bounded by a semaphore (default 4, configurable via `ARGON_MAX_CONCURRENCY`) to cap memory usage (~19 MiB per hash).
+- Hashes are upgraded silently to current parameters on next login (`NeedsRehash` check).
+- A pre-computed decoy hash is verified when the email is not found, preventing timing-oracle user enumeration.
+
+## Ownership Rules
+
+| Operation | Enforcement |
+|---|---|
+| Update user profile | `userId` path param must equal session `userID` (checked in handler) |
+| Delete post | `WHERE public_id = $1 AND user_id = $2` (atomic in DB) |
+| Delete comment | `WHERE public_id = $1 AND id = $2 AND user_id = $3` (atomic in DB) |
+| Follow/unfollow self | Blocked at service layer (`currentUserID == targetUserID`) |
+| Read email field | Stripped in handler unless requester is the user |
+| Upload image | Registered to `userID`; consumed atomically at post/avatar creation |
+
+## What Is Protected
+
+- All routes except `POST /sessions`, `POST /users`, `GET /health`, `GET /ready`, and `OPTIONS` require a valid session cookie.
+- Adding a new public route requires explicit registration before the `RequireSession` middleware wrapper.
+
+## Rate Limiting
+
+- Token bucket per policy, keyed by user id > session cookie > client IP.
+- Implemented as a Lua script on Dragonfly (atomic HMGET + HMSET + PEXPIRE).
+- `TRUST_PROXY=true` honors `X-Forwarded-For` for IP extraction; disabled by default.
+- Failure mode: configurable via `RATE_LIMIT_FAIL_OPEN` (default false → fail-closed on Dragonfly error); fail-closed returns HTTP 503. `RATE_LIMIT_FAIL_OPEN` applies only to the token-bucket rate limiter.
+- Login throttle uses separate per-IP (5 failures) and per-email (50 failures) counters in Dragonfly with 15 min TTL, cleared on successful login. When Dragonfly is unavailable, the login throttle always fails open regardless of `RATE_LIMIT_FAIL_OPEN`.
+
+## Upload Security
+
+- File content is validated against magic bytes (not extension or MIME header): JPEG `\xff\xd8\xff`, PNG `\x89PNG\r\n\x1a\n`, GIF `GIF8`, WEBP `RIFF....WEBP`.
+- Multipart read is bounded to 1 MB + 1 byte; files exceeding 1 MB are rejected.
+- Filenames are 32 lowercase hex characters generated from `crypto/rand`.
+- File serving validates the path segment against the 32-char hex pattern before proxying.
+
+## HTTP Security Headers (backend)
+
+- `X-XSS-Protection: 0` (legacy auditor disabled; CSP takes over)
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `Referrer-Policy: no-referrer`
+- `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'`
+
+## HTTP Security Headers (frontend)
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+
+## Search Filter Injection Prevention
+
+- Hashtag filter values are validated against `^[A-Za-z0-9_]{1,50}$` before being interpolated into Meilisearch filter strings.
+- All other query parameters are passed as structured JSON fields, never as raw filter fragments.
+
+## CSRF Protection
+
+- `OriginGuard` middleware rejects mutating requests where `Origin` does not match the request host.
+- `SameSite=Strict` cookie blocks cross-site form submission.
+
+## Meilisearch Key Isolation
+
+- The master key is used once at startup to provision a scoped API key with only `search`, `documents.add`, and `documents.delete` actions.
+- All subsequent Meilisearch operations use the scoped key; the master key is not retained in memory.
