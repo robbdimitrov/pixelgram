@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { typeaheadNav } from '$lib/utils/typeaheadNav';
+
   let {
     onselect,
     items,
@@ -16,26 +18,13 @@
     if (items) activeIndex = 0;
   });
 
-  function select(item: unknown) {
-    onselect(display(item));
-  }
-
   function handleKeydown(e: KeyboardEvent) {
-    if (!items.length) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      activeIndex = (activeIndex + 1) % items.length;
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      activeIndex = (activeIndex - 1 + items.length) % items.length;
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      select(items[activeIndex]);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onselect('');
-    }
+    const { index, action } = typeaheadNav(e.key, activeIndex, items.length);
+    if (action === 'none' && index === activeIndex) return;
+    e.preventDefault();
+    activeIndex = index;
+    if (action === 'select') onselect(display(items[index]));
+    else if (action === 'clear') onselect('');
   }
 </script>
 

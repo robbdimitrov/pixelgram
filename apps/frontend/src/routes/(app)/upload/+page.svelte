@@ -12,7 +12,7 @@
   let { form }: { form: ActionData } = $props();
 
   let imagePreview = $state('');
-  let errorMessage = $state(form?.error ?? '');
+  let errorMessage = $derived(form?.error ?? '');
   let isSubmitting = $state(false);
   let isDragging = $state(false);
   let description = $state('');
@@ -150,7 +150,7 @@
         };
       }}
     >
-      <div class="grid min-h-[34rem] md:grid-cols-[minmax(0,1fr)_22rem]">
+      <div class="grid min-h-136 md:grid-cols-[minmax(0,1fr)_22rem]">
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class={[
@@ -162,7 +162,7 @@
           ondrop={handleDrop}
         >
           {#if imagePreview}
-            <div class="flex w-full max-w-[42rem] flex-col gap-4">
+            <div class="flex w-full max-w-2xl flex-col gap-4">
               <div class="aspect-square w-full overflow-hidden rounded-xl bg-base-200 shadow-sm">
                 <img class="h-full w-full object-cover" src={imagePreview} alt="Upload preview" />
               </div>
@@ -179,7 +179,7 @@
             </div>
           {:else}
             <label
-              class="flex aspect-square w-full max-w-[42rem] cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-300 p-6 text-center transition-colors hover:border-base-content/30 hover:bg-base-100/60 sm:px-8"
+              class="flex aspect-square w-full max-w-2xl cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-300 p-6 text-center transition-colors hover:border-base-content/30 hover:bg-base-100/60 sm:px-8"
               for="file-input"
             >
               <span class="grid h-16 w-16 place-items-center rounded-full bg-neutral text-neutral-content shadow-md shadow-slate-900/15">
