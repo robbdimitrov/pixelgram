@@ -9,4 +9,5 @@ type routeRegistrar interface {
 func RegisterRoutes(mux routeRegistrar, handler Handler) {
 	mux.HandleFunc("GET /users/search", handler.SearchUsers)
 	mux.HandleFunc("GET /hashtags/search", handler.SearchHashtags)
+	mux.HandleFunc("GET /search", handler.Search)
 }
