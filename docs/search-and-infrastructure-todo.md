@@ -231,7 +231,7 @@ limit `256Mi`.
 
 ## Phase 3 — Hashtags, mentions, links, typeahead
 
-### 3.1 Hashtag schema
+### 3.1 Hashtag schema [DONE]
 - **Files:** new `apps/database/migrations/000004_create_hashtags.{up,down}.sql`.
 - **Change:**
   ```sql
