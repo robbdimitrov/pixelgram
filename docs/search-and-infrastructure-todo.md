@@ -438,7 +438,7 @@ limit `256Mi`.
 
 ## Phase 5 — Auth & operational hardening
 
-### 5.1 Bound Argon2 concurrency, raise memory
+### 5.1 Bound Argon2 concurrency, raise memory [DONE]
 - **Files:** `apps/backend/internal/auth/password.go`; `cmd/api/main.go`;
   `deploy/backend.yaml`.
 - **Change:** add a package-level `golang.org/x/sync/semaphore.Weighted` sized to

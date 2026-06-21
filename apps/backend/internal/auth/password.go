@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
@@ -10,6 +11,9 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/sync/semaphore"
+
+	"pixelgram/backend/internal/env"
 )
 
 const (
@@ -22,6 +26,23 @@ var (
 	ErrInvalidHash = errors.New("invalid password hash")
 	ErrHashVersion = errors.New("unsupported argon2 version")
 )
+
+// NeedsRehash reports whether the stored hash was computed with parameters
+// below the target — indicating it should be upgraded on the next login.
+func NeedsRehash(encodedHash string, target PasswordParams) bool {
+	params, _, _, err := parsePHC(encodedHash)
+	if err != nil {
+		return true
+	}
+	return params.Memory < target.Memory ||
+		params.Iterations < target.Iterations ||
+		params.Parallelism < target.Parallelism
+}
+
+// hashSemaphore limits concurrent Argon2 operations to the configured
+// concurrency cap so that a burst of logins cannot exhaust pod memory
+// (each Argon2id hash at default params consumes ~19 MiB).
+var hashSemaphore = semaphore.NewWeighted(int64(env.Int("ARGON_MAX_CONCURRENCY", 4)))
 
 type PasswordParams struct {
 	Memory      uint32
@@ -51,6 +72,11 @@ func HashPassword(password string, params PasswordParams) (string, error) {
 		return "", ErrInvalidHash
 	}
 
+	if err := hashSemaphore.Acquire(context.Background(), 1); err != nil {
+		return "", err
+	}
+	defer hashSemaphore.Release(1)
+
 	salt := make([]byte, saltSize)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
@@ -65,6 +91,11 @@ func VerifyPassword(password, encodedHash string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	if err := hashSemaphore.Acquire(context.Background(), 1); err != nil {
+		return false, err
+	}
+	defer hashSemaphore.Release(1)
 
 	actual := argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, uint32(len(expected)))
 	return subtle.ConstantTimeCompare(actual, expected) == 1, nil
