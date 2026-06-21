@@ -58,6 +58,14 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 				SELECT $1, id FROM hashtags WHERE name = $2 ON CONFLICT DO NOTHING`, postID, tag); err != nil {
 				return err
 			}
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('hashtag', $1)`, tag); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('post', $1)`, publicID); err != nil {
+			return err
 		}
 		return tx.Commit(ctx)
 	})
@@ -147,6 +155,10 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 		if _, err := tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('post', $1)`, postID); err != nil {
 			return err
 		}
 		return tx.Commit(ctx)

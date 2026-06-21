@@ -9,7 +9,7 @@ import (
 )
 
 func TestOpenRepositoriesWithoutDatabaseUsesNoopAdapters(t *testing.T) {
-	repositories, readiness, closeRepositories, err := openRepositories("")
+	repositories, _, readiness, closeRepositories, err := openRepositories("")
 	if err != nil {
 		t.Fatalf("openRepositories() error = %v", err)
 	}
@@ -28,7 +28,7 @@ func TestOpenRepositoriesWithoutDatabaseUsesNoopAdapters(t *testing.T) {
 func TestOpenRepositoriesRequiresSessionSecretWithDatabase(t *testing.T) {
 	t.Setenv("SESSION_HASH_SECRET", "")
 
-	_, _, _, err := openRepositories("postgres://unused")
+	_, _, _, _, err := openRepositories("postgres://unused")
 
 	if err == nil || !strings.Contains(err.Error(), "SESSION_HASH_SECRET is required") {
 		t.Fatalf("openRepositories() error = %v", err)
