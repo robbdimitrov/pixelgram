@@ -28,6 +28,11 @@ func (c *Client) Close() {
 	c.db.Close()
 }
 
+// DB returns the underlying database handle for use by background workers.
+func (c *Client) DB() *database.DB {
+	return c.db
+}
+
 func (c *Client) Ping(ctx context.Context) error {
 	return c.db.Pool().Ping(ctx)
 }

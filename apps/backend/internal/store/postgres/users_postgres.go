@@ -33,8 +33,20 @@ func NewUserRepository(client *Client) *UserRepository {
 func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error) {
 	var id int
 	err := r.db.Write(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx, `INSERT INTO users (name, username, email, password)
-			VALUES ($1, $2, $3, $4) RETURNING id`, name, username, email, passwordHash).Scan(&id)
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+		if err := tx.QueryRow(ctx, `INSERT INTO users (name, username, email, password)
+			VALUES ($1, $2, $3, $4) RETURNING id`, name, username, email, passwordHash).Scan(&id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('user', $1::text)`, id); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
 	})
 	if err != nil {
 		if database.UniqueViolation(err) {
@@ -249,6 +261,10 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 			if !stillUsed {
 				result.UnusedAvatar = oldAvatar.String
 			}
+		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('user', $1)`, userID); err != nil {
+			return err
 		}
 		return tx.Commit(ctx)
 	})
