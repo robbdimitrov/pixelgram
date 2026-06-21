@@ -10,6 +10,10 @@ import (
 	"pixelgram/backend/internal/auth"
 )
 
+// targetPasswordParams is the current target for password hashing.
+// On login, hashes with weaker parameters are silently upgraded.
+var targetPasswordParams = auth.DefaultPasswordParams
+
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrLoginRateLimited   = errors.New("login rate limited")
@@ -20,6 +24,7 @@ type Service struct {
 	now               func() time.Time
 	generateSessionID func() (string, error)
 	verifyPassword    func(string, string) (bool, error)
+	hashPassword      func(string, auth.PasswordParams) (string, error)
 	decoyHash         string
 }
 
@@ -29,6 +34,7 @@ func NewService(repository Repository) *Service {
 		now:               time.Now,
 		generateSessionID: auth.GenerateSessionID,
 		verifyPassword:    auth.VerifyPassword,
+		hashPassword:      auth.HashPassword,
 		decoyHash:         auth.DecoyHash(),
 	}
 }
@@ -70,6 +76,14 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 	if credentials == nil || !verified {
 		s.recordLoginFailures(ctx, keys)
 		return LoginOutput{}, ErrInvalidCredentials
+	}
+
+	if auth.NeedsRehash(credentials.PasswordHash, targetPasswordParams) {
+		if newHash, err := s.hashPassword(input.Password, targetPasswordParams); err == nil {
+			if err := s.repository.UpdatePasswordHash(ctx, credentials.ID, newHash); err != nil {
+				slog.Warn("failed to upgrade password hash", "error", err)
+			}
+		}
 	}
 
 	sessionID, err := s.generateSessionID()

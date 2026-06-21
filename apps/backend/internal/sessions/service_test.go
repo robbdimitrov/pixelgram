@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"pixelgram/backend/internal/auth"
 )
 
 type fakeRepository struct {
@@ -19,6 +21,8 @@ type fakeRepository struct {
 	recordedResetAt      []time.Time
 	clearedKeys          []string
 	deletedSessionID     string
+	updatedPasswordHash  string
+	updatePasswordErr    error
 }
 
 func (r *fakeRepository) DeleteExpiredSessions(context.Context) error {
@@ -66,6 +70,11 @@ func (r *fakeRepository) CreateSession(
 func (r *fakeRepository) DeleteSession(_ context.Context, sessionID string) error {
 	r.deletedSessionID = sessionID
 	return r.err
+}
+
+func (r *fakeRepository) UpdatePasswordHash(_ context.Context, _ int, hash string) error {
+	r.updatedPasswordHash = hash
+	return r.updatePasswordErr
 }
 
 func TestServiceLoginRateLimitedByIP(t *testing.T) {
@@ -243,11 +252,91 @@ func TestServiceLogoutDeletesSession(t *testing.T) {
 	}
 }
 
+func TestServiceLoginRehashesWeakHash(t *testing.T) {
+	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
+	// A hash with params below DefaultPasswordParams triggers a rehash.
+	weakHash := "$argon2id$v=19$m=4096,t=1,p=1$c29tZXNhbHQ$dGVzdGhhc2g"
+	repository := &fakeRepository{
+		credentials: &UserCredentials{ID: 3, PasswordHash: weakHash},
+	}
+	service := newTestService(repository, now)
+	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
+	service.hashPassword = func(password string, _ auth.PasswordParams) (string, error) {
+		return "new-strong-hash", nil
+	}
+
+	_, err := service.Login(context.Background(), LoginInput{
+		Email: "test@example.com", Password: "p", ClientIP: "192.0.2.1",
+	})
+
+	if err != nil {
+		t.Fatalf("Login() error = %v", err)
+	}
+	if repository.updatedPasswordHash != "new-strong-hash" {
+		t.Fatalf("UpdatePasswordHash not called or wrong hash: %q", repository.updatedPasswordHash)
+	}
+}
+
+func TestServiceLoginSkipsRehashForCurrentParams(t *testing.T) {
+	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
+	// A hash produced with DefaultPasswordParams should not be rehashed.
+	repository := &fakeRepository{
+		credentials: &UserCredentials{ID: 3, PasswordHash: currentParamsHash},
+	}
+	service := newTestService(repository, now)
+	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
+	rehashCalled := false
+	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
+		rehashCalled = true
+		return "", nil
+	}
+
+	_, err := service.Login(context.Background(), LoginInput{
+		Email: "test@example.com", Password: "p", ClientIP: "192.0.2.1",
+	})
+
+	if err != nil {
+		t.Fatalf("Login() error = %v", err)
+	}
+	if rehashCalled {
+		t.Fatal("hashPassword should not be called for an at-target hash")
+	}
+}
+
+func TestServiceLoginPersistErrorDoesNotFailLogin(t *testing.T) {
+	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
+	repository := &fakeRepository{
+		credentials:       &UserCredentials{ID: 3, PasswordHash: "invalid-hash"},
+		updatePasswordErr: errors.New("db down"),
+	}
+	service := newTestService(repository, now)
+	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
+	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
+		return "new-hash", nil
+	}
+
+	_, err := service.Login(context.Background(), LoginInput{
+		Email: "test@example.com", Password: "p", ClientIP: "192.0.2.1",
+	})
+
+	if err != nil {
+		t.Fatalf("Login() error = %v, want nil (persist failure must not fail login)", err)
+	}
+}
+
+// currentParamsHash is a valid Argon2id PHC hash at DefaultPasswordParams.
+// Used to verify that an at-target hash is not rehashed.
+const currentParamsHash = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQxMjM0NTY3OA$hbwqGankDMxbQ5fN303ASdxPeikPPqvxOYodhOKwtOY"
+
 func newTestService(repository Repository, now time.Time) *Service {
 	service := NewService(repository)
 	service.now = func() time.Time { return now }
 	service.generateSessionID = func() (string, error) {
 		return "AAAAAAAAAAAAAAAAAAAAAAAAAAAA", nil
+	}
+	// Use a no-op hasher by default so existing tests don't trigger slow rehashes.
+	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
+		return "rehashed", nil
 	}
 	return service
 }

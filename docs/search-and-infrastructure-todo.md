@@ -452,7 +452,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `bound argon2 concurrency to the memory budget`
 
-### 5.2 Re-hash passwords on login
+### 5.2 Re-hash passwords on login [DONE]
 - **Files:** `apps/backend/internal/auth/password.go`;
   `internal/sessions/service.go`, `service_test.go`;
   `internal/sessions/repository.go`; `internal/store/postgres/sessions_postgres.go`;

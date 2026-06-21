@@ -136,6 +136,10 @@ func (r *SessionRepository) ClearLoginFailures(ctx context.Context, keys []strin
 	return r.exec(ctx, `DELETE FROM login_failures WHERE key = ANY($1)`, keys)
 }
 
+func (r *SessionRepository) UpdatePasswordHash(ctx context.Context, userID int, hash string) error {
+	return r.exec(ctx, `UPDATE users SET password = $1 WHERE id = $2`, hash, userID)
+}
+
 func (r *SessionRepository) exec(ctx context.Context, query string, args ...any) error {
 	return r.db.Write(ctx, func() error {
 		_, err := r.db.Pool().Exec(ctx, query, args...)
