@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"pixelgram/backend/internal/app"
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/env"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/noop"
@@ -30,6 +31,12 @@ func main() {
 	}
 	defer closeRepositories()
 
+	blobs, err := openBlobStore(context.Background(), databaseURL)
+	if err != nil {
+		slog.Error("failed to initialize blob store", "error", err)
+		os.Exit(1)
+	}
+
 	rateLimiter, err := openRateLimiter(databaseURL)
 	if err != nil {
 		slog.Error("failed to initialize rate limiter", "error", err)
@@ -38,7 +45,7 @@ func main() {
 	startRateLimiterCleanup(rateLimiter)
 
 	handler := app.New(app.Config{
-		ImageDir:    env.String("IMAGE_DIR", "/tmp"),
+		Blobs:       blobs,
 		RateLimiter: rateLimiter,
 	}, repositories)
 
@@ -116,6 +123,20 @@ func openRepositories(databaseURL string) (app.Repositories, func(), error) {
 		Posts:       postgres.NewPostRepository(client),
 		Comments:    postgres.NewCommentRepository(client),
 	}, client.Close, nil
+}
+
+func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, error) {
+	if databaseURL == "" {
+		return blobstore.NewMemoryStore(), nil
+	}
+	return blobstore.NewS3Store(
+		ctx,
+		env.String("S3_ENDPOINT", "http://seaweedfs:8333"),
+		env.String("S3_BUCKET", "pixelgram"),
+		env.String("S3_REGION", "us-east-1"),
+		os.Getenv("S3_ACCESS_KEY"),
+		os.Getenv("S3_SECRET_KEY"),
+	)
 }
 
 func openRateLimiter(databaseURL string) (httpx.RateLimiterStore, error) {

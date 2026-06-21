@@ -1,15 +1,16 @@
 package posts
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/uploads"
@@ -215,14 +216,12 @@ func TestGetPostRejectsMalformedUUID(t *testing.T) {
 }
 
 func TestDeletePostDeletesFile(t *testing.T) {
-	dir := t.TempDir()
-	filename := "post-file"
-	if err := os.WriteFile(filepath.Join(dir, filename), []byte("image"), 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
+	store := blobstore.NewMemoryStore()
+	filename := "aabbccddeeff00112233445566778899"
+	_ = store.Put(context.Background(), filename, "image/jpeg", bytes.NewReader([]byte{0xff}), 1)
 	handler := Handler{Service: NewService(
 		&fakeStore{deleted: true, deletedFile: filename},
-		uploads.Files{ImageDir: dir},
+		uploads.Files{Store: store},
 	)}
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/posts/"+testPublicID, nil)
@@ -234,8 +233,9 @@ func TestDeletePostDeletesFile(t *testing.T) {
 	if res.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusNoContent)
 	}
-	if _, err := os.Stat(filepath.Join(dir, filename)); !os.IsNotExist(err) {
-		t.Fatalf("expected file deletion, stat err=%v", err)
+	_, _, _, err := store.Get(context.Background(), filename)
+	if !errors.Is(err, blobstore.ErrNotFound) {
+		t.Fatal("expected file to be deleted from blobstore")
 	}
 }
 

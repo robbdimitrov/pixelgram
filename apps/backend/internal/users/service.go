@@ -4,19 +4,19 @@ import (
 	"context"
 
 	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/uploads"
 )
 
 type Service struct {
 	repository Repository
-	imageDir   string
+	blobs      blobstore.Store
 }
 
 var _ HandlerService = (*Service)(nil)
 
-func NewService(repository Repository, imageDir string) *Service {
-	return &Service{repository: repository, imageDir: imageDir}
+func NewService(repository Repository, blobs blobstore.Store) *Service {
+	return &Service{repository: repository, blobs: blobs}
 }
 
 func (s *Service) CreateUser(ctx context.Context, command CreateUserCommand) (int, error) {
@@ -68,7 +68,7 @@ func (s *Service) UpdateProfile(ctx context.Context, command UpdateProfileComman
 	}
 
 	if result.UnusedAvatar != "" {
-		uploads.DeleteUploadFile(s.imageDir, result.UnusedAvatar)
+		_ = s.blobs.Delete(ctx, result.UnusedAvatar)
 	}
 	return UpdateProfileUpdated, nil
 }

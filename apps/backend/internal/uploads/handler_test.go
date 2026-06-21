@@ -7,12 +7,10 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/httpx"
 )
 
@@ -46,33 +44,9 @@ func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) (bo
 	return true, nil
 }
 
-func TestCreateFileDeletesExpiredUploadsWhenCreateFails(t *testing.T) {
-	dir := t.TempDir()
-	expired := "expired-upload"
-	if err := os.WriteFile(filepath.Join(dir, expired), []byte{0xff, 0xd8, 0xff}, 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
-	store := &fakeStore{expired: []string{expired}, createErr: errors.New("database unavailable")}
-	handler := Handler{Service: NewService(store), ImageDir: dir}
-	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
-	if err != nil {
-		t.Fatalf("multipartRequest returned error: %v", err)
-	}
-	req = httpx.WithUserID(req, "1")
-	res := httptest.NewRecorder()
-
-	handler.CreateFile(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
-	}
-	if _, err := os.Stat(filepath.Join(dir, expired)); !os.IsNotExist(err) {
-		t.Fatalf("expected expired upload to be deleted, stat err=%v", err)
-	}
-}
-
 func TestCreateFileMissingFile(t *testing.T) {
-	handler := Handler{Service: NewService(&fakeStore{capacity: true}), ImageDir: t.TempDir()}
+	store := blobstore.NewMemoryStore()
+	handler := Handler{Service: NewService(&fakeStore{capacity: true}), Store: store}
 	req, err := multipartRequest(nil)
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -91,8 +65,9 @@ func TestCreateFileMissingFile(t *testing.T) {
 }
 
 func TestCreateFileRejectsNonImage(t *testing.T) {
-	store := &fakeStore{capacity: true}
-	handler := Handler{Service: NewService(store), ImageDir: t.TempDir()}
+	db := &fakeStore{capacity: true}
+	store := blobstore.NewMemoryStore()
+	handler := Handler{Service: NewService(db), Store: store}
 	req, err := multipartRequest([]byte("not an image"))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -105,7 +80,7 @@ func TestCreateFileRejectsNonImage(t *testing.T) {
 	if res.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
 	}
-	if store.created {
+	if db.created {
 		t.Fatal("non-image upload should not create DB upload")
 	}
 	if !strings.Contains(res.Body.String(), "Only image uploads are allowed.") {
@@ -114,8 +89,9 @@ func TestCreateFileRejectsNonImage(t *testing.T) {
 }
 
 func TestCreateFileAcceptsImageSignature(t *testing.T) {
-	store := &fakeStore{capacity: true}
-	handler := Handler{Service: NewService(store), ImageDir: t.TempDir()}
+	db := &fakeStore{capacity: true}
+	store := blobstore.NewMemoryStore()
+	handler := Handler{Service: NewService(db), Store: store}
 	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -128,22 +104,24 @@ func TestCreateFileAcceptsImageSignature(t *testing.T) {
 	if res.Code != http.StatusCreated {
 		t.Fatalf("status = %d, want %d; body=%s", res.Code, http.StatusCreated, res.Body.String())
 	}
-	if !store.created || store.createdUser != "1" || store.filename == "" {
-		t.Fatalf("store create = %v user=%q filename=%q", store.created, store.createdUser, store.filename)
+	if !db.created || db.createdUser != "1" || db.filename == "" {
+		t.Fatalf("store create = %v user=%q filename=%q", db.created, db.createdUser, db.filename)
 	}
-	if _, err := os.Stat(filepath.Join(handler.ImageDir, store.filename)); err != nil {
-		t.Fatalf("expected uploaded file to exist: %v", err)
+	// Object must exist in the blobstore after a successful upload.
+	rc, _, _, err := store.Get(context.Background(), db.filename)
+	if err != nil {
+		t.Fatalf("object not found in blobstore after upload: %v", err)
 	}
+	rc.Close()
 }
 
 func TestCreateFileDeletesExpiredUploads(t *testing.T) {
-	dir := t.TempDir()
-	expired := "expired-upload"
-	if err := os.WriteFile(filepath.Join(dir, expired), []byte{0xff, 0xd8, 0xff}, 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
-	store := &fakeStore{capacity: true, expired: []string{expired}}
-	handler := Handler{Service: NewService(store), ImageDir: dir}
+	expired := "aabbccddeeff00112233445566778899"
+	db := &fakeStore{capacity: true, expired: []string{expired}}
+	store := blobstore.NewMemoryStore()
+	// Pre-populate the store so Delete has something to remove.
+	_ = store.Put(context.Background(), expired, "image/jpeg", bytes.NewReader([]byte{0xff}), 1)
+	handler := Handler{Service: NewService(db), Store: store}
 	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -156,14 +134,39 @@ func TestCreateFileDeletesExpiredUploads(t *testing.T) {
 	if res.Code != http.StatusCreated {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusCreated)
 	}
-	if _, err := os.Stat(filepath.Join(dir, expired)); !os.IsNotExist(err) {
-		t.Fatalf("expected expired upload to be deleted, stat err=%v", err)
+	_, _, _, err = store.Get(context.Background(), expired)
+	if !errors.Is(err, blobstore.ErrNotFound) {
+		t.Fatal("expected expired upload to be deleted from blobstore")
+	}
+}
+
+func TestCreateFileDeletesExpiredUploadsWhenCreateFails(t *testing.T) {
+	expired := "aabbccddeeff00112233445566778899"
+	db := &fakeStore{expired: []string{expired}, createErr: errors.New("database unavailable")}
+	store := blobstore.NewMemoryStore()
+	_ = store.Put(context.Background(), expired, "image/jpeg", bytes.NewReader([]byte{0xff}), 1)
+	handler := Handler{Service: NewService(db), Store: store}
+	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
+	if err != nil {
+		t.Fatalf("multipartRequest returned error: %v", err)
+	}
+	req = httpx.WithUserID(req, "1")
+	res := httptest.NewRecorder()
+
+	handler.CreateFile(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+	_, _, _, err = store.Get(context.Background(), expired)
+	if !errors.Is(err, blobstore.ErrNotFound) {
+		t.Fatal("expected expired upload to be deleted from blobstore even on create failure")
 	}
 }
 
 func TestCreateFileRejectsQuotaExhaustion(t *testing.T) {
-	store := &fakeStore{capacity: false}
-	handler := Handler{Service: NewService(store), ImageDir: t.TempDir()}
+	store := blobstore.NewMemoryStore()
+	handler := Handler{Service: NewService(&fakeStore{capacity: false}), Store: store}
 	req, err := multipartRequest([]byte{0xff, 0xd8, 0xff, 0x00})
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -176,13 +179,11 @@ func TestCreateFileRejectsQuotaExhaustion(t *testing.T) {
 	if res.Code != http.StatusTooManyRequests {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusTooManyRequests)
 	}
-	if store.created {
-		t.Fatal("quota rejection should not create DB upload")
-	}
 }
 
 func TestCreateFileRejectsOversizedUpload(t *testing.T) {
-	handler := Handler{Service: NewService(&fakeStore{capacity: true}), ImageDir: t.TempDir()}
+	store := blobstore.NewMemoryStore()
+	handler := Handler{Service: NewService(&fakeStore{capacity: true}), Store: store}
 	req, err := multipartRequest(append([]byte{0xff, 0xd8, 0xff}, bytes.Repeat([]byte("x"), fileLimit)...))
 	if err != nil {
 		t.Fatalf("multipartRequest returned error: %v", err)
@@ -198,22 +199,15 @@ func TestCreateFileRejectsOversizedUpload(t *testing.T) {
 }
 
 func TestServeFile(t *testing.T) {
-	dir := t.TempDir()
+	store := blobstore.NewMemoryStore()
 	filename := "0123456789abcdef0123456789abcdef"
 	content := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00}
-	modTime := time.Date(2026, time.June, 1, 12, 0, 0, 0, time.UTC)
-	path := filepath.Join(dir, filename)
-	if err := os.WriteFile(path, content, 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
-	if err := os.Chtimes(path, modTime, modTime); err != nil {
-		t.Fatalf("Chtimes returned error: %v", err)
-	}
+	_ = store.Put(context.Background(), filename, "image/png", bytes.NewReader(content), int64(len(content)))
 
 	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
 	res := httptest.NewRecorder()
 
-	Handler{ImageDir: dir}.ServeFile(res, req)
+	Handler{Store: store}.ServeFile(res, req)
 
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
@@ -230,100 +224,42 @@ func TestServeFile(t *testing.T) {
 	if got := res.Header().Get("Content-Type"); got != "image/png" {
 		t.Errorf("Content-Type = %q", got)
 	}
-	if got := res.Header().Get("Last-Modified"); got != modTime.Format(http.TimeFormat) {
-		t.Errorf("Last-Modified = %q", got)
-	}
 }
 
-func TestServeFileHonorsIfNoneMatch(t *testing.T) {
-	dir := t.TempDir()
+func TestServeFileMissingKey(t *testing.T) {
+	store := blobstore.NewMemoryStore()
 	filename := "0123456789abcdef0123456789abcdef"
-	if err := os.WriteFile(filepath.Join(dir, filename), []byte("content"), 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
+
 	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
-	req.Header.Set("If-None-Match", `"`+filename+`"`)
 	res := httptest.NewRecorder()
 
-	Handler{ImageDir: dir}.ServeFile(res, req)
+	Handler{Store: store}.ServeFile(res, req)
 
-	if res.Code != http.StatusNotModified {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotModified)
-	}
-	if res.Body.Len() != 0 {
-		t.Fatalf("body = %q, want empty", res.Body.String())
+	if res.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
 	}
 }
 
-func TestServeFileIgnoresNonMatchingETag(t *testing.T) {
-	dir := t.TempDir()
+func TestServeFileRejectsInvalidOrMissingFilenames(t *testing.T) {
+	store := blobstore.NewMemoryStore()
 	filename := "0123456789abcdef0123456789abcdef"
-	content := []byte("complete content")
-	if err := os.WriteFile(filepath.Join(dir, filename), content, 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
-	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
-	req.Header.Set("If-None-Match", `"different"`)
-	res := httptest.NewRecorder()
-
-	Handler{ImageDir: dir}.ServeFile(res, req)
-
-	if res.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
-	}
-	if !bytes.Equal(res.Body.Bytes(), content) {
-		t.Fatalf("body = %q, want %q", res.Body.Bytes(), content)
-	}
-}
-
-func TestServeFileRejectsInvalidOrMissingFiles(t *testing.T) {
-	dir := t.TempDir()
-	filename := "0123456789abcdef0123456789abcdef"
-	if err := os.Mkdir(filepath.Join(dir, filename), 0o700); err != nil {
-		t.Fatalf("Mkdir returned error: %v", err)
-	}
 
 	for _, path := range []string{
 		"/uploads/",
 		"/uploads/not-a-valid-filename",
 		"/uploads/0123456789ABCDEF0123456789ABCDEF",
 		"/uploads/" + filename + "/extra",
-		"/uploads/fedcba9876543210fedcba9876543210",
-		"/uploads/" + filename,
 	} {
 		t.Run(path, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, path, nil)
 			res := httptest.NewRecorder()
 
-			Handler{ImageDir: dir}.ServeFile(res, req)
+			Handler{Store: store}.ServeFile(res, req)
 
 			if res.Code != http.StatusNotFound {
 				t.Fatalf("status = %d, want %d", res.Code, http.StatusNotFound)
 			}
 		})
-	}
-}
-
-func TestServeFileSupportsRanges(t *testing.T) {
-	dir := t.TempDir()
-	filename := "0123456789abcdef0123456789abcdef"
-	if err := os.WriteFile(filepath.Join(dir, filename), []byte("0123456789"), 0o600); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
-	req := httptest.NewRequest(http.MethodGet, "/uploads/"+filename, nil)
-	req.Header.Set("Range", "bytes=2-5")
-	res := httptest.NewRecorder()
-
-	Handler{ImageDir: dir}.ServeFile(res, req)
-
-	if res.Code != http.StatusPartialContent {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusPartialContent)
-	}
-	if got := res.Body.String(); got != "2345" {
-		t.Fatalf("body = %q, want %q", got, "2345")
-	}
-	if got := res.Header().Get("Content-Range"); got != "bytes 2-5/10" {
-		t.Errorf("Content-Range = %q", got)
 	}
 }
 

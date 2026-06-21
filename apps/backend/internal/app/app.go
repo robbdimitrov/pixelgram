@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/comments"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/posts"
@@ -12,7 +13,7 @@ import (
 )
 
 type Config struct {
-	ImageDir    string
+	Blobs       blobstore.Store
 	RateLimiter httpx.RateLimiterStore
 }
 
@@ -26,17 +27,20 @@ type Repositories struct {
 }
 
 func New(cfg Config, repositories Repositories) http.Handler {
+	if cfg.Blobs == nil {
+		cfg.Blobs = blobstore.NewMemoryStore()
+	}
 	if cfg.RateLimiter == nil {
 		cfg.RateLimiter = httpx.NoopRateLimiterStore{}
 	}
 	protected := http.NewServeMux()
-	userHandler := users.NewHandler(users.NewService(repositories.Users, cfg.ImageDir))
+	userHandler := users.NewHandler(users.NewService(repositories.Users, cfg.Blobs))
 	sessionHandler := sessions.NewHandler(sessions.NewService(repositories.Sessions))
 	uploadHandler := uploads.Handler{
-		Service: uploads.NewService(repositories.Uploads), ImageDir: cfg.ImageDir,
+		Service: uploads.NewService(repositories.Uploads), Store: cfg.Blobs,
 	}
 	postHandler := posts.Handler{Service: posts.NewService(
-		repositories.Posts, uploads.Files{ImageDir: cfg.ImageDir},
+		repositories.Posts, uploads.Files{Store: cfg.Blobs},
 	)}
 	commentHandler := comments.Handler{Service: comments.NewService(repositories.Comments)}
 

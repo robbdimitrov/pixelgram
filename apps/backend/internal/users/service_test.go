@@ -1,14 +1,14 @@
 package users
 
 import (
+	"bytes"
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"pixelgram/backend/internal/auth"
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/pagination"
 )
 
@@ -91,7 +91,7 @@ var _ Repository = (*fakeRepository)(nil)
 
 func TestServiceCreateUserHashesPassword(t *testing.T) {
 	repository := &fakeRepository{createID: 42}
-	service := NewService(repository, "")
+	service := NewService(repository, blobstore.NewMemoryStore())
 
 	id, err := service.CreateUser(context.Background(), CreateUserCommand{
 		Name: "Test", Username: "test", Email: "test@example.com", Password: "password123",
@@ -111,7 +111,7 @@ func TestServiceCreateUserHashesPassword(t *testing.T) {
 
 func TestServiceUpdateProfileOutcomes(t *testing.T) {
 	t.Run("invalid avatar", func(t *testing.T) {
-		service := NewService(&fakeRepository{updateResult: UpdateUserResult{}}, t.TempDir())
+		service := NewService(&fakeRepository{updateResult: UpdateUserResult{}}, blobstore.NewMemoryStore())
 
 		outcome, err := service.UpdateProfile(context.Background(), UpdateProfileCommand{UserID: "1"})
 
@@ -121,22 +121,20 @@ func TestServiceUpdateProfileOutcomes(t *testing.T) {
 	})
 
 	t.Run("removes unused avatar", func(t *testing.T) {
-		imageDir := t.TempDir()
-		filename := "old-avatar.jpg"
-		path := filepath.Join(imageDir, filename)
-		if err := os.WriteFile(path, []byte("avatar"), 0o600); err != nil {
-			t.Fatal(err)
-		}
-		repository := &fakeRepository{updateResult: UpdateUserResult{Updated: true, UnusedAvatar: filename}}
-		service := NewService(repository, imageDir)
+		store := blobstore.NewMemoryStore()
+		avatarKey := "aabbccddeeff00112233445566778899"
+		_ = store.Put(context.Background(), avatarKey, "image/jpeg", bytes.NewReader([]byte{0xff}), 1)
+		repository := &fakeRepository{updateResult: UpdateUserResult{Updated: true, UnusedAvatar: avatarKey}}
+		service := NewService(repository, store)
 
 		outcome, err := service.UpdateProfile(context.Background(), UpdateProfileCommand{UserID: "1"})
 
 		if err != nil || outcome != UpdateProfileUpdated {
 			t.Fatalf("UpdateProfile() = %v, %v", outcome, err)
 		}
-		if _, err := os.Stat(path); !errors.Is(err, os.ErrNotExist) {
-			t.Fatalf("unused avatar still exists: %v", err)
+		_, _, _, err = store.Get(context.Background(), avatarKey)
+		if !errors.Is(err, blobstore.ErrNotFound) {
+			t.Fatal("unused avatar should have been deleted from the blob store")
 		}
 	})
 }
@@ -150,7 +148,7 @@ func TestServiceChangePassword(t *testing.T) {
 		found:       true,
 		credentials: UserCredentials{ID: 1, PasswordHash: oldHash},
 	}
-	service := NewService(repository, "")
+	service := NewService(repository, blobstore.NewMemoryStore())
 
 	outcome, err := service.ChangePassword(context.Background(), ChangePasswordCommand{
 		UserID: "1", CurrentPassword: "old-password", NewPassword: "new-password",
@@ -193,7 +191,7 @@ func TestServiceChangePasswordStopsForInvalidCredentials(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			outcome, err := NewService(test.repository, "").ChangePassword(
+			outcome, err := NewService(test.repository, blobstore.NewMemoryStore()).ChangePassword(
 				context.Background(),
 				ChangePasswordCommand{
 					UserID: "1", CurrentPassword: "wrong-password", NewPassword: "new-password",
@@ -212,7 +210,7 @@ func TestServiceChangePasswordStopsForInvalidCredentials(t *testing.T) {
 
 func TestServiceFollowCommands(t *testing.T) {
 	repository := &fakeRepository{}
-	service := NewService(repository, "")
+	service := NewService(repository, blobstore.NewMemoryStore())
 	command := FollowCommand{FollowerID: "1", FolloweeID: "2"}
 
 	if err := service.FollowUser(context.Background(), command); err != nil {
@@ -229,7 +227,7 @@ func TestServiceFollowCommands(t *testing.T) {
 func TestServiceListFollowers(t *testing.T) {
 	cursor := &pagination.Cursor{ID: 7}
 	repository := &fakeRepository{users: []User{{ID: 2}}, nextCursor: cursor}
-	service := NewService(repository, "")
+	service := NewService(repository, blobstore.NewMemoryStore())
 
 	items, next, err := service.ListFollowers(context.Background(), ListQuery{
 		Username: "test", CurrentUserID: "1", Cursor: cursor, Limit: 20,

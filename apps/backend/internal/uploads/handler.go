@@ -1,16 +1,16 @@
 package uploads
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
+	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/httpx"
 )
 
@@ -21,108 +21,87 @@ type Application interface {
 }
 
 type Handler struct {
-	Service  Application
-	ImageDir string
+	Service Application
+	Store   blobstore.Store
 }
 
 func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, _ := httpx.UserID(r)
-	filename, err := h.saveMultipartImage(r)
+
+	data, err := h.readMultipartImage(r)
 	if err != nil {
 		status, message := uploadErrorResponse(err)
 		httpx.WriteMessage(w, status, message)
 		return
 	}
 
-	path := uploadPath(h.ImageDir, filename)
-	f, err := os.Open(path)
-	if err != nil {
-		DeleteUploadFile(h.ImageDir, filename)
-		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
-		return
+	header := data
+	if len(header) > 12 {
+		header = header[:12]
 	}
-	header := make([]byte, 12)
 	// io.ReadFull avoids a short read leaving header partially populated, which
 	// could falsely reject a valid image (e.g. WEBP needs bytes at offset 8).
-	n, err := io.ReadFull(f, header)
-	f.Close()
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
-		DeleteUploadFile(h.ImageDir, filename)
-		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
-		return
-	}
-	if !isImage(header[:n]) {
-		DeleteUploadFile(h.ImageDir, filename)
+	if !isImage(header) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Only image uploads are allowed.")
 		return
 	}
 
-	result, err := h.Service.Register(ctx, RegisterCommand{UserID: userID, Filename: filename})
-	deleteUploadFiles(h.ImageDir, result.ExpiredFilenames)
+	contentType := http.DetectContentType(data)
+
+	filename, err := randomFilename()
 	if err != nil {
-		DeleteUploadFile(h.ImageDir, filename)
+		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
+		return
+	}
+
+	result, err := h.Service.Register(ctx, RegisterCommand{UserID: userID, Filename: filename})
+	for _, f := range result.ExpiredFilenames {
+		_ = h.Store.Delete(ctx, f)
+	}
+	if err != nil {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
 	}
 	if !result.Created {
-		DeleteUploadFile(h.ImageDir, filename)
 		httpx.WriteMessage(w, http.StatusTooManyRequests, "Too many pending uploads. Create posts with existing uploads or try again later.")
+		return
+	}
+
+	if err := h.Store.Put(ctx, filename, contentType, bytes.NewReader(data), int64(len(data))); err != nil {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
 		return
 	}
 
 	httpx.WriteJSON(w, http.StatusCreated, map[string]string{"filename": filename})
 }
 
-func (h Handler) saveMultipartImage(r *http.Request) (string, error) {
+func (h Handler) readMultipartImage(r *http.Request) ([]byte, error) {
 	reader, err := r.MultipartReader()
 	if err != nil {
-		return "", errProcessUpload
+		return nil, errProcessUpload
 	}
 
-	var imagePart io.Reader
 	for {
 		part, err := reader.NextPart()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return "", errProcessUpload
+			return nil, errProcessUpload
 		}
 		if part.FormName() == "image" {
-			imagePart = part
-			break
+			data, err := io.ReadAll(io.LimitReader(part, fileLimit+1))
+			if err != nil {
+				return nil, errProcessUpload
+			}
+			if int64(len(data)) > fileLimit {
+				return nil, errFileTooLarge
+			}
+			return data, nil
 		}
 	}
-	if imagePart == nil {
-		return "", errMissingFile
-	}
-
-	filename, err := randomFilename()
-	if err != nil {
-		return "", errProcessUpload
-	}
-	if err := os.MkdirAll(h.ImageDir, 0o755); err != nil {
-		return "", errProcessUpload
-	}
-
-	file, err := os.OpenFile(uploadPath(h.ImageDir, filename), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
-	if err != nil {
-		return "", errProcessUpload
-	}
-	defer file.Close()
-
-	written, err := io.Copy(file, io.LimitReader(imagePart, fileLimit+1))
-	if err != nil {
-		DeleteUploadFile(h.ImageDir, filename)
-		return "", errProcessUpload
-	}
-	if written > fileLimit {
-		DeleteUploadFile(h.ImageDir, filename)
-		return "", errFileTooLarge
-	}
-
-	return filename, nil
+	return nil, errMissingFile
 }
 
 func (h Handler) ServeFile(w http.ResponseWriter, r *http.Request) {
@@ -132,22 +111,23 @@ func (h Handler) ServeFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := os.Open(uploadPath(h.ImageDir, filename))
+	rc, ct, _, err := h.Store.Get(r.Context(), filename)
+	if errors.Is(err, blobstore.ErrNotFound) {
+		http.NotFound(w, r)
+		return
+	}
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	defer file.Close()
-
-	info, err := file.Stat()
-	if err != nil || !info.Mode().IsRegular() {
-		http.NotFound(w, r)
-		return
-	}
+	defer rc.Close()
 
 	w.Header().Set("Cache-Control", "private, max-age=86400")
 	w.Header().Set("ETag", `"`+filename+`"`)
-	http.ServeContent(w, r, filename, info.ModTime(), file)
+	if ct != "" {
+		w.Header().Set("Content-Type", ct)
+	}
+	_, _ = io.Copy(w, rc)
 }
 
 func uploadFilename(path string) (string, bool) {
@@ -163,34 +143,12 @@ func uploadFilename(path string) (string, bool) {
 	return filename, true
 }
 
-func uploadPath(imageDir, filename string) string {
-	return filepath.Join(imageDir, filepath.Base(filename))
-}
-
-func DeleteUploadFile(imageDir, filename string) {
-	_ = os.Remove(uploadPath(imageDir, filename))
-}
-
 type Files struct {
-	ImageDir string
+	Store blobstore.Store
 }
 
 func (f Files) Delete(filename string) {
-	DeleteUploadFile(f.ImageDir, filename)
-}
-
-func deleteUploadFiles(imageDir string, filenames []string) {
-	for _, filename := range filenames {
-		DeleteUploadFile(imageDir, filename)
-	}
-}
-
-func randomFilename() (string, error) {
-	var bytes [16]byte
-	if _, err := rand.Read(bytes[:]); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes[:]), nil
+	_ = f.Store.Delete(context.Background(), filename)
 }
 
 func uploadErrorResponse(err error) (int, string) {
@@ -252,4 +210,12 @@ func hasBytes(buffer, bytes []byte, offset int) bool {
 		}
 	}
 	return true
+}
+
+func randomFilename() (string, error) {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b[:]), nil
 }

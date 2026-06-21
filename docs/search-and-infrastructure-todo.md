@@ -105,7 +105,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `add blobstore interface with s3 and in-memory backends`
 
-### 1.2 Serve uploads from the blob store
+### 1.2 Serve uploads from the blob store [DONE]
 - **Files:** `apps/backend/internal/uploads/handler.go`, `handler_test.go`;
   `internal/app/app.go`; `cmd/api/main.go`.
 - **Change:** replace `ImageDir` with `Store blobstore.Store` on `uploads.Handler`
