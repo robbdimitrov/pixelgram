@@ -20,6 +20,7 @@ ROLL_OUT_DATABASE=(statefulset/database)
 ROLL_OUT_REST=(
   statefulset/storage
   statefulset/cache
+  statefulset/search
   deployment/backend
   deployment/frontend
 )
@@ -68,6 +69,7 @@ ensure_secret() {
     ensure_secret_key "${secret_name}" s3-access-key
     ensure_secret_key "${secret_name}" s3-secret-key
     ensure_secret_key "${secret_name}" dragonfly-password
+    ensure_secret_key "${secret_name}" meili-master-key
     return
   fi
 
@@ -77,7 +79,8 @@ ensure_secret() {
     --from-literal=session-hash-secret="$(random_secret)" \
     --from-literal=s3-access-key="$(random_secret)" \
     --from-literal=s3-secret-key="$(random_secret)" \
-    --from-literal=dragonfly-password="$(random_secret)"
+    --from-literal=dragonfly-password="$(random_secret)" \
+    --from-literal=meili-master-key="$(random_secret)"
 }
 
 ensure_secret_key() {
@@ -143,11 +146,13 @@ build_images() {
     log "loading images into kind node"
     docker pull chrislusf/seaweedfs
     docker pull docker.dragonflydb.io/dragonflydb/dragonfly
+    docker pull getmeili/meilisearch
     docker save localhost:5000/pixelgram/backend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/pixelgram/database | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/pixelgram/frontend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save chrislusf/seaweedfs | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save docker.dragonflydb.io/dragonflydb/dragonfly | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
+    docker save getmeili/meilisearch | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
   fi
 }
 

@@ -117,6 +117,13 @@ spec:
             secretKeyRef:
               name: database-credentials
               key: session-hash-secret
+        - name: MEILI_URL
+          value: http://search:7700
+        - name: MEILI_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: meili-master-key
         readinessProbe:
           httpGet:
             path: /ready
