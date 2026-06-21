@@ -7,6 +7,7 @@
   import { pluralize } from '$lib/utils/pluralize';
   import { fetchJson } from '$lib/utils/clientFetch';
   import type { Post, Comment } from '$lib/types';
+  import Linkified from '$lib/components/Linkified.svelte';
 
   let {
     post: initialPost,
@@ -143,7 +144,7 @@
         <a href="/@{initialPost.username}" class="mr-1.5 font-bold text-base-content hover:underline">
           {initialPost.username}
         </a>
-        <span class="whitespace-pre-wrap text-base-content/70">{initialPost.description}</span>
+        <Linkified text={initialPost.description} />
       </div>
     {/if}
 
@@ -198,7 +199,7 @@
               <Avatar username={comment.username} avatar={comment.avatar} size="h-8 w-8" class="mt-0.5" />
               <div class="min-w-0 flex-1 text-sm leading-6">
                 <a href="/@{comment.username}" class="mr-1.5 font-bold text-base-content hover:underline">{comment.username}</a>
-                <span class="break-words whitespace-pre-wrap text-base-content/70">{comment.body}</span>
+                <Linkified text={comment.body} />
                 <div class="mt-0.5 text-xs text-base-content/50">{relativeDate(comment.created)}</div>
               </div>
               {#if currentUserId === comment.userId}

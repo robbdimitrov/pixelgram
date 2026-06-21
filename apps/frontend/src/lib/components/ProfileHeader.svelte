@@ -4,6 +4,7 @@
   import { imageUrl } from '$lib/utils/imageUrl';
   import { pluralize } from '$lib/utils/pluralize';
   import type { User } from '$lib/types';
+  import Linkified from '$lib/components/Linkified.svelte';
 
   let {
     profileUser = $bindable(),
@@ -66,8 +67,8 @@
     </div>
 
     {#if profileUser.bio}
-      <p class="w-full max-w-xl whitespace-pre-wrap text-sm leading-relaxed text-base-content/70">
-        {profileUser.bio}
+      <p class="w-full max-w-xl text-sm leading-relaxed text-base-content/70">
+        <Linkified text={profileUser.bio} />
       </p>
     {/if}
 
