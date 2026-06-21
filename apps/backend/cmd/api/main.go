@@ -15,6 +15,7 @@ import (
 	"pixelgram/backend/internal/env"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/noop"
+	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
 )
@@ -45,6 +46,12 @@ func main() {
 	}
 	startRateLimiterCleanup(rateLimiter)
 
+	meili, err := openMeiliClient(context.Background())
+	if err != nil {
+		slog.Error("failed to initialize search client", "error", err)
+		os.Exit(1)
+	}
+
 	signalContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	sessionCleanupDone := startSessionCleanup(signalContext, repositories.Sessions)
@@ -53,6 +60,7 @@ func main() {
 		Blobs:       blobs,
 		RateLimiter: rateLimiter,
 		Readiness:   readiness,
+		Meili:       meili,
 	}, repositories)
 
 	addr := ":" + port
@@ -144,6 +152,15 @@ func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, er
 		os.Getenv("S3_ACCESS_KEY"),
 		os.Getenv("S3_SECRET_KEY"),
 	)
+}
+
+func openMeiliClient(ctx context.Context) (*search.MeiliClient, error) {
+	meiliURL := os.Getenv("MEILI_URL")
+	if meiliURL == "" {
+		return nil, nil
+	}
+	masterKey := os.Getenv("MEILI_MASTER_KEY")
+	return search.NewMeiliClient(ctx, meiliURL, masterKey)
 }
 
 func openRateLimiter(databaseURL string) (httpx.RateLimiterStore, error) {
