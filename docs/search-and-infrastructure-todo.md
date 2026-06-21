@@ -290,7 +290,7 @@ limit `256Mi`.
 - **Verify:** backend verify commands; integration.
 - **Commit:** `add user and hashtag typeahead endpoints`
 
-### 3.4 Linkifier and `<Linkified>`
+### 3.4 Linkifier and `<Linkified>` [DONE]
 - **Files:** new `apps/frontend/src/lib/utils/linkify.ts`, `linkify.test.ts`; new
   `src/lib/components/Linkified.svelte`; edit `PostCard.svelte` (caption + comment
   body), `ProfileHeader.svelte` (bio).
