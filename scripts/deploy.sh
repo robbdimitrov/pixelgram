@@ -18,6 +18,7 @@ PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/pixelgram-port-forward-${LO
 SERVICES=(backend database frontend)
 ROLL_OUT_DATABASE=(statefulset/database)
 ROLL_OUT_REST=(
+  statefulset/storage
   deployment/backend
   deployment/frontend
 )
@@ -59,14 +60,36 @@ ensure_namespace() {
 }
 
 ensure_secret() {
-  if kubectl -n "${NS}" get secret database-credentials >/dev/null 2>&1; then
+  local secret_name="database-credentials"
+  if kubectl -n "${NS}" get secret "${secret_name}" >/dev/null 2>&1; then
+    ensure_secret_key "${secret_name}" postgres-password
+    ensure_secret_key "${secret_name}" session-hash-secret
+    ensure_secret_key "${secret_name}" s3-access-key
+    ensure_secret_key "${secret_name}" s3-secret-key
     return
   fi
 
-  log "creating generated database/session secret"
-  kubectl -n "${NS}" create secret generic database-credentials \
+  log "creating generated application secrets"
+  kubectl -n "${NS}" create secret generic "${secret_name}" \
     --from-literal=postgres-password="$(random_secret)" \
-    --from-literal=session-hash-secret="$(random_secret)"
+    --from-literal=session-hash-secret="$(random_secret)" \
+    --from-literal=s3-access-key="$(random_secret)" \
+    --from-literal=s3-secret-key="$(random_secret)"
+}
+
+ensure_secret_key() {
+  local secret_name="$1"
+  local key="$2"
+  local existing encoded
+  existing="$(kubectl -n "${NS}" get secret "${secret_name}" -o go-template="{{ index .data \"${key}\" }}")"
+  if [[ -n "${existing}" && "${existing}" != "<no value>" ]]; then
+    return
+  fi
+
+  log "adding missing ${key} secret"
+  encoded="$(printf '%s' "$(random_secret)" | base64 | tr -d '\n')"
+  kubectl -n "${NS}" patch secret "${secret_name}" --type merge \
+    -p "{\"data\":{\"${key}\":\"${encoded}\"}}" >/dev/null
 }
 
 port_pids() {
@@ -115,9 +138,11 @@ build_images() {
   make -C "${ROOT}"
   if docker container inspect --format '{{.State.Running}}' pixelgram-control-plane 2>/dev/null | grep -qx true; then
     log "loading images into kind node"
+    docker pull chrislusf/seaweedfs
     docker save localhost:5000/pixelgram/backend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/pixelgram/database | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/pixelgram/frontend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
+    docker save chrislusf/seaweedfs | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
   fi
 }
 
@@ -126,6 +151,7 @@ apply_manifests() {
   ensure_namespace
   ensure_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
+  kubectl -n "${NS}" delete pvc image-storage-pvc --ignore-not-found
 }
 
 rollout_restart() {

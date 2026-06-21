@@ -52,14 +52,14 @@ pixelgram-control-plane ctr --namespace k8s.io images import -`), add the
 
 | Env var | Default | Used by |
 |---|---|---|
-| `S3_ENDPOINT` | `http://seaweedfs:8333` | blobstore |
+| `S3_ENDPOINT` | `http://storage:8333` | blobstore |
 | `S3_BUCKET` | `pixelgram` | blobstore |
 | `S3_REGION` | `us-east-1` | blobstore |
 | `S3_FORCE_PATH_STYLE` | `true` | blobstore |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | from secret | blobstore |
-| `DRAGONFLY_URL` | `redis://dragonfly:6379` | cache |
+| `DRAGONFLY_URL` | `redis://cache:6379` | cache |
 | `DRAGONFLY_PASSWORD` | from secret | cache |
-| `MEILI_URL` | `http://meilisearch:7700` | search |
+| `MEILI_URL` | `http://search:7700` | search |
 | `MEILI_MASTER_KEY` | from secret | search |
 | `ARGON_MAX_CONCURRENCY` | `4` | auth |
 | `SESSION_ABSOLUTE_TTL_HOURS` | `720` (30 days) | sessions |
@@ -125,10 +125,10 @@ limit `256Mi`.
 - **Verify:** backend verify commands.
 - **Commit:** `serve uploads from object storage`
 
-### 1.3 SeaweedFS deployment, drop the image PVC
-- **Files:** new `deploy/seaweedfs.yaml`; edit `deploy/backend.yaml`; delete
+### 1.3 SeaweedFS deployment, drop the image PVC [DONE]
+- **Files:** new `deploy/storage.yaml`; edit `deploy/backend.yaml`; delete
   `deploy/storagevolume.yaml`; edit `scripts/deploy.sh`.
-- **Change:** `seaweedfs.yaml`: `StatefulSet` (1 replica, `chrislusf/seaweedfs
+- **Change:** `storage.yaml`: `StatefulSet` named `storage` (1 replica, `chrislusf/seaweedfs
   server -dir=/data -s3 -s3.port=8333`), headless Service on `8333`,
   `volumeClaimTemplate` `5Gi` mounted at `/data`, per the deployment-manifest rules.
   `backend.yaml`: remove the `image-storage` volume + mount and `IMAGE_DIR`; add the
@@ -136,7 +136,7 @@ limit `256Mi`.
   `Recreate` to `RollingUpdate`; keep `replicas: 1`; raise memory limit to `256Mi`;
   rewrite the single-replica comment to state the cap is policy and the service is
   HA-ready. `scripts/deploy.sh`: add `s3-access-key`/`s3-secret-key` to
-  `ensure_secret`, load `chrislusf/seaweedfs` into kind, add `statefulset/seaweedfs`
+  `ensure_secret`, load `chrislusf/seaweedfs` into kind, add `statefulset/storage`
   to the rollout waits.
 - **Verify:** `./scripts/deploy.sh`; upload works; `kubectl scale --replicas=2`
   shows images load from either pod, then scale back to 1; the image PVC is gone.
@@ -164,7 +164,7 @@ limit `256Mi`.
 - **valkey-go usage (exact patterns):**
   ```go
   client, err := valkey.NewClient(valkey.ClientOption{
-      InitAddress: []string{"dragonfly:6379"}, Password: pw,
+      InitAddress: []string{"cache:6379"}, Password: pw,
   })
   // Lua script:
   script := valkey.NewLuaScript(luaSrc)
@@ -216,7 +216,7 @@ limit `256Mi`.
 - **Commit:** `drop unlogged rate-limit and login-failure tables`
 
 ### 2.4 Dragonfly deployment
-- **Files:** new `deploy/dragonfly.yaml`; edit `deploy/backend.yaml`
+- **Files:** new `deploy/cache.yaml`; edit `deploy/backend.yaml`
   (`DRAGONFLY_URL`, `DRAGONFLY_PASSWORD` from secret); edit `scripts/deploy.sh`.
 - **Change:** `StatefulSet` (1 replica,
   `docker.dragonflydb.io/dragonflydb/dragonfly`, args `--requirepass=$(...)` from the
@@ -425,7 +425,7 @@ limit `256Mi`.
 - **Commit:** `add global search page`
 
 ### 4.6 Meilisearch deployment
-- **Files:** new `deploy/meilisearch.yaml`; edit `deploy/backend.yaml` (`MEILI_URL`,
+- **Files:** new `deploy/search.yaml`; edit `deploy/backend.yaml` (`MEILI_URL`,
   `MEILI_MASTER_KEY` from secret); edit `scripts/deploy.sh`.
 - **Change:** `StatefulSet` (1 replica, `getmeili/meilisearch`, `MEILI_MASTER_KEY`
   from the secret, `MEILI_ENV=production`), Service on `7700`, `volumeClaimTemplate`

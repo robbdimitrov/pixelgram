@@ -59,7 +59,7 @@ When `DATABASE_URL` is unset, the backend uses no-op repositories for local hand
 
 ## Runtime and Operations
 
-- `DATABASE_URL`, `IMAGE_DIR`, and `SESSION_HASH_SECRET` are configured in `deploy/backend.yaml`. `PORT` defaults to `8080`.
+- `DATABASE_URL`, `S3_*`, and `SESSION_HASH_SECRET` are configured in `deploy/backend.yaml`. `PORT` defaults to `8080`.
 - `TRUST_PROXY` is valid only behind a proxy that overwrites forwarding headers. Normalize trusted proxy-derived identity before rate limiting.
 - Keep recovery middleware outermost.
 - Background goroutines must recover panics at their boundary. Work intentionally outliving a request must not retain the request's cancellable context.

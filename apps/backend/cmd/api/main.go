@@ -138,7 +138,7 @@ func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, er
 	}
 	return blobstore.NewS3Store(
 		ctx,
-		env.String("S3_ENDPOINT", "http://seaweedfs:8333"),
+		env.String("S3_ENDPOINT", "http://storage:8333"),
 		env.String("S3_BUCKET", "pixelgram"),
 		env.String("S3_REGION", "us-east-1"),
 		os.Getenv("S3_ACCESS_KEY"),
