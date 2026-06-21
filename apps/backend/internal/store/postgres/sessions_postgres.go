@@ -106,52 +106,6 @@ func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string)
 	return r.exec(ctx, `DELETE FROM sessions WHERE id = $1`, r.db.HashSession(sessionID))
 }
 
-func (r *SessionRepository) DeleteExpiredLoginFailures(ctx context.Context) error {
-	return r.exec(ctx, `DELETE FROM login_failures WHERE reset_at <= now()`)
-}
-
-func (r *SessionRepository) GetLoginFailures(ctx context.Context, keys []string) ([]sessions.LoginFailure, error) {
-	var failures []sessions.LoginFailure
-	err := r.db.Read(ctx, func() error {
-		rows, err := r.db.Pool().Query(ctx,
-			`SELECT key, count, reset_at FROM login_failures WHERE key = ANY($1)`, keys)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-		failures = []sessions.LoginFailure{}
-		for rows.Next() {
-			var failure sessions.LoginFailure
-			if err := rows.Scan(&failure.Key, &failure.Count, &failure.ResetAt); err != nil {
-				return err
-			}
-			failures = append(failures, failure)
-		}
-		return rows.Err()
-	})
-	if err != nil {
-		return nil, err
-	}
-	return failures, nil
-}
-
-func (r *SessionRepository) RecordLoginFailure(ctx context.Context, key string, resetAt time.Time) error {
-	return r.exec(ctx, `INSERT INTO login_failures (key, count, reset_at) VALUES ($1, 1, $2)
-		ON CONFLICT (key) DO UPDATE SET
-		  count = CASE
-		    WHEN login_failures.reset_at <= now() THEN 1
-		    ELSE login_failures.count + 1
-		  END,
-		  reset_at = CASE
-		    WHEN login_failures.reset_at <= now() THEN EXCLUDED.reset_at
-		    ELSE login_failures.reset_at
-		  END`, key, resetAt)
-}
-
-func (r *SessionRepository) ClearLoginFailures(ctx context.Context, keys []string) error {
-	return r.exec(ctx, `DELETE FROM login_failures WHERE key = ANY($1)`, keys)
-}
-
 func (r *SessionRepository) UpdatePasswordHash(ctx context.Context, userID int, hash string) error {
 	return r.exec(ctx, `UPDATE users SET password = $1 WHERE id = $2`, hash, userID)
 }

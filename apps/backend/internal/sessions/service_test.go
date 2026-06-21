@@ -11,15 +11,11 @@ import (
 
 type fakeRepository struct {
 	credentials          *UserCredentials
-	failures             []LoginFailure
 	err                  error
 	createdSession       CreatedSession
 	createdSessionID     string
 	createdSessionUser   int
 	createdSessionExpiry time.Time
-	recordedKeys         []string
-	recordedResetAt      []time.Time
-	clearedKeys          []string
 	deletedSessionID     string
 	updatedPasswordHash  string
 	updatePasswordErr    error
@@ -29,25 +25,6 @@ type fakeRepository struct {
 func (r *fakeRepository) DeleteExpiredSessions(context.Context) error {
 	r.expiredSessionSweeps++
 	return r.err
-}
-
-func (r *fakeRepository) DeleteExpiredLoginFailures(context.Context) error {
-	return r.err
-}
-
-func (r *fakeRepository) GetLoginFailures(context.Context, []string) ([]LoginFailure, error) {
-	return r.failures, r.err
-}
-
-func (r *fakeRepository) RecordLoginFailure(_ context.Context, key string, resetAt time.Time) error {
-	r.recordedKeys = append(r.recordedKeys, key)
-	r.recordedResetAt = append(r.recordedResetAt, resetAt)
-	return nil
-}
-
-func (r *fakeRepository) ClearLoginFailures(_ context.Context, keys []string) error {
-	r.clearedKeys = append([]string(nil), keys...)
-	return nil
 }
 
 func (r *fakeRepository) FindLoginCredentialsByEmail(context.Context, string) (*UserCredentials, error) {
@@ -79,14 +56,35 @@ func (r *fakeRepository) UpdatePasswordHash(_ context.Context, _ int, hash strin
 	return r.updatePasswordErr
 }
 
+type fakeThrottle struct {
+	failures     []LoginFailure
+	recordedKeys []string
+	clearedKeys  []string
+	err          error
+}
+
+func (t *fakeThrottle) GetFailures(_ context.Context, _ []string) ([]LoginFailure, error) {
+	return t.failures, t.err
+}
+
+func (t *fakeThrottle) RecordFailure(_ context.Context, key string) error {
+	t.recordedKeys = append(t.recordedKeys, key)
+	return nil
+}
+
+func (t *fakeThrottle) Clear(_ context.Context, keys []string) error {
+	t.clearedKeys = append([]string(nil), keys...)
+	return nil
+}
+
 func TestServiceLoginRateLimitedByIP(t *testing.T) {
 	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
-	repository := &fakeRepository{failures: []LoginFailure{{
+	throttle := &fakeThrottle{failures: []LoginFailure{{
 		Key:     "ip:192.0.2.1",
 		Count:   ipLoginFailures,
 		ResetAt: now.Add(time.Minute),
 	}}}
-	service := newTestService(repository, now)
+	service := newTestService(&fakeRepository{}, throttle, now)
 
 	_, err := service.Login(context.Background(), LoginInput{
 		Email:    "test@example.com",
@@ -97,19 +95,19 @@ func TestServiceLoginRateLimitedByIP(t *testing.T) {
 	if !errors.Is(err, ErrLoginRateLimited) {
 		t.Fatalf("Login() error = %v, want ErrLoginRateLimited", err)
 	}
-	if len(repository.recordedKeys) != 0 {
+	if len(throttle.recordedKeys) != 0 {
 		t.Fatal("rate-limited login should not record another failure")
 	}
 }
 
 func TestServiceLoginEmailKeyUsesHigherThreshold(t *testing.T) {
 	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
-	repository := &fakeRepository{failures: []LoginFailure{{
+	throttle := &fakeThrottle{failures: []LoginFailure{{
 		Key:     "email:test@example.com",
 		Count:   ipLoginFailures,
 		ResetAt: now.Add(time.Minute),
 	}}}
-	service := newTestService(repository, now)
+	service := newTestService(&fakeRepository{}, throttle, now)
 	service.verifyPassword = func(string, string) (bool, error) { return false, nil }
 
 	_, err := service.Login(context.Background(), LoginInput{
@@ -125,8 +123,8 @@ func TestServiceLoginEmailKeyUsesHigherThreshold(t *testing.T) {
 
 func TestServiceLoginInvalidCredentialsRecordsBothKeys(t *testing.T) {
 	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
-	repository := &fakeRepository{}
-	service := newTestService(repository, now)
+	throttle := &fakeThrottle{}
+	service := newTestService(&fakeRepository{}, throttle, now)
 
 	_, err := service.Login(context.Background(), LoginInput{
 		Email:    "test@example.com",
@@ -137,24 +135,18 @@ func TestServiceLoginInvalidCredentialsRecordsBothKeys(t *testing.T) {
 	if !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("Login() error = %v, want ErrInvalidCredentials", err)
 	}
-	if len(repository.recordedKeys) != 2 {
-		t.Fatalf("recorded keys = %v, want IP and email keys", repository.recordedKeys)
+	if len(throttle.recordedKeys) != 2 {
+		t.Fatalf("recorded keys = %v, want IP and email keys", throttle.recordedKeys)
 	}
-	if repository.recordedKeys[0] != "ip:192.0.2.1" ||
-		repository.recordedKeys[1] != "email:test@example.com" {
-		t.Fatalf("recorded keys = %v", repository.recordedKeys)
-	}
-	for _, resetAt := range repository.recordedResetAt {
-		if want := now.Add(rateLimitDuration); !resetAt.Equal(want) {
-			t.Fatalf("reset at = %v, want %v", resetAt, want)
-		}
+	if throttle.recordedKeys[0] != "ip:192.0.2.1" ||
+		throttle.recordedKeys[1] != "email:test@example.com" {
+		t.Fatalf("recorded keys = %v", throttle.recordedKeys)
 	}
 }
 
 func TestServiceLoginVerifiesDecoyHashForUnknownAccount(t *testing.T) {
 	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
-	repository := &fakeRepository{} // no credentials: account does not exist
-	service := newTestService(repository, now)
+	service := newTestService(&fakeRepository{}, &fakeThrottle{}, now)
 	called := false
 	var gotHash string
 	service.verifyPassword = func(_, hash string) (bool, error) {
@@ -185,7 +177,8 @@ func TestServiceLoginSuccessCreatesSessionAndClearsFailures(t *testing.T) {
 	repository := &fakeRepository{
 		credentials: &UserCredentials{ID: 7, PasswordHash: "encoded-hash"},
 	}
-	service := newTestService(repository, now)
+	throttle := &fakeThrottle{}
+	service := newTestService(repository, throttle, now)
 	service.verifyPassword = func(password, hash string) (bool, error) {
 		return password == "password123" && hash == "encoded-hash", nil
 	}
@@ -211,8 +204,8 @@ func TestServiceLoginSuccessCreatesSessionAndClearsFailures(t *testing.T) {
 	if want := now.Add(sessionDuration); !repository.createdSessionExpiry.Equal(want) {
 		t.Fatalf("session expiry = %v, want %v", repository.createdSessionExpiry, want)
 	}
-	if len(repository.clearedKeys) != 2 {
-		t.Fatalf("cleared keys = %v, want IP and email keys", repository.clearedKeys)
+	if len(throttle.clearedKeys) != 2 {
+		t.Fatalf("cleared keys = %v, want IP and email keys", throttle.clearedKeys)
 	}
 	if repository.expiredSessionSweeps != 0 {
 		t.Fatalf("expired session sweeps = %d, want 0", repository.expiredSessionSweeps)
@@ -224,7 +217,8 @@ func TestServiceLoginPasswordVerificationErrorIsInvalidCredentials(t *testing.T)
 	repository := &fakeRepository{
 		credentials: &UserCredentials{ID: 7, PasswordHash: "malformed"},
 	}
-	service := newTestService(repository, now)
+	throttle := &fakeThrottle{}
+	service := newTestService(repository, throttle, now)
 	service.verifyPassword = func(string, string) (bool, error) {
 		return false, errors.New("invalid password hash")
 	}
@@ -238,14 +232,35 @@ func TestServiceLoginPasswordVerificationErrorIsInvalidCredentials(t *testing.T)
 	if !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("Login() error = %v, want ErrInvalidCredentials", err)
 	}
-	if len(repository.recordedKeys) != 2 {
-		t.Fatalf("recorded keys = %v, want IP and email keys", repository.recordedKeys)
+	if len(throttle.recordedKeys) != 2 {
+		t.Fatalf("recorded keys = %v, want IP and email keys", throttle.recordedKeys)
+	}
+}
+
+func TestServiceLoginThrottleDownFailsOpen(t *testing.T) {
+	now := time.Date(2026, time.June, 15, 12, 0, 0, 0, time.UTC)
+	repository := &fakeRepository{
+		credentials: &UserCredentials{ID: 5, PasswordHash: "encoded-hash"},
+	}
+	throttle := &fakeThrottle{err: errors.New("dragonfly down")}
+	service := newTestService(repository, throttle, now)
+	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
+
+	// Throttle is down but login should still reach password verification and succeed.
+	_, err := service.Login(context.Background(), LoginInput{
+		Email:    "test@example.com",
+		Password: "password123",
+		ClientIP: "192.0.2.1",
+	})
+
+	if err != nil {
+		t.Fatalf("Login() error = %v, want nil (throttle down must fail open)", err)
 	}
 }
 
 func TestServiceLogoutDeletesSession(t *testing.T) {
 	repository := &fakeRepository{}
-	service := NewService(repository)
+	service := NewService(repository, NoopLoginThrottle{})
 
 	err := service.Logout(context.Background(), "AAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
@@ -264,7 +279,7 @@ func TestServiceLoginRehashesWeakHash(t *testing.T) {
 	repository := &fakeRepository{
 		credentials: &UserCredentials{ID: 3, PasswordHash: weakHash},
 	}
-	service := newTestService(repository, now)
+	service := newTestService(repository, &fakeThrottle{}, now)
 	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
 	service.hashPassword = func(password string, _ auth.PasswordParams) (string, error) {
 		return "new-strong-hash", nil
@@ -288,7 +303,7 @@ func TestServiceLoginSkipsRehashForCurrentParams(t *testing.T) {
 	repository := &fakeRepository{
 		credentials: &UserCredentials{ID: 3, PasswordHash: currentParamsHash},
 	}
-	service := newTestService(repository, now)
+	service := newTestService(repository, &fakeThrottle{}, now)
 	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
 	rehashCalled := false
 	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
@@ -314,7 +329,7 @@ func TestServiceLoginPersistErrorDoesNotFailLogin(t *testing.T) {
 		credentials:       &UserCredentials{ID: 3, PasswordHash: "invalid-hash"},
 		updatePasswordErr: errors.New("db down"),
 	}
-	service := newTestService(repository, now)
+	service := newTestService(repository, &fakeThrottle{}, now)
 	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
 	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
 		return "new-hash", nil
@@ -333,8 +348,8 @@ func TestServiceLoginPersistErrorDoesNotFailLogin(t *testing.T) {
 // Used to verify that an at-target hash is not rehashed.
 const currentParamsHash = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQxMjM0NTY3OA$hbwqGankDMxbQ5fN303ASdxPeikPPqvxOYodhOKwtOY"
 
-func newTestService(repository Repository, now time.Time) *Service {
-	service := NewService(repository)
+func newTestService(repository Repository, throttle LoginThrottle, now time.Time) *Service {
+	service := NewService(repository, throttle)
 	service.now = func() time.Time { return now }
 	service.generateSessionID = func() (string, error) {
 		return "AAAAAAAAAAAAAAAAAAAAAAAAAAAA", nil
@@ -346,4 +361,7 @@ func newTestService(repository Repository, now time.Time) *Service {
 	return service
 }
 
-var _ Repository = (*fakeRepository)(nil)
+var (
+	_ Repository    = (*fakeRepository)(nil)
+	_ LoginThrottle = (*fakeThrottle)(nil)
+)

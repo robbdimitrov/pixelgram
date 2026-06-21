@@ -38,21 +38,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	rateLimiter, err := openRateLimiter(databaseURL)
+	rateLimiter, err := openRateLimiter()
 	if err != nil {
 		slog.Error("failed to initialize rate limiter", "error", err)
 		os.Exit(1)
 	}
-	startRateLimiterCleanup(rateLimiter)
+
+	loginThrottle, err := openLoginThrottle()
+	if err != nil {
+		slog.Error("failed to initialize login throttle", "error", err)
+		os.Exit(1)
+	}
 
 	signalContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	sessionCleanupDone := startSessionCleanup(signalContext, repositories.Sessions)
 
 	handler := app.New(app.Config{
-		Blobs:       blobs,
-		RateLimiter: rateLimiter,
-		Readiness:   readiness,
+		Blobs:         blobs,
+		RateLimiter:   rateLimiter,
+		LoginThrottle: loginThrottle,
+		Readiness:     readiness,
 	}, repositories)
 
 	addr := ":" + port
@@ -146,25 +152,20 @@ func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, er
 	)
 }
 
-func openRateLimiter(databaseURL string) (httpx.RateLimiterStore, error) {
-	if databaseURL == "" {
+func openRateLimiter() (httpx.RateLimiterStore, error) {
+	dragonflyURL := os.Getenv("DRAGONFLY_URL")
+	if dragonflyURL == "" {
 		return httpx.NoopRateLimiterStore{}, nil
 	}
-	return httpx.NewPostgresRateLimiterStore(databaseURL)
+	return httpx.NewDragonflyRateLimiterStore(dragonflyURL, os.Getenv("DRAGONFLY_PASSWORD"))
 }
 
-func startRateLimiterCleanup(store httpx.RateLimiterStore) {
-	interval := time.Duration(env.Int("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", 60)) * time.Minute
-	maxAge := time.Duration(env.Int("RATE_LIMIT_MAX_AGE_HOURS", 24)) * time.Hour
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		for range ticker.C {
-			if err := store.Cleanup(context.Background(), maxAge); err != nil {
-				slog.Warn("rate limiter cleanup failed", "error", err)
-			}
-		}
-	}()
+func openLoginThrottle() (sessions.LoginThrottle, error) {
+	dragonflyURL := os.Getenv("DRAGONFLY_URL")
+	if dragonflyURL == "" {
+		return sessions.NoopLoginThrottle{}, nil
+	}
+	return sessions.NewDragonflyLoginThrottle(dragonflyURL, os.Getenv("DRAGONFLY_PASSWORD"))
 }
 
 type sessionSweeper interface {

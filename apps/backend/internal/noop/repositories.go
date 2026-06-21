@@ -49,13 +49,7 @@ func (Users) UnfollowUser(context.Context, string, string) error           { ret
 
 type Sessions struct{}
 
-func (Sessions) DeleteExpiredSessions(context.Context) error      { return nil }
-func (Sessions) DeleteExpiredLoginFailures(context.Context) error { return nil }
-func (Sessions) GetLoginFailures(context.Context, []string) ([]sessions.LoginFailure, error) {
-	return nil, nil
-}
-func (Sessions) RecordLoginFailure(context.Context, string, time.Time) error { return nil }
-func (Sessions) ClearLoginFailures(context.Context, []string) error          { return nil }
+func (Sessions) DeleteExpiredSessions(context.Context) error { return nil }
 func (Sessions) FindLoginCredentialsByEmail(context.Context, string) (*sessions.UserCredentials, error) {
 	return nil, nil
 }

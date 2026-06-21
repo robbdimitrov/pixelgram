@@ -21,6 +21,7 @@ var (
 
 type Service struct {
 	repository        Repository
+	throttle          LoginThrottle
 	now               func() time.Time
 	generateSessionID func() (string, error)
 	verifyPassword    func(string, string) (bool, error)
@@ -28,9 +29,10 @@ type Service struct {
 	decoyHash         string
 }
 
-func NewService(repository Repository) *Service {
+func NewService(repository Repository, throttle LoginThrottle) *Service {
 	return &Service{
 		repository:        repository,
+		throttle:          throttle,
 		now:               time.Now,
 		generateSessionID: auth.GenerateSessionID,
 		verifyPassword:    auth.VerifyPassword,
@@ -42,13 +44,10 @@ func NewService(repository Repository) *Service {
 func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, error) {
 	keys := loginFailureKeys(input.ClientIP, input.Email)
 
-	if err := s.repository.DeleteExpiredLoginFailures(ctx); err != nil {
-		return LoginOutput{}, err
-	}
-
-	failures, err := s.repository.GetLoginFailures(ctx, keys)
+	failures, err := s.throttle.GetFailures(ctx, keys)
 	if err != nil {
-		return LoginOutput{}, err
+		slog.Warn("login throttle unavailable, failing open", "error", err)
+		failures = nil
 	}
 	if rateLimited(failures, s.now()) {
 		return LoginOutput{}, ErrLoginRateLimited
@@ -98,7 +97,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 		return LoginOutput{}, err
 	}
 
-	if err := s.repository.ClearLoginFailures(ctx, keys); err != nil {
+	if err := s.throttle.Clear(ctx, keys); err != nil {
 		slog.Warn("failed to clear login failures", "error", err)
 	}
 
@@ -133,8 +132,9 @@ func failureThreshold(key string) int {
 }
 
 func (s *Service) recordLoginFailures(ctx context.Context, keys []string) {
-	resetAt := s.now().Add(rateLimitDuration)
 	for _, key := range keys {
-		_ = s.repository.RecordLoginFailure(ctx, key, resetAt)
+		if err := s.throttle.RecordFailure(ctx, key); err != nil {
+			slog.Warn("failed to record login failure", "error", err)
+		}
 	}
 }

@@ -1013,19 +1013,3 @@ func (c *Client) DeleteExpiredSessions(ctx context.Context) error {
 func (c *Client) DeleteSession(ctx context.Context, sessionID string) error {
 	return NewSessionRepository(c).DeleteSession(ctx, sessionID)
 }
-
-func (c *Client) DeleteExpiredLoginFailures(ctx context.Context) error {
-	return NewSessionRepository(c).DeleteExpiredLoginFailures(ctx)
-}
-
-func (c *Client) GetLoginFailures(ctx context.Context, keys []string) ([]sessions.LoginFailure, error) {
-	return NewSessionRepository(c).GetLoginFailures(ctx, keys)
-}
-
-func (c *Client) RecordLoginFailure(ctx context.Context, key string, resetAt time.Time) error {
-	return NewSessionRepository(c).RecordLoginFailure(ctx, key, resetAt)
-}
-
-func (c *Client) ClearLoginFailures(ctx context.Context, keys []string) error {
-	return NewSessionRepository(c).ClearLoginFailures(ctx, keys)
-}

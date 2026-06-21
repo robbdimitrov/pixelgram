@@ -15,9 +15,10 @@ import (
 )
 
 type Config struct {
-	Blobs       blobstore.Store
-	RateLimiter httpx.RateLimiterStore
-	Readiness   func(context.Context) error
+	Blobs         blobstore.Store
+	RateLimiter   httpx.RateLimiterStore
+	LoginThrottle sessions.LoginThrottle
+	Readiness     func(context.Context) error
 }
 
 type Repositories struct {
@@ -37,9 +38,12 @@ func New(cfg Config, repositories Repositories) http.Handler {
 	if cfg.RateLimiter == nil {
 		cfg.RateLimiter = httpx.NoopRateLimiterStore{}
 	}
+	if cfg.LoginThrottle == nil {
+		cfg.LoginThrottle = sessions.NoopLoginThrottle{}
+	}
 	protected := http.NewServeMux()
 	userHandler := users.NewHandler(users.NewService(repositories.Users, cfg.Blobs))
-	sessionHandler := sessions.NewHandler(sessions.NewService(repositories.Sessions))
+	sessionHandler := sessions.NewHandler(sessions.NewService(repositories.Sessions, cfg.LoginThrottle))
 	uploadHandler := uploads.Handler{
 		Service: uploads.NewService(repositories.Uploads), Store: cfg.Blobs,
 	}
