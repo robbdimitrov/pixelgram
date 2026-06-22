@@ -52,26 +52,35 @@ describe('getCursorPage', () => {
 	const map = (dto: { id: number; label: string }) => ({ ...dto, mapped: true });
 
 	it('fetches the base URL when no cursor is given', async () => {
-		const fetch = vi.fn().mockResolvedValue(
-			new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
-		);
+		const fetch = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
+			);
 		await getCursorPage(fetch, '/posts', null, map);
 		expect(fetch).toHaveBeenCalledWith('/posts');
 	});
 
 	it('appends encoded cursor as query param', async () => {
-		const fetch = vi.fn().mockResolvedValue(
-			new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
-		);
+		const fetch = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
+			);
 		await getCursorPage(fetch, '/posts', 'abc==', map);
 		expect(fetch).toHaveBeenCalledWith('/posts?cursor=abc%3D%3D');
 	});
 
 	it('maps each DTO through the mapper and returns nextCursor', async () => {
-		const dtos = [{ id: 1, label: 'a' }, { id: 2, label: 'b' }];
-		const fetch = vi.fn().mockResolvedValue(
-			new Response(JSON.stringify({ items: dtos, nextCursor: 'next' }), { status: 200 })
-		);
+		const dtos = [
+			{ id: 1, label: 'a' },
+			{ id: 2, label: 'b' }
+		];
+		const fetch = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(JSON.stringify({ items: dtos, nextCursor: 'next' }), { status: 200 })
+			);
 		const page = await getCursorPage(fetch, '/posts', null, map);
 		expect(page.items).toEqual([
 			{ id: 1, label: 'a', mapped: true },
@@ -81,9 +90,11 @@ describe('getCursorPage', () => {
 	});
 
 	it('returns empty items and null cursor on empty page', async () => {
-		const fetch = vi.fn().mockResolvedValue(
-			new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
-		);
+		const fetch = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })
+			);
 		const page = await getCursorPage(fetch, '/posts', null, map);
 		expect(page.items).toEqual([]);
 		expect(page.nextCursor).toBeNull();

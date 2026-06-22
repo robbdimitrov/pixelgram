@@ -58,6 +58,7 @@ func registerRoutes(public, protected routeMux, h handlers) {
 	uploads.RegisterPublicRoutes(public, h.uploads)
 
 	users.RegisterProtectedRoutes(protected, h.users)
+	sessions.RegisterProtectedRoutes(protected, h.sessions)
 	uploads.RegisterProtectedRoutes(protected, h.uploads)
 	posts.RegisterRoutes(protected, h.posts)
 	comments.RegisterRoutes(protected, h.comments)

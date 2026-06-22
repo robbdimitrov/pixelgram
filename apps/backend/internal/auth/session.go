@@ -11,14 +11,14 @@ import (
 
 const SessionIDLength = 28
 
-var sessionIDPattern = regexp.MustCompile(`^[A-Za-z0-9+/=]+$`)
+var sessionIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{28}$`)
 
 func GenerateSessionID() (string, error) {
 	bytes := make([]byte, 21)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
-	return base64.StdEncoding.EncodeToString(bytes), nil
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }
 
 func ValidSessionID(sessionID string) bool {

@@ -7,14 +7,14 @@ const VALID_TYPES = new Set<string>(['users', 'posts', 'hashtags']);
 const MAX_Q_LENGTH = 50;
 
 export const GET: RequestHandler = async (event) => {
-  const q = event.url.searchParams.get('q') ?? '';
-  const typeParam = event.url.searchParams.get('type') ?? 'posts';
-  const cursor = event.url.searchParams.get('cursor') ?? undefined;
+	const q = event.url.searchParams.get('q') ?? '';
+	const typeParam = event.url.searchParams.get('type') ?? 'posts';
+	const cursor = event.url.searchParams.get('cursor') ?? undefined;
 
-  if (!q || q.length > MAX_Q_LENGTH || !VALID_TYPES.has(typeParam)) {
-    return json({ items: [], nextCursor: null });
-  }
+	if (!q || q.length > MAX_Q_LENGTH || !VALID_TYPES.has(typeParam)) {
+		return json({ items: [], nextCursor: null });
+	}
 
-  const page = await search(apiClient(event), { q, type: typeParam as SearchType, cursor });
-  return json(page);
+	const page = await search(apiClient(event), { q, type: typeParam as SearchType, cursor });
+	return json(page);
 };

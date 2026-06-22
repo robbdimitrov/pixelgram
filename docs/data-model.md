@@ -29,8 +29,9 @@ search_outbox (event queue for Meilisearch sync)
 ### sessions
 | Field | Type | Constraints |
 |---|---|---|
-| id | varchar(255) PK | HMAC-SHA256 hash of the raw session token |
-| user_id | integer FK → users | ON DELETE CASCADE |
+| id | varchar(255) PK | Private HMAC-SHA256 hash of the raw session token; never exposed |
+| public_id | uuid | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() — listing and revocation identifier |
+| user_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
 | expires_at | timestamptz | NOT NULL |
 
@@ -108,6 +109,7 @@ Transactional outbox. Written in the same transaction as the entity mutation; re
 
 | Table | Index | Purpose |
 |---|---|---|
+| sessions | sessions_public_id_key (UNIQUE) | public session lookup and revocation |
 | sessions | sessions_user_id_idx | session lookup by user |
 | sessions | sessions_expires_at_idx | cleanup sweep |
 | uploads | uploads_user_id_idx, uploads_created_idx | expiry queries |
@@ -133,6 +135,10 @@ Transactional outbox. Written in the same transaction as the entity mutation; re
 - A post's `filename` is consumed from `uploads` atomically at creation; an orphaned upload is never used for a post.
 - A user's `avatar` must either be blank, equal to an existing `users.avatar` or `posts.filename` owned by the same user, or a valid pending `upload`. The old avatar blob is deleted from object storage if no other entity references it.
 - Deleting a post clears `users.avatar` for any user whose avatar references the post's filename.
-- A session token is stored only as its HMAC-SHA256 hash; the raw token lives only in the cookie.
+- A session token is stored only as its private HMAC-SHA256 `id`; the raw token
+  lives only in the cookie. The independent UUID `public_id` is safe to expose
+  for session listing and ownership-constrained revocation.
+- Session creation is serialized on the owning user row and retains at most the
+  100 newest sessions per user.
 - Hashtag names are lowercased and de-duplicated before storage; they are created idempotently (`ON CONFLICT DO NOTHING`).
 - `follows(follower_id, followee_id)` is inserted with `ON CONFLICT DO NOTHING`; self-follow is blocked at the service layer.

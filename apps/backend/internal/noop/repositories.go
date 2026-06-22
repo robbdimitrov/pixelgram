@@ -56,7 +56,13 @@ func (Sessions) FindLoginCredentialsByEmail(context.Context, string) (*sessions.
 func (Sessions) CreateSession(context.Context, string, int, time.Time) (sessions.CreatedSession, error) {
 	return sessions.CreatedSession{}, nil
 }
-func (Sessions) DeleteSession(context.Context, string) error           { return nil }
+func (Sessions) DeleteSession(context.Context, string) error { return nil }
+func (Sessions) ListActiveSessions(context.Context, string, string) ([]sessions.Session, error) {
+	return []sessions.Session{}, nil
+}
+func (Sessions) DeleteSessionByID(context.Context, string, string, string) (sessions.DeleteSessionOutcome, error) {
+	return sessions.DeleteSessionNotFound, nil
+}
 func (Sessions) UpdatePasswordHash(context.Context, int, string) error { return nil }
 
 type Uploads struct{}

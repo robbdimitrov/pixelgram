@@ -14,6 +14,8 @@ import (
 type HandlerService interface {
 	Login(ctx context.Context, input LoginInput) (LoginOutput, error)
 	Logout(ctx context.Context, sessionID string) error
+	ListActive(ctx context.Context, userID, currentSessionToken string) ([]Session, error)
+	Revoke(ctx context.Context, publicID, userID, currentSessionToken string) error
 }
 
 type Handler struct {
@@ -79,4 +81,60 @@ func (h Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 
 	httpx.ClearSessionCookie(w, r)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) ListSessions(w http.ResponseWriter, r *http.Request) {
+	userID, sessionID, ok := authenticatedSession(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	items, err := h.Service.ListActive(r.Context(), userID, sessionID)
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, struct {
+		Sessions []Session `json:"sessions"`
+	}{Sessions: items})
+}
+
+func (h Handler) RevokeSession(w http.ResponseWriter, r *http.Request) {
+	publicID := r.PathValue("sessionId")
+	if !validation.ValidUUID(publicID) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid session ID.")
+		return
+	}
+
+	userID, sessionID, ok := authenticatedSession(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	if err := h.Service.Revoke(r.Context(), publicID, userID, sessionID); err != nil {
+		switch {
+		case errors.Is(err, ErrSessionNotFound):
+			httpx.WriteMessage(w, http.StatusNotFound, "Session not found.")
+		case errors.Is(err, ErrCurrentSession):
+			httpx.WriteMessage(w, http.StatusConflict, "The current session cannot be revoked.")
+		default:
+			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func authenticatedSession(r *http.Request) (string, string, bool) {
+	userID, ok := httpx.UserID(r)
+	if !ok || userID == "" {
+		return "", "", false
+	}
+	sessionID, ok := httpx.GetSessionCookie(r)
+	if !ok || !auth.ValidSessionID(sessionID) {
+		return "", "", false
+	}
+	return userID, sessionID, true
 }

@@ -19,7 +19,8 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
     ├── logout/             form action: DELETE /sessions → delete session cookie → redirect /login (cookie deleted even if backend call fails)
     ├── settings/           layout → redirect to sub-routes
     │   ├── profile/        form action: PUT /users/{id}
-    │   └── password/       form action: PUT /users/{id}
+    │   ├── password/       form action: PUT /users/{id}
+    │   └── sessions/       load: GET /sessions; revoke action: DELETE /sessions/{sessionId}
     ├── posts/[publicId]/   load: GET /posts/{id} + GET /posts/{id}/comments
     └── [username=username]/ load: GET /users/{username} + GET /users/{username}/posts; actions: follow (POST /users/{id}/follow), unfollow (DELETE /users/{id}/follow)
         ├── likes/          load: GET /users/{username}/likes
@@ -92,6 +93,8 @@ Browser fetches for pagination: `GET /feed`, `GET /@{username}`, `GET /posts/{id
 | `/@{username}/{mode}` | GET | page load | GET /users/{u}/followers or /following |
 | `/@{username}/{mode}` | GET | +server.ts | GET /users/{u}/followers or /following?cursor= |
 | `/posts/{id}/comments` | GET | +server.ts | GET /posts/{id}/comments?cursor= |
+| `/settings/sessions` | GET | page load | GET /sessions |
+| `/settings/sessions?/revoke` | POST | named form action | DELETE /sessions/{sessionId} |
 | `/uploads/[key]` | GET | +server.ts | GET /uploads/{key} (proxied) |
 | `/health` | GET | +server.ts | returns `ok` text |
 
@@ -101,8 +104,29 @@ State: `items`, `cursor`, `loading`, `error`. Resets when `getInitial()` returns
 
 ## Session Cookie Relay
 
-On login, the backend sets `Set-Cookie: session=...` on its own origin. `applySessionCookie()` in `auth.ts` parses the `Set-Cookie` header and re-emits it on the SvelteKit origin. The cookie is then included in all subsequent `apiClient` calls via `event.cookies.get('session')`.
+On login, the backend sets `Set-Cookie: session=...` on its own origin.
+`applySessionCookie()` in `auth.ts` accepts only a 28-character unpadded
+base64url token (`[A-Za-z0-9_-]{28}`), parses the `Set-Cookie` header, and
+re-emits it on the SvelteKit origin. The cookie is then included in all
+subsequent `apiClient` calls via `event.cookies.get('session')`.
+
+## Active Sessions
+
+`/settings/sessions` follows the BFF boundary. Its server load calls
+`GET /sessions` through `apiClient`, maps the API timestamps to `Date` values,
+and renders the initial list during SSR; the browser does not fetch sessions on
+mount.
+
+Remote revocation uses the enhanced named `revoke` form action. The action
+validates the submitted public UUID, calls
+`DELETE /sessions/{encodeURIComponent(sessionId)}` through `apiClient`, and
+maps backend failures to safe UI messages. The page removes a session from its
+local list only after a successful response. The current session has no revoke
+control and must be terminated through the existing Logout action.
 
 ## Type Mapping
 
-DTOs (`UserDto`, `PostDto`, `CommentDto`) are mapped to domain types (`User`, `Post`, `Comment`) via `mappers.ts`. The only transformation is `created: string → Date`.
+DTOs (`UserDto`, `PostDto`, `CommentDto`, `SessionDto`) are mapped to domain
+types (`User`, `Post`, `Comment`, `Session`) via `mappers.ts`. Timestamp strings
+are deliberately converted to `Date` values; sessions map both `created` and
+`expiresAt`.

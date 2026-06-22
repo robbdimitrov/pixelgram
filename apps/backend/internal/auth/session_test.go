@@ -20,8 +20,13 @@ func TestValidSessionID(t *testing.T) {
 		want      bool
 	}{
 		{name: "valid", sessionID: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA", want: true},
+		{name: "valid URL-safe characters", sessionID: "_-AAAAAAAAAAAAAAAAAAAAAAAAAA", want: true},
 		{name: "too short", sessionID: "AAAAAAAAAAAAAAAAAAAAAAAAAAA", want: false},
-		{name: "invalid chars", sessionID: "AAAAAAAAAAAAAAAAAAAAAAAAAAA-", want: false},
+		{name: "too long", sessionID: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA", want: false},
+		{name: "standard base64 plus", sessionID: "+AAAAAAAAAAAAAAAAAAAAAAAAAAA", want: false},
+		{name: "standard base64 slash", sessionID: "/AAAAAAAAAAAAAAAAAAAAAAAAAAA", want: false},
+		{name: "base64 padding", sessionID: "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", want: false},
+		{name: "non ASCII", sessionID: "éAAAAAAAAAAAAAAAAAAAAAAAAAAA", want: false},
 	}
 
 	for _, tt := range tests {

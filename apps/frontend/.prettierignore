@@ -1,3 +1,5 @@
 .svelte-kit/
 build/
+coverage/
+dist/
 package-lock.json

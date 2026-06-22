@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { mapUser, mapPost, mapComment } from '$lib/utils/mappers';
-import type { UserDto, PostDto, CommentDto } from '$lib/types';
+import { mapUser, mapPost, mapComment, mapSession } from '$lib/utils/mappers';
+import type { UserDto, PostDto, CommentDto, SessionDto } from '$lib/types';
 
 const baseUserDto: UserDto = {
 	id: 1,
@@ -89,5 +89,26 @@ describe('mapComment', () => {
 	it('preserves null avatar', () => {
 		const comment = mapComment(baseCommentDto);
 		expect(comment.avatar).toBeNull();
+	});
+});
+
+describe('mapSession', () => {
+	const session: SessionDto = {
+		id: '01904d2e-7f4d-7c33-ae21-2f94737eaa10',
+		created: '2026-06-22T12:00:00Z',
+		expiresAt: '2026-06-29T12:00:00Z',
+		current: true
+	};
+
+	it('maps both timestamps to valid Date values', () => {
+		expect(mapSession(session)).toEqual({
+			...session,
+			created: new Date(session.created),
+			expiresAt: new Date(session.expiresAt)
+		});
+	});
+
+	it.each(['created', 'expiresAt'] as const)('rejects an invalid %s timestamp', (field) => {
+		expect(() => mapSession({ ...session, [field]: 'invalid' })).toThrow('Invalid timestamp');
 	});
 });

@@ -7,9 +7,9 @@
 </script>
 
 {#if navigating.to}
-  <div class="fixed inset-x-0 top-0 z-50 h-0.5 bg-primary/20">
-    <div class="h-full w-1/3 animate-pulse rounded-full bg-primary"></div>
-  </div>
+	<div class="fixed inset-x-0 top-0 z-50 h-0.5 bg-primary/20">
+		<div class="h-full w-1/3 animate-pulse rounded-full bg-primary"></div>
+	</div>
 {/if}
 
 {@render children()}

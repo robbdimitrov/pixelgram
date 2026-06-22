@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -690,6 +691,482 @@ func TestPostgresRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 	}
 }
 
+func TestPostgresRepositoryListsAndRevokesActiveSessions(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_list_owner")
+	otherUserID := createTestUser(t, client, "session_list_other")
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	type seededSession struct {
+		token    string
+		publicID string
+		created  time.Time
+		expires  time.Time
+		userID   int
+	}
+	seeded := []seededSession{
+		{
+			token:    "current-token",
+			publicID: "10000000-0000-0000-0000-000000000002",
+			created:  now.Add(-time.Hour),
+			expires:  now.Add(24 * time.Hour),
+			userID:   userID,
+		},
+		{
+			token:    "remote-newer-public-id",
+			publicID: "10000000-0000-0000-0000-000000000003",
+			created:  now.Add(-2 * time.Hour),
+			expires:  now.Add(24 * time.Hour),
+			userID:   userID,
+		},
+		{
+			token:    "remote-older-public-id",
+			publicID: "10000000-0000-0000-0000-000000000001",
+			created:  now.Add(-2 * time.Hour),
+			expires:  now.Add(24 * time.Hour),
+			userID:   userID,
+		},
+		{
+			token:    "sliding-expired",
+			publicID: "20000000-0000-0000-0000-000000000001",
+			created:  now.Add(-3 * time.Hour),
+			expires:  now.Add(-time.Minute),
+			userID:   userID,
+		},
+		{
+			token:    "absolute-expired",
+			publicID: "20000000-0000-0000-0000-000000000002",
+			created:  now.Add(-31 * 24 * time.Hour),
+			expires:  now.Add(24 * time.Hour),
+			userID:   userID,
+		},
+		{
+			token:    "other-user",
+			publicID: "30000000-0000-0000-0000-000000000001",
+			created:  now,
+			expires:  now.Add(24 * time.Hour),
+			userID:   otherUserID,
+		},
+	}
+	for _, session := range seeded {
+		if _, err := client.CreateSession(ctx, session.token, session.userID, session.expires); err != nil {
+			t.Fatalf("CreateSession(%q) error = %v", session.token, err)
+		}
+		if _, err := client.db.Pool().Exec(
+			ctx,
+			`UPDATE sessions SET public_id = $1, created = $2 WHERE id = $3`,
+			session.publicID,
+			session.created,
+			auth.HashSessionToken(session.token, testSessionSecret),
+		); err != nil {
+			t.Fatalf("seed session %q error = %v", session.token, err)
+		}
+	}
+
+	items, err := client.ListActiveSessions(ctx, stringID(userID), "current-token")
+	if err != nil {
+		t.Fatalf("ListActiveSessions() error = %v", err)
+	}
+	if len(items) != 3 {
+		t.Fatalf("ListActiveSessions() = %+v, want 3 items", items)
+	}
+	wantIDs := []string{
+		"10000000-0000-0000-0000-000000000002",
+		"10000000-0000-0000-0000-000000000003",
+		"10000000-0000-0000-0000-000000000001",
+	}
+	for i, wantID := range wantIDs {
+		if items[i].ID != wantID {
+			t.Fatalf("session[%d].ID = %q, want %q", i, items[i].ID, wantID)
+		}
+		if items[i].Current != (i == 0) {
+			t.Fatalf("session[%d].Current = %v, want %v", i, items[i].Current, i == 0)
+		}
+	}
+	if !items[0].Created.Equal(seeded[0].created) || !items[0].ExpiresAt.Equal(seeded[0].expires) {
+		t.Fatalf("current session timestamps = %v, %v; want %v, %v",
+			items[0].Created, items[0].ExpiresAt, seeded[0].created, seeded[0].expires)
+	}
+
+	outcome, err := client.DeleteSessionByID(
+		ctx,
+		"30000000-0000-0000-0000-000000000001",
+		stringID(userID),
+		"current-token",
+	)
+	if err != nil || outcome != sessions.DeleteSessionNotFound {
+		t.Fatalf("DeleteSessionByID(other user) = %v, %v", outcome, err)
+	}
+	var otherUserSessionCount int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(*) FROM sessions WHERE public_id = $1 AND user_id = $2`,
+		"30000000-0000-0000-0000-000000000001",
+		otherUserID,
+	).Scan(&otherUserSessionCount); err != nil || otherUserSessionCount != 1 {
+		t.Fatalf("other user's session count = %d, error = %v; want 1", otherUserSessionCount, err)
+	}
+
+	outcome, err = client.DeleteSessionByID(
+		ctx,
+		"10000000-0000-0000-0000-000000000002",
+		stringID(userID),
+		"current-token",
+	)
+	if err != nil || outcome != sessions.DeleteSessionCurrent {
+		t.Fatalf("DeleteSessionByID(current) = %v, %v", outcome, err)
+	}
+	var currentSessionCount int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(*) FROM sessions WHERE public_id = $1 AND id = $2`,
+		"10000000-0000-0000-0000-000000000002",
+		auth.HashSessionToken("current-token", testSessionSecret),
+	).Scan(&currentSessionCount); err != nil || currentSessionCount != 1 {
+		t.Fatalf("current session count = %d, error = %v; want 1", currentSessionCount, err)
+	}
+
+	outcome, err = client.DeleteSessionByID(
+		ctx,
+		"10000000-0000-0000-0000-000000000003",
+		stringID(userID),
+		"current-token",
+	)
+	if err != nil || outcome != sessions.DeleteSessionDeleted {
+		t.Fatalf("DeleteSessionByID(remote) = %v, %v", outcome, err)
+	}
+	var remaining int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(*) FROM sessions WHERE public_id = $1`,
+		"10000000-0000-0000-0000-000000000003",
+	).Scan(&remaining); err != nil || remaining != 0 {
+		t.Fatalf("deleted session count = %d, error = %v", remaining, err)
+	}
+}
+
+func TestPostgresRepositoryConcurrentSessionRevocationHasOneWinner(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_revoke_concurrent")
+	const (
+		token    = "remote-session-token"
+		publicID = "40000000-0000-0000-0000-000000000001"
+	)
+	if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`UPDATE sessions SET public_id = $1 WHERE id = $2`,
+		publicID,
+		auth.HashSessionToken(token, testSessionSecret),
+	); err != nil {
+		t.Fatalf("set public ID error = %v", err)
+	}
+
+	const callers = 16
+	start := make(chan struct{})
+	outcomes := make(chan sessions.DeleteSessionOutcome, callers)
+	errs := make(chan error, callers)
+	var group sync.WaitGroup
+	for range callers {
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			<-start
+			outcome, err := client.DeleteSessionByID(
+				ctx,
+				publicID,
+				stringID(userID),
+				"different-current-token",
+			)
+			outcomes <- outcome
+			errs <- err
+		}()
+	}
+	close(start)
+	group.Wait()
+	close(outcomes)
+	close(errs)
+
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("DeleteSessionByID() error = %v", err)
+		}
+	}
+	deleted, notFound := 0, 0
+	for outcome := range outcomes {
+		switch outcome {
+		case sessions.DeleteSessionDeleted:
+			deleted++
+		case sessions.DeleteSessionNotFound:
+			notFound++
+		case sessions.DeleteSessionCurrent:
+			t.Fatal("remote session was misclassified as current during concurrent revocation")
+		default:
+			t.Fatalf("unexpected deletion outcome %v", outcome)
+		}
+	}
+	if deleted != 1 || notFound != callers-1 {
+		t.Fatalf("outcomes = %d deleted, %d not found; want 1, %d", deleted, notFound, callers-1)
+	}
+}
+
+func TestPostgresRepositoryConcurrentRevocationPreservesCurrentSession(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_current_race")
+	const (
+		token    = "current-session-token"
+		publicID = "50000000-0000-0000-0000-000000000001"
+		callers  = 16
+	)
+	if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`UPDATE sessions SET public_id = $1 WHERE id = $2`,
+		publicID,
+		auth.HashSessionToken(token, testSessionSecret),
+	); err != nil {
+		t.Fatalf("set public ID error = %v", err)
+	}
+
+	start := make(chan struct{})
+	outcomes := make(chan sessions.DeleteSessionOutcome, callers)
+	errs := make(chan error, callers)
+	var group sync.WaitGroup
+	for range callers {
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			<-start
+			outcome, err := client.DeleteSessionByID(ctx, publicID, stringID(userID), token)
+			outcomes <- outcome
+			errs <- err
+		}()
+	}
+	close(start)
+	group.Wait()
+	close(outcomes)
+	close(errs)
+
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("DeleteSessionByID() error = %v", err)
+		}
+	}
+	for outcome := range outcomes {
+		if outcome != sessions.DeleteSessionCurrent {
+			t.Fatalf("DeleteSessionByID() outcome = %v, want current", outcome)
+		}
+	}
+	var remaining int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(*) FROM sessions WHERE public_id = $1 AND id = $2`,
+		publicID,
+		auth.HashSessionToken(token, testSessionSecret),
+	).Scan(&remaining); err != nil || remaining != 1 {
+		t.Fatalf("current session count = %d, error = %v; want 1", remaining, err)
+	}
+}
+
+func TestPostgresSessionPublicIDGeneratedAndUnique(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_public_id")
+
+	for _, token := range []string{"first-token", "second-token"} {
+		if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour)); err != nil {
+			t.Fatalf("CreateSession(%q) error = %v", token, err)
+		}
+	}
+
+	var count, distinct int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(public_id), count(DISTINCT public_id) FROM sessions WHERE user_id = $1`,
+		userID,
+	).Scan(&count, &distinct); err != nil {
+		t.Fatalf("public ID query error = %v", err)
+	}
+	if count != 2 || distinct != 2 {
+		t.Fatalf("public IDs = count %d, distinct %d; want 2, 2", count, distinct)
+	}
+
+	var firstPublicID string
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT public_id FROM sessions WHERE id = $1`,
+		auth.HashSessionToken("first-token", testSessionSecret),
+	).Scan(&firstPublicID); err != nil {
+		t.Fatalf("first public ID query error = %v", err)
+	}
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`UPDATE sessions SET public_id = $1 WHERE id = $2`,
+		firstPublicID,
+		auth.HashSessionToken("second-token", testSessionSecret),
+	); err == nil {
+		t.Fatal("duplicate public ID update succeeded, want unique constraint violation")
+	}
+}
+
+func TestPostgresRepositoryCapsSessionsPerUser(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_limit")
+
+	for i := 0; i < maxSessionsPerUser+1; i++ {
+		token := fmt.Sprintf("bounded-session-%03d", i)
+		if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour)); err != nil {
+			t.Fatalf("CreateSession(%d) error = %v", i, err)
+		}
+	}
+
+	var count int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(*) FROM sessions WHERE user_id = $1`,
+		userID,
+	).Scan(&count); err != nil {
+		t.Fatalf("session count query error = %v", err)
+	}
+	if count != maxSessionsPerUser {
+		t.Fatalf("session count = %d, want %d", count, maxSessionsPerUser)
+	}
+}
+
+func TestPostgresRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_concurrent_limit")
+
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`INSERT INTO sessions (id, user_id, created, expires_at)
+		SELECT 'existing-' || value, $1,
+		  clock_timestamp() - (value * interval '1 minute'),
+		  clock_timestamp() + interval '1 day'
+		FROM generate_series(1, 99) AS series(value)`,
+		userID,
+	); err != nil {
+		t.Fatalf("seed existing sessions error = %v", err)
+	}
+
+	const callers = 8
+	start := make(chan struct{})
+	errs := make(chan error, callers)
+	var group sync.WaitGroup
+	for i := 0; i < callers; i++ {
+		group.Add(1)
+		go func(index int) {
+			defer group.Done()
+			<-start
+			token := fmt.Sprintf("concurrent-issued-%d", index)
+			_, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour))
+			errs <- err
+		}(i)
+	}
+	close(start)
+	group.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("concurrent CreateSession() error = %v", err)
+		}
+	}
+
+	var count int
+	if err := client.db.Pool().QueryRow(
+		ctx,
+		`SELECT count(*) FROM sessions WHERE user_id = $1`,
+		userID,
+	).Scan(&count); err != nil {
+		t.Fatalf("session count query error = %v", err)
+	}
+	if count != maxSessionsPerUser {
+		t.Fatalf("session count = %d, want %d", count, maxSessionsPerUser)
+	}
+	for i := 0; i < callers; i++ {
+		token := fmt.Sprintf("concurrent-issued-%d", i)
+		var exists bool
+		if err := client.db.Pool().QueryRow(
+			ctx,
+			`SELECT EXISTS (SELECT 1 FROM sessions WHERE id = $1)`,
+			auth.HashSessionToken(token, testSessionSecret),
+		).Scan(&exists); err != nil {
+			t.Fatalf("issued session %d query error = %v", i, err)
+		}
+		if !exists {
+			t.Fatalf("issued session %d was pruned", i)
+		}
+	}
+}
+
+func TestPostgresRepositorySessionListHasHardLimit(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_list_limit")
+
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`INSERT INTO sessions (id, user_id, created, expires_at)
+		SELECT 'direct-' || value, $1,
+		  clock_timestamp() - (value * interval '1 minute'),
+		  clock_timestamp() + interval '1 day'
+		FROM generate_series(1, 101) AS series(value)`,
+		userID,
+	); err != nil {
+		t.Fatalf("seed direct sessions error = %v", err)
+	}
+
+	items, err := client.ListActiveSessions(ctx, stringID(userID), "not-a-seeded-token")
+	if err != nil {
+		t.Fatalf("ListActiveSessions() error = %v", err)
+	}
+	if len(items) != maxSessionsPerUser {
+		t.Fatalf("listed sessions = %d, want %d", len(items), maxSessionsPerUser)
+	}
+}
+
+func TestPostgresRepositoryListsEffectiveAbsoluteExpiry(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	userID := createTestUser(t, client, "session_effective_expiry")
+	const token = "near-absolute-expiry"
+
+	if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(sessionTTL)); err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	created := time.Now().UTC().Add(-29 * 24 * time.Hour).Truncate(time.Microsecond)
+	if _, err := client.db.Pool().Exec(
+		ctx,
+		`UPDATE sessions SET created = $1, expires_at = $2 WHERE id = $3`,
+		created,
+		time.Now().UTC().Add(sessionTTL),
+		auth.HashSessionToken(token, testSessionSecret),
+	); err != nil {
+		t.Fatalf("set near-absolute expiry error = %v", err)
+	}
+
+	items, err := client.ListActiveSessions(ctx, stringID(userID), token)
+	if err != nil {
+		t.Fatalf("ListActiveSessions() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ListActiveSessions() = %+v, want one session", items)
+	}
+	wantExpiry := created.Add(defaultSessionAbsoluteTTLHours * time.Hour)
+	if !items[0].ExpiresAt.Equal(wantExpiry) {
+		t.Fatalf("effective expiry = %v, want %v", items[0].ExpiresAt, wantExpiry)
+	}
+}
+
 func TestSearchRepositoryTypeaheadResultsAndLimit(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
@@ -1012,4 +1489,15 @@ func (c *Client) DeleteExpiredSessions(ctx context.Context) error {
 
 func (c *Client) DeleteSession(ctx context.Context, sessionID string) error {
 	return NewSessionRepository(c).DeleteSession(ctx, sessionID)
+}
+
+func (c *Client) ListActiveSessions(ctx context.Context, userID, currentSessionToken string) ([]sessions.Session, error) {
+	return NewSessionRepository(c).ListActiveSessions(ctx, userID, currentSessionToken)
+}
+
+func (c *Client) DeleteSessionByID(
+	ctx context.Context,
+	publicID, userID, currentSessionToken string,
+) (sessions.DeleteSessionOutcome, error) {
+	return NewSessionRepository(c).DeleteSessionByID(ctx, publicID, userID, currentSessionToken)
 }

@@ -43,7 +43,8 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 			return err
 		}
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('user', $1::text)`, id); err != nil {
+			`INSERT INTO search_outbox (entity_type, entity_id)
+			VALUES ('user', $1::integer::text)`, id); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {

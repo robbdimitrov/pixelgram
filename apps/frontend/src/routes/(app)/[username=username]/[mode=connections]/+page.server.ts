@@ -5,22 +5,20 @@ import { stripAt } from '$lib/server/username';
 import { apiClient } from '$lib/server/api/client';
 
 export const load: PageServerLoad = async ({ fetch, cookies, params }) => {
-  const api = apiClient({ fetch, cookies });
-  const username = stripAt(params.username);
-  const mode = params.mode as 'followers' | 'following';
+	const api = apiClient({ fetch, cookies });
+	const username = stripAt(params.username);
+	const mode = params.mode as 'followers' | 'following';
 
-  const profileUser = await getByUsername(api, username);
-  if (!profileUser) throw error(404, 'User not found');
+	const profileUser = await getByUsername(api, username);
+	if (!profileUser) throw error(404, 'User not found');
 
-  const page =
-    mode === 'followers'
-      ? await getFollowers(api, username)
-      : await getFollowing(api, username);
+	const page =
+		mode === 'followers' ? await getFollowers(api, username) : await getFollowing(api, username);
 
-  return {
-    profileUser,
-    mode,
-    users: page.items,
-    nextCursor: page.nextCursor
-  };
+	return {
+		profileUser,
+		mode,
+		users: page.items,
+		nextCursor: page.nextCursor
+	};
 };

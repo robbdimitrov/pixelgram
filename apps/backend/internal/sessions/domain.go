@@ -27,6 +27,21 @@ type CreatedSession struct {
 	UserID int
 }
 
+type Session struct {
+	ID        string    `json:"id"`
+	Created   time.Time `json:"created"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	Current   bool      `json:"current"`
+}
+
+type DeleteSessionOutcome int
+
+const (
+	DeleteSessionNotFound DeleteSessionOutcome = iota
+	DeleteSessionDeleted
+	DeleteSessionCurrent
+)
+
 type LoginInput struct {
 	Email    string
 	Password string

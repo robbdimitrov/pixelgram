@@ -17,6 +17,7 @@ import (
 const (
 	sessionTTL                     = 7 * 24 * time.Hour
 	defaultSessionAbsoluteTTLHours = 720
+	maxSessionsPerUser             = 100
 )
 
 type SessionRepository struct {
@@ -44,10 +45,44 @@ func (r *SessionRepository) FindLoginCredentialsByEmail(ctx context.Context, ema
 
 func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
 	var session sessions.CreatedSession
+	hashedSessionID := r.db.HashSession(sessionID)
 	err := r.db.Write(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx, `INSERT INTO sessions (id, user_id, expires_at)
-			VALUES ($1, $2, $3) RETURNING user_id`,
-			r.db.HashSession(sessionID), userID, expiresAt).Scan(&session.UserID)
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+
+		// Serialize session creation per user so concurrent replicas cannot
+		// exceed the bounded active-session policy.
+		if err := tx.QueryRow(ctx, `SELECT id FROM users WHERE id = $1 FOR UPDATE`, userID).
+			Scan(&session.UserID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions
+			WHERE user_id = $1
+			  AND (expires_at <= clock_timestamp()
+			    OR created < clock_timestamp() - ($2 * interval '1 hour'))`,
+			userID, sessionAbsoluteTTLHours()); err != nil {
+			return err
+		}
+		if err := tx.QueryRow(ctx, `INSERT INTO sessions (id, user_id, created, expires_at)
+			VALUES ($1, $2, clock_timestamp(), $3) RETURNING user_id`,
+			hashedSessionID, userID, expiresAt).Scan(&session.UserID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions
+			WHERE user_id = $1
+			  AND id <> $2
+			  AND id NOT IN (
+			  SELECT id FROM sessions
+			  WHERE user_id = $1 AND id <> $2
+			  ORDER BY created DESC, public_id DESC
+			  LIMIT $3
+			)`, userID, hashedSessionID, maxSessionsPerUser-1); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
 	})
 	if err != nil {
 		return sessions.CreatedSession{}, err
@@ -104,6 +139,77 @@ func sessionAbsoluteTTLHours() int {
 
 func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string) error {
 	return r.exec(ctx, `DELETE FROM sessions WHERE id = $1`, r.db.HashSession(sessionID))
+}
+
+func (r *SessionRepository) ListActiveSessions(ctx context.Context, userID, currentSessionToken string) ([]sessions.Session, error) {
+	var items []sessions.Session
+	err := r.db.Read(ctx, func() error {
+		attemptItems := make([]sessions.Session, 0)
+		rows, err := r.db.Pool().Query(ctx, `SELECT public_id, created,
+			  LEAST(expires_at, created + ($3 * interval '1 hour')), id = $2
+			FROM sessions
+			WHERE user_id = $1
+			  AND expires_at > now()
+			  AND created >= now() - ($3 * interval '1 hour')
+			ORDER BY created DESC, public_id DESC
+			LIMIT $4`,
+			userID, r.db.HashSession(currentSessionToken), sessionAbsoluteTTLHours(), maxSessionsPerUser)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var session sessions.Session
+			if err := rows.Scan(&session.ID, &session.Created, &session.ExpiresAt, &session.Current); err != nil {
+				return err
+			}
+			attemptItems = append(attemptItems, session)
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		items = attemptItems
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *SessionRepository) DeleteSessionByID(
+	ctx context.Context,
+	publicID, userID, currentSessionToken string,
+) (sessions.DeleteSessionOutcome, error) {
+	var result string
+	err := r.db.Write(ctx, func() error {
+		return r.db.Pool().QueryRow(ctx, `WITH deleted AS (
+			  DELETE FROM sessions
+			  WHERE public_id = $1 AND user_id = $2 AND id <> $3
+			  RETURNING 1
+			)
+			SELECT CASE
+			  WHEN EXISTS (SELECT 1 FROM deleted) THEN 'deleted'
+			  WHEN EXISTS (
+			    SELECT 1 FROM sessions
+			    WHERE public_id = $1 AND user_id = $2 AND id = $3
+			  ) THEN 'current'
+			  ELSE 'not_found'
+			END`,
+			publicID, userID, r.db.HashSession(currentSessionToken)).Scan(&result)
+	})
+	if err != nil {
+		return sessions.DeleteSessionNotFound, err
+	}
+	switch result {
+	case "deleted":
+		return sessions.DeleteSessionDeleted, nil
+	case "current":
+		return sessions.DeleteSessionCurrent, nil
+	default:
+		return sessions.DeleteSessionNotFound, nil
+	}
 }
 
 func (r *SessionRepository) UpdatePasswordHash(ctx context.Context, userID int, hash string) error {

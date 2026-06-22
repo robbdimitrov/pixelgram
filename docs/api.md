@@ -40,7 +40,37 @@ Defaults are overridable via env vars `RATE_LIMIT_{POLICY}_{BURST,RATE}`.
 #### Sessions
 | Method | Path | Purpose |
 |---|---|---|
+| GET | /sessions | List the authenticated user's active sessions |
 | DELETE | /sessions | Logout — clears session cookie |
+| DELETE | /sessions/{sessionId} | Revoke one remote session by public UUID |
+
+`GET /sessions` returns active sessions newest first:
+
+```json
+{
+  "sessions": [
+    {
+      "id": "01904d2e-7f4d-7c33-ae21-2f94737eaa10",
+      "created": "2026-06-22T12:00:00Z",
+      "expiresAt": "2026-06-29T12:00:00Z",
+      "current": true
+    }
+  ]
+}
+```
+
+The `id` field is the session's public UUID, not the raw cookie token or its
+private HMAC database key. The list includes only sessions owned by the
+authenticated user that remain within both the sliding expiry and absolute
+lifetime. `expiresAt` is the earlier of those two limits. Accounts retain at
+most 100 sessions, so the response is bounded. Responses are `200`; repository
+failures return `500`.
+
+`DELETE /sessions/{sessionId}` validates `sessionId` as a UUID and deletes only
+a session owned by the authenticated user. It returns `204` on success, `400`
+for a malformed UUID, `404` when the session is missing or belongs to another
+user, `409` when it identifies the current session, and `500` on repository
+failure. Use `DELETE /sessions` to terminate the current session.
 
 #### Users
 | Method | Path | Purpose |

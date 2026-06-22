@@ -7,15 +7,11 @@ describe('linkify', () => {
 	});
 
 	it('returns a mention token with correct href', () => {
-		expect(linkify('@alice')).toEqual([
-			{ type: 'mention', value: '@alice', href: '/@alice' }
-		]);
+		expect(linkify('@alice')).toEqual([{ type: 'mention', value: '@alice', href: '/@alice' }]);
 	});
 
 	it('lower-cases the mention href', () => {
-		expect(linkify('@Alice')).toEqual([
-			{ type: 'mention', value: '@Alice', href: '/@alice' }
-		]);
+		expect(linkify('@Alice')).toEqual([{ type: 'mention', value: '@Alice', href: '/@alice' }]);
 	});
 
 	it('returns a hashtag token with correct href', () => {
@@ -43,9 +39,7 @@ describe('linkify', () => {
 	});
 
 	it('returns a text token for ftp:// (not a recognised url)', () => {
-		expect(linkify('ftp://example.com')).toEqual([
-			{ type: 'text', value: 'ftp://example.com' }
-		]);
+		expect(linkify('ftp://example.com')).toEqual([{ type: 'text', value: 'ftp://example.com' }]);
 	});
 
 	it('tokenises a mixed string with mention, hashtag, url, and plain text', () => {

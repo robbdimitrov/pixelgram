@@ -2,12 +2,26 @@
 
 ## Session Model
 
-- Session IDs are generated with `crypto/rand` (21 bytes → 28-char base64 string).
-- The raw session ID is never stored. It is HMAC-SHA256 hashed with `SESSION_HASH_SECRET` before persistence.
+- Session tokens are generated with `crypto/rand` as 21 random bytes encoded
+  with unpadded base64url (`[A-Za-z0-9_-]{28}`). Standard base64 characters
+  `+`, `/`, and padding `=` are rejected.
+- The raw session token is never stored. It is HMAC-SHA256 hashed with
+  `SESSION_HASH_SECRET`; that private HMAC value is the session row's primary
+  key and is never exposed through the API.
+- Each session also has a random public UUID used for listing and remote
+  revocation. Exposing this identifier does not expose the cookie token or its
+  HMAC.
 - The `session` cookie is `HttpOnly`, `SameSite=Strict`, `Secure` (when TLS is detected or `TRUST_PROXY=true` and `X-Forwarded-Proto: https`), `Path=/`, `Max-Age=604800` (7 days).
 - On every authenticated request, `RefreshSession` refreshes the sliding TTL only when the session is within the inner half of the TTL window (`expires_at < now + TTL/2`); sessions in the outer half are still validated but not re-stamped. Sessions expire 7 days after last use or 30 days (720 h, configurable via `SESSION_ABSOLUTE_TTL_HOURS`) after creation, whichever comes first.
 - A background goroutine sweeps expired sessions from PostgreSQL every hour.
 - Password changes revoke all other sessions for the user atomically in a single transaction.
+- Each user is limited to 100 sessions. Session creation is serialized per user
+  and removes the oldest excess rows, bounding listing and storage work.
+- Active-session listing and revocation derive the user and current token from
+  authenticated request state. Remote revocation uses an ownership-constrained
+  database delete, returns the same not-found result for missing and unowned
+  UUIDs, and refuses to revoke the current session. Current-session termination
+  remains the logout operation.
 
 ## Password Policy
 
@@ -24,6 +38,7 @@
 | Update user profile | `userId` path param must equal session `userID` (checked in handler) |
 | Delete post | `WHERE public_id = $1 AND user_id = $2` (atomic in DB) |
 | Delete comment | `WHERE public_id = $1 AND id = $2 AND user_id = $3` (atomic in DB) |
+| Revoke remote session | Atomic delete constrained by `public_id` and authenticated `user_id`; missing and unowned IDs both return 404 |
 | Follow/unfollow self | Blocked at service layer (`currentUserID == targetUserID`) |
 | Read email field | Stripped in handler unless requester is the user |
 | Upload image | Registered to `userID`; consumed atomically at post/avatar creation |

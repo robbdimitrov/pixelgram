@@ -17,6 +17,8 @@ var targetPasswordParams = auth.DefaultPasswordParams
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrLoginRateLimited   = errors.New("login rate limited")
+	ErrSessionNotFound    = errors.New("session not found")
+	ErrCurrentSession     = errors.New("cannot revoke current session")
 )
 
 type Service struct {
@@ -109,6 +111,25 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 
 func (s *Service) Logout(ctx context.Context, sessionID string) error {
 	return s.repository.DeleteSession(ctx, sessionID)
+}
+
+func (s *Service) ListActive(ctx context.Context, userID, currentSessionToken string) ([]Session, error) {
+	return s.repository.ListActiveSessions(ctx, userID, currentSessionToken)
+}
+
+func (s *Service) Revoke(ctx context.Context, publicID, userID, currentSessionToken string) error {
+	outcome, err := s.repository.DeleteSessionByID(ctx, publicID, userID, currentSessionToken)
+	if err != nil {
+		return err
+	}
+	switch outcome {
+	case DeleteSessionDeleted:
+		return nil
+	case DeleteSessionCurrent:
+		return ErrCurrentSession
+	default:
+		return ErrSessionNotFound
+	}
 }
 
 func loginFailureKeys(clientIP, email string) []string {

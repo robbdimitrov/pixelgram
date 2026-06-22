@@ -27,6 +27,8 @@ func TestRouteContract(t *testing.T) {
 		{Method: "PUT", Path: "/users/{userId}", Authenticated: true},
 		{Method: "POST", Path: "/users/{userId}/follow", Authenticated: true},
 		{Method: "DELETE", Path: "/users/{userId}/follow", Authenticated: true},
+		{Method: "GET", Path: "/sessions", Authenticated: true},
+		{Method: "DELETE", Path: "/sessions/{sessionId}", Authenticated: true},
 		{Method: "POST", Path: "/uploads", Authenticated: true},
 		{Method: "POST", Path: "/posts", Authenticated: true},
 		{Method: "GET", Path: "/posts", Authenticated: true},

@@ -17,6 +17,14 @@ type fakeRepository struct {
 	createdSessionUser   int
 	createdSessionExpiry time.Time
 	deletedSessionID     string
+	listedSessions       []Session
+	listUserID           string
+	listCurrentToken     string
+	deleteByIDPublicID   string
+	deleteByIDUserID     string
+	deleteByIDToken      string
+	deleteByIDOutcome    DeleteSessionOutcome
+	deleteByIDErr        error
 	updatedPasswordHash  string
 	updatePasswordErr    error
 	expiredSessionSweeps int
@@ -49,6 +57,22 @@ func (r *fakeRepository) CreateSession(
 func (r *fakeRepository) DeleteSession(_ context.Context, sessionID string) error {
 	r.deletedSessionID = sessionID
 	return r.err
+}
+
+func (r *fakeRepository) ListActiveSessions(_ context.Context, userID, currentSessionToken string) ([]Session, error) {
+	r.listUserID = userID
+	r.listCurrentToken = currentSessionToken
+	return r.listedSessions, r.err
+}
+
+func (r *fakeRepository) DeleteSessionByID(
+	_ context.Context,
+	publicID, userID, currentSessionToken string,
+) (DeleteSessionOutcome, error) {
+	r.deleteByIDPublicID = publicID
+	r.deleteByIDUserID = userID
+	r.deleteByIDToken = currentSessionToken
+	return r.deleteByIDOutcome, r.deleteByIDErr
 }
 
 func (r *fakeRepository) UpdatePasswordHash(_ context.Context, _ int, hash string) error {
@@ -269,6 +293,82 @@ func TestServiceLogoutDeletesSession(t *testing.T) {
 	}
 	if repository.deletedSessionID != "AAAAAAAAAAAAAAAAAAAAAAAAAAAA" {
 		t.Fatalf("deleted session ID = %q", repository.deletedSessionID)
+	}
+}
+
+func TestServiceListActiveSessions(t *testing.T) {
+	want := []Session{{ID: "01904d2e-7f4d-7c33-ae21-2f94737eaa10", Current: true}}
+	repository := &fakeRepository{listedSessions: want}
+	service := NewService(repository, NoopLoginThrottle{})
+
+	got, err := service.ListActive(context.Background(), "7", "current-token")
+
+	if err != nil {
+		t.Fatalf("ListActive() error = %v", err)
+	}
+	if len(got) != 1 || got[0] != want[0] {
+		t.Fatalf("ListActive() = %+v, want %+v", got, want)
+	}
+	if repository.listUserID != "7" || repository.listCurrentToken != "current-token" {
+		t.Fatalf("repository list args = %q, %q", repository.listUserID, repository.listCurrentToken)
+	}
+}
+
+func TestServiceListActiveSessionsRepositoryError(t *testing.T) {
+	wantErr := errors.New("database unavailable")
+	service := NewService(&fakeRepository{err: wantErr}, NoopLoginThrottle{})
+
+	_, err := service.ListActive(context.Background(), "7", "current-token")
+
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("ListActive() error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestServiceRevokeSessionOutcomes(t *testing.T) {
+	tests := []struct {
+		name    string
+		outcome DeleteSessionOutcome
+		repoErr error
+		wantErr error
+	}{
+		{name: "deleted", outcome: DeleteSessionDeleted},
+		{name: "missing", outcome: DeleteSessionNotFound, wantErr: ErrSessionNotFound},
+		{name: "current", outcome: DeleteSessionCurrent, wantErr: ErrCurrentSession},
+		{name: "repository error", repoErr: errors.New("database unavailable"), wantErr: errors.New("database unavailable")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				deleteByIDOutcome: test.outcome,
+				deleteByIDErr:     test.repoErr,
+			}
+			service := NewService(repository, NoopLoginThrottle{})
+
+			err := service.Revoke(
+				context.Background(),
+				"01904d2e-7f4d-7c33-ae21-2f94737eaa10",
+				"7",
+				"current-token",
+			)
+
+			if test.wantErr == nil && err != nil {
+				t.Fatalf("Revoke() error = %v", err)
+			}
+			if test.wantErr != nil && (err == nil || err.Error() != test.wantErr.Error()) {
+				t.Fatalf("Revoke() error = %v, want %v", err, test.wantErr)
+			}
+			if repository.deleteByIDPublicID != "01904d2e-7f4d-7c33-ae21-2f94737eaa10" ||
+				repository.deleteByIDUserID != "7" ||
+				repository.deleteByIDToken != "current-token" {
+				t.Fatalf("repository revoke args = %q, %q, %q",
+					repository.deleteByIDPublicID,
+					repository.deleteByIDUserID,
+					repository.deleteByIDToken,
+				)
+			}
+		})
 	}
 }
 

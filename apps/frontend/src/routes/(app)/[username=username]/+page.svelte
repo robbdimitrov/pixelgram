@@ -1,72 +1,76 @@
 <script lang="ts">
-  import { createPagination } from '$lib/createPagination.svelte';
-  import ProfileHeader from '$lib/components/ProfileHeader.svelte';
-  import Thumbnail from '$lib/components/Thumbnail.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-  import { fetchJson } from '$lib/utils/clientFetch';
-  import type { PageData } from './$types';
-  import type { Post } from '$lib/types';
+	import { createPagination } from '$lib/createPagination.svelte';
+	import ProfileHeader from '$lib/components/ProfileHeader.svelte';
+	import Thumbnail from '$lib/components/Thumbnail.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+	import { fetchJson } from '$lib/utils/clientFetch';
+	import type { PageData } from './$types';
+	import type { Post } from '$lib/types';
 
-  let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
-  let profileUser = $derived(data.profileUser);
-  let isFollowPending = $state(false);
+	let profileUser = $derived(data.profileUser);
+	let isFollowPending = $state(false);
 
-  const pagination = createPagination(
-    () => ({ items: data.posts, nextCursor: data.nextCursor }),
-    async (cursor) => {
-      const res = await fetch(`/@${data.profileUser.username}?cursor=${encodeURIComponent(cursor)}`);
-      return fetchJson<{ items: Post[]; nextCursor: string | null }>(res);
-    }
-  );
+	const pagination = createPagination(
+		() => ({ items: data.posts, nextCursor: data.nextCursor }),
+		async (cursor) => {
+			const res = await fetch(
+				`/@${data.profileUser.username}?cursor=${encodeURIComponent(cursor)}`
+			);
+			return fetchJson<{ items: Post[]; nextCursor: string | null }>(res);
+		}
+	);
 
-  const isCurrentUser = $derived(data.currentUser.id === profileUser.id);
-  const username = $derived(profileUser.username);
+	const isCurrentUser = $derived(data.currentUser.id === profileUser.id);
+	const username = $derived(profileUser.username);
 </script>
 
 <svelte:head>
-  <title>@{data.profileUser.username} — PixelGram</title>
+	<title>@{data.profileUser.username} — PixelGram</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-5xl flex-col gap-6">
-  <ProfileHeader {profileUser} {isCurrentUser} bind:isFollowPending />
+	<ProfileHeader {profileUser} {isCurrentUser} bind:isFollowPending />
 
-  <div class="h-px w-full bg-base-300" aria-hidden="true"></div>
+	<div class="h-px w-full bg-base-300" aria-hidden="true"></div>
 
-  <div class="tabs tabs-bordered justify-center font-bold">
-    <a class="tab tab-active" href="/@{username}">Posts</a>
-    <a class="tab" href="/@{username}/followers">Followers</a>
-    <a class="tab" href="/@{username}/following">Following</a>
-  </div>
+	<div class="tabs tabs-bordered justify-center font-bold">
+		<a class="tab tab-active" href="/@{username}">Posts</a>
+		<a class="tab" href="/@{username}/followers">Followers</a>
+		<a class="tab" href="/@{username}/following">Following</a>
+	</div>
 
-  {#if pagination.items.length > 0}
-    <div class="grid grid-cols-3 gap-2 sm:gap-4">
-      {#each pagination.items as post (post.id)}
-        <div class="aspect-square">
-          <Thumbnail {post} />
-        </div>
-      {/each}
-    </div>
-  {:else}
-    <div class="mx-auto w-full max-w-xl">
-      <EmptyState
-        icon="camera"
-        title="No uploads yet"
-        description={isCurrentUser ? 'Your profile is ready. Share your first photo to start building your grid.' : 'This profile has not shared any photos yet.'}
-        actionLabel={isCurrentUser ? 'Share Your First Photo' : 'Browse Feed'}
-        actionRoute={isCurrentUser ? '/upload' : '/feed'}
-        actionStyle={isCurrentUser ? 'primary' : 'outline'}
-      />
-    </div>
-  {/if}
+	{#if pagination.items.length > 0}
+		<div class="grid grid-cols-3 gap-2 sm:gap-4">
+			{#each pagination.items as post (post.id)}
+				<div class="aspect-square">
+					<Thumbnail {post} />
+				</div>
+			{/each}
+		</div>
+	{:else}
+		<div class="mx-auto w-full max-w-xl">
+			<EmptyState
+				icon="camera"
+				title="No uploads yet"
+				description={isCurrentUser
+					? 'Your profile is ready. Share your first photo to start building your grid.'
+					: 'This profile has not shared any photos yet.'}
+				actionLabel={isCurrentUser ? 'Share Your First Photo' : 'Browse Feed'}
+				actionRoute={isCurrentUser ? '/upload' : '/feed'}
+				actionStyle={isCurrentUser ? 'primary' : 'outline'}
+			/>
+		</div>
+	{/if}
 
-  {#if !pagination.done && pagination.items.length > 0}
-    <div class="flex flex-col items-center gap-2">
-      {#if pagination.error}
-        <p class="text-sm text-error">{pagination.error}</p>
-      {/if}
-      <LoadMoreButton loading={pagination.loading} onclick={pagination.more} />
-    </div>
-  {/if}
+	{#if !pagination.done && pagination.items.length > 0}
+		<div class="flex flex-col items-center gap-2">
+			{#if pagination.error}
+				<p class="text-sm text-error">{pagination.error}</p>
+			{/if}
+			<LoadMoreButton loading={pagination.loading} onclick={pagination.more} />
+		</div>
+	{/if}
 </div>
