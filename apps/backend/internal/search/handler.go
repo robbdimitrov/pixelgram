@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/pagination"
 )
 
 // hashtagNameRe matches valid hashtag names as stored in the database.
@@ -21,7 +22,6 @@ var hashtagNameRe = regexp.MustCompile(`^[A-Za-z0-9_]{1,50}$`)
 const (
 	maxQueryLen  = 50
 	typeaheadLen = 8
-	searchPage   = 20
 )
 
 type Application interface {
@@ -107,13 +107,19 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limit, ok := pagination.ParseLimit(r.URL.Query(), 20)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid limit.")
+		return
+	}
+
 	ctx := r.Context()
 	var items any
 	var count int
 
 	switch searchType {
 	case "users":
-		hits, err := meiliSearch(ctx, h.Meili, "users", q, "", offset, searchPage)
+		hits, err := meiliSearch(ctx, h.Meili, "users", q, "", offset, limit)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -130,7 +136,7 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 		count = len(users)
 
 	case "hashtags":
-		hits, err := meiliSearch(ctx, h.Meili, "hashtags", q, "", offset, searchPage)
+		hits, err := meiliSearch(ctx, h.Meili, "hashtags", q, "", offset, limit)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -157,7 +163,7 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 			filter = fmt.Sprintf(`hashtags = "%s"`, tag)
 			searchQ = ""
 		}
-		hits, err := meiliSearch(ctx, h.Meili, "posts", searchQ, filter, offset, searchPage)
+		hits, err := meiliSearch(ctx, h.Meili, "posts", searchQ, filter, offset, limit)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -175,8 +181,8 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var nextCursor *string
-	if count >= searchPage {
-		nc := encodeCursor(offset + searchPage)
+	if count >= limit {
+		nc := encodeCursor(offset + limit)
 		nextCursor = &nc
 	}
 

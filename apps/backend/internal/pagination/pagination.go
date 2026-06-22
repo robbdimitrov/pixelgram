@@ -32,17 +32,25 @@ func NewCursorPage[T any](items []T, nextCursor *Cursor) CursorPage[T] {
 	return CursorPage[T]{Items: items, NextCursor: encoded}
 }
 
-func ParsePagination(query url.Values) (Pagination, bool) {
+func ParseLimit(query url.Values, fallback int) (int, bool) {
 	if query.Has("page") {
-		return Pagination{}, false
+		return 0, false
 	}
 
-	limit, ok := parseIntDefault(query.Get("limit"), 10)
+	limit, ok := parseIntDefault(query.Get("limit"), fallback)
 	if !ok || limit < 1 {
-		return Pagination{}, false
+		return 0, false
 	}
 	if limit > 50 {
 		limit = 50
+	}
+	return limit, true
+}
+
+func ParsePagination(query url.Values) (Pagination, bool) {
+	limit, ok := ParseLimit(query, 10)
+	if !ok {
+		return Pagination{}, false
 	}
 
 	cursor, ok := DecodeCursor(query.Get("cursor"))

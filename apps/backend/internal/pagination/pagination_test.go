@@ -38,6 +38,35 @@ func TestParsePagination(t *testing.T) {
 	}
 }
 
+func TestParseLimit(t *testing.T) {
+	tests := []struct {
+		name     string
+		query    url.Values
+		fallback int
+		want     int
+		ok       bool
+	}{
+		{name: "defaults", query: url.Values{}, fallback: 20, want: 20, ok: true},
+		{name: "custom limit", query: url.Values{"limit": {"15"}}, fallback: 20, want: 15, ok: true},
+		{name: "caps limit", query: url.Values{"limit": {"100"}}, fallback: 20, want: 50, ok: true},
+		{name: "legacy page", query: url.Values{"page": {"1"}}, fallback: 20, want: 0, ok: false},
+		{name: "invalid limit", query: url.Values{"limit": {"abc"}}, fallback: 20, want: 0, ok: false},
+		{name: "zero limit", query: url.Values{"limit": {"0"}}, fallback: 20, want: 0, ok: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := ParseLimit(tt.query, tt.fallback)
+			if ok != tt.ok {
+				t.Fatalf("ok = %v, want %v", ok, tt.ok)
+			}
+			if got != tt.want {
+				t.Fatalf("limit = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCursorRoundTrip(t *testing.T) {
 	want := Cursor{
 		Created: time.Date(2026, 6, 15, 10, 0, 0, 123, time.UTC),
