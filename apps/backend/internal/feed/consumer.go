@@ -1,0 +1,203 @@
+package feed
+
+import (
+	"context"
+	"encoding/json"
+	"log/slog"
+	"strconv"
+	"time"
+
+	"github.com/twmb/franz-go/pkg/kgo"
+)
+
+const (
+	consumerGroup       = "feed-consumer"
+	topicEntityChanges  = "entity-changes"
+	topicActivity       = "activity"
+	followBackfillLimit = 50
+)
+
+type Consumer struct {
+	client *kgo.Client
+	repo   Repository
+}
+
+func NewConsumer(brokers []string, repo Repository) (*Consumer, error) {
+	client, err := kgo.NewClient(
+		kgo.SeedBrokers(brokers...),
+		kgo.ConsumerGroup(consumerGroup),
+		kgo.ConsumeTopics(topicEntityChanges, topicActivity),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &Consumer{client: client, repo: repo}, nil
+}
+
+func (c *Consumer) Close() {
+	c.client.Close()
+}
+
+func (c *Consumer) Run(ctx context.Context) {
+	for {
+		closed := false
+		func() {
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					slog.Error("feed consumer panicked", "panic", recovered)
+				}
+			}()
+			for {
+				fetches := c.client.PollFetches(ctx)
+				if ctx.Err() != nil {
+					return
+				}
+				if fetches.IsClientClosed() {
+					closed = true
+					return
+				}
+				fetches.EachError(func(topic string, partition int32, err error) {
+					slog.Warn("feed consumer: fetch error", "topic", topic, "partition", partition, "error", err)
+				})
+				fetches.EachRecord(func(record *kgo.Record) {
+					c.handle(ctx, record)
+				})
+				if err := c.client.CommitUncommittedOffsets(ctx); err != nil {
+					slog.Warn("feed consumer: commit failed", "error", err)
+				}
+			}
+		}()
+		if ctx.Err() != nil || closed {
+			return
+		}
+	}
+}
+
+type entityChangesPayload struct {
+	Table    string `json:"table"`
+	Op       string `json:"op"`
+	ID       int64  `json:"id"`
+	AuthorID string `json:"author_id"`
+	Created  string `json:"created"`
+}
+
+type activityPayload struct {
+	Op          string `json:"op"`
+	ActorID     string `json:"actor_id"`
+	RecipientID string `json:"recipient_id"`
+}
+
+func (c *Consumer) handle(ctx context.Context, record *kgo.Record) {
+	switch record.Topic {
+	case topicEntityChanges:
+		c.handleEntityChanges(ctx, record.Value)
+	case topicActivity:
+		c.handleActivity(ctx, record.Value)
+	}
+}
+
+func (c *Consumer) handleEntityChanges(ctx context.Context, data []byte) {
+	var payload entityChangesPayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		slog.Warn("feed consumer: failed to decode entity-changes payload", "error", err)
+		return
+	}
+	if payload.Table != "posts" || payload.Op != "upsert" {
+		return
+	}
+
+	authorID, err := strconv.ParseInt(payload.AuthorID, 10, 64)
+	if err != nil {
+		slog.Warn("feed consumer: invalid author_id", "author_id", payload.AuthorID)
+		return
+	}
+
+	var created time.Time
+	if payload.Created != "" {
+		created, err = time.Parse(time.RFC3339Nano, payload.Created)
+		if err != nil {
+			created = time.Now().UTC()
+		}
+	} else {
+		created = time.Now().UTC()
+	}
+
+	followers, err := c.repo.GetFollowers(ctx, authorID)
+	if err != nil {
+		slog.Warn("feed consumer: failed to get followers", "author_id", authorID, "error", err)
+		return
+	}
+
+	entries := make([]Entry, 0, len(followers)+1)
+	entries = append(entries, Entry{UserID: authorID, PostID: payload.ID, Created: created})
+	for _, followerID := range followers {
+		entries = append(entries, Entry{UserID: followerID, PostID: payload.ID, Created: created})
+	}
+
+	if err := c.repo.InsertEntries(ctx, entries); err != nil {
+		slog.Warn("feed consumer: failed to insert feed entries", "post_id", payload.ID, "error", err)
+	}
+}
+
+func (c *Consumer) handleActivity(ctx context.Context, data []byte) {
+	var payload activityPayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		slog.Warn("feed consumer: failed to decode activity payload", "error", err)
+		return
+	}
+
+	switch payload.Op {
+	case "follow":
+		c.handleFollow(ctx, payload.ActorID, payload.RecipientID)
+	case "unfollow":
+		c.handleUnfollow(ctx, payload.ActorID, payload.RecipientID)
+	}
+}
+
+func (c *Consumer) handleFollow(ctx context.Context, actorIDStr, recipientIDStr string) {
+	actorID, err := strconv.ParseInt(actorIDStr, 10, 64)
+	if err != nil {
+		slog.Warn("feed consumer: invalid actor_id", "actor_id", actorIDStr)
+		return
+	}
+	recipientID, err := strconv.ParseInt(recipientIDStr, 10, 64)
+	if err != nil {
+		slog.Warn("feed consumer: invalid recipient_id", "recipient_id", recipientIDStr)
+		return
+	}
+
+	recentEntries, err := c.repo.GetRecentPostEntries(ctx, recipientID, followBackfillLimit)
+	if err != nil {
+		slog.Warn("feed consumer: failed to get recent posts for follow", "recipient_id", recipientID, "error", err)
+		return
+	}
+	if len(recentEntries) == 0 {
+		return
+	}
+
+	entries := make([]Entry, len(recentEntries))
+	for i, e := range recentEntries {
+		entries[i] = Entry{UserID: actorID, PostID: e.PostID, Created: e.Created}
+	}
+
+	if err := c.repo.InsertEntries(ctx, entries); err != nil {
+		slog.Warn("feed consumer: failed to insert feed entries on follow", "actor_id", actorID, "error", err)
+	}
+}
+
+func (c *Consumer) handleUnfollow(ctx context.Context, actorIDStr, recipientIDStr string) {
+	actorID, err := strconv.ParseInt(actorIDStr, 10, 64)
+	if err != nil {
+		slog.Warn("feed consumer: invalid actor_id", "actor_id", actorIDStr)
+		return
+	}
+	recipientID, err := strconv.ParseInt(recipientIDStr, 10, 64)
+	if err != nil {
+		slog.Warn("feed consumer: invalid recipient_id", "recipient_id", recipientIDStr)
+		return
+	}
+
+	if err := c.repo.PruneByFollowee(ctx, actorID, recipientID); err != nil {
+		slog.Warn("feed consumer: failed to prune feed on unfollow", "actor_id", actorID, "recipient_id", recipientID, "error", err)
+	}
+}
