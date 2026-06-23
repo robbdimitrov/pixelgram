@@ -11,6 +11,8 @@
 | `storage` | SeaweedFS — S3-compatible object storage | `chrislusf/seaweedfs` |
 | `cache` | Dragonfly — rate limiting and login throttle | `docker.dragonflydb.io/dragonflydb/dragonfly` |
 | `search` | Meilisearch — full-text search | `getmeili/meilisearch` |
+| `broker` | Redpanda — Kafka-compatible event broker | `redpandadata/redpanda` |
+| `connect` | Redpanda Connect — CDC relay and Meilisearch/S3 sync | `redpandadata/connect` |
 
 ## Request Flow
 
@@ -25,6 +27,16 @@ Browser → nginx Ingress → frontend:8080 (SvelteKit SSR)
                                            │
                                         search
                                         (HTTP)
+
+postgres (WAL) → connect (pg_cdc on outbox)
+                     │
+                     ├── topic: entity-changes ──► connect sync-search → search
+                     │                         ──► connect cleanup-s3  → storage
+                     │                         ──► backend notifications-consumer
+                     │                         ──► backend feed-consumer
+                     │
+                     └── topic: activity ────────► backend notifications-consumer
+                                                ──► backend feed-consumer
 ```
 
 - The browser never calls the backend directly. `connect-src 'self'` CSP enforces the boundary.
@@ -43,11 +55,10 @@ Browser → nginx Ingress → frontend:8080 (SvelteKit SSR)
 ### Backend (Go)
 - Stateless HTTP API; all state lives in PostgreSQL, S3, Dragonfly, and Meilisearch.
 - Auth boundary: `httpx.RequireSession` wraps all routes except the explicit public allowlist.
-- Feature modules: `users`, `sessions`, `posts`, `comments`, `uploads`, `search`.
+- Feature modules: `users`, `sessions`, `posts`, `comments`, `uploads`, `search`, `notifications`, `feed`.
 - Upload handler decodes and re-encodes images to JPEG, stripping EXIF/GPS metadata and enforcing a 25 MP pixel dimension limit before storage.
-- Search outbox worker: drains `search_outbox` table and syncs to Meilisearch.
-- Session cleanup goroutine: sweeps expired sessions every hour.
-- Startup backfill: indexes all existing users, posts, and hashtags into Meilisearch on first replica. An advisory lock prevents redundant concurrent runs; concurrent runs are safe because all writes are idempotent upserts.
+- `notifications-consumer` and `feed-consumer`: franz-go consumer groups, each subscribing to both `entity-changes` and `activity` topics with distinct consumer group names so each receives the full stream independently.
+- Session cleanup goroutine: sweeps expired sessions and deletes `outbox` rows older than 7 days every hour.
 
 ### Database (migrate/migrate)
 - Runs as init container in the backend pod before the backend starts.
@@ -55,7 +66,8 @@ Browser → nginx Ingress → frontend:8080 (SvelteKit SSR)
 
 ## Key Integration Patterns
 
-- **Outbox pattern**: mutations to users, posts, and hashtags write a row to `search_outbox` inside the same transaction and call `pg_notify('search_outbox', '')`. The worker LISTEN connection wakes immediately; a fallback timer fires every 30 s.
+- **Outbox pattern**: every domain mutation writes a row to `outbox` inside the same transaction. The outbox is append-only; Redpanda Connect reads new rows via WAL CDC (`pg_cdc` input on `public.outbox`) and publishes to the appropriate Redpanda topic (`entity-changes` or `activity`). WAL position tracking gives at-least-once delivery; downstream consumers are idempotent.
+- **CDC relay**: Redpanda Connect monitors the PostgreSQL WAL for INSERT events on `outbox`. Two pipelines run in Connect: `sync-search` (entity-changes → Meilisearch) and `cleanup-s3` (post deletes → S3 DELETE). A one-shot Kubernetes Job (`broker-backfill`) seeds existing data on first deploy.
 - **Circuit breaker**: all PostgreSQL operations go through `database.DB.Read`/`Write`, which runs through a circuit breaker (5 consecutive transient failures → open; 30 s cooldown).
 - **Token bucket rate limiting**: implemented in Lua on Dragonfly; keyed by `{policy}:user:{id}` > `{policy}:session:{id}` > `{policy}:ip:{ip}`.
 - **Login throttle**: per-IP (5 failures) and per-email (50 failures) counters stored in Dragonfly with 15 min TTL.

@@ -9,7 +9,9 @@ users ──< posts ──< likes
                  ──< comments
                  ──< post_hashtags >── hashtags
 users ──< follows (follower → followee)
-search_outbox (event queue for Meilisearch sync)
+users ──< notifications (recipient ← actor events)
+users ──< feed >── posts
+outbox (transactional outbox for Kafka entity-changes and activity events)
 ```
 
 ## Entity Definitions
@@ -94,16 +96,37 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 | created | timestamptz | NOT NULL |
 | — | UNIQUE(follower_id, followee_id) | |
 
-### search_outbox
-Transactional outbox. Written in the same transaction as the entity mutation; read by the search worker.
+### notifications
+| Field | Type | Constraints |
+|---|---|---|
+| id | bigserial PK | auto-increment |
+| external_id | varchar(255) UNIQUE | NOT NULL — idempotency key (outbox row id carried through Kafka) |
+| user_id | bigint FK → users | NOT NULL, ON DELETE CASCADE — recipient |
+| actor_id | bigint FK → users | NOT NULL, ON DELETE CASCADE — who triggered the event |
+| type | varchar(20) | NOT NULL — `like`, `comment`, or `follow` |
+| entity_id | varchar(255) | NOT NULL — post public_id, comment id, or actor user id |
+| read | boolean | NOT NULL DEFAULT false |
+| created | timestamptz | NOT NULL DEFAULT now() |
+
+### outbox
+Transactional outbox for Redpanda. Written in the same transaction as the entity mutation; Redpanda Connect reads new rows via WAL CDC and publishes to the appropriate topic. Append-only; rows are never updated or deleted by the relay. A periodic cleanup removes rows older than 7 days.
 
 | Field | Type | Constraints |
 |---|---|---|
-| id | serial PK | |
-| entity_type | varchar(20) | `user`, `post`, or `hashtag` |
-| entity_id | varchar(255) | user id (int as text), post public_id (UUID), or hashtag name |
-| attempts | integer | DEFAULT 0 — retry counter; dead-lettered (deleted) at 5 |
+| id | bigserial PK | |
+| topic | varchar(50) | NOT NULL — `entity-changes` or `activity` |
+| payload | jsonb | NOT NULL — event payload |
+| created | timestamptz | NOT NULL DEFAULT now() |
+
+### feed
+Pre-materialized feed table. Populated by the `feed-consumer` on post creation (fan-out on write) and follow events. `ON DELETE CASCADE` on both FKs handles cleanup automatically when a post or user is deleted.
+
+| Field | Type | Constraints |
+|---|---|---|
+| user_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
+| post_id | integer FK → posts | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
+| — | PRIMARY KEY (user_id, post_id) | |
 
 ## Indexes
 
@@ -120,7 +143,10 @@ Transactional outbox. Written in the same transaction as the entity mutation; re
 | follows | follows_follower_id_idx, follows_followee_id_idx | social graph traversal |
 | hashtags | hashtags_name_trgm_idx (GIN trgm) | trigram typeahead |
 | users | users_username_trgm_idx (GIN trgm) | trigram typeahead |
-| search_outbox | search_outbox_id_idx | worker batch ordering |
+| outbox | outbox_created_idx | TTL cleanup |
+| notifications | notifications_user_id_created_idx | keyset pagination per user |
+| notifications | notifications_type_entity_idx | bulk delete by type and entity |
+| feed | feed_user_id_created_idx | keyset pagination per user |
 
 ## Meilisearch Indexes
 
@@ -142,3 +168,5 @@ Transactional outbox. Written in the same transaction as the entity mutation; re
   100 newest sessions per user.
 - Hashtag names are lowercased and de-duplicated before storage; they are created idempotently (`ON CONFLICT DO NOTHING`).
 - `follows(follower_id, followee_id)` is inserted with `ON CONFLICT DO NOTHING`; self-follow is blocked at the service layer.
+- `feed(user_id, post_id)` inserts use `ON CONFLICT DO NOTHING`; post-deletion rows are removed by `ON DELETE CASCADE`, not by the consumer.
+- `notifications` inserts use `ON CONFLICT (external_id) DO NOTHING`; `external_id` is the outbox row id relayed through Kafka, ensuring idempotent replay.

@@ -12,6 +12,8 @@ All services are deployed to the `pixelgram` namespace via manifests in `deploy/
 | `storage` | StatefulSet | 1 | PVC 5 Gi (ReadWriteOnce) + emptyDir /tmp |
 | `cache` | StatefulSet | 1 | PVC 1 Gi (ReadWriteOnce) |
 | `search` | StatefulSet | 1 | PVC 1 Gi (ReadWriteOnce) + emptyDir /tmp |
+| `broker` | StatefulSet | 1 | PVC 2 Gi (ReadWriteOnce) |
+| `connect` | Deployment | 1 | none (stateless) |
 
 ## Image Registry
 
@@ -33,8 +35,9 @@ All services are cluster-internal only. The nginx Ingress exposes only the `fron
 | `storage` | 8333 | S3 (HTTP) |
 | `cache` | 6379 | Redis-compatible |
 | `search` | 7700 | HTTP |
+| `broker` | 9092 | Kafka |
 
-`database`, `storage`, `cache`, and `search` use headless services (`clusterIP: None`).
+`database`, `storage`, `cache`, `search`, and `broker` use headless services (`clusterIP: None`). The `broker` service sets `publishNotReadyAddresses: true`.
 
 ## Ingress
 
@@ -57,7 +60,7 @@ All secrets are in the `database-credentials` Secret. Required keys:
 
 - `runAsNonRoot: true`
 - `allowPrivilegeEscalation: false`
-- `readOnlyRootFilesystem: true` (backend, frontend, cache, search, storage init; not PostgreSQL)
+- `readOnlyRootFilesystem: true` (backend, frontend, cache, search, storage init, broker, connect; not PostgreSQL)
 - `capabilities: drop: [ALL]`
 - `seccompProfile: RuntimeDefault`
 
@@ -69,6 +72,8 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | cache | 1000 |
 | search | 1000 |
 | storage | 65532 |
+| broker | 101 |
+| connect | 101 |
 
 ## Resource Limits
 
@@ -80,6 +85,8 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | cache | 256 Mi | 128 Mi | 100 m |
 | search | 512 Mi | 256 Mi | 100 m |
 | storage | 256 Mi | 128 Mi | 100 m |
+| broker | 512 Mi | 256 Mi | 250 m |
+| connect | 256 Mi | 128 Mi | 100 m |
 
 ## Health Probes
 
@@ -91,12 +98,17 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | cache | tcpSocket :6379 | tcpSocket :6379 | tcpSocket :6379, 30×2 s |
 | search | GET /health | GET /health | GET /health, 30×2 s |
 | storage | tcpSocket :8333 | tcpSocket :8333 | tcpSocket :8333, 30×2 s |
+| broker | GET :9644/v1/status/ready | GET :9644/v1/status/ready | GET :9644/v1/status/ready, 30×2 s |
 
 ## Migration Strategy
 
 - Migrations live in `apps/database/migrations/` as paired `NNNNNN_description.{up,down}.sql`.
 - Applied via `migrate/migrate` in the init container before each backend rollout.
 - Migration history is append-only; deployed schema defects require corrective migrations.
+
+## PostgreSQL CDC Configuration
+
+The `database` StatefulSet runs PostgreSQL with `-c wal_level=logical` to enable logical replication, which Redpanda Connect requires for the `pg_cdc` input. Only the `outbox` table is in the CDC publication (`outbox_relay`); no other tables require `REPLICA IDENTITY` changes.
 
 ## Environment Variables (backend)
 
@@ -113,6 +125,7 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | `TRUST_PROXY` | literal `"true"` | Honor X-Forwarded-* headers |
 | `MEILI_URL` | literal | Meilisearch endpoint |
 | `MEILI_MASTER_KEY` | secret | Meilisearch key provisioning |
+| `REDPANDA_BROKERS` | literal | Kafka broker address for consumers |
 | `PORT` | literal `"8080"` | Listen port |
 
 ## Environment Variables (frontend)

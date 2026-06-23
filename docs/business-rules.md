@@ -55,12 +55,30 @@
 
 ## Feed Logic
 
-The feed returns posts where:
-1. The post belongs to the current user, OR
-2. The post belongs to a user the current user follows, OR
-3. The current user follows nobody (returns all posts as a discovery feed).
+The feed reads from a pre-materialized `feed` table populated by the `feed-consumer`:
 
-All three cases are evaluated in one SQL query using `OR EXISTS / OR NOT EXISTS`.
+- **Post created**: one feed row is inserted per follower of the author, plus one for the author themselves. Uses `ON CONFLICT (user_id, post_id) DO NOTHING` for idempotency.
+- **Post deleted**: handled entirely by `ON DELETE CASCADE` on `feed.post_id` — no consumer action.
+- **Follow**: the last 50 posts by the followed user are backfilled into the follower's feed.
+- **Unfollow**: all feed rows where the post's author is the unfollowed user are pruned from the follower's feed.
+- A new user's feed is empty until they follow someone or create a post.
+
+## Notifications
+
+Notifications are created and deleted by the `notifications-consumer` from the `activity` topic. The `entity-changes` topic is also consumed for post-deletion cleanup. Self-events are never notified.
+
+**Creation** (all skip if `actor_id == recipient_id`):
+- Like: notify the post owner (`type=like`, `entity_id=post_public_id`).
+- Comment: notify the post owner (`type=comment`, `entity_id=comment_id`).
+- Follow: notify the followee (`type=follow`, `entity_id=actor_id as string`).
+
+All inserts use `ON CONFLICT (external_id) DO NOTHING` for idempotency.
+
+**Deletion**:
+- Unlike: delete the matching like notification for the actor and post.
+- Comment deleted: delete the matching comment notification by `entity_id=comment_id`.
+- Unfollow: delete the matching follow notification for the actor and recipient.
+- Post deleted: delete all `like` and `comment` notifications where `entity_id=post_public_id`.
 
 ## Search Query Rules
 

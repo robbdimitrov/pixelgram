@@ -11,8 +11,9 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
 ├── (auth)/                 no layout guard; public
 │   ├── login/              form action: POST /sessions
 │   └── signup/             form action: POST /users then POST /sessions
-└── (app)/                  +layout.server.ts: GET /users/me → redirect /login if 401
-    ├── feed/               load: GET /posts
+└── (app)/                  +layout.server.ts: GET /users/me → redirect /login if 401; GET /notifications (unread count badge)
+    ├── feed/               load: GET /feed
+    ├── notifications/      load: GET /notifications + PUT /notifications/{id}/read (mark all unread as read)
     ├── search/             load: GET /search?q=&type=
     ├── upload/             form action: POST /uploads → POST /posts
     ├── suggest/            GET +server.ts — typeahead proxy: GET /users/search or /hashtags/search
@@ -35,8 +36,8 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
   - renders: navigation progress bar + {children}
 
   (app)/+layout.svelte
-    - loads: currentUser (GET /users/me) → redirect /login if absent
-    - renders: <Navbar currentUser> + <main>{children}</main>
+    - loads: currentUser (GET /users/me) → redirect /login if absent; unreadCount from GET /notifications
+    - renders: <Navbar currentUser unreadCount> + <main>{children}</main>
     - width: max-w-5xl px-4 pb-8 pt-4
 
   (auth)/ — no shared layout component
@@ -81,8 +82,10 @@ Browser fetches for pagination: `GET /feed`, `GET /@{username}`, `GET /posts/{id
 
 | Path | Method | Handler | Backend call |
 |---|---|---|---|
-| `/feed` | GET | page load | GET /posts |
-| `/feed` | GET | +server.ts | GET /posts?cursor= |
+| `/feed` | GET | page load | GET /feed |
+| `/feed` | GET | +server.ts | GET /feed?cursor= |
+| `/notifications` | GET | page load | GET /notifications + PUT /notifications/{id}/read |
+| `/notifications` | GET | +server.ts | GET /notifications?cursor= + PUT /notifications/{id}/read |
 | `/search` | GET | page load | GET /search |
 | `/search` | GET | +server.ts | GET /search?cursor= |
 | `/suggest` | GET | +server.ts | GET /users/search or /hashtags/search |

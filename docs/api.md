@@ -83,11 +83,17 @@ failure. Use `DELETE /sessions` to terminate the current session.
 | POST | /users/{userId}/follow | Follow a user |
 | DELETE | /users/{userId}/follow | Unfollow a user |
 
+#### Feed
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /feed | Get the authenticated user's feed (cursor-paginated) |
+
+`GET /feed` returns posts from the feed table for the authenticated user, ordered `(created DESC, id DESC)`. Response shape matches the post list shape. Returns an empty items array (not an error) when the feed is empty.
+
 #### Posts
 | Method | Path | Purpose |
 |---|---|---|
 | POST | /posts | Create post from an upload |
-| GET | /posts | Get feed (cursor-paginated) |
 | GET | /posts/{publicId} | Get single post |
 | DELETE | /posts/{publicId} | Delete own post |
 | POST | /posts/{publicId}/likes | Like a post |
@@ -113,6 +119,36 @@ failure. Use `DELETE /sessions` to terminate the current session.
 | GET | /users/search?q= | Typeahead user search (up to 8 results) |
 | GET | /hashtags/search?q= | Typeahead hashtag search (up to 8 results) |
 | GET | /search?q=&type=&cursor= | Full search — type: `users`, `posts`, or `hashtags`; requires Meilisearch |
+
+#### Notifications
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /notifications | List notifications for the authenticated user (cursor-paginated) |
+| PUT | /notifications/{id}/read | Mark one notification as read |
+
+`GET /notifications` returns cursor-paginated notifications ordered `(created DESC, id DESC)`:
+
+```json
+{
+  "items": [
+    {
+      "id": 42,
+      "externalId": "activity-0-1234",
+      "userId": 7,
+      "actorId": 3,
+      "type": "like",
+      "entityId": "01904d2e-7f4d-7c33-ae21-2f94737eaa10",
+      "read": false,
+      "created": "2026-06-22T12:00:00Z"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+Notification types: `like` (entityId = post public_id), `comment` (entityId = comment id), `follow` (entityId = actor user id as string).
+
+`PUT /notifications/{id}/read` requires `id` to be a positive integer. Returns `204` on success, `400` for an invalid ID, and `500` on repository failure. Ownership is enforced in the UPDATE query.
 
 ## Pagination Model
 
