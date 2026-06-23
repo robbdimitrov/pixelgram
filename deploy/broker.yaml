@@ -1,0 +1,360 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: broker-pipelines
+  labels:
+    app: pixelgram
+    tier: broker
+data:
+  relay.yaml: |
+    input:
+      pg_cdc:
+        dsn: "${DATABASE_URL}"
+        slot_name: outbox_relay
+        publication_name: outbox_relay
+        tables:
+          - public.outbox
+
+    pipeline:
+      processors:
+        - filter:
+            check: meta("operation") == "INSERT"
+        - mapping: |
+            root = this.data.payload.parse_json()
+            root._outbox_id = this.data.id
+            meta topic = this.data.topic
+
+    output:
+      kafka_franz:
+        seed_brokers: ["${REDPANDA_BROKERS}"]
+        topic: ${! meta("topic") }
+        key: ${! json("_outbox_id") }
+        idempotent: true
+        max_in_flight: 1
+  sync-search.yaml: |
+    input:
+      kafka_franz:
+        seed_brokers: ["${REDPANDA_BROKERS}"]
+        topics: [entity-changes]
+        consumer_group: sync-search
+
+    pipeline:
+      processors:
+        - branch:
+            request_map: |
+              root = if this.table == "users" && this.op == "upsert" { this } else { deleted() }
+            processors:
+              - http:
+                  url: "${MEILI_URL}/indexes/users/documents"
+                  verb: POST
+                  headers:
+                    Authorization: "Bearer ${MEILI_MASTER_KEY}"
+        - branch:
+            request_map: |
+              root = if this.table == "users" && this.op == "delete" { this } else { deleted() }
+            processors:
+              - http:
+                  url: "${MEILI_URL}/indexes/users/documents/${! json(\"id\") }"
+                  verb: DELETE
+                  headers:
+                    Authorization: "Bearer ${MEILI_MASTER_KEY}"
+        - branch:
+            request_map: |
+              root = if this.table == "posts" && this.op == "upsert" { this } else { deleted() }
+            processors:
+              - http:
+                  url: "${MEILI_URL}/indexes/posts/documents"
+                  verb: POST
+                  headers:
+                    Authorization: "Bearer ${MEILI_MASTER_KEY}"
+        - branch:
+            request_map: |
+              root = if this.table == "posts" && this.op == "delete" { this } else { deleted() }
+            processors:
+              - http:
+                  url: "${MEILI_URL}/indexes/posts/documents/${! json(\"id\") }"
+                  verb: DELETE
+                  headers:
+                    Authorization: "Bearer ${MEILI_MASTER_KEY}"
+        - branch:
+            request_map: |
+              root = if this.table == "hashtags" && this.op == "upsert" && this.post_count > 0 { this } else { deleted() }
+            processors:
+              - http:
+                  url: "${MEILI_URL}/indexes/hashtags/documents"
+                  verb: POST
+                  headers:
+                    Authorization: "Bearer ${MEILI_MASTER_KEY}"
+        - branch:
+            request_map: |
+              root = if this.table == "hashtags" && this.op == "upsert" && this.post_count == 0 { this } else { deleted() }
+            processors:
+              - http:
+                  url: "${MEILI_URL}/indexes/hashtags/documents/${! json(\"name\") }"
+                  verb: DELETE
+                  headers:
+                    Authorization: "Bearer ${MEILI_MASTER_KEY}"
+
+    output:
+      drop: {}
+  cleanup-s3.yaml: |
+    input:
+      kafka_franz:
+        seed_brokers: ["${REDPANDA_BROKERS}"]
+        topics: [entity-changes]
+        consumer_group: cleanup-s3
+
+    pipeline:
+      processors:
+        - filter:
+            check: this.table == "posts" && this.op == "delete"
+
+    output:
+      http_client:
+        url: "${S3_ENDPOINT}/${S3_BUCKET}/${! json(\"filename\") }"
+        verb: DELETE
+  backfill.yaml: |
+    input:
+      sql_select:
+        driver: postgres
+        dsn: "${DATABASE_URL}"
+        table: users
+        columns: [id, username, name]
+        suffix: ORDER BY id
+
+    pipeline:
+      processors:
+        - mapping: |
+            root.table = "users"
+            root.op = "upsert"
+            root.id = this.id
+            root.username = this.username
+            root.name = this.name
+
+    output:
+      kafka_franz:
+        seed_brokers: ["${REDPANDA_BROKERS}"]
+        topic: entity-changes
+        key: ${! json("id") }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker
+  labels:
+    app: pixelgram
+    tier: broker
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: pixelgram
+    tier: broker
+  ports:
+  - name: kafka
+    port: 9092
+    targetPort: kafka
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: broker
+  labels:
+    app: pixelgram
+    tier: broker
+spec:
+  serviceName: broker
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: pixelgram
+      tier: broker
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: pixelgram
+        tier: broker
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: redpanda
+        image: docker.redpanda.com/redpandadata/redpanda
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        command: ["/usr/bin/rpk", "redpanda", "start"]
+        args:
+        - --smp=1
+        - --memory=256M
+        - --overprovisioned
+        - --node-id=0
+        - --kafka-addr=0.0.0.0:9092
+        - --advertise-kafka-addr=broker-0.broker:9092
+        - --pandaproxy-addr=0.0.0.0:8082
+        - --advertise-pandaproxy-addr=broker-0.broker:8082
+        - --schema-registry-addr=0.0.0.0:8081
+        - --rpc-addr=0.0.0.0:33145
+        - --advertise-rpc-addr=broker-0.broker:33145
+        - --mode=dev-container
+        - --set=redpanda.auto_create_topics_enabled=true
+        ports:
+        - name: kafka
+          containerPort: 9092
+        - name: pandaproxy
+          containerPort: 8082
+        - name: schema-registry
+          containerPort: 8081
+        - name: admin
+          containerPort: 9644
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            memory: 256Mi
+            cpu: 200m
+        startupProbe:
+          httpGet:
+            path: /v1/status/ready
+            port: 9644
+          failureThreshold: 60
+          periodSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /v1/status/ready
+            port: 9644
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /v1/status/ready
+            port: 9644
+          failureThreshold: 6
+          periodSeconds: 10
+          timeoutSeconds: 3
+        volumeMounts:
+        - mountPath: /var/lib/redpanda/data
+          name: broker-data
+        - mountPath: /tmp
+          name: temporary-files
+      volumes:
+      - name: temporary-files
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: broker-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connect
+  labels:
+    app: pixelgram
+    tier: broker
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: pixelgram
+      tier: broker
+      component: connect
+  template:
+    metadata:
+      labels:
+        app: pixelgram
+        tier: broker
+        component: connect
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: connect
+        image: docker.redpanda.com/redpandadata/connect
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        command: ["/redpanda-connect", "run", "/etc/connect/relay.yaml"]
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: postgres-password
+        - name: POSTGRES_DB
+          value: pixelgram
+        - name: DATABASE_URL
+          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
+        - name: S3_ENDPOINT
+          value: http://storage:8333
+        - name: S3_BUCKET
+          value: pixelgram
+        - name: S3_REGION
+          value: us-east-1
+        - name: S3_FORCE_PATH_STYLE
+          value: "true"
+        - name: S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: s3-access-key
+        - name: S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: s3-secret-key
+        - name: MEILI_URL
+          value: http://search:7700
+        - name: MEILI_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: meili-master-key
+        - name: REDPANDA_BROKERS
+          value: broker:9092
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            memory: 128Mi
+            cpu: 100m
+        volumeMounts:
+        - name: broker-pipelines
+          mountPath: /etc/connect
+      volumes:
+      - name: broker-pipelines
+        configMap:
+          name: broker-pipelines
+          defaultMode: 0444

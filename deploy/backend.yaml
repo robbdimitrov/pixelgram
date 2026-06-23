@@ -124,6 +124,8 @@ spec:
             secretKeyRef:
               name: database-credentials
               key: meili-master-key
+        - name: REDPANDA_BROKERS
+          value: broker:9092
         readinessProbe:
           httpGet:
             path: /ready
