@@ -14,7 +14,7 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
 └── (app)/                  +layout.server.ts: GET /users/me → redirect /login if 401; GET /notifications (unread count badge)
     ├── feed/               load: GET /feed
     ├── notifications/      load: GET /notifications + PUT /notifications/{id}/read (mark all unread as read)
-    ├── search/             load: GET /search?q=&type=
+    ├── search/             load: GET /search?q=&type= (empty query shows discovery content: suggested users via GET /users/suggested + popular posts grid via GET /posts/popular)
     ├── upload/             form action: POST /uploads → POST /posts
     ├── suggest/            GET +server.ts — typeahead proxy: GET /users/search or /hashtags/search
     ├── logout/             form action: DELETE /sessions → delete session cookie → redirect /login (cookie deleted even if backend call fails)

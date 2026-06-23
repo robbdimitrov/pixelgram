@@ -63,6 +63,11 @@ The feed reads from a pre-materialized `feed` table populated by the `feed-consu
 - **Unfollow**: all feed rows where the post's author is the unfollowed user are pruned from the follower's feed.
 - A new user's feed is empty until they follow someone or create a post.
 
+## Celebrity / Hybrid Fanout
+
+- **Celebrity threshold**: users with `follower_count > 10000` skip fan-out-on-write; only their own feed row is written at post creation time.
+- **Hybrid read**: celebrity posts are merged into each viewer's feed at query time via `UNION ALL` with `NOT EXISTS` dedup against the fan-out inbox, ensuring no duplicate entries appear when both paths would otherwise produce the same row.
+
 ## Notifications
 
 Notifications are created and deleted by the `notifications-consumer` from the `activity` topic. The `entity-changes` topic is also consumed for post-deletion cleanup. Self-events are never notified.

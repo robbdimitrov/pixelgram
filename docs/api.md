@@ -83,6 +83,24 @@ failure. Use `DELETE /sessions` to terminate the current session.
 | POST | /users/{userId}/follow | Follow a user |
 | DELETE | /users/{userId}/follow | Unfollow a user |
 
+#### Discovery
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /users/suggested | Get up to 10 suggested users to follow |
+| GET | /posts/popular | Get up to 20 popular posts from the last 7 days |
+
+`GET /users/suggested` returns users ordered by `follower_count` descending, excluding users the authenticated user already follows and the authenticated user themselves. Response:
+
+```json
+{"items": [<user>]}
+```
+
+`GET /posts/popular` returns posts from the last 7 days ordered by like count descending, up to 20 results. Response:
+
+```json
+{"items": [<post>]}
+```
+
 #### Feed
 | Method | Path | Purpose |
 |---|---|---|

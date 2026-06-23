@@ -26,6 +26,7 @@ outbox (transactional outbox for Kafka entity-changes and activity events)
 | password | varchar(255) | NOT NULL — Argon2id PHC hash |
 | avatar | varchar(255) | DEFAULT `''` — blob filename |
 | bio | varchar(300) | DEFAULT `''` |
+| follower_count | int | NOT NULL DEFAULT 0 — atomically maintained by follow/unfollow mutations within their transactions |
 | created | timestamptz | DEFAULT now() |
 
 ### sessions
