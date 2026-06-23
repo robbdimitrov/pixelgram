@@ -72,3 +72,9 @@ export async function unfollowUser(fetch: ApiClient, userId: number): Promise<nu
 	const res = await fetch(`/users/${userId}/follow`, { method: 'DELETE' });
 	return unwrap<null>(res);
 }
+
+export async function getSuggestedUsers(fetch: ApiClient): Promise<{ items: User[] }> {
+	const res = await fetch('/users/suggested');
+	const dto = await unwrap<{ items: UserDto[] }>(res);
+	return { items: (dto?.items ?? []).map(mapUser) };
+}

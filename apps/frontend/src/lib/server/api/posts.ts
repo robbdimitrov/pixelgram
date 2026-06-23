@@ -102,3 +102,9 @@ export async function uploadImage(fetch: ApiClient, file: File): Promise<ImageFi
 	const res = await fetch('/uploads', { method: 'POST', body: formData });
 	return unwrap<ImageFilenameDto>(res);
 }
+
+export async function getPopularPosts(fetch: ApiClient): Promise<{ items: Post[] }> {
+	const res = await fetch('/posts/popular');
+	const dto = await unwrap<{ items: PostDto[] }>(res);
+	return { items: (dto?.items ?? []).map(mapPost) };
+}
