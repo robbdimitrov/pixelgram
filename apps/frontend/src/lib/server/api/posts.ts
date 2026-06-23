@@ -12,7 +12,7 @@ import { unwrap, getCursorPage } from './http';
 import type { ApiClient } from './client';
 
 export async function getFeed(fetch: ApiClient, cursor?: string | null): Promise<CursorPage<Post>> {
-	return getCursorPage(fetch, '/posts', cursor, mapPost);
+	return getCursorPage(fetch, '/feed', cursor, mapPost);
 }
 
 export async function getUserPosts(

@@ -25,11 +25,12 @@
 <div class="mx-auto flex max-w-xl flex-col items-center gap-6">
 	{#if pagination.items.length === 0}
 		<EmptyState
-			icon="square-plus"
-			title="Ready for your first post?"
-			description="Start your PixelGram feed with a photo worth sharing."
-			actionLabel="Share Your First Photo"
-			actionRoute="/upload"
+			icon="camera"
+			title="Your feed is empty"
+			description="Follow people to see their posts here."
+			actionLabel="Find People to Follow"
+			actionRoute="/search"
+			actionStyle="outline"
 		/>
 	{/if}
 

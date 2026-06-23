@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Camera, Home, Search, SquarePlus, User } from '@lucide/svelte';
+	import { Bell, Camera, Home, Search, SquarePlus, User } from '@lucide/svelte';
 	import type { User as UserType } from '$lib/types';
 
-	let { currentUser }: { currentUser: UserType } = $props();
+	let { currentUser, unreadCount = 0 }: { currentUser: UserType; unreadCount?: number } = $props();
 
 	function isActive(path: string) {
 		return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
@@ -66,6 +66,24 @@
 			aria-label="Upload"
 		>
 			<SquarePlus class="h-5 w-5" />
+		</a>
+
+		<a
+			href="/notifications"
+			class="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
+			class:bg-white={isActive('/notifications')}
+			class:text-slate-950={isActive('/notifications')}
+			class:shadow-md={isActive('/notifications')}
+			title="Notifications"
+			aria-label="Notifications"
+		>
+			<Bell class="h-5 w-5" />
+			{#if unreadCount > 0}
+				<span
+					class="absolute right-1.5 top-1.5 flex h-2 w-2 items-center justify-center rounded-full bg-primary"
+					aria-label="{unreadCount} unread notification{unreadCount === 1 ? '' : 's'}"
+				></span>
+			{/if}
 		</a>
 
 		<a

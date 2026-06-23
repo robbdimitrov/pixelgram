@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Camera, Heart, TriangleAlert, SquarePlus } from '@lucide/svelte';
+	import { Bell, Camera, Heart, TriangleAlert, SquarePlus } from '@lucide/svelte';
 
-	type Icon = 'camera' | 'heart' | 'square-plus' | 'triangle-alert';
+	type Icon = 'bell' | 'camera' | 'heart' | 'square-plus' | 'triangle-alert';
 	type ButtonStyle = 'primary' | 'outline';
 
 	let {
@@ -31,6 +31,8 @@
 			<Heart class="h-6 w-6" />
 		{:else if icon === 'triangle-alert'}
 			<TriangleAlert class="h-6 w-6" />
+		{:else if icon === 'bell'}
+			<Bell class="h-6 w-6" />
 		{:else}
 			<SquarePlus class="h-6 w-6" />
 		{/if}

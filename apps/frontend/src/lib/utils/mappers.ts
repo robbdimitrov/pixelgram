@@ -6,7 +6,9 @@ import type {
 	Comment,
 	CommentDto,
 	Session,
-	SessionDto
+	SessionDto,
+	Notification,
+	NotificationDto
 } from '$lib/types';
 
 export function mapUser(dto: UserDto): User {
@@ -61,6 +63,19 @@ export function mapSession(dto: SessionDto): Session {
 		created: parseTimestamp(dto.created),
 		expiresAt: parseTimestamp(dto.expiresAt),
 		current: dto.current
+	};
+}
+
+export function mapNotification(dto: NotificationDto): Notification {
+	return {
+		id: dto.id,
+		externalId: dto.externalId,
+		userId: dto.userId,
+		actorId: dto.actorId,
+		type: dto.type,
+		entityId: dto.entityId,
+		read: dto.read,
+		created: new Date(dto.created)
 	};
 }
 

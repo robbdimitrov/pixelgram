@@ -108,3 +108,27 @@ export interface Session {
 	expiresAt: Date;
 	current: boolean;
 }
+
+export type NotificationType = 'like' | 'comment' | 'follow';
+
+export interface NotificationDto {
+	id: number;
+	externalId: string;
+	userId: number;
+	actorId: number;
+	type: NotificationType;
+	entityId: string;
+	read: boolean;
+	created: string;
+}
+
+export interface Notification {
+	id: number;
+	externalId: string;
+	userId: number;
+	actorId: number;
+	type: NotificationType;
+	entityId: string;
+	read: boolean;
+	created: Date;
+}
