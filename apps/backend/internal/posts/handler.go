@@ -34,6 +34,7 @@ type Application interface {
 	DeletePost(ctx context.Context, command DeletePostCommand) error
 	LikePost(ctx context.Context, publicID, userID string) error
 	UnlikePost(ctx context.Context, publicID, userID string) error
+	ListPopularPosts(ctx context.Context, viewerID string) ([]Post, error)
 }
 
 type Handler struct {
@@ -146,6 +147,16 @@ func (h Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) ListPopularPosts(w http.ResponseWriter, r *http.Request) {
+	viewerID, _ := httpx.UserID(r)
+	items, err := h.Service.ListPopularPosts(r.Context(), viewerID)
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
 func (h Handler) LikePost(w http.ResponseWriter, r *http.Request) {

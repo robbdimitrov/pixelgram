@@ -36,6 +36,8 @@ type fakeService struct {
 	unfollowErr          error
 	getByUsernameCurrent string
 	getByID              string
+	suggestedUsers       []User
+	suggestedErr         error
 }
 
 func (s *fakeService) CreateUser(_ context.Context, command CreateUserCommand) (int, error) {
@@ -81,6 +83,10 @@ func (s *fakeService) FollowUser(_ context.Context, command FollowCommand) error
 func (s *fakeService) UnfollowUser(_ context.Context, command FollowCommand) error {
 	s.unfollowCommand = command
 	return s.unfollowErr
+}
+
+func (s *fakeService) ListSuggestedUsers(_ context.Context, _ string) ([]User, error) {
+	return s.suggestedUsers, s.suggestedErr
 }
 
 func TestCreateUserValidation(t *testing.T) {
@@ -445,6 +451,41 @@ func TestFollowUserErrors(t *testing.T) {
 				t.Fatalf("response = %d %q", res.Code, res.Body.String())
 			}
 		})
+	}
+}
+
+func TestListSuggestedUsersReturnsItems(t *testing.T) {
+	service := &fakeService{
+		suggestedUsers: []User{
+			{ID: 5, Username: "alice", Email: "alice@example.com"},
+			{ID: 6, Username: "bob", Email: "bob@example.com"},
+		},
+	}
+	res := httptest.NewRecorder()
+	req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/users/suggested", nil), "1")
+
+	NewHandler(service).ListSuggestedUsers(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if !strings.Contains(res.Body.String(), `"items"`) {
+		t.Fatalf("body = %q, want items key", res.Body.String())
+	}
+	// Emails must be stripped from suggested users.
+	if strings.Contains(res.Body.String(), "alice@example.com") || strings.Contains(res.Body.String(), "bob@example.com") {
+		t.Fatalf("body = %q, email must be hidden for suggested users", res.Body.String())
+	}
+}
+
+func TestListSuggestedUsersRequiresSession(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/users/suggested", nil)
+
+	NewHandler(&fakeService{}).ListSuggestedUsers(res, req)
+
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusUnauthorized)
 	}
 }
 

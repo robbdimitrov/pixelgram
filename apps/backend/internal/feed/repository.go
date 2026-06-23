@@ -13,4 +13,5 @@ type Repository interface {
 	PruneByFollowee(ctx context.Context, followerID int64, followeeID int64) error
 	GetFollowers(ctx context.Context, userID int64) ([]int64, error)
 	GetRecentPostEntries(ctx context.Context, userID int64, limit int) ([]Entry, error)
+	GetUserFollowerCount(ctx context.Context, userID int64) (int64, error)
 }

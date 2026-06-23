@@ -39,6 +39,7 @@ type Repository interface {
 	PostExists(ctx context.Context, publicID string) (bool, error)
 	LikePost(ctx context.Context, publicID, userID string) error
 	UnlikePost(ctx context.Context, publicID, userID string) error
+	ListPopularPosts(ctx context.Context, viewerID string, limit int) ([]Post, error)
 }
 
 type FileRepository interface {
@@ -109,6 +110,10 @@ func (s *Service) LikePost(ctx context.Context, publicID, userID string) error {
 
 func (s *Service) UnlikePost(ctx context.Context, publicID, userID string) error {
 	return s.updateLike(ctx, publicID, userID, s.repository.UnlikePost)
+}
+
+func (s *Service) ListPopularPosts(ctx context.Context, viewerID string) ([]Post, error) {
+	return s.repository.ListPopularPosts(ctx, viewerID, 20)
 }
 
 func (s *Service) updateLike(

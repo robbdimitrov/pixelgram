@@ -23,6 +23,7 @@ type HandlerService interface {
 	ChangePassword(ctx context.Context, command ChangePasswordCommand) (ChangePasswordOutcome, error)
 	FollowUser(ctx context.Context, command FollowCommand) error
 	UnfollowUser(ctx context.Context, command FollowCommand) error
+	ListSuggestedUsers(ctx context.Context, viewerID string) ([]User, error)
 }
 
 type Handler struct {
@@ -260,6 +261,23 @@ func (h Handler) updatePassword(w http.ResponseWriter, r *http.Request, userID, 
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) ListSuggestedUsers(w http.ResponseWriter, r *http.Request) {
+	viewerID, ok := httpx.UserID(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	items, err := h.Service.ListSuggestedUsers(r.Context(), viewerID)
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	for i := range items {
+		items[i].Email = ""
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
 func (h Handler) FollowUser(w http.ResponseWriter, r *http.Request) {

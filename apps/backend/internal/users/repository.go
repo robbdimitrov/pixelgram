@@ -17,4 +17,5 @@ type Repository interface {
 	ChangePassword(ctx context.Context, userID, passwordHash, currentSessionID string) error
 	FollowUser(ctx context.Context, followerID, followeeID string) error
 	UnfollowUser(ctx context.Context, followerID, followeeID string) error
+	ListSuggestedUsers(ctx context.Context, viewerID string, limit int) ([]User, error)
 }

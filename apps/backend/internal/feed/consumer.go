@@ -74,11 +74,12 @@ func (c *Consumer) Run(ctx context.Context) {
 }
 
 type entityChangesPayload struct {
-	Table    string `json:"table"`
-	Op       string `json:"op"`
-	ID       int64  `json:"id"`
-	AuthorID string `json:"author_id"`
-	Created  string `json:"created"`
+	Table         string `json:"table"`
+	Op            string `json:"op"`
+	ID            int64  `json:"id"`
+	AuthorID      string `json:"author_id"`
+	Created       string `json:"created"`
+	FollowerCount int64  `json:"follower_count"`
 }
 
 type activityPayload struct {
@@ -120,6 +121,17 @@ func (c *Consumer) handleEntityChanges(ctx context.Context, data []byte) {
 		}
 	} else {
 		created = time.Now().UTC()
+	}
+
+	if payload.FollowerCount > CelebThreshold {
+		if err := c.repo.InsertEntries(ctx, []Entry{{
+			UserID:  authorID,
+			PostID:  payload.ID,
+			Created: created,
+		}}); err != nil {
+			slog.Warn("feed consumer: failed to insert author feed entry", "post_id", payload.ID, "error", err)
+		}
+		return
 	}
 
 	followers, err := c.repo.GetFollowers(ctx, authorID)
@@ -164,6 +176,15 @@ func (c *Consumer) handleFollow(ctx context.Context, actorIDStr, recipientIDStr 
 	if err != nil {
 		slog.Warn("feed consumer: invalid recipient_id", "recipient_id", recipientIDStr)
 		return
+	}
+
+	count, err := c.repo.GetUserFollowerCount(ctx, recipientID)
+	if err != nil {
+		slog.Warn("feed consumer: failed to get follower count", "recipient_id", recipientID, "error", err)
+		return
+	}
+	if count > CelebThreshold {
+		return // celebrity posts are served on-read; no backfill
 	}
 
 	recentEntries, err := c.repo.GetRecentPostEntries(ctx, recipientID, followBackfillLimit)

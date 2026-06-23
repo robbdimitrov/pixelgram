@@ -14,11 +14,12 @@ import (
 )
 
 type FeedRepository struct {
-	db *database.DB
+	db             *database.DB
+	celebThreshold int64
 }
 
-func NewFeedRepository(client *Client) *FeedRepository {
-	return &FeedRepository{db: client.db}
+func NewFeedRepository(client *Client, threshold int64) *FeedRepository {
+	return &FeedRepository{db: client.db, celebThreshold: threshold}
 }
 
 func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pagination.Cursor, limit int) ([]posts.Post, *pagination.Cursor, error) {
@@ -28,9 +29,27 @@ func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pa
 		JOIN posts ON posts.id = f.post_id
 		JOIN users u ON u.id = posts.user_id
 		WHERE f.user_id = $1
-		AND (NOT $2 OR (f.created, posts.id) < ($3, $4))
-		ORDER BY f.created DESC, posts.id DESC LIMIT $5`,
-		limit, userID, hasCursor, cursorCreated, cursorID, limit+1)
+		  AND (NOT $2 OR (f.created, posts.id) < ($3, $4))
+
+		UNION ALL
+
+		SELECT `+postColumns+`, posts.created AS cursor_created
+		FROM posts
+		JOIN users u ON u.id = posts.user_id
+		WHERE posts.user_id IN (
+		  SELECT fl.followee_id
+		  FROM follows fl
+		  JOIN users cu ON cu.id = fl.followee_id
+		  WHERE fl.follower_id = $1
+		    AND cu.follower_count > $6
+		)
+		AND NOT EXISTS (
+		  SELECT 1 FROM feed WHERE feed.user_id = $1 AND feed.post_id = posts.id
+		)
+		AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
+
+		ORDER BY cursor_created DESC, id DESC LIMIT $5`,
+		limit, userID, hasCursor, cursorCreated, cursorID, limit+1, r.celebThreshold)
 }
 
 // insertEntriesBatchSize keeps bind parameters well under Postgres's 65,535 limit (3 per row).
@@ -118,6 +137,15 @@ func (r *FeedRepository) GetRecentPostEntries(ctx context.Context, userID int64,
 		return rows.Err()
 	})
 	return entries, err
+}
+
+func (r *FeedRepository) GetUserFollowerCount(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := r.db.Read(ctx, func() error {
+		return r.db.Pool().QueryRow(ctx,
+			`SELECT follower_count FROM users WHERE id = $1`, userID).Scan(&count)
+	})
+	return count, err
 }
 
 func (r *FeedRepository) queryFeedPage(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *pagination.Cursor, error) {

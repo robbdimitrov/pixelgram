@@ -51,8 +51,9 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			return err
 		}
 		var username string
-		if err := tx.QueryRow(ctx, `SELECT username FROM users WHERE id = $1`, userID).Scan(&username); err != nil {
-			return err
+		var followerCount int64
+		if err := tx.QueryRow(ctx, `SELECT username, follower_count FROM users WHERE id = $1`, userID).Scan(&username, &followerCount); err != nil {
+			return err // hard fail — wrong count means wrong fan-out decision
 		}
 
 		descStr := ""
@@ -76,8 +77,8 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		hashtagsJSON += "]"
 
 		postPayload := fmt.Sprintf(
-			`{"table":"posts","op":"upsert","id":%d,"post_id":%q,"author_id":%q,"description":%q,"username":%q,"hashtags":%s,"created":%q}`,
-			postID, publicID, userID, descStr, username, hashtagsJSON, createdAt.UTC().Format(time.RFC3339Nano),
+			`{"table":"posts","op":"upsert","id":%d,"post_id":%q,"author_id":%q,"description":%q,"username":%q,"hashtags":%s,"created":%q,"follower_count":%d}`,
+			postID, publicID, userID, descStr, username, hashtagsJSON, createdAt.UTC().Format(time.RFC3339Nano), followerCount,
 		)
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", postPayload); err != nil {
@@ -439,6 +440,17 @@ func cursorValues(cursor *pagination.Cursor) (bool, time.Time, int) {
 		return false, time.Time{}, 0
 	}
 	return true, cursor.Created, cursor.ID
+}
+
+func (r *PostRepository) ListPopularPosts(ctx context.Context, viewerID string, limit int) ([]posts.Post, error) {
+	return r.queryPosts(ctx, `SELECT `+postColumns+`
+        FROM posts
+        JOIN users u ON u.id = posts.user_id
+        WHERE posts.created > NOW() - INTERVAL '7 days'
+          AND EXISTS (SELECT 1 FROM likes WHERE post_id = posts.id)
+        ORDER BY (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) DESC,
+                 posts.created DESC
+        LIMIT $2`, viewerID, limit)
 }
 
 var _ posts.Repository = (*PostRepository)(nil)

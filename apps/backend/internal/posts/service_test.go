@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/store"
 )
 
@@ -26,8 +25,8 @@ func (r *serviceRepository) GetPost(context.Context, string, string) (Post, bool
 func (r *serviceRepository) PostExists(context.Context, string) (bool, error) {
 	return r.exists, nil
 }
-func (r *serviceRepository) GetFeed(context.Context, *pagination.Cursor, int, string) ([]Post, *pagination.Cursor, error) {
-	return nil, nil, nil
+func (r *serviceRepository) ListPopularPosts(context.Context, string, int) ([]Post, error) {
+	return nil, nil
 }
 
 type fakeFiles struct{ deleted string }

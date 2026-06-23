@@ -107,3 +107,7 @@ func (s *Service) FollowUser(ctx context.Context, command FollowCommand) error {
 func (s *Service) UnfollowUser(ctx context.Context, command FollowCommand) error {
 	return s.repository.UnfollowUser(ctx, command.FollowerID, command.FolloweeID)
 }
+
+func (s *Service) ListSuggestedUsers(ctx context.Context, viewerID string) ([]User, error) {
+	return s.repository.ListSuggestedUsers(ctx, viewerID, 10)
+}

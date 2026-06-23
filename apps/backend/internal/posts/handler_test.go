@@ -73,6 +73,10 @@ func (s *fakeStore) UnlikePost(_ context.Context, _ string, _ string) error {
 	return s.err
 }
 
+func (s *fakeStore) ListPopularPosts(_ context.Context, _ string, _ int) ([]Post, error) {
+	return s.posts, s.err
+}
+
 func TestCreatePostMissingFilename(t *testing.T) {
 	handler := Handler{Service: NewService(&fakeStore{}, nil)}
 	res := httptest.NewRecorder()
@@ -256,5 +260,21 @@ func TestLikePostSuccess(t *testing.T) {
 	}
 	if !store.liked {
 		t.Fatal("expected LikePost store call")
+	}
+}
+
+func TestListPopularPostsReturnsItems(t *testing.T) {
+	store := &fakeStore{posts: []Post{{ID: 1, Filename: "a"}, {ID: 2, Filename: "b"}}}
+	handler := Handler{Service: NewService(store, nil)}
+	res := httptest.NewRecorder()
+	req := httpx.WithUserID(httptest.NewRequest(http.MethodGet, "/posts/popular", nil), "3")
+
+	handler.ListPopularPosts(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if !strings.Contains(res.Body.String(), `"items"`) {
+		t.Fatalf("body = %q, want items key", res.Body.String())
 	}
 }

@@ -218,6 +218,11 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 			// Either the target user doesn't exist or already followed — no outbox event.
 			return tx.Commit(ctx)
 		}
+		if _, err := tx.Exec(ctx,
+			`UPDATE users SET follower_count = follower_count + 1 WHERE id = $1`,
+			followeeID); err != nil {
+			return err
+		}
 		payload := fmt.Sprintf(
 			`{"op":"follow","actor_id":%q,"recipient_id":%q}`,
 			followerID, followeeID,
@@ -244,9 +249,17 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 			return err
 		}
 		defer database.Rollback(ctx, tx)
-		if _, err := tx.Exec(ctx,
-			`DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID); err != nil {
+		tag, err := tx.Exec(ctx,
+			`DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID)
+		if err != nil {
 			return err
+		}
+		if tag.RowsAffected() > 0 {
+			if _, err := tx.Exec(ctx,
+				`UPDATE users SET follower_count = GREATEST(follower_count - 1, 0) WHERE id = $1`,
+				followeeID); err != nil {
+				return err
+			}
 		}
 		payload := fmt.Sprintf(
 			`{"op":"unfollow","actor_id":%q,"recipient_id":%q}`,
@@ -353,6 +366,40 @@ func (r *UserRepository) ChangePassword(ctx context.Context, userID, passwordHas
 		}
 		return tx.Commit(ctx)
 	})
+}
+
+func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string, limit int) ([]users.User, error) {
+	var result []users.User
+	err := r.db.Read(ctx, func() error {
+		rows, err := r.db.Pool().Query(ctx, `SELECT `+userColumns+`
+            FROM users u
+            WHERE u.id != $1
+              AND NOT EXISTS (
+                SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = u.id
+              )
+            ORDER BY u.follower_count DESC
+            LIMIT $2`, viewerID, limit)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		result = []users.User{}
+		for rows.Next() {
+			var user users.User
+			var avatar, bio sql.NullString
+			if err := rows.Scan(&user.ID, &user.Name, &user.Username,
+				&user.Email, &avatar, &bio, &user.Posts, &user.Likes,
+				&user.Followers, &user.Following, &user.IsFollowing,
+				&user.Created); err != nil {
+				return err
+			}
+			user.Avatar = database.NullableString(avatar)
+			user.Bio = database.NullableString(bio)
+			result = append(result, user)
+		}
+		return rows.Err()
+	})
+	return result, err
 }
 
 var _ users.Repository = (*UserRepository)(nil)

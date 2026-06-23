@@ -87,6 +87,10 @@ func (r *fakeRepository) UnfollowUser(_ context.Context, followerID, followeeID 
 	return r.err
 }
 
+func (r *fakeRepository) ListSuggestedUsers(_ context.Context, _ string, _ int) ([]User, error) {
+	return r.users, r.err
+}
+
 var _ Repository = (*fakeRepository)(nil)
 
 func TestServiceCreateUserHashesPassword(t *testing.T) {

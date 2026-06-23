@@ -45,9 +45,10 @@ func (Users) GetUserWithID(context.Context, string) (users.UserCredentials, bool
 func (Users) UpdateUser(context.Context, string, string, string, string, string, *string) (users.UpdateUserResult, error) {
 	return users.UpdateUserResult{}, nil
 }
-func (Users) ChangePassword(context.Context, string, string, string) error { return nil }
-func (Users) FollowUser(context.Context, string, string) error             { return nil }
-func (Users) UnfollowUser(context.Context, string, string) error           { return nil }
+func (Users) ChangePassword(context.Context, string, string, string) error          { return nil }
+func (Users) FollowUser(context.Context, string, string) error                      { return nil }
+func (Users) UnfollowUser(context.Context, string, string) error                    { return nil }
+func (Users) ListSuggestedUsers(context.Context, string, int) ([]users.User, error) { return nil, nil }
 
 type Sessions struct{}
 
@@ -91,9 +92,10 @@ func (Posts) GetPost(context.Context, string, string) (posts.Post, bool, error) 
 func (Posts) DeletePost(context.Context, string, string) (string, bool, error) {
 	return "", false, nil
 }
-func (Posts) PostExists(context.Context, string) (bool, error) { return false, nil }
-func (Posts) LikePost(context.Context, string, string) error   { return nil }
-func (Posts) UnlikePost(context.Context, string, string) error { return nil }
+func (Posts) PostExists(context.Context, string) (bool, error)                    { return false, nil }
+func (Posts) LikePost(context.Context, string, string) error                      { return nil }
+func (Posts) UnlikePost(context.Context, string, string) error                    { return nil }
+func (Posts) ListPopularPosts(context.Context, string, int) ([]posts.Post, error) { return nil, nil }
 
 type Comments struct{}
 
@@ -126,6 +128,7 @@ func (Feed) InsertEntries(context.Context, []feed.Entry) error                  
 func (Feed) PruneByFollowee(context.Context, int64, int64) error                    { return nil }
 func (Feed) GetFollowers(context.Context, int64) ([]int64, error)                   { return nil, nil }
 func (Feed) GetRecentPostEntries(context.Context, int64, int) ([]feed.Entry, error) { return nil, nil }
+func (Feed) GetUserFollowerCount(context.Context, int64) (int64, error)             { return 0, nil }
 
 type Notifications struct{}
 
