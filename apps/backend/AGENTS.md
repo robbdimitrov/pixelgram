@@ -7,7 +7,7 @@ These rules extend the repository-level `AGENTS.md` for files under `apps/backen
 - Go HTTP service using `net/http` and `pgx`
 - Composition, routes, and authentication boundary: `internal/app/`
 - HTTP helpers and middleware: `internal/httpx/`
-- Feature modules: `internal/{users,sessions,uploads,posts,comments}/`
+- Feature modules: `internal/{users,sessions,uploads,posts,comments,search,notifications,feed}/`
 - PostgreSQL lifecycle, retries, and circuit breaker: `internal/database/`
 - PostgreSQL repositories: `internal/store/postgres/`
 - No-op local repositories: `internal/noop/`

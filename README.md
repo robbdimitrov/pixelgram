@@ -8,14 +8,16 @@
 ## Features
 
 - **Image sharing**: Upload, browse, like, and comment on images with a responsive feed and profile pages.
+- **Social feed**: Personalized feed of posts from followed users, pre-materialized on write by a Kafka consumer group (fan-out on follow/post).
+- **Notifications**: Real-time like, comment, and follow notifications with unread badge and mark-as-read support.
 - **Rich text**: Captions, comments, and bios render `@mention`, `#hashtag`, and URL links. Compose typeahead suggests users and hashtags as you type.
 - **Global search**: Search users, posts, and hashtags with paginated results. A leading `#` scopes results to hashtag-filtered posts.
 - **Object storage**: Image bytes are stored in SeaweedFS (S3-compatible), decoupled from the database and served with `Cache-Control` and `ETag` headers.
 - **Cache layer**: Dragonfly (Redis-protocol) backs rate-limit token buckets and login-failure counters, keeping the hot path off PostgreSQL.
-- **Search index**: Meilisearch holds a derived search index fed by a transactional outbox — every post, user, and hashtag change is indexed asynchronously without blocking the write path.
+- **Event streaming**: Every domain mutation writes to a transactional outbox. Redpanda Connect reads the PostgreSQL WAL via CDC and publishes to Redpanda (Kafka-compatible) topics consumed by the notifications and feed workers and the Meilisearch sync pipeline.
 - **Session management**: Argon2id password hashing, HMAC-keyed session tokens, per-user session listing and remote revocation.
 - **Production-ready**: Stateless Go API, bounded concurrency, absolute session lifetimes, dependency-aware readiness probe, structured JSON logging, circuit breaker and retry-with-backoff on every database call.
-- **HA-ready**: Ships at `replicas: 1` but correct at `replicas: N`. No shared in-process state; the outbox worker uses `SELECT FOR UPDATE SKIP LOCKED` with LISTEN/NOTIFY.
+- **HA-ready**: Ships at `replicas: 1` but correct at `replicas: N`. No shared in-process state; the outbox is CDC-based (no polling) and all consumers use idempotent inserts with `ON CONFLICT DO NOTHING`.
 
 ## Architecture
 
@@ -33,6 +35,11 @@ graph TD
             Blob[("SeaweedFS<br>image objects")]:::storage
             Search[("Meilisearch<br>search index")]:::search
         end
+
+        subgraph streaming ["Event Streaming"]
+            Broker[("Redpanda<br>Kafka broker")]:::broker
+            Connect["Redpanda Connect<br>(CDC relay)"]:::connect
+        end
     end
 
     Browser --> Web
@@ -41,6 +48,11 @@ graph TD
     API --> Cache
     API --> Blob
     API --> Search
+    DB -->|WAL CDC| Connect
+    Connect --> Broker
+    Broker -->|entity-changes<br>activity| API
+    Broker -->|sync-search| Connect
+    Connect --> Search
 
     classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
     classDef backend fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
@@ -48,9 +60,12 @@ graph TD
     classDef storage fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
     classDef cache fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
     classDef search fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff
+    classDef broker fill:#f97316,stroke:#ea580c,stroke-width:2px,color:#fff
+    classDef connect fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
 
     style cluster fill:transparent,stroke:#64748b
     style data fill:transparent,stroke:transparent
+    style streaming fill:transparent,stroke:transparent
 ```
 
 | Service | Language | Description |
@@ -61,12 +76,14 @@ graph TD
 
 ### Infrastructure
 
-Four in-cluster stateful services run alongside the application:
+Six in-cluster services run alongside the application:
 
 - **PostgreSQL** — Primary source of truth for all application data.
 - **Dragonfly** — Redis-protocol cache backing rate-limit token buckets and login-failure counters. The API fails open on unavailability.
 - **SeaweedFS** — S3-compatible object store holding image bytes. The API streams blobs directly; no image data touches PostgreSQL.
-- **Meilisearch** — Derived search index. PostgreSQL is the only source of truth; Meilisearch is populated and kept current by the transactional outbox worker. The index can be rebuilt by replaying the outbox.
+- **Meilisearch** — Derived search index. PostgreSQL is the only source of truth; Meilisearch is populated and kept current via the Redpanda CDC pipeline.
+- **Redpanda** — Kafka-compatible event broker. Receives `entity-changes` and `activity` events published by Redpanda Connect; consumed by the backend's `notifications-consumer` and `feed-consumer` goroutines.
+- **Redpanda Connect** — Stateless CDC relay. Reads new `outbox` rows from the PostgreSQL WAL and publishes to Redpanda. Also drives the Meilisearch sync and S3 cleanup pipelines.
 
 ## Docs
 
