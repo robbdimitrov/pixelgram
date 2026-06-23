@@ -31,7 +31,6 @@ func TestRouteContract(t *testing.T) {
 		{Method: "DELETE", Path: "/sessions/{sessionId}", Authenticated: true},
 		{Method: "POST", Path: "/uploads", Authenticated: true},
 		{Method: "POST", Path: "/posts", Authenticated: true},
-		{Method: "GET", Path: "/posts", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}/posts", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}/likes", Authenticated: true},
 		{Method: "GET", Path: "/posts/{publicId}", Authenticated: true},
@@ -44,6 +43,9 @@ func TestRouteContract(t *testing.T) {
 		{Method: "GET", Path: "/users/search", Authenticated: true},
 		{Method: "GET", Path: "/hashtags/search", Authenticated: true},
 		{Method: "GET", Path: "/search", Authenticated: true},
+		{Method: "GET", Path: "/feed", Authenticated: true},
+		{Method: "GET", Path: "/notifications", Authenticated: true},
+		{Method: "PUT", Path: "/notifications/{id}/read", Authenticated: true},
 	}
 
 	got := Routes()

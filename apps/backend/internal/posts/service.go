@@ -32,7 +32,6 @@ type DeletePostCommand struct {
 
 type Repository interface {
 	CreatePost(ctx context.Context, userID, filename string, description *string, tags []string) (string, bool, error)
-	GetFeed(ctx context.Context, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetPost(ctx context.Context, publicID, currentUserID string) (Post, bool, error)
@@ -64,10 +63,6 @@ func (s *Service) CreatePost(ctx context.Context, command CreatePostCommand) (Cr
 		ctx, command.UserID, command.Filename, command.Description, tags,
 	)
 	return CreatePostResult{PublicID: publicID, Created: created}, err
-}
-
-func (s *Service) GetFeed(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error) {
-	return s.repository.GetFeed(ctx, query.Cursor, query.Limit, query.CurrentUserID)
 }
 
 func (s *Service) GetPosts(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error) {

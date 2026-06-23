@@ -6,7 +6,9 @@ import (
 
 	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/feed"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/notifications"
 	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
@@ -23,13 +25,15 @@ type Config struct {
 }
 
 type Repositories struct {
-	SessionAuth httpx.SessionStore
-	Users       users.Repository
-	Sessions    sessions.Repository
-	Uploads     uploads.Repository
-	Posts       posts.Repository
-	Comments    comments.Repository
-	Search      search.Repository
+	SessionAuth   httpx.SessionStore
+	Users         users.Repository
+	Sessions      sessions.Repository
+	Uploads       uploads.Repository
+	Posts         posts.Repository
+	Comments      comments.Repository
+	Search        search.Repository
+	Feed          feed.Repository
+	Notifications notifications.Repository
 }
 
 func New(cfg Config, repositories Repositories) http.Handler {
@@ -53,6 +57,8 @@ func New(cfg Config, repositories Repositories) http.Handler {
 	)}
 	commentHandler := comments.Handler{Service: comments.NewService(repositories.Comments)}
 	searchHandler := search.Handler{Service: search.NewService(repositories.Search), Meili: cfg.Meili}
+	feedHandler := feed.Handler{Service: feed.NewService(repositories.Feed)}
+	notificationHandler := notifications.Handler{Service: notifications.NewService(repositories.Notifications)}
 
 	public := http.NewServeMux()
 	registerRoutes(
@@ -61,7 +67,7 @@ func New(cfg Config, repositories Repositories) http.Handler {
 		handlers{
 			users: userHandler, sessions: sessionHandler, uploads: uploadHandler,
 			posts: postHandler, comments: commentHandler, search: searchHandler,
-			readiness: cfg.Readiness,
+			feed: feedHandler, notifications: notificationHandler, readiness: cfg.Readiness,
 		},
 	)
 	protected.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

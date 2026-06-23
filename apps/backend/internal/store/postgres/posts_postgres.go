@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -48,6 +50,40 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			VALUES ($1, $2, $3) RETURNING id, public_id`, userID, filename, description).Scan(&postID, &publicID); err != nil {
 			return err
 		}
+		var username string
+		if err := tx.QueryRow(ctx, `SELECT username FROM users WHERE id = $1`, userID).Scan(&username); err != nil {
+			return err
+		}
+
+		descStr := ""
+		if description != nil {
+			descStr = *description
+		}
+
+		var createdAt time.Time
+		if err := tx.QueryRow(ctx, `SELECT created FROM posts WHERE id = $1`, postID).Scan(&createdAt); err != nil {
+			return err
+		}
+
+		// Build hashtag array for payload.
+		hashtagsJSON := "["
+		for i, tag := range tags {
+			if i > 0 {
+				hashtagsJSON += ","
+			}
+			hashtagsJSON += fmt.Sprintf("%q", tag)
+		}
+		hashtagsJSON += "]"
+
+		postPayload := fmt.Sprintf(
+			`{"table":"posts","op":"upsert","id":%d,"post_id":%q,"author_id":%q,"description":%q,"username":%q,"hashtags":%s,"created":%q}`,
+			postID, publicID, userID, descStr, username, hashtagsJSON, createdAt.UTC().Format(time.RFC3339Nano),
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", postPayload); err != nil {
+			return err
+		}
+
 		for _, tag := range tags {
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO hashtags (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`, tag); err != nil {
@@ -58,17 +94,19 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 				SELECT $1, id FROM hashtags WHERE name = $2 ON CONFLICT DO NOTHING`, postID, tag); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx,
-				`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('hashtag', $1)`, tag); err != nil {
+			var postCount int
+			if err := tx.QueryRow(ctx,
+				`SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)`, tag).Scan(&postCount); err != nil {
 				return err
 			}
-		}
-		if _, err := tx.Exec(ctx,
-			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('post', $1)`, publicID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {
-			return err
+			hashtagPayload := fmt.Sprintf(
+				`{"table":"hashtags","op":"upsert","name":%q,"post_count":%d}`,
+				tag, postCount,
+			)
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", hashtagPayload); err != nil {
+				return err
+			}
 		}
 		return tx.Commit(ctx)
 	})
@@ -79,22 +117,6 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		return "", false, err
 	}
 	return publicID, true, nil
-}
-
-func (r *PostRepository) GetFeed(ctx context.Context, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryPostPage(ctx, `SELECT `+postColumns+`, posts.created AS cursor_created
-		FROM posts JOIN users u ON u.id = posts.user_id
-		WHERE (
-			posts.user_id = $1
-			OR EXISTS (
-				SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = posts.user_id
-			)
-			OR NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = $1)
-		)
-		AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
-		ORDER BY posts.created DESC, posts.id DESC LIMIT $5`,
-		limit, currentUserID, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
 func (r *PostRepository) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
@@ -153,6 +175,55 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 		defer database.Rollback(ctx, tx)
+
+		// Look up hashtag names before deleting.
+		hashtagRows, err := tx.Query(ctx,
+			`SELECT h.name FROM hashtags h
+			JOIN post_hashtags ph ON ph.hashtag_id = h.id
+			JOIN posts p ON p.id = ph.post_id
+			WHERE p.public_id = $1`, postID)
+		if err != nil {
+			return err
+		}
+		var hashtags []string
+		for hashtagRows.Next() {
+			var name string
+			if err := hashtagRows.Scan(&name); err != nil {
+				hashtagRows.Close()
+				return err
+			}
+			hashtags = append(hashtags, name)
+		}
+		hashtagRows.Close()
+		if err := hashtagRows.Err(); err != nil {
+			return err
+		}
+
+		var postDBID int
+		if err := tx.QueryRow(ctx, `SELECT id FROM posts WHERE public_id = $1 AND user_id = $2`,
+			postID, userID).Scan(&postDBID); err != nil {
+			return err
+		}
+
+		// Collect comment IDs before deletion for notification cleanup.
+		commentRows, err := tx.Query(ctx, `SELECT id FROM comments WHERE post_id = $1`, postDBID)
+		if err != nil {
+			return err
+		}
+		var commentIDs []int64
+		for commentRows.Next() {
+			var cid int64
+			if err := commentRows.Scan(&cid); err != nil {
+				commentRows.Close()
+				return err
+			}
+			commentIDs = append(commentIDs, cid)
+		}
+		commentRows.Close()
+		if err := commentRows.Err(); err != nil {
+			return err
+		}
+
 		if err := tx.QueryRow(ctx, `DELETE FROM posts WHERE public_id = $1 AND user_id = $2
 			RETURNING filename`, postID, userID).Scan(&filename); err != nil {
 			return err
@@ -160,13 +231,41 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		if _, err := tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename); err != nil {
 			return err
 		}
+
+		commentIDsJSON := "["
+		for i, cid := range commentIDs {
+			if i > 0 {
+				commentIDsJSON += ","
+			}
+			commentIDsJSON += strconv.FormatInt(cid, 10)
+		}
+		commentIDsJSON += "]"
+
+		postPayload := fmt.Sprintf(
+			`{"table":"posts","op":"delete","id":%d,"post_id":%q,"author_id":%q,"filename":%q,"comment_ids":%s}`,
+			postDBID, postID, userID, filename, commentIDsJSON,
+		)
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('post', $1)`, postID); err != nil {
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", postPayload); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {
-			return err
+
+		for _, tag := range hashtags {
+			var postCount int
+			if err := tx.QueryRow(ctx,
+				`SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)`, tag).Scan(&postCount); err != nil {
+				return err
+			}
+			hashtagPayload := fmt.Sprintf(
+				`{"table":"hashtags","op":"upsert","name":%q,"post_count":%d}`,
+				tag, postCount,
+			)
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", hashtagPayload); err != nil {
+				return err
+			}
 		}
+
 		return tx.Commit(ctx)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -188,21 +287,76 @@ func (r *PostRepository) PostExists(ctx context.Context, postID string) (bool, e
 }
 
 func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) error {
-	return r.exec(ctx, `INSERT INTO likes (user_id, post_id)
-		SELECT $1, id FROM posts WHERE public_id = $2 ON CONFLICT DO NOTHING`, userID, postID)
+	err := r.db.Write(ctx, func() error {
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+
+		if _, err := tx.Exec(ctx, `INSERT INTO likes (user_id, post_id)
+			SELECT $1, id FROM posts WHERE public_id = $2 ON CONFLICT DO NOTHING`, userID, postID); err != nil {
+			return err
+		}
+
+		var recipientID string
+		if err := tx.QueryRow(ctx,
+			`SELECT user_id::text FROM posts WHERE public_id = $1`, postID).Scan(&recipientID); err != nil {
+			return err
+		}
+
+		payload := fmt.Sprintf(
+			`{"op":"like","post_id":%q,"actor_id":%q,"recipient_id":%q}`,
+			postID, userID, recipientID,
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+			return err
+		}
+
+		return tx.Commit(ctx)
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return store.ErrNotFound
+	}
+	return err
 }
 
 func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) error {
-	return r.exec(ctx, `DELETE FROM likes
-		WHERE user_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)`,
-		userID, postID)
-}
+	err := r.db.Write(ctx, func() error {
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
 
-func (r *PostRepository) exec(ctx context.Context, query string, args ...any) error {
-	return r.db.Write(ctx, func() error {
-		_, err := r.db.Pool().Exec(ctx, query, args...)
-		return err
+		if _, err := tx.Exec(ctx, `DELETE FROM likes
+			WHERE user_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)`,
+			userID, postID); err != nil {
+			return err
+		}
+
+		var recipientID string
+		if err := tx.QueryRow(ctx,
+			`SELECT user_id::text FROM posts WHERE public_id = $1`, postID).Scan(&recipientID); err != nil {
+			return err
+		}
+
+		payload := fmt.Sprintf(
+			`{"op":"unlike","post_id":%q,"actor_id":%q,"recipient_id":%q}`,
+			postID, userID, recipientID,
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+			return err
+		}
+
+		return tx.Commit(ctx)
 	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return store.ErrNotFound
+	}
+	return err
 }
 
 func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...any) ([]posts.Post, error) {

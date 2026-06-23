@@ -40,12 +40,6 @@ func (s *fakeStore) CreatePost(_ context.Context, _ string, _ string, _ *string,
 	return s.createdID, s.created, s.err
 }
 
-func (s *fakeStore) GetFeed(_ context.Context, cursor *pagination.Cursor, limit int, _ string) ([]Post, *pagination.Cursor, error) {
-	s.requestedCursor = cursor
-	s.requestedLimit = limit
-	return s.posts, s.nextCursor, s.err
-}
-
 func (s *fakeStore) GetPosts(_ context.Context, userID string, cursor *pagination.Cursor, limit int, _ string) ([]Post, *pagination.Cursor, error) {
 	s.requestedUser = userID
 	s.requestedCursor = cursor
@@ -124,44 +118,6 @@ func TestCreatePostSuccess(t *testing.T) {
 	}
 	if strings.TrimSpace(res.Body.String()) != `{"publicId":"`+testPublicID+`"}` {
 		t.Fatalf("body = %q", res.Body.String())
-	}
-}
-
-func TestGetFeedPagination(t *testing.T) {
-	cursor := pagination.Cursor{Created: time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC), ID: 42}
-	nextCursor := pagination.Cursor{Created: time.Date(2026, 6, 14, 10, 0, 0, 0, time.UTC), ID: 21}
-	store := &fakeStore{
-		posts:      []Post{{ID: 1, Filename: "a"}},
-		nextCursor: &nextCursor,
-	}
-	handler := Handler{Service: NewService(store, nil)}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts?cursor="+pagination.EncodeCursor(cursor)+"&limit=500", nil)
-	req = httpx.WithUserID(req, "1")
-
-	handler.GetFeed(res, req)
-
-	if res.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
-	}
-	if store.requestedCursor == nil || *store.requestedCursor != cursor || store.requestedLimit != 50 {
-		t.Fatalf("pagination = cursor %+v limit %d", store.requestedCursor, store.requestedLimit)
-	}
-	if !strings.Contains(res.Body.String(), `"nextCursor":"`+pagination.EncodeCursor(nextCursor)+`"`) {
-		t.Fatalf("body = %q", res.Body.String())
-	}
-}
-
-func TestGetFeedInvalidPagination(t *testing.T) {
-	handler := Handler{Service: NewService(&fakeStore{}, nil)}
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/posts?cursor=invalid", nil)
-	req = httpx.WithUserID(req, "1")
-
-	handler.GetFeed(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
 	}
 }
 

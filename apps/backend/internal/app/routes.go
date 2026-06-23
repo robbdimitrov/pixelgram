@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/feed"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/notifications"
 	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
@@ -22,13 +24,15 @@ type Route struct {
 }
 
 type handlers struct {
-	users     users.Handler
-	sessions  sessions.Handler
-	uploads   uploads.Handler
-	posts     posts.Handler
-	comments  comments.Handler
-	search    search.Handler
-	readiness func(context.Context) error
+	users         users.Handler
+	sessions      sessions.Handler
+	uploads       uploads.Handler
+	posts         posts.Handler
+	comments      comments.Handler
+	search        search.Handler
+	feed          feed.Handler
+	notifications notifications.Handler
+	readiness     func(context.Context) error
 }
 
 type routeMux struct {
@@ -63,6 +67,8 @@ func registerRoutes(public, protected routeMux, h handlers) {
 	posts.RegisterRoutes(protected, h.posts)
 	comments.RegisterRoutes(protected, h.comments)
 	search.RegisterRoutes(protected, h.search)
+	feed.RegisterRoutes(protected, h.feed)
+	notifications.RegisterRoutes(protected, h.notifications)
 }
 
 func readinessHandler(check func(context.Context) error) http.HandlerFunc {

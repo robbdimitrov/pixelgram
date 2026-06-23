@@ -141,87 +141,6 @@ func TestPostgresRepositoryRejectsDuplicateUsernameAndEmail(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryFeedSelectionAndStableOrdering(t *testing.T) {
-	client := openTestClient(t)
-	ctx := context.Background()
-	viewerID := createTestUser(t, client, "viewer")
-	followedID := createTestUser(t, client, "followed")
-	otherID := createTestUser(t, client, "other")
-	created := time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC)
-
-	viewerPost := insertTestPost(t, client, viewerID, "viewer", created)
-	followedFirst := insertTestPost(t, client, followedID, "followed-1", created)
-	otherPost := insertTestPost(t, client, otherID, "other", created)
-	followedSecond := insertTestPost(t, client, followedID, "followed-2", created)
-
-	withoutFollows, cursor, err := client.GetFeed(ctx, nil, 10, stringID(viewerID))
-	if err != nil {
-		t.Fatalf("GetFeed(no follows) error = %v", err)
-	}
-	if cursor != nil {
-		t.Fatalf("GetFeed(no follows) cursor = %+v, want nil", cursor)
-	}
-	assertIDs(t, postIDs(withoutFollows), []int{followedSecond.ID, otherPost.ID, followedFirst.ID, viewerPost.ID})
-
-	if err := client.FollowUser(ctx, stringID(viewerID), stringID(followedID)); err != nil {
-		t.Fatalf("FollowUser() error = %v", err)
-	}
-	withFollows, cursor, err := client.GetFeed(ctx, nil, 10, stringID(viewerID))
-	if err != nil {
-		t.Fatalf("GetFeed(with follows) error = %v", err)
-	}
-	if cursor != nil {
-		t.Fatalf("GetFeed(with follows) cursor = %+v, want nil", cursor)
-	}
-	assertIDs(t, postIDs(withFollows), []int{followedSecond.ID, followedFirst.ID, viewerPost.ID})
-}
-
-func TestPostgresRepositoryFeedCursorPaginationAndBoundaries(t *testing.T) {
-	client := openTestClient(t)
-	ctx := context.Background()
-	viewerID := createTestUser(t, client, "feed_viewer")
-	authorID := createTestUser(t, client, "feed_author")
-	base := time.Date(2026, 6, 15, 10, 0, 0, 0, time.UTC)
-
-	var want []int
-	for i := 0; i < 5; i++ {
-		post := insertTestPost(t, client, authorID, fmt.Sprintf("feed-%d", i), base.Add(time.Duration(i)*time.Minute))
-		want = append([]int{post.ID}, want...)
-	}
-
-	var got []int
-	var cursor *pagination.Cursor
-	for {
-		items, next, err := client.GetFeed(ctx, cursor, 2, stringID(viewerID))
-		if err != nil {
-			t.Fatalf("GetFeed(cursor %+v) error = %v", cursor, err)
-		}
-		got = append(got, postIDs(items)...)
-		if next == nil {
-			break
-		}
-		cursor = next
-	}
-	assertIDs(t, got, want)
-	assertNoDuplicateIDs(t, got)
-
-	future := &pagination.Cursor{Created: base.Add(time.Hour), ID: 999999}
-	items, _, err := client.GetFeed(ctx, future, 10, stringID(viewerID))
-	if err != nil {
-		t.Fatalf("GetFeed(future cursor) error = %v", err)
-	}
-	assertIDs(t, postIDs(items), want)
-
-	past := &pagination.Cursor{Created: base.Add(-time.Hour), ID: 1}
-	items, terminal, err := client.GetFeed(ctx, past, 10, stringID(viewerID))
-	if err != nil {
-		t.Fatalf("GetFeed(past cursor) error = %v", err)
-	}
-	if len(items) != 0 || terminal != nil {
-		t.Fatalf("GetFeed(past cursor) = %v, %+v; want empty terminal page", postIDs(items), terminal)
-	}
-}
-
 func TestPostgresRepositoryProfilePostCursorPagination(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
@@ -1433,10 +1352,6 @@ func (c *Client) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
 
 func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string, tags ...string) (string, bool, error) {
 	return NewPostRepository(c).CreatePost(ctx, userID, filename, description, tags)
-}
-
-func (c *Client) GetFeed(ctx context.Context, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	return NewPostRepository(c).GetFeed(ctx, cursor, limit, currentUserID)
 }
 
 func (c *Client) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {

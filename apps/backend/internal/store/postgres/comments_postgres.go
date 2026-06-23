@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 
@@ -34,13 +35,38 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 	var comment comments.Comment
 	var avatar sql.NullString
 	err := r.db.Write(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx, `INSERT INTO comments (post_id, user_id, body)
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+
+		if err := tx.QueryRow(ctx, `INSERT INTO comments (post_id, user_id, body)
 			SELECT id, $2, $3 FROM posts WHERE public_id = $1
 			RETURNING id, post_id, user_id,
 			(SELECT username FROM users WHERE id = $2),
 			(SELECT avatar FROM users WHERE id = $2), body, created`,
 			postID, userID, body).Scan(&comment.ID, &comment.PostID, &comment.UserID,
-			&comment.Username, &avatar, &comment.Body, &comment.Created)
+			&comment.Username, &avatar, &comment.Body, &comment.Created); err != nil {
+			return err
+		}
+
+		var recipientID string
+		if err := tx.QueryRow(ctx,
+			`SELECT user_id::text FROM posts WHERE public_id = $1`, postID).Scan(&recipientID); err != nil {
+			return err
+		}
+
+		payload := fmt.Sprintf(
+			`{"op":"comment","comment_id":%d,"post_id":%q,"actor_id":%q,"recipient_id":%q}`,
+			comment.ID, postID, userID, recipientID,
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+			return err
+		}
+
+		return tx.Commit(ctx)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return comments.Comment{}, store.ErrNotFound
@@ -94,24 +120,41 @@ func (r *CommentRepository) ListComments(ctx context.Context, postID string, cur
 func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error) {
 	var deleted, forbidden bool
 	err := r.db.Write(ctx, func() error {
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+
 		var deletedID int
-		err := r.db.Pool().QueryRow(ctx, `DELETE FROM comments
+		err = tx.QueryRow(ctx, `DELETE FROM comments
 			WHERE id = $1
 			  AND post_id = (SELECT id FROM posts WHERE public_id = $2)
 			  AND user_id = $3 RETURNING id`,
 			commentID, postID, userID).Scan(&deletedID)
 		if err == nil {
 			deleted = true
-			return nil
+			payload := fmt.Sprintf(
+				`{"op":"uncomment","comment_id":%s,"actor_id":%q}`,
+				commentID, userID,
+			)
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+				return err
+			}
+			return tx.Commit(ctx)
 		}
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return err
 		}
 		// Comment exists but isn't owned by this user, or doesn't exist at all.
-		return r.db.Pool().QueryRow(ctx, `SELECT EXISTS(
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(
 			  SELECT 1 FROM comments
 			  WHERE id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)
-			)`, commentID, postID).Scan(&forbidden)
+			)`, commentID, postID).Scan(&forbidden); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
 	})
 	if err != nil {
 		return false, err

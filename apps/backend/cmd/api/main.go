@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -15,8 +15,10 @@ import (
 	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/database"
 	"pixelgram/backend/internal/env"
+	"pixelgram/backend/internal/feed"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/noop"
+	"pixelgram/backend/internal/notifications"
 	"pixelgram/backend/internal/search"
 	"pixelgram/backend/internal/sessions"
 	"pixelgram/backend/internal/store/postgres"
@@ -63,10 +65,28 @@ func main() {
 	defer stop()
 	sessionCleanupDone := startSessionCleanup(signalContext, repositories.Sessions)
 
-	if meili != nil && db != nil {
-		worker := search.NewWorker(db, meili)
-		go worker.Run(signalContext)
-		go runBackfill(signalContext, db, meili)
+	if db != nil {
+		go sweepOutboxPeriodically(signalContext, db)
+	}
+
+	if brokersEnv := os.Getenv("REDPANDA_BROKERS"); brokersEnv != "" {
+		brokers := strings.Split(brokersEnv, ",")
+
+		notifConsumer, err := notifications.NewConsumer(brokers, repositories.Notifications)
+		if err != nil {
+			slog.Error("failed to initialize notifications consumer", "error", err)
+			os.Exit(1)
+		}
+		defer notifConsumer.Close()
+		go notifConsumer.Run(signalContext)
+
+		feedConsumer, err := feed.NewConsumer(brokers, repositories.Feed)
+		if err != nil {
+			slog.Error("failed to initialize feed consumer", "error", err)
+			os.Exit(1)
+		}
+		defer feedConsumer.Close()
+		go feedConsumer.Run(signalContext)
 	}
 
 	handler := app.New(app.Config{
@@ -123,13 +143,15 @@ func setupLogger() {
 func openRepositories(databaseURL string) (app.Repositories, *database.DB, func(context.Context) error, func(), error) {
 	if databaseURL == "" {
 		return app.Repositories{
-			SessionAuth: noop.SessionAuth{},
-			Users:       noop.Users{},
-			Sessions:    noop.Sessions{},
-			Uploads:     noop.Uploads{},
-			Posts:       noop.Posts{},
-			Comments:    noop.Comments{},
-			Search:      noop.Search{},
+			SessionAuth:   noop.SessionAuth{},
+			Users:         noop.Users{},
+			Sessions:      noop.Sessions{},
+			Uploads:       noop.Uploads{},
+			Posts:         noop.Posts{},
+			Comments:      noop.Comments{},
+			Search:        noop.Search{},
+			Feed:          noop.Feed{},
+			Notifications: noop.Notifications{},
 		}, nil, func(context.Context) error { return nil }, func() {}, nil
 	}
 
@@ -144,13 +166,15 @@ func openRepositories(databaseURL string) (app.Repositories, *database.DB, func(
 	}
 
 	return app.Repositories{
-		SessionAuth: postgres.NewSessionRepository(client),
-		Users:       postgres.NewUserRepository(client),
-		Sessions:    postgres.NewSessionRepository(client),
-		Uploads:     postgres.NewUploadRepository(client),
-		Posts:       postgres.NewPostRepository(client),
-		Comments:    postgres.NewCommentRepository(client),
-		Search:      postgres.NewSearchRepository(client),
+		SessionAuth:   postgres.NewSessionRepository(client),
+		Users:         postgres.NewUserRepository(client),
+		Sessions:      postgres.NewSessionRepository(client),
+		Uploads:       postgres.NewUploadRepository(client),
+		Posts:         postgres.NewPostRepository(client),
+		Comments:      postgres.NewCommentRepository(client),
+		Search:        postgres.NewSearchRepository(client),
+		Feed:          postgres.NewFeedRepository(client),
+		Notifications: postgres.NewNotificationRepository(client),
 	}, client.DB(), client.Ping, client.Close, nil
 }
 
@@ -161,200 +185,6 @@ func openMeiliClient(ctx context.Context, databaseURL string) (*search.MeiliClie
 	meiliURL := env.String("MEILI_URL", "http://search:7700")
 	masterKey := os.Getenv("MEILI_MASTER_KEY")
 	return search.NewMeiliClient(ctx, meiliURL, masterKey)
-}
-
-// backfillAdvisoryLock is the Postgres advisory lock ID used to ensure only
-// one replica runs the initial backfill at startup.
-const backfillAdvisoryLock = 774191
-
-// runBackfill streams all users, posts, and hashtags into Meilisearch once.
-// An advisory lock ensures only one replica performs the backfill concurrently.
-func runBackfill(ctx context.Context, db *database.DB, meili *search.MeiliClient) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			slog.Error("search backfill panicked", "panic", recovered)
-		}
-	}()
-
-	conn, err := db.Pool().Acquire(ctx)
-	if err != nil {
-		return
-	}
-	defer conn.Release()
-
-	var locked bool
-	if err := conn.QueryRow(ctx, "SELECT pg_try_advisory_lock($1)", backfillAdvisoryLock).Scan(&locked); err != nil || !locked {
-		return
-	}
-	defer conn.Exec(ctx, "SELECT pg_advisory_unlock($1)", backfillAdvisoryLock) //nolint:errcheck
-
-	backfillUsers(ctx, db, meili)
-	backfillPosts(ctx, db, meili)
-	backfillHashtags(ctx, db, meili)
-}
-
-const backfillBatchSize = 500
-
-func backfillUsers(ctx context.Context, db *database.DB, meili *search.MeiliClient) {
-	var lastID int
-	for {
-		var docs []map[string]any
-		err := db.Read(ctx, func() error {
-			rows, err := db.Pool().Query(ctx,
-				`SELECT id, username, name FROM users WHERE id > $1 ORDER BY id LIMIT $2`,
-				lastID, backfillBatchSize)
-			if err != nil {
-				return err
-			}
-			defer rows.Close()
-			docs = docs[:0]
-			for rows.Next() {
-				var id int
-				var username, name string
-				if err := rows.Scan(&id, &username, &name); err != nil {
-					return err
-				}
-				lastID = id
-				docs = append(docs, map[string]any{
-					"id":       strconv.Itoa(id),
-					"username": username,
-					"name":     name,
-				})
-			}
-			return rows.Err()
-		})
-		if err != nil || len(docs) == 0 {
-			return
-		}
-		if err := meili.UpsertDocuments(ctx, "users", docs); err != nil {
-			slog.Warn("search backfill: upsert users failed", "error", err)
-			return
-		}
-		if len(docs) < backfillBatchSize {
-			return
-		}
-	}
-}
-
-func backfillPosts(ctx context.Context, db *database.DB, meili *search.MeiliClient) {
-	var lastID int
-	for {
-		type postRow struct {
-			id          int
-			publicID    string
-			username    string
-			description *string
-			created     int64
-		}
-		var batch []postRow
-		err := db.Read(ctx, func() error {
-			rows, err := db.Pool().Query(ctx,
-				`SELECT p.id, p.public_id, u.username, p.description,
-				extract(epoch from p.created)::bigint
-				FROM posts p JOIN users u ON u.id = p.user_id
-				WHERE p.id > $1 ORDER BY p.id LIMIT $2`,
-				lastID, backfillBatchSize)
-			if err != nil {
-				return err
-			}
-			defer rows.Close()
-			batch = batch[:0]
-			for rows.Next() {
-				var r postRow
-				var desc *string
-				if err := rows.Scan(&r.id, &r.publicID, &r.username, &desc, &r.created); err != nil {
-					return err
-				}
-				r.description = desc
-				lastID = r.id
-				batch = append(batch, r)
-			}
-			return rows.Err()
-		})
-		if err != nil || len(batch) == 0 {
-			return
-		}
-		docs := make([]map[string]any, 0, len(batch))
-		for _, r := range batch {
-			var hashtags []string
-			_ = db.Read(ctx, func() error {
-				rows, err := db.Pool().Query(ctx,
-					`SELECT h.name FROM hashtags h
-					JOIN post_hashtags ph ON ph.hashtag_id = h.id
-					WHERE ph.post_id = $1`, r.id)
-				if err != nil {
-					return err
-				}
-				defer rows.Close()
-				for rows.Next() {
-					var tag string
-					if err := rows.Scan(&tag); err != nil {
-						return err
-					}
-					hashtags = append(hashtags, tag)
-				}
-				return rows.Err()
-			})
-			docs = append(docs, map[string]any{
-				"id":          r.publicID,
-				"description": r.description,
-				"username":    r.username,
-				"hashtags":    hashtags,
-				"created":     r.created,
-			})
-		}
-		if err := meili.UpsertDocuments(ctx, "posts", docs); err != nil {
-			slog.Warn("search backfill: upsert posts failed", "error", err)
-			return
-		}
-		if len(batch) < backfillBatchSize {
-			return
-		}
-	}
-}
-
-func backfillHashtags(ctx context.Context, db *database.DB, meili *search.MeiliClient) {
-	var lastName string
-	for {
-		var docs []map[string]any
-		err := db.Read(ctx, func() error {
-			rows, err := db.Pool().Query(ctx,
-				`SELECT h.name, count(ph.post_id) AS post_count
-				FROM hashtags h LEFT JOIN post_hashtags ph ON ph.hashtag_id = h.id
-				WHERE h.name > $1
-				GROUP BY h.name ORDER BY h.name LIMIT $2`,
-				lastName, backfillBatchSize)
-			if err != nil {
-				return err
-			}
-			defer rows.Close()
-			docs = docs[:0]
-			for rows.Next() {
-				var name string
-				var postCount int
-				if err := rows.Scan(&name, &postCount); err != nil {
-					return err
-				}
-				lastName = name
-				docs = append(docs, map[string]any{
-					"id":         name,
-					"name":       name,
-					"post_count": postCount,
-				})
-			}
-			return rows.Err()
-		})
-		if err != nil || len(docs) == 0 {
-			return
-		}
-		if err := meili.UpsertDocuments(ctx, "hashtags", docs); err != nil {
-			slog.Warn("search backfill: upsert hashtags failed", "error", err)
-			return
-		}
-		if len(docs) < backfillBatchSize {
-			return
-		}
-	}
 }
 
 func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, error) {
@@ -419,6 +249,30 @@ func runSessionCleanup(
 		}
 	}()
 	return done
+}
+
+func sweepOutboxPeriodically(ctx context.Context, db *database.DB) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			sweepExpiredOutbox(ctx, db)
+		}
+	}
+}
+
+func sweepExpiredOutbox(ctx context.Context, db *database.DB) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("outbox cleanup panicked", "panic", r)
+		}
+	}()
+	if _, err := db.Pool().Exec(ctx, "DELETE FROM outbox WHERE created < now() - interval '7 days'"); err != nil {
+		slog.Warn("outbox cleanup failed", "error", err)
+	}
 }
 
 func sweepExpiredSessions(ctx context.Context, repository sessionSweeper) {

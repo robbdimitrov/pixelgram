@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"pixelgram/backend/internal/comments"
+	"pixelgram/backend/internal/feed"
 	"pixelgram/backend/internal/httpx"
+	"pixelgram/backend/internal/notifications"
 	"pixelgram/backend/internal/pagination"
 	"pixelgram/backend/internal/posts"
 	"pixelgram/backend/internal/search"
@@ -77,9 +79,6 @@ type Posts struct{}
 func (Posts) CreatePost(context.Context, string, string, *string, []string) (string, bool, error) {
 	return "", false, nil
 }
-func (Posts) GetFeed(context.Context, *pagination.Cursor, int, string) ([]posts.Post, *pagination.Cursor, error) {
-	return nil, nil, nil
-}
 func (Posts) GetPosts(context.Context, string, *pagination.Cursor, int, string) ([]posts.Post, *pagination.Cursor, error) {
 	return nil, nil, nil
 }
@@ -118,12 +117,39 @@ func (Search) SearchHashtags(context.Context, string) ([]search.HashtagResult, e
 	return []search.HashtagResult{}, nil
 }
 
+type Feed struct{}
+
+func (Feed) ListFeed(context.Context, string, *pagination.Cursor, int) ([]posts.Post, *pagination.Cursor, error) {
+	return []posts.Post{}, nil, nil
+}
+func (Feed) InsertEntries(context.Context, []feed.Entry) error                      { return nil }
+func (Feed) PruneByFollowee(context.Context, int64, int64) error                    { return nil }
+func (Feed) GetFollowers(context.Context, int64) ([]int64, error)                   { return nil, nil }
+func (Feed) GetRecentPostEntries(context.Context, int64, int) ([]feed.Entry, error) { return nil, nil }
+
+type Notifications struct{}
+
+func (Notifications) ListNotifications(context.Context, int64, *pagination.Cursor, int) ([]notifications.Notification, error) {
+	return nil, nil
+}
+func (Notifications) MarkRead(context.Context, int64, int64) error         { return nil }
+func (Notifications) UnreadCount(context.Context, int64) (int, error)      { return 0, nil }
+func (Notifications) DeleteByEntity(context.Context, string, string) error { return nil }
+func (Notifications) DeleteByActorAndType(context.Context, int64, int64, string, string) error {
+	return nil
+}
+func (Notifications) CreateNotification(context.Context, notifications.Notification) error {
+	return nil
+}
+
 var (
-	_ httpx.SessionStore  = SessionAuth{}
-	_ users.Repository    = Users{}
-	_ sessions.Repository = Sessions{}
-	_ uploads.Repository  = Uploads{}
-	_ posts.Repository    = Posts{}
-	_ comments.Repository = Comments{}
-	_ search.Repository   = Search{}
+	_ httpx.SessionStore       = SessionAuth{}
+	_ users.Repository         = Users{}
+	_ sessions.Repository      = Sessions{}
+	_ uploads.Repository       = Uploads{}
+	_ posts.Repository         = Posts{}
+	_ comments.Repository      = Comments{}
+	_ search.Repository        = Search{}
+	_ feed.Repository          = Feed{}
+	_ notifications.Repository = Notifications{}
 )

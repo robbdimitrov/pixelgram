@@ -28,7 +28,6 @@ type Post struct {
 
 type Application interface {
 	CreatePost(ctx context.Context, command CreatePostCommand) (CreatePostResult, error)
-	GetFeed(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error)
 	GetPosts(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error)
 	GetLikedPosts(ctx context.Context, query ListQuery) ([]Post, *pagination.Cursor, error)
 	GetPost(ctx context.Context, publicID, currentUserID string) (Post, bool, error)
@@ -77,26 +76,6 @@ func (h Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusCreated, map[string]string{"publicId": result.PublicID})
-}
-
-func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	currentUserID, _ := httpx.UserID(r)
-	page, ok := pagination.ParsePagination(r.URL.Query())
-	if !ok {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid pagination parameters.")
-		return
-	}
-
-	items, nextCursor, err := h.Service.GetFeed(ctx, ListQuery{
-		Cursor: page.Cursor, Limit: page.Limit, CurrentUserID: currentUserID,
-	})
-	if err != nil {
-		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-
-	writePostPage(w, items, nextCursor)
 }
 
 func (h Handler) GetPosts(w http.ResponseWriter, r *http.Request) {

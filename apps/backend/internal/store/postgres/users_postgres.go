@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -42,12 +44,12 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 			VALUES ($1, $2, $3, $4) RETURNING id`, name, username, email, passwordHash).Scan(&id); err != nil {
 			return err
 		}
+		payload := fmt.Sprintf(
+			`{"table":"users","op":"upsert","id":%d,"user_id":"%d","username":%q,"bio":""}`,
+			id, id, username,
+		)
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO search_outbox (entity_type, entity_id)
-			VALUES ('user', $1::integer::text)`, id); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", payload); err != nil {
 			return err
 		}
 		return tx.Commit(ctx)
@@ -195,13 +197,36 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID string) error {
 	var targetExists bool
 	err := r.db.Write(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx, `WITH target AS (
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+		var followInserted bool
+		if err := tx.QueryRow(ctx, `WITH target AS (
 				SELECT id FROM users WHERE id = $2
 			), inserted AS (
 				INSERT INTO follows (follower_id, followee_id)
 				SELECT $1, id FROM target ON CONFLICT DO NOTHING
+				RETURNING 1
 			)
-			SELECT EXISTS (SELECT 1 FROM target)`, followerID, followeeID).Scan(&targetExists)
+			SELECT EXISTS (SELECT 1 FROM target), EXISTS (SELECT 1 FROM inserted)`,
+			followerID, followeeID).Scan(&targetExists, &followInserted); err != nil {
+			return err
+		}
+		if !targetExists || !followInserted {
+			// Either the target user doesn't exist or already followed — no outbox event.
+			return tx.Commit(ctx)
+		}
+		payload := fmt.Sprintf(
+			`{"op":"follow","actor_id":%q,"recipient_id":%q}`,
+			followerID, followeeID,
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
 	})
 	if err != nil {
 		return err
@@ -214,8 +239,24 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 
 func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeID string) error {
 	return r.db.Write(ctx, func() error {
-		_, err := r.db.Pool().Exec(ctx, `DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID)
-		return err
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+		if _, err := tx.Exec(ctx,
+			`DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID); err != nil {
+			return err
+		}
+		payload := fmt.Sprintf(
+			`{"op":"unfollow","actor_id":%q,"recipient_id":%q}`,
+			followerID, followeeID,
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+			return err
+		}
+		return tx.Commit(ctx)
 	})
 }
 
@@ -266,11 +307,20 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 				result.UnusedAvatar = oldAvatar.String
 			}
 		}
-		if _, err := tx.Exec(ctx,
-			`INSERT INTO search_outbox (entity_type, entity_id) VALUES ('user', $1)`, userID); err != nil {
-			return err
+		userIDInt, err := strconv.ParseInt(userID, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid user id: %w", err)
 		}
-		if _, err := tx.Exec(ctx, `SELECT pg_notify('search_outbox', '')`); err != nil {
+		bioStr := ""
+		if bio != nil {
+			bioStr = *bio
+		}
+		payload := fmt.Sprintf(
+			`{"table":"users","op":"upsert","id":%d,"user_id":"%d","username":%q,"bio":%q}`,
+			userIDInt, userIDInt, username, bioStr,
+		)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", payload); err != nil {
 			return err
 		}
 		return tx.Commit(ctx)
