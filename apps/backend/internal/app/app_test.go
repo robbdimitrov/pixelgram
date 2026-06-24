@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/httpx"
+	"phasma/backend/internal/httpx"
 )
 
 func TestRouteContract(t *testing.T) {

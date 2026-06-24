@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type fakeService struct {

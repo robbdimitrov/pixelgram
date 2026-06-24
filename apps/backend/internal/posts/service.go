@@ -3,8 +3,8 @@ package posts
 import (
 	"context"
 
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type CreatePostCommand struct {

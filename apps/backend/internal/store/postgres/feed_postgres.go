@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/feed"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/posts"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/feed"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/posts"
 )
 
 type FeedRepository struct {

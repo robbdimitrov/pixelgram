@@ -1,9 +1,8 @@
-# Pixelgram
+# Phasma
 
-**Pixelgram** is a full-stack image-sharing platform built with a production-grade architecture. Combining a robust Go API with a modern SvelteKit frontend, it provides a seamless experience for users to upload, browse, and interact with images.
+**Phasma** is a full-stack image-sharing platform built with a production-grade architecture. Combining a robust Go API with a modern SvelteKit frontend, it provides a seamless experience for users to upload, browse, and interact with images.
 
-[![Pixelgram Rewrite: Glassmorphic Redesign via Multi-Model AI Refactor](https://img.youtube.com/vi/nTqpn376k_g/maxresdefault.jpg)](https://www.youtube.com/watch?v=nTqpn376k_g)
-
+[![Phasma Rewrite: Glassmorphic Redesign via Multi-Model AI Refactor](https://img.youtube.com/vi/nTqpn376k_g/maxresdefault.jpg)](https://www.youtube.com/watch?v=nTqpn376k_g)
 
 ## Features
 
@@ -108,15 +107,15 @@ Deploy the application to your active Kubernetes cluster using the provided scri
 ./scripts/deploy.sh
 ```
 
-The script builds the Docker images, creates the Kubernetes namespace (`pixelgram` by default) and resources, waits for pods to be ready, and starts a port-forward to the frontend at http://localhost:8080/. It is idempotent and safe to re-run for updates.
+The script builds the Docker images, creates the Kubernetes namespace (`phasma` by default) and resources, waits for pods to be ready, and starts a port-forward to the frontend at http://localhost:8080/. It is idempotent and safe to re-run for updates.
 
 ## Cleanup
 
 To remove all deployed resources and the namespace:
 
 ```sh
-kubectl delete -f ./deploy -n pixelgram
-kubectl delete namespace pixelgram
+kubectl delete -f ./deploy -n phasma
+kubectl delete namespace phasma
 ```
 
 ## Testing

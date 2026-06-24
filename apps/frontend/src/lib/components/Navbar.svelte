@@ -16,7 +16,7 @@
 	<a
 		class="flex min-w-0 items-center gap-2 no-underline transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99] sm:gap-3"
 		href="/"
-		aria-label="PixelGram home"
+		aria-label="Phasma home"
 	>
 		<span
 			class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-neutral text-neutral-content shadow-md shadow-slate-900/15"
@@ -24,7 +24,7 @@
 			<Camera class="h-5 w-5" />
 		</span>
 		<span class="hidden truncate text-2xl font-extrabold tracking-normal sm:inline sm:text-[1.5rem]"
-			>PixelGram</span
+			>Phasma</span
 		>
 	</a>
 

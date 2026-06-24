@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/blobstore"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/uploads"
+	"phasma/backend/internal/blobstore"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
+	"phasma/backend/internal/uploads"
 )
 
 const testPublicID = "550e8400-e29b-41d4-a716-446655440000"

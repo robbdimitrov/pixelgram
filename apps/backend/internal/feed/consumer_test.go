@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/posts"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/posts"
 )
 
 // fakeRepo is a typed fake implementing Repository for unit tests.

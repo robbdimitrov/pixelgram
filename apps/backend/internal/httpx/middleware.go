@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"pixelgram/backend/internal/auth"
+	"phasma/backend/internal/auth"
 )
 
 type SessionStore interface {

@@ -12,17 +12,17 @@ import (
 	"syscall"
 	"time"
 
-	"pixelgram/backend/internal/app"
-	"pixelgram/backend/internal/blobstore"
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/env"
-	"pixelgram/backend/internal/feed"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/noop"
-	"pixelgram/backend/internal/notifications"
-	"pixelgram/backend/internal/search"
-	"pixelgram/backend/internal/sessions"
-	"pixelgram/backend/internal/store/postgres"
+	"phasma/backend/internal/app"
+	"phasma/backend/internal/blobstore"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/env"
+	"phasma/backend/internal/feed"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/noop"
+	"phasma/backend/internal/notifications"
+	"phasma/backend/internal/search"
+	"phasma/backend/internal/sessions"
+	"phasma/backend/internal/store/postgres"
 )
 
 func main() {
@@ -214,7 +214,7 @@ func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, er
 	return blobstore.NewS3Store(
 		ctx,
 		env.String("S3_ENDPOINT", "http://storage:8333"),
-		env.String("S3_BUCKET", "pixelgram"),
+		env.String("S3_BUCKET", "phasma"),
 		env.String("S3_REGION", "us-east-1"),
 		os.Getenv("S3_ACCESS_KEY"),
 		os.Getenv("S3_SECRET_KEY"),

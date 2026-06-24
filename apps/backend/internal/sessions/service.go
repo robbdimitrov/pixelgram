@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"pixelgram/backend/internal/auth"
+	"phasma/backend/internal/auth"
 )
 
 // targetPasswordParams is the current target for password hashing.

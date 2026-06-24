@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/store"
 )
 
 // WriteStoreError maps a store sentinel error to its conventional JSON HTTP

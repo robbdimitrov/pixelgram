@@ -51,7 +51,7 @@ func (c *MeiliClient) provisionScopedKey(ctx context.Context, masterKey string) 
 		"actions":     []string{"search", "documents.add", "documents.delete"},
 		"indexes":     []string{"*"},
 		"expiresAt":   nil,
-		"description": "pixelgram-backend scoped key",
+		"description": "phasma-backend scoped key",
 	}
 	var result struct {
 		Key string `json:"key"`

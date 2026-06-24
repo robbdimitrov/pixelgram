@@ -1,4 +1,4 @@
-# Pixelgram Go Backend
+# Phasma Go Backend
 
 The backend is a stateless Go HTTP service built with `net/http` and `pgx`.
 It owns users, sessions, posts, comments, likes, and image upload metadata.
@@ -41,7 +41,7 @@ repository tests serially, and removes its containers and network on exit.
 Database readiness is bounded to 60 seconds and emits container logs on failure.
 
 Database tests compile as part of `go test ./...` and skip when
-`PIXELGRAM_TEST_DATABASE_URL` is unset or `-short` is used.
+`PHASMA_TEST_DATABASE_URL` is unset or `-short` is used.
 
 ## API Conventions
 

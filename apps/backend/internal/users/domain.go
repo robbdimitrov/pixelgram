@@ -3,7 +3,7 @@ package users
 import (
 	"time"
 
-	"pixelgram/backend/internal/pagination"
+	"phasma/backend/internal/pagination"
 )
 
 type User struct {

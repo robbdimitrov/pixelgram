@@ -16,7 +16,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings — PixelGram</title>
+	<title>Settings — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto max-w-xl">
@@ -35,7 +35,7 @@
 				<div class="flex flex-col gap-3">
 					<div class="grid gap-2">
 						<h2 class="text-sm font-bold text-base-content">Appearance</h2>
-						<p class="text-xs text-base-content/60">Choose how PixelGram looks on this device.</p>
+						<p class="text-xs text-base-content/60">Choose how Phasma looks on this device.</p>
 					</div>
 					<div class="grid grid-cols-3 gap-2 rounded-full bg-base-100 p-1">
 						{#each options as opt (opt)}

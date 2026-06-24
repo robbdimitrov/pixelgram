@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: frontend
   labels:
-    app: pixelgram
+    app: phasma
     tier: frontend
   annotations:
     # Uploads stream through the frontend BFF, so the request body reaches the
@@ -14,7 +14,7 @@ spec:
   # The SvelteKit server is the only public entry point; it proxies /api and
   # /uploads to the backend in-cluster, so no backend routes are exposed here.
   rules:
-    - host: pixelgram.localhost
+    - host: phasma.localhost
       http:
         paths:
           - path: /
@@ -27,5 +27,5 @@ spec:
   # Production TLS — enable with an ingress-managed certificate (e.g. cert-manager):
   # tls:
   #   - hosts:
-  #       - pixelgram.localhost
-  #     secretName: pixelgram-tls
+  #       - phasma.localhost
+  #     secretName: phasma-tls

@@ -1,4 +1,4 @@
-module pixelgram/backend
+module phasma/backend
 
 go 1.26
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/twmb/franz-go/pkg/kgo"
 
-	"pixelgram/backend/internal/pagination"
+	"phasma/backend/internal/pagination"
 )
 
 // fakeRepo implements Repository for consumer unit tests.

@@ -2,7 +2,7 @@
 
 ## Kubernetes Deployment Model
 
-All services are deployed to the `pixelgram` namespace via manifests in `deploy/`. Local deployment targets a `kind` cluster.
+All services are deployed to the `phasma` namespace via manifests in `deploy/`. Local deployment targets a `kind` cluster.
 
 | Workload | Kind | Replicas | Storage |
 |---|---|---|---|
@@ -17,7 +17,7 @@ All services are deployed to the `pixelgram` namespace via manifests in `deploy/
 
 ## Image Registry
 
-All custom images are pushed to `localhost:5000/pixelgram/<service>`. Built and pushed via top-level `Makefile` targets.
+All custom images are pushed to `localhost:5000/phasma/<service>`. Built and pushed via top-level `Makefile` targets.
 
 ## Init Container Sequencing
 
@@ -41,7 +41,7 @@ All services are cluster-internal only. The nginx Ingress exposes only the `fron
 
 ## Ingress
 
-nginx Ingress at `pixelgram.localhost`. Routes all traffic to `frontend:8080`. `proxy-body-size: 2m` accommodates 1 MB image uploads plus multipart overhead.
+nginx Ingress at `phasma.localhost`. Routes all traffic to `frontend:8080`. `proxy-body-size: 2m` accommodates 1 MB image uploads plus multipart overhead.
 
 ## Secrets
 

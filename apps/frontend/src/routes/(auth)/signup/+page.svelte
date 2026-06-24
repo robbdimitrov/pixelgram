@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign up — PixelGram</title>
+	<title>Sign up — Phasma</title>
 </svelte:head>
 
 <section
@@ -17,7 +17,7 @@
 >
 	<div class="grid gap-3">
 		<span class="text-xs font-extrabold uppercase tracking-[0.16em] text-base-content/60"
-			>Join PixelGram</span
+			>Join Phasma</span
 		>
 		<h1 class="text-3xl font-extrabold leading-tight tracking-normal text-base-content sm:text-4xl">
 			Create your account

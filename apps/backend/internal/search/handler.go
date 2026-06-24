@@ -11,8 +11,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
 )
 
 // hashtagNameRe matches valid hashtag names as stored in the database.

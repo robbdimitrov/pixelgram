@@ -4,7 +4,7 @@ metadata:
   name: frontend
 spec:
   selector:
-    app: pixelgram
+    app: phasma
     tier: frontend
   ports:
   - port: 8080
@@ -14,7 +14,7 @@ kind: Deployment
 metadata:
   name: frontend
   labels:
-    app: pixelgram
+    app: phasma
     tier: frontend
 spec:
   replicas: 1
@@ -25,12 +25,12 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: frontend
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: frontend
     spec:
       securityContext:
@@ -40,7 +40,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: frontend
-        image: localhost:5000/pixelgram/frontend
+        image: localhost:5000/phasma/frontend
         imagePullPolicy: IfNotPresent
         env:
         - name: PORT

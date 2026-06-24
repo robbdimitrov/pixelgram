@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>{page.status} — PixelGram</title>
+	<title>{page.status} — Phasma</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-base-200 p-4">

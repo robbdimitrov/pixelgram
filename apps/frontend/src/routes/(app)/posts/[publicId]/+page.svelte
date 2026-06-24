@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.post.description ? data.post.description.slice(0, 60) : 'Post'} — PixelGram</title>
+	<title>{data.post.description ? data.post.description.slice(0, 60) : 'Post'} — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto max-w-xl">

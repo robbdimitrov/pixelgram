@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>Log in — PixelGram</title>
+	<title>Log in — Phasma</title>
 </svelte:head>
 
 <section
@@ -20,7 +20,7 @@
 			>Welcome back</span
 		>
 		<h1 class="text-3xl font-extrabold leading-tight tracking-normal text-base-content sm:text-4xl">
-			Log in to PixelGram
+			Log in to Phasma
 		</h1>
 		<p class="text-base leading-7 text-base-content/70">
 			Share photos, follow the feed, and keep your creative journal moving.
@@ -104,7 +104,7 @@
 
 	<div class="grid gap-3 border-t border-base-300 pt-6 text-center">
 		<span class="text-xs font-extrabold uppercase tracking-[0.16em] text-base-content/60"
-			>New to PixelGram?</span
+			>New to Phasma?</span
 		>
 		<p class="text-sm text-base-content/70">
 			Don't have an account?

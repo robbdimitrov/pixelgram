@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/posts"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/posts"
 )
 
 type Application interface {

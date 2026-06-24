@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"pixelgram/backend/internal/blobstore"
-	"pixelgram/backend/internal/httpx"
+	"phasma/backend/internal/blobstore"
+	"phasma/backend/internal/httpx"
 )
 
 func testJPEG(t *testing.T) []byte {

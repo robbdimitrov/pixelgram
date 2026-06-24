@@ -58,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.q ? `"${data.q}" — Search` : 'Search'} — PixelGram</title>
+	<title>{data.q ? `"${data.q}" — Search` : 'Search'} — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-xl flex-col gap-6">

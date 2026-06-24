@@ -4,7 +4,7 @@ metadata:
   name: backend
 spec:
   selector:
-    app: pixelgram
+    app: phasma
     tier: backend
   ports:
   - port: 8080
@@ -14,7 +14,7 @@ kind: Deployment
 metadata:
   name: backend
   labels:
-    app: pixelgram
+    app: phasma
     tier: backend
 spec:
   # The single replica is a resource policy; backend state is shared through
@@ -24,12 +24,12 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: backend
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: backend
     spec:
       securityContext:
@@ -41,7 +41,7 @@ spec:
           type: RuntimeDefault
       initContainers:
       - name: migration
-        image: localhost:5000/pixelgram/database
+        image: localhost:5000/phasma/database
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
@@ -57,7 +57,7 @@ spec:
               key: postgres-password
       containers:
       - name: backend
-        image: localhost:5000/pixelgram/backend
+        image: localhost:5000/phasma/backend
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
@@ -82,13 +82,13 @@ spec:
               name: database-credentials
               key: postgres-password
         - name: POSTGRES_DB
-          value: pixelgram
+          value: phasma
         - name: DATABASE_URL
           value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
         - name: S3_ENDPOINT
           value: http://storage:8333
         - name: S3_BUCKET
-          value: pixelgram
+          value: phasma
         - name: S3_REGION
           value: us-east-1
         - name: S3_FORCE_PATH_STYLE

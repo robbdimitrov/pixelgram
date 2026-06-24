@@ -3,8 +3,8 @@ package comments
 import (
 	"context"
 
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type CreateCommentCommand struct {

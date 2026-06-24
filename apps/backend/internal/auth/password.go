@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/sync/semaphore"
 
-	"pixelgram/backend/internal/env"
+	"phasma/backend/internal/env"
 )
 
 const (

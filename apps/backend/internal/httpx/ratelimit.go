@@ -12,7 +12,7 @@ import (
 
 	"github.com/valkey-io/valkey-go"
 
-	"pixelgram/backend/internal/env"
+	"phasma/backend/internal/env"
 )
 
 // tokenBucketLua refills tokens based on elapsed time, decrements one, sets

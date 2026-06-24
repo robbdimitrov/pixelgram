@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/search"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/search"
 )
 
 type SearchRepository struct {

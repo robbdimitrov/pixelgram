@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/store"
 )
 
 type serviceRepository struct {

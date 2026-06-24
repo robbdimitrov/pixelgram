@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"pixelgram/backend/internal/database"
+	"phasma/backend/internal/database"
 )
 
 // Client owns the shared database lifecycle and implements session

@@ -52,7 +52,7 @@ func TestHashSessionTokenNoFallbackSecret(t *testing.T) {
 	// An empty secret must not silently fall back to a hardcoded value; it
 	// hashes with an empty HMAC key, distinct from any real secret.
 	emptySecret := HashSessionToken(token, "")
-	legacyFallback := HashSessionToken(token, "pixelgram-development-session-secret")
+	legacyFallback := HashSessionToken(token, "phasma-development-session-secret")
 
 	if emptySecret == legacyFallback {
 		t.Fatal("HashSessionToken with empty secret must not reuse the old development fallback secret")

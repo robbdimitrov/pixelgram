@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/auth"
+	"phasma/backend/internal/store"
 )
 
 type DB struct {

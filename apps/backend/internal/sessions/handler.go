@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/validation"
+	"phasma/backend/internal/auth"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/validation"
 )
 
 type HandlerService interface {

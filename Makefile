@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := all
 
-IMAGE_PREFIX ?= localhost:5000/pixelgram
+IMAGE_PREFIX ?= localhost:5000/phasma
 
 .PHONY: all
 all: backend database frontend

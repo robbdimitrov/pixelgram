@@ -6,7 +6,7 @@ spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app: pixelgram
+    app: phasma
     tier: database
   ports:
   - name: postgres
@@ -18,7 +18,7 @@ kind: StatefulSet
 metadata:
   name: database
   labels:
-    app: pixelgram
+    app: phasma
     tier: database
 spec:
   serviceName: database
@@ -26,14 +26,14 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: database
   updateStrategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: database
     spec:
       automountServiceAccountToken: false
@@ -73,7 +73,7 @@ spec:
               name: database-credentials
               key: postgres-password
         - name: POSTGRES_DB
-          value: pixelgram
+          value: phasma
         - name: PGDATA
           value: /var/lib/postgresql/18/docker
         readinessProbe:
@@ -83,7 +83,7 @@ spec:
             - -U
             - postgres
             - -d
-            - pixelgram
+            - phasma
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -94,7 +94,7 @@ spec:
             - -U
             - postgres
             - -d
-            - pixelgram
+            - phasma
           failureThreshold: 30
           periodSeconds: 2
         livenessProbe:
@@ -104,7 +104,7 @@ spec:
             - -U
             - postgres
             - -d
-            - pixelgram
+            - phasma
           failureThreshold: 6
           periodSeconds: 10
           timeoutSeconds: 3

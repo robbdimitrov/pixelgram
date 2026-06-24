@@ -34,7 +34,7 @@
 </script>
 
 <svelte:head>
-	<title>Notifications — PixelGram</title>
+	<title>Notifications — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-xl flex-col gap-4">

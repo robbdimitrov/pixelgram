@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: broker-pipelines
   labels:
-    app: pixelgram
+    app: phasma
     tier: broker
 data:
   relay.yaml: |
@@ -142,13 +142,13 @@ kind: Service
 metadata:
   name: broker
   labels:
-    app: pixelgram
+    app: phasma
     tier: broker
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app: pixelgram
+    app: phasma
     tier: broker
   ports:
   - name: kafka
@@ -160,7 +160,7 @@ kind: StatefulSet
 metadata:
   name: broker
   labels:
-    app: pixelgram
+    app: phasma
     tier: broker
 spec:
   serviceName: broker
@@ -168,14 +168,14 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: broker
   updateStrategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: broker
     spec:
       automountServiceAccountToken: false
@@ -269,20 +269,20 @@ kind: Deployment
 metadata:
   name: connect
   labels:
-    app: pixelgram
+    app: phasma
     tier: broker
 spec:
   replicas: 1
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: broker
       component: connect
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: broker
         component: connect
     spec:
@@ -314,13 +314,13 @@ spec:
               name: database-credentials
               key: postgres-password
         - name: POSTGRES_DB
-          value: pixelgram
+          value: phasma
         - name: DATABASE_URL
           value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
         - name: S3_ENDPOINT
           value: http://storage:8333
         - name: S3_BUCKET
-          value: pixelgram
+          value: phasma
         - name: S3_REGION
           value: us-east-1
         - name: S3_FORCE_PATH_STYLE

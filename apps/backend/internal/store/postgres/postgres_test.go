@@ -12,14 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/comments"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/posts"
-	"pixelgram/backend/internal/sessions"
-	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/users"
+	"phasma/backend/internal/auth"
+	"phasma/backend/internal/comments"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/posts"
+	"phasma/backend/internal/sessions"
+	"phasma/backend/internal/store"
+	"phasma/backend/internal/users"
 )
 
 const testSessionSecret = "integration-secret"
@@ -34,9 +34,9 @@ func openTestClient(t *testing.T) *Client {
 	if testing.Short() {
 		t.Skip("PostgreSQL integration test")
 	}
-	databaseURL := os.Getenv("PIXELGRAM_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("PHASMA_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("PIXELGRAM_TEST_DATABASE_URL is not set")
+		t.Skip("PHASMA_TEST_DATABASE_URL is not set")
 	}
 	client, err := New(context.Background(), databaseURL, testSessionSecret)
 	if err != nil {

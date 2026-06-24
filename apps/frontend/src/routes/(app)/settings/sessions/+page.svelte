@@ -23,7 +23,7 @@
 </script>
 
 <svelte:head>
-	<title>Active Sessions — PixelGram</title>
+	<title>Active Sessions — Phasma</title>
 </svelte:head>
 
 <div

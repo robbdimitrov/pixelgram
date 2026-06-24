@@ -8,10 +8,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"pixelgram/backend/internal/comments"
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/comments"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type CommentRepository struct {

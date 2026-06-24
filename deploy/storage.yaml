@@ -3,13 +3,13 @@ kind: Service
 metadata:
   name: storage
   labels:
-    app: pixelgram
+    app: phasma
     tier: storage
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app: pixelgram
+    app: phasma
     tier: storage
   ports:
   - name: s3
@@ -21,7 +21,7 @@ kind: StatefulSet
 metadata:
   name: storage
   labels:
-    app: pixelgram
+    app: phasma
     tier: storage
 spec:
   serviceName: storage
@@ -29,14 +29,14 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: storage
   updateStrategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: storage
     spec:
       automountServiceAccountToken: false
@@ -57,7 +57,7 @@ spec:
         - -ec
         args:
         - |
-          printf '{"identities":[{"name":"pixelgram","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","List","Tagging","Write"]}]}\n' \
+          printf '{"identities":[{"name":"phasma","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","List","Tagging","Write"]}]}\n' \
             "${S3_ACCESS_KEY}" "${S3_SECRET_KEY}" > /tmp/s3.json
           exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json
         securityContext:

@@ -1,4 +1,4 @@
-# Pixelgram
+# Phasma
 
 ## Architecture
 
@@ -25,24 +25,24 @@ make test-integration    # PostgreSQL integration tests
 ./scripts/deploy.sh      # preferred local kind deployment
 ```
 
-Images are tagged `localhost:5000/pixelgram/<service>`.
+Images are tagged `localhost:5000/phasma/<service>`.
 
 ### Manual Kubernetes workflow
 
 ```sh
-kubectl create namespace pixelgram
-kubectl create secret generic database-credentials -n pixelgram \
+kubectl create namespace phasma
+kubectl create secret generic database-credentials -n phasma \
   --from-literal=postgres-password="$(openssl rand -hex 32)" \
   --from-literal=session-hash-secret="$(openssl rand -hex 32)"
-kubectl apply -f ./deploy -n pixelgram
-kubectl port-forward service/frontend 8080 -n pixelgram
+kubectl apply -f ./deploy -n phasma
+kubectl port-forward service/frontend 8080 -n phasma
 ```
 
 Cleanup:
 
 ```sh
-kubectl delete -f ./deploy -n pixelgram
-kubectl delete namespace pixelgram
+kubectl delete -f ./deploy -n phasma
+kubectl delete namespace phasma
 ```
 
 ## Engineering Standards

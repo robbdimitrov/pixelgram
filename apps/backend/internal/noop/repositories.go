@@ -4,16 +4,16 @@ import (
 	"context"
 	"time"
 
-	"pixelgram/backend/internal/comments"
-	"pixelgram/backend/internal/feed"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/notifications"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/posts"
-	"pixelgram/backend/internal/search"
-	"pixelgram/backend/internal/sessions"
-	"pixelgram/backend/internal/uploads"
-	"pixelgram/backend/internal/users"
+	"phasma/backend/internal/comments"
+	"phasma/backend/internal/feed"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/notifications"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/posts"
+	"phasma/backend/internal/search"
+	"phasma/backend/internal/sessions"
+	"phasma/backend/internal/uploads"
+	"phasma/backend/internal/users"
 )
 
 type SessionAuth struct{}

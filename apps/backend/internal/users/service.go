@@ -3,9 +3,9 @@ package users
 import (
 	"context"
 
-	"pixelgram/backend/internal/auth"
-	"pixelgram/backend/internal/blobstore"
-	"pixelgram/backend/internal/pagination"
+	"phasma/backend/internal/auth"
+	"phasma/backend/internal/blobstore"
+	"phasma/backend/internal/pagination"
 )
 
 type Service struct {

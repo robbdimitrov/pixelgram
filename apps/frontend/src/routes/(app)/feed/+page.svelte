@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>Feed — PixelGram</title>
+	<title>Feed — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-xl flex-col items-center gap-6">

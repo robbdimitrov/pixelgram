@@ -3,8 +3,8 @@ package feed
 import (
 	"context"
 
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/posts"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/posts"
 )
 
 type Service struct {

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/validation"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
+	"phasma/backend/internal/validation"
 )
 
 type HandlerService interface {

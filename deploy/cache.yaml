@@ -3,13 +3,13 @@ kind: Service
 metadata:
   name: cache
   labels:
-    app: pixelgram
+    app: phasma
     tier: cache
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app: pixelgram
+    app: phasma
     tier: cache
   ports:
   - name: redis
@@ -21,7 +21,7 @@ kind: StatefulSet
 metadata:
   name: cache
   labels:
-    app: pixelgram
+    app: phasma
     tier: cache
 spec:
   serviceName: cache
@@ -29,14 +29,14 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: cache
   updateStrategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: cache
     spec:
       automountServiceAccountToken: false

@@ -28,7 +28,7 @@
 </script>
 
 <svelte:head>
-	<title>@{data.profileUser.username} — PixelGram</title>
+	<title>@{data.profileUser.username} — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-5xl flex-col gap-6">

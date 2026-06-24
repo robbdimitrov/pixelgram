@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"pixelgram/backend/internal/auth"
+	"phasma/backend/internal/auth"
 )
 
 type fakeRepository struct {

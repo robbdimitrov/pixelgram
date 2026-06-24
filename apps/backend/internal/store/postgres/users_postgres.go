@@ -10,10 +10,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
-	"pixelgram/backend/internal/users"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
+	"phasma/backend/internal/users"
 )
 
 const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,

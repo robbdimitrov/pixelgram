@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/pagination"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/pagination"
 )
 
 type Application interface {

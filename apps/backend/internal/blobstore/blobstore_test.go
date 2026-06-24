@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"pixelgram/backend/internal/blobstore"
+	"phasma/backend/internal/blobstore"
 )
 
 func TestMemoryStoreRoundTrip(t *testing.T) {

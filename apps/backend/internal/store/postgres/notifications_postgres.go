@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/notifications"
-	"pixelgram/backend/internal/pagination"
-	"pixelgram/backend/internal/store"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/notifications"
+	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type NotificationRepository struct {

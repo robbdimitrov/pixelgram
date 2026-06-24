@@ -16,8 +16,8 @@ import (
 
 	_ "golang.org/x/image/webp"
 
-	"pixelgram/backend/internal/blobstore"
-	"pixelgram/backend/internal/httpx"
+	"phasma/backend/internal/blobstore"
+	"phasma/backend/internal/httpx"
 )
 
 const (

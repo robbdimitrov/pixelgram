@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"pixelgram/backend/internal/env"
+	"phasma/backend/internal/env"
 )
 
 type retryConfig struct {

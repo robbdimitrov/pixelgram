@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/uploads"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/uploads"
 )
 
 const maxPendingUploads = 20

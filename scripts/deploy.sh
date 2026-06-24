@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Bring up the full Pixelgram stack on a local Kubernetes cluster (e.g. colima/k3s).
+# Bring up the full Phasma stack on a local Kubernetes cluster (e.g. colima/k3s).
 # Idempotent: safe to re-run; reuses the cluster, namespace, and port-forward.
 
-CLUSTER="${CLUSTER:-pixelgram}"
-NS="${NS:-pixelgram}"
+CLUSTER="${CLUSTER:-phasma}"
+NS="${NS:-phasma}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 K8S_DIR="$ROOT/deploy"
-REGISTRY="${REGISTRY:-localhost:5000/pixelgram}"
-APP_HOST="${APP_HOST:-pixelgram.localhost}"
+REGISTRY="${REGISTRY:-localhost:5000/phasma}"
+APP_HOST="${APP_HOST:-phasma.localhost}"
 LOCAL_PORT="${LOCAL_PORT:-8080}"
 REMOTE_PORT="${REMOTE_PORT:-8080}"
-PORT_FORWARD_LOG="${PORT_FORWARD_LOG:-/tmp/pixelgram-port-forward-${LOCAL_PORT}.log}"
-PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/pixelgram-port-forward-${LOCAL_PORT}.pid}"
+PORT_FORWARD_LOG="${PORT_FORWARD_LOG:-/tmp/phasma-port-forward-${LOCAL_PORT}.log}"
+PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/phasma-port-forward-${LOCAL_PORT}.pid}"
 
 SERVICES=(backend database frontend)
 ROLL_OUT_DATABASE=(statefulset/database)
@@ -142,17 +142,17 @@ build_images() {
   log "building images"
   export DOCKER_BUILDKIT=1
   make -C "${ROOT}"
-  if docker container inspect --format '{{.State.Running}}' pixelgram-control-plane 2>/dev/null | grep -qx true; then
+  if docker container inspect --format '{{.State.Running}}' phasma-control-plane 2>/dev/null | grep -qx true; then
     log "loading images into kind node"
     docker pull chrislusf/seaweedfs
     docker pull docker.dragonflydb.io/dragonflydb/dragonfly
     docker pull getmeili/meilisearch
-    docker save localhost:5000/pixelgram/backend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
-    docker save localhost:5000/pixelgram/database | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
-    docker save localhost:5000/pixelgram/frontend | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
-    docker save chrislusf/seaweedfs | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
-    docker save docker.dragonflydb.io/dragonflydb/dragonfly | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
-    docker save getmeili/meilisearch | docker exec -i pixelgram-control-plane ctr --namespace k8s.io images import -
+    docker save localhost:5000/phasma/backend | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save localhost:5000/phasma/database | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save localhost:5000/phasma/frontend | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save chrislusf/seaweedfs | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save docker.dragonflydb.io/dragonflydb/dragonfly | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save getmeili/meilisearch | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
   fi
 }
 
@@ -262,7 +262,7 @@ start_port_forward_background() {
 print_summary() {
   cat <<EOF
 
-==> pixelgram is up
+==> phasma is up
 
   Frontend       http://${APP_HOST}:${LOCAL_PORT}
   Gateway        in-cluster: http://backend:8080

@@ -4,9 +4,9 @@
 
 | Service | Role | Image |
 |---|---|---|
-| `frontend` | SvelteKit SSR BFF — sole public entry point | `localhost:5000/pixelgram/frontend` |
-| `backend` | Go HTTP API — all business logic | `localhost:5000/pixelgram/backend` |
-| `database` | Migration runner — init container only | `localhost:5000/pixelgram/database` |
+| `frontend` | SvelteKit SSR BFF — sole public entry point | `localhost:5000/phasma/frontend` |
+| `backend` | Go HTTP API — all business logic | `localhost:5000/phasma/backend` |
+| `database` | Migration runner — init container only | `localhost:5000/phasma/database` |
 | `postgres` | PostgreSQL — primary data store | `postgres` |
 | `storage` | SeaweedFS — S3-compatible object storage | `chrislusf/seaweedfs` |
 | `cache` | Dragonfly — rate limiting and login throttle | `docker.dragonflydb.io/dragonflydb/dragonfly` |

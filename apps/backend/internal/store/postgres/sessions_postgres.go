@@ -8,10 +8,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"pixelgram/backend/internal/database"
-	"pixelgram/backend/internal/env"
-	"pixelgram/backend/internal/httpx"
-	"pixelgram/backend/internal/sessions"
+	"phasma/backend/internal/database"
+	"phasma/backend/internal/env"
+	"phasma/backend/internal/httpx"
+	"phasma/backend/internal/sessions"
 )
 
 const (

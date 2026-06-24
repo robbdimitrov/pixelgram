@@ -3,7 +3,7 @@ package notifications
 import (
 	"context"
 
-	"pixelgram/backend/internal/pagination"
+	"phasma/backend/internal/pagination"
 )
 
 type Repository interface {

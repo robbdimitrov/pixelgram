@@ -124,7 +124,7 @@
 </script>
 
 <svelte:head>
-	<title>Create Post — PixelGram</title>
+	<title>Create Post — Phasma</title>
 </svelte:head>
 
 <div class="mx-auto max-w-5xl">
@@ -133,7 +133,7 @@
 	>
 		<div class="flex min-h-16 items-center justify-between border-b border-base-300 px-6 sm:px-8">
 			<div>
-				<p class="text-xs font-bold uppercase tracking-wider text-base-content/60">PixelGram</p>
+				<p class="text-xs font-bold uppercase tracking-wider text-base-content/60">Phasma</p>
 				<h1 class="text-lg font-black leading-tight">Create new post</h1>
 			</div>
 			<button

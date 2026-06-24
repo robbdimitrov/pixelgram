@@ -3,13 +3,13 @@ kind: Service
 metadata:
   name: search
   labels:
-    app: pixelgram
+    app: phasma
     tier: search
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app: pixelgram
+    app: phasma
     tier: search
   ports:
   - name: http
@@ -21,7 +21,7 @@ kind: StatefulSet
 metadata:
   name: search
   labels:
-    app: pixelgram
+    app: phasma
     tier: search
 spec:
   serviceName: search
@@ -29,14 +29,14 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: pixelgram
+      app: phasma
       tier: search
   updateStrategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: pixelgram
+        app: phasma
         tier: search
     spec:
       automountServiceAccountToken: false
