@@ -60,6 +60,11 @@ func (r *FeedRepository) InsertEntries(ctx context.Context, entries []feed.Entry
 		return nil
 	}
 	return r.db.Write(ctx, func() error {
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
 		for i := 0; i < len(entries); i += insertEntriesBatchSize {
 			end := i + insertEntriesBatchSize
 			if end > len(entries) {
@@ -76,11 +81,11 @@ func (r *FeedRepository) InsertEntries(ctx context.Context, entries []feed.Entry
 			query := `INSERT INTO feed (user_id, post_id, created) VALUES ` +
 				strings.Join(placeholders, ", ") +
 				` ON CONFLICT (user_id, post_id) DO NOTHING`
-			if _, err := r.db.Pool().Exec(ctx, query, args...); err != nil {
+			if _, err := tx.Exec(ctx, query, args...); err != nil {
 				return err
 			}
 		}
-		return nil
+		return tx.Commit(ctx)
 	})
 }
 
@@ -98,7 +103,7 @@ func (r *FeedRepository) GetFollowers(ctx context.Context, userID int64) ([]int6
 	var followers []int64
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx,
-			`SELECT follower_id FROM follows WHERE followee_id = $1`, userID)
+			`SELECT follower_id FROM follows WHERE followee_id = $1 LIMIT $2`, userID, r.celebThreshold)
 		if err != nil {
 			return err
 		}
