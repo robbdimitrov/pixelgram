@@ -260,14 +260,14 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 				followeeID); err != nil {
 				return err
 			}
-		}
-		payload := fmt.Sprintf(
-			`{"op":"unfollow","actor_id":%q,"recipient_id":%q}`,
-			followerID, followeeID,
-		)
-		if _, err := tx.Exec(ctx,
-			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
-			return err
+			payload := fmt.Sprintf(
+				`{"op":"unfollow","actor_id":%q,"recipient_id":%q}`,
+				followerID, followeeID,
+			)
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
+				return err
+			}
 		}
 		return tx.Commit(ctx)
 	})
