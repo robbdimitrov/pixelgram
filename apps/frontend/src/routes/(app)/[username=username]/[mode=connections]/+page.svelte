@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { createPagination } from '$lib/createPagination.svelte';
 	import ProfileHeader from '$lib/components/ProfileHeader.svelte';
@@ -43,11 +44,11 @@
 	<div class="h-px w-full bg-base-300" aria-hidden="true"></div>
 
 	<div class="tabs tabs-bordered justify-center font-bold">
-		<a class="tab" href="/@{username}">Posts</a>
-		<a class="tab" class:tab-active={data.mode === 'followers'} href="/@{username}/followers"
+		<a class="tab" href={resolve(`/@${username}`)}>Posts</a>
+		<a class="tab" class:tab-active={data.mode === 'followers'} href={resolve(`/@${username}/followers`)}
 			>Followers</a
 		>
-		<a class="tab" class:tab-active={data.mode === 'following'} href="/@{username}/following"
+		<a class="tab" class:tab-active={data.mode === 'following'} href={resolve(`/@${username}/following`)}
 			>Following</a
 		>
 	</div>
@@ -60,7 +61,7 @@
 					class="flex items-start gap-3 rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm shadow-slate-900/5"
 				>
 					<Avatar username={user.username} avatar={user.avatar} size="h-8 w-8" class="mt-0.5" />
-					<a href="/@{user.username}" class="min-w-0 flex-1">
+					<a href={resolve(`/@${user.username}`)} class="min-w-0 flex-1">
 						<div class="truncate text-sm font-black text-base-content">
 							{user.name || user.username}
 						</div>

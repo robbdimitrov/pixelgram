@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { ChevronRight } from '@lucide/svelte';
 	import { theme } from '$lib/theme';
@@ -55,7 +56,7 @@
 
 			<li>
 				<a
-					href="/settings/profile"
+					href={resolve('/settings/profile')}
 					class="flex items-center justify-between rounded-2xl border border-base-300 bg-base-200 p-4 text-sm font-bold text-base-content transition-colors hover:border-base-content/20 hover:bg-base-300"
 				>
 					<span>Edit Profile</span>
@@ -65,7 +66,7 @@
 
 			<li>
 				<a
-					href="/settings/password"
+					href={resolve('/settings/password')}
 					class="flex items-center justify-between rounded-2xl border border-base-300 bg-base-200 p-4 text-sm font-bold text-base-content transition-colors hover:border-base-content/20 hover:bg-base-300"
 				>
 					<span>Change Password</span>
@@ -75,7 +76,7 @@
 
 			<li>
 				<a
-					href="/settings/sessions"
+					href={resolve('/settings/sessions')}
 					class="flex items-center justify-between rounded-2xl border border-base-300 bg-base-200 p-4 text-sm font-bold text-base-content transition-colors hover:border-base-content/20 hover:bg-base-300"
 				>
 					<span>Active Sessions</span>

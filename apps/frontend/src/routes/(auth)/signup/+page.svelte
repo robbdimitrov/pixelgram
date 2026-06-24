@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import type { ActionData } from './$types';
 
@@ -148,7 +149,7 @@
 		>
 		<p class="text-sm text-base-content/70">
 			Already have an account?
-			<a href="/login" class="ml-1 font-extrabold text-base-content hover:text-primary">Log in</a>
+			<a href={resolve('/login')} class="ml-1 font-extrabold text-base-content hover:text-primary">Log in</a>
 		</p>
 	</div>
 </section>

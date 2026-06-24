@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { linkify } from '$lib/utils/linkify';
 
 	let { text }: { text: string } = $props();
@@ -8,12 +9,12 @@
 
 <span class="whitespace-pre-wrap"
 	>{#each tokens as token (token)}{#if token.type === 'mention'}<a
-				href={token.href}
+				href={resolve(token.href as any)}
 				class="link link-primary">{token.value}</a
-			>{:else if token.type === 'hashtag'}<a href={token.href} class="link link-secondary"
+			>{:else if token.type === 'hashtag'}<a href={resolve(token.href as any)} class="link link-secondary"
 				>{token.value}</a
 			>{:else if token.type === 'url'}<a
-				href={token.href}
+				href={resolve(token.href as any)}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="link">{token.value}</a

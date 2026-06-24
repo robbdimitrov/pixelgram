@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Bell, Camera, Heart, TriangleAlert, SquarePlus } from '@lucide/svelte';
 
 	type Icon = 'bell' | 'camera' | 'heart' | 'square-plus' | 'triangle-alert';
@@ -41,7 +42,7 @@
 	<p class="max-w-sm text-sm leading-6 text-base-content/70">{description}</p>
 	{#if actionLabel && actionRoute}
 		<a
-			href={actionRoute}
+			href={resolve(actionRoute as any)}
 			class="btn h-12 min-h-12 rounded-full px-6 font-bold transition-all duration-150 active:scale-95 {actionStyle ===
 			'primary'
 				? 'btn-neutral shadow-lg'

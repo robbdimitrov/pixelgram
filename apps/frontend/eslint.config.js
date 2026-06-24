@@ -35,11 +35,5 @@ export default [
 	},
 	{
 		ignores: ['build/', '.svelte-kit/', 'coverage/', 'dist/']
-	},
-	{
-		files: ['**/*.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
 	}
 ];

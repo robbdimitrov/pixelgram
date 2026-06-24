@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { ArrowLeft } from '@lucide/svelte';
 	import type { ActionData } from './$types';
@@ -20,7 +21,7 @@
 >
 	<div class="flex items-center gap-3 border-b border-base-300 pb-4">
 		<a
-			href="/settings"
+			href={resolve('/settings')}
 			class="btn btn-ghost btn-circle btn-sm text-base-content/60 transition-colors hover:bg-base-200 hover:text-base-content"
 			title="Back to Settings"
 		>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { createPagination } from '$lib/createPagination.svelte';
@@ -25,7 +26,7 @@
 	}
 
 	function navigate(q: string, type: SearchType) {
-		goto(buildUrl(q, type), { replaceState: true });
+		goto(resolve(buildUrl(q, type) as any), { replaceState: true });
 	}
 
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -83,7 +84,7 @@
 					{#each data.suggested as user (user.id)}
 						<div class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-100 p-3">
 							<Avatar username={user.username} avatar={user.avatar} size="h-10 w-10" />
-							<a href="/@{user.username}" class="min-w-0 flex-1">
+							<a href={resolve(`/@${user.username}`)} class="min-w-0 flex-1">
 								<p class="truncate font-bold">{user.name || user.username}</p>
 								<p class="truncate text-sm text-base-content/60">@{user.username}</p>
 							</a>
@@ -150,7 +151,7 @@
 					{@const user = item as import('$lib/server/api/search').SearchUserItem}
 					<li>
 						<a
-							href="/@{user.username}"
+							href={resolve(`/@${user.username}`)}
 							class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-100 p-3 transition-colors hover:bg-base-200"
 						>
 							<Avatar username={user.username} avatar={null} size="h-10 w-10" />
@@ -168,7 +169,7 @@
 					{@const post = item as import('$lib/server/api/search').SearchPostItem}
 					<li>
 						<a
-							href="/posts/{post.id}"
+							href={resolve(`/posts/${post.id}`)}
 							class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-100 p-3 transition-colors hover:bg-base-200"
 						>
 							<span
@@ -192,7 +193,7 @@
 					{@const hashtag = item as import('$lib/server/api/search').SearchHashtagItem}
 					<li>
 						<a
-							href="/search?q=%23{encodeURIComponent(hashtag.name)}&type=hashtags"
+							href={resolve(`/search?q=%23${encodeURIComponent(hashtag.name)}&type=hashtags`)}
 							class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-100 p-3 transition-colors hover:bg-base-200"
 						>
 							<span

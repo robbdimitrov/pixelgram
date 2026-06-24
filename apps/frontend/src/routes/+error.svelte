@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 </script>
 
@@ -27,7 +28,7 @@
 				{page.error?.message ?? 'An unexpected error occurred.'}
 			</p>
 		</div>
-		<a href="/feed" class="btn btn-neutral h-11 min-h-11 rounded-full px-6 font-bold">
+		<a href={resolve('/feed')} class="btn btn-neutral h-11 min-h-11 rounded-full px-6 font-bold">
 			Back to Feed
 		</a>
 	</div>

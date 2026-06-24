@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Bell, Camera, Home, Search, SquarePlus, User } from '@lucide/svelte';
 	import type { User as UserType } from '$lib/types';
@@ -15,7 +16,7 @@
 >
 	<a
 		class="flex min-w-0 items-center gap-2 no-underline transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99] sm:gap-3"
-		href="/"
+		href={resolve('/')}
 		aria-label="Phasma home"
 	>
 		<span
@@ -33,7 +34,7 @@
 		aria-label="Primary navigation"
 	>
 		<a
-			href="/feed"
+			href={resolve('/feed')}
 			class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
 			class:bg-white={isActive('/feed')}
 			class:text-slate-950={isActive('/feed')}
@@ -45,7 +46,7 @@
 		</a>
 
 		<a
-			href="/search"
+			href={resolve('/search')}
 			class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
 			class:bg-white={isActive('/search')}
 			class:text-slate-950={isActive('/search')}
@@ -57,7 +58,7 @@
 		</a>
 
 		<a
-			href="/upload"
+			href={resolve('/upload')}
 			class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
 			class:bg-white={isActive('/upload')}
 			class:text-slate-950={isActive('/upload')}
@@ -69,7 +70,7 @@
 		</a>
 
 		<a
-			href="/notifications"
+			href={resolve('/notifications')}
 			class="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
 			class:bg-white={isActive('/notifications')}
 			class:text-slate-950={isActive('/notifications')}
@@ -87,7 +88,7 @@
 		</a>
 
 		<a
-			href="/@{currentUser.username}"
+			href={resolve(`/@${currentUser.username}`)}
 			class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-base-content/70 transition-colors hover:bg-base-100 hover:text-base-content dark:hover:bg-white/15"
 			class:bg-white={isActive('/@' + currentUser.username)}
 			class:text-slate-950={isActive('/@' + currentUser.username)}

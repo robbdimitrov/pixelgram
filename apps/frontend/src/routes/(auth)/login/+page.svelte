@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import type { ActionData } from './$types';
 
@@ -108,7 +109,7 @@
 		>
 		<p class="text-sm text-base-content/70">
 			Don't have an account?
-			<a href="/signup" class="ml-1 font-extrabold text-base-content hover:text-primary"
+			<a href={resolve('/signup')} class="ml-1 font-extrabold text-base-content hover:text-primary"
 				>Create one</a
 			>
 		</p>

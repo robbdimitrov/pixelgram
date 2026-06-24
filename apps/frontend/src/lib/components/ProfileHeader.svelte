@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Settings } from '@lucide/svelte';
 	import { imageUrl } from '$lib/utils/imageUrl';
@@ -43,7 +44,7 @@
 
 			{#if isCurrentUser}
 				<a
-					href="/settings"
+					href={resolve('/settings')}
 					class="btn btn-neutral btn-sm h-10 min-h-10 shrink-0 gap-2 rounded-full px-5 font-extrabold shadow-md shadow-slate-900/15"
 				>
 					<Settings class="h-4 w-4" />
@@ -95,23 +96,23 @@
 		<div
 			class="flex items-center justify-center gap-6 text-sm font-bold text-base-content/70 md:justify-start"
 		>
-			<a href="/@{profileUser.username}" class="transition-colors hover:text-base-content">
+			<a href={resolve(`/@${profileUser.username}`)} class="transition-colors hover:text-base-content">
 				<strong class="font-black text-base-content">{profileUser.posts}</strong>
 				{pluralize(profileUser.posts, 'post')}
 			</a>
-			<a href="/@{profileUser.username}/likes" class="transition-colors hover:text-base-content">
+			<a href={resolve(`/@${profileUser.username}/likes`)} class="transition-colors hover:text-base-content">
 				<strong class="font-black text-base-content">{profileUser.likes}</strong>
 				{pluralize(profileUser.likes, 'like')}
 			</a>
 			<a
-				href="/@{profileUser.username}/followers"
+				href={resolve(`/@${profileUser.username}/followers`)}
 				class="transition-colors hover:text-base-content"
 			>
 				<strong class="font-black text-base-content">{profileUser.followers}</strong>
 				{pluralize(profileUser.followers, 'follower')}
 			</a>
 			<a
-				href="/@{profileUser.username}/following"
+				href={resolve(`/@${profileUser.username}/following`)}
 				class="transition-colors hover:text-base-content"
 			>
 				<strong class="font-black text-base-content">{profileUser.following}</strong> following

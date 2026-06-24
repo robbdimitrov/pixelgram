@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Heart, MessageCircle, Trash2, Send } from '@lucide/svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -81,7 +82,7 @@
 			<Avatar username={initialPost.username} avatar={initialPost.avatar} />
 			<div class="flex flex-col">
 				<a
-					href="/@{initialPost.username}"
+					href={resolve(`/@${initialPost.username}`)}
 					class="text-base font-bold leading-6 text-base-content transition-colors hover:text-primary"
 				>
 					{initialPost.username}
@@ -157,7 +158,7 @@
 			</form>
 
 			<a
-				href="/posts/{initialPost.publicId}"
+				href={resolve(`/posts/${initialPost.publicId}`)}
 				class="group inline-flex items-center gap-1.5 text-sm font-semibold text-base-content/60 transition-colors hover:text-base-content"
 				aria-label="View comments"
 			>
@@ -170,7 +171,7 @@
 		{#if initialPost.description && initialPost.description.length > 0}
 			<div class="text-base leading-7">
 				<a
-					href="/@{initialPost.username}"
+					href={resolve(`/@${initialPost.username}`)}
 					class="mr-1.5 font-bold text-base-content hover:underline"
 				>
 					{initialPost.username}
@@ -235,7 +236,7 @@
 							/>
 							<div class="min-w-0 flex-1 text-sm leading-6">
 								<a
-									href="/@{comment.username}"
+									href={resolve(`/@${comment.username}`)}
 									class="mr-1.5 font-bold text-base-content hover:underline">{comment.username}</a
 								>
 								<Linkified text={comment.body} />

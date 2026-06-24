@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { imageUrl } from '$lib/utils/imageUrl';
 
 	let {
@@ -15,7 +16,7 @@
 </script>
 
 <a
-	href="/@{username}"
+	href={resolve(`/@${username}`)}
 	class="relative block shrink-0 overflow-hidden rounded-full border border-base-300 transition-colors hover:border-base-content {size} {extra}"
 >
 	<img

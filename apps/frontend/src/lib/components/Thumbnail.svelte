@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Heart } from '@lucide/svelte';
 	import { imageUrl } from '$lib/utils/imageUrl';
 	import type { Post } from '$lib/types';
@@ -7,7 +8,7 @@
 </script>
 
 <a
-	href="/posts/{post.publicId}"
+	href={resolve(`/posts/${post.publicId}`)}
 	class="group relative block aspect-square w-full overflow-hidden rounded-2xl border border-base-300 bg-base-300/30 shadow-sm transition-all duration-500 hover:shadow-md"
 >
 	<img

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { createPagination } from '$lib/createPagination.svelte';
 	import ProfileHeader from '$lib/components/ProfileHeader.svelte';
 	import Thumbnail from '$lib/components/Thumbnail.svelte';
@@ -37,9 +38,9 @@
 	<div class="h-px w-full bg-base-300" aria-hidden="true"></div>
 
 	<div class="tabs tabs-bordered justify-center font-bold">
-		<a class="tab tab-active" href="/@{username}">Posts</a>
-		<a class="tab" href="/@{username}/followers">Followers</a>
-		<a class="tab" href="/@{username}/following">Following</a>
+		<a class="tab tab-active" href={resolve(`/@${username}`)}>Posts</a>
+		<a class="tab" href={resolve(`/@${username}/followers`)}>Followers</a>
+		<a class="tab" href={resolve(`/@${username}/following`)}>Following</a>
 	</div>
 
 	{#if pagination.items.length > 0}
