@@ -79,6 +79,7 @@
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
 - `Referrer-Policy: strict-origin-when-cross-origin`
+- SvelteKit nonce-based `Content-Security-Policy`: `default-src 'self'; script-src 'self'` plus nonce; `style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`
 
 ## Search Filter Injection Prevention
 

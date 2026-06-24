@@ -83,9 +83,11 @@ BACKEND_URL=http://localhost:8080 node build
   the returned filename.
 - Image bytes are served same-origin by `src/routes/uploads/[key]/+server.ts`,
   which streams them from the backend through `apiClient` without buffering. The
-  browser only ever talks to this origin, so `img-src 'self'` holds with no
-  ingress rule for `/uploads`.
-- Use `imageUrl()` for image paths. CSP keeps `img-src 'self'`.
+  browser only ever talks to this origin, so stored images stay under `'self'`
+  with no ingress rule for `/uploads`.
+- Use `imageUrl()` for stored image paths. CSP keeps `img-src 'self' data: blob:`
+  so local upload previews can render `data:` URLs and client-side resizing can
+  decode selected files through `blob:` object URLs.
 
 ## SSR and Browser Security
 
