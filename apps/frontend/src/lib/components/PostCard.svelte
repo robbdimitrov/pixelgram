@@ -180,7 +180,7 @@
 			</div>
 		{/if}
 
-		<span class="text-[11px] font-bold uppercase tracking-[0.05em] text-base-content/60">
+		<span class="text-[11px] font-bold uppercase tracking-wider text-base-content/60">
 			{relativeDate(initialPost.created, 'long')}
 		</span>
 

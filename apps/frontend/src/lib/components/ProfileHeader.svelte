@@ -31,15 +31,15 @@
 		/>
 	</div>
 
-	<div class="flex w-full flex-grow flex-col gap-4 text-center md:text-left">
+	<div class="flex w-full grow flex-col gap-4 text-center md:text-left">
 		<div
 			class="flex w-full flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between sm:text-left"
 		>
 			<div class="grid min-w-0 gap-1">
-				<h1 class="break-words text-2xl font-black tracking-tight text-base-content sm:text-3xl">
+				<h1 class="wrap-break-word text-2xl font-black tracking-tight text-base-content sm:text-3xl">
 					{profileUser.name || profileUser.username}
 				</h1>
-				<p class="break-words text-sm font-bold text-base-content/60">@{profileUser.username}</p>
+				<p class="wrap-break-word text-sm font-bold text-base-content/60">@{profileUser.username}</p>
 			</div>
 
 			{#if isCurrentUser}
