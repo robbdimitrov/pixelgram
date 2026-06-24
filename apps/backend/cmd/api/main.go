@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -65,10 +66,17 @@ func main() {
 	defer stop()
 	sessionCleanupDone := startSessionCleanup(signalContext, repositories.Sessions)
 
+	var sweepOutboxDone <-chan struct{}
 	if db != nil {
-		go sweepOutboxPeriodically(signalContext, db)
+		ch := make(chan struct{})
+		sweepOutboxDone = ch
+		go func() {
+			defer close(ch)
+			sweepOutboxPeriodically(signalContext, db)
+		}()
 	}
 
+	var consumerWg sync.WaitGroup
 	if brokersEnv := os.Getenv("REDPANDA_BROKERS"); brokersEnv != "" {
 		brokers := strings.Split(brokersEnv, ",")
 
@@ -78,7 +86,11 @@ func main() {
 			os.Exit(1)
 		}
 		defer notifConsumer.Close()
-		go notifConsumer.Run(signalContext)
+		consumerWg.Add(1)
+		go func() {
+			defer consumerWg.Done()
+			notifConsumer.Run(signalContext)
+		}()
 
 		feedConsumer, err := feed.NewConsumer(brokers, repositories.Feed)
 		if err != nil {
@@ -86,7 +98,11 @@ func main() {
 			os.Exit(1)
 		}
 		defer feedConsumer.Close()
-		go feedConsumer.Run(signalContext)
+		consumerWg.Add(1)
+		go func() {
+			defer consumerWg.Done()
+			feedConsumer.Run(signalContext)
+		}()
 	}
 
 	handler := app.New(app.Config{
@@ -130,6 +146,10 @@ func main() {
 		os.Exit(1)
 	}
 	<-sessionCleanupDone
+	if sweepOutboxDone != nil {
+		<-sweepOutboxDone
+	}
+	consumerWg.Wait()
 }
 
 func setupLogger() {
