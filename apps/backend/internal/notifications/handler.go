@@ -43,6 +43,21 @@ func (h Handler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, pagination.NewCursorPage(items, nextCursor))
 }
 
+func (h Handler) UnreadCount(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, ok := parseUserID(r)
+	if !ok {
+		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	count, err := h.Service.UnreadCount(ctx, userID)
+	if err != nil {
+		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]int{"count": count})
+}
+
 func (h Handler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := parseUserID(r)

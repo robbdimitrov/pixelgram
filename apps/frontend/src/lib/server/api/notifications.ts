@@ -1,4 +1,4 @@
-import type { Notification, NotificationDto, CursorPage } from '$lib/types';
+import type { Notification, CursorPage } from '$lib/types';
 import { mapNotification } from '$lib/utils/mappers';
 import { unwrap, getCursorPage } from './http';
 import type { ApiClient } from './client';
@@ -19,7 +19,7 @@ export async function markNotificationRead(fetch: ApiClient, id: number): Promis
 }
 
 export async function getUnreadCount(fetch: ApiClient): Promise<number> {
-	const res = await fetch('/notifications?limit=50');
-	const page = await unwrap<{ items: NotificationDto[]; nextCursor: string | null }>(res);
-	return (page?.items ?? []).filter((n) => !n.read).length;
+	const res = await fetch('/notifications/unread-count');
+	const data = await unwrap<{ count: number }>(res);
+	return data?.count ?? 0;
 }

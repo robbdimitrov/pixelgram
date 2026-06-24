@@ -8,5 +8,6 @@ type routeRegistrar interface {
 
 func RegisterRoutes(mux routeRegistrar, handler Handler) {
 	mux.HandleFunc("GET /notifications", handler.ListNotifications)
+	mux.HandleFunc("GET /notifications/unread-count", handler.UnreadCount)
 	mux.HandleFunc("PUT /notifications/{id}/read", handler.MarkRead)
 }
