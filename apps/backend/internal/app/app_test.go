@@ -21,6 +21,7 @@ func TestRouteContract(t *testing.T) {
 		{Method: "DELETE", Path: "/sessions"},
 		{Method: "GET", Path: "/uploads/"},
 		{Method: "GET", Path: "/users/me", Authenticated: true},
+		{Method: "GET", Path: "/users/suggested", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}/followers", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}/following", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}", Authenticated: true},
@@ -31,6 +32,7 @@ func TestRouteContract(t *testing.T) {
 		{Method: "DELETE", Path: "/sessions/{sessionId}", Authenticated: true},
 		{Method: "POST", Path: "/uploads", Authenticated: true},
 		{Method: "POST", Path: "/posts", Authenticated: true},
+		{Method: "GET", Path: "/posts/popular", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}/posts", Authenticated: true},
 		{Method: "GET", Path: "/users/{username}/likes", Authenticated: true},
 		{Method: "GET", Path: "/posts/{publicId}", Authenticated: true},
@@ -45,6 +47,7 @@ func TestRouteContract(t *testing.T) {
 		{Method: "GET", Path: "/search", Authenticated: true},
 		{Method: "GET", Path: "/feed", Authenticated: true},
 		{Method: "GET", Path: "/notifications", Authenticated: true},
+		{Method: "GET", Path: "/notifications/unread-count", Authenticated: true},
 		{Method: "PUT", Path: "/notifications/{id}/read", Authenticated: true},
 	}
 
