@@ -7,6 +7,7 @@ const VALID_TYPES = new Set<string>(['users', 'posts', 'hashtags']);
 const MAX_Q_LENGTH = 50;
 
 export const GET: RequestHandler = async (event) => {
+	if (!event.cookies.get('session')) return new Response(null, { status: 401 });
 	const q = event.url.searchParams.get('q') ?? '';
 	const typeParam = event.url.searchParams.get('type') ?? 'posts';
 	const cursor = event.url.searchParams.get('cursor') ?? undefined;

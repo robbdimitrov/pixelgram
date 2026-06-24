@@ -5,6 +5,7 @@ import { stripAt } from '$lib/server/username';
 import { apiClient } from '$lib/server/api/client';
 
 export const GET: RequestHandler = async ({ fetch, cookies, params, url }) => {
+	if (!cookies.get('session')) return new Response(null, { status: 401 });
 	const api = apiClient({ fetch, cookies });
 	const username = stripAt(params.username);
 	const mode = params.mode as 'followers' | 'following';

@@ -4,14 +4,17 @@ import { getNotifications, markNotificationRead } from '$lib/server/api/notifica
 import { apiClient } from '$lib/server/api/client';
 
 export const GET: RequestHandler = async ({ fetch, cookies, url }) => {
+	if (!cookies.get('session')) return new Response(null, { status: 401 });
 	const cursor = url.searchParams.get('cursor') ?? undefined;
 	const client = apiClient({ fetch, cookies });
 	const page = await getNotifications(client, cursor);
 
 	// Mark newly loaded unread notifications as read; failures are best-effort.
-	await Promise.allSettled(
-		page.items.filter((n) => !n.read).map((n) => markNotificationRead(client, n.id))
-	);
+	const unreadIds = new Set(page.items.filter((n) => !n.read).map((n) => n.id));
+	await Promise.allSettled([...unreadIds].map((id) => markNotificationRead(client, id)));
 
-	return json(page);
+	return json({
+		items: page.items.map((n) => (unreadIds.has(n.id) ? { ...n, read: true } : n)),
+		nextCursor: page.nextCursor
+	});
 };

@@ -7,6 +7,7 @@ const VALID_TYPES = new Set(['users', 'hashtags']);
 const MAX_Q_LENGTH = 50;
 
 export const GET: RequestHandler = async (event) => {
+	if (!event.cookies.get('session')) return new Response(null, { status: 401 });
 	const type = event.url.searchParams.get('type') ?? '';
 	const q = event.url.searchParams.get('q') ?? '';
 
