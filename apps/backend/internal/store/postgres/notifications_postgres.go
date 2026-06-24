@@ -7,6 +7,7 @@ import (
 	"pixelgram/backend/internal/database"
 	"pixelgram/backend/internal/notifications"
 	"pixelgram/backend/internal/pagination"
+	"pixelgram/backend/internal/store"
 )
 
 type NotificationRepository struct {
@@ -56,9 +57,15 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 
 func (r *NotificationRepository) MarkRead(ctx context.Context, id int64, userID int64) error {
 	return r.db.Write(ctx, func() error {
-		_, err := r.db.Pool().Exec(ctx,
+		tag, err := r.db.Pool().Exec(ctx,
 			`UPDATE notifications SET read = true WHERE id = $1 AND user_id = $2`, id, userID)
-		return err
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return store.ErrNotFound
+		}
+		return nil
 	})
 }
 
