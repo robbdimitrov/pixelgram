@@ -14,12 +14,22 @@ export const actions: Actions = {
 			return fail(400, { error: 'Please select an image.' });
 		}
 
-		const uploaded = await uploadImage(api, file);
+		let uploaded;
+		try {
+			uploaded = await uploadImage(api, file);
+		} catch {
+			return fail(500, { error: 'Image upload failed. Please try again.' });
+		}
 		if (!uploaded) {
 			return fail(500, { error: 'Image upload failed. Please try again.' });
 		}
 
-		const post = await createPost(api, uploaded.filename, description);
+		let post;
+		try {
+			post = await createPost(api, uploaded.filename, description);
+		} catch {
+			return fail(500, { error: 'Could not create post. Please try again.' });
+		}
 		if (!post) {
 			return fail(500, { error: 'Could not create post. Please try again.' });
 		}

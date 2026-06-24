@@ -26,17 +26,14 @@ export const actions: Actions = {
 
 		let avatarFilename = currentUser.avatar ?? '';
 
-		if (removeAvatar) {
-			avatarFilename = '';
-		} else if (file instanceof File && file.size > 0) {
-			const uploaded = await uploadImage(api, file);
-			if (!uploaded) {
-				return fail(500, { error: 'Could not upload avatar. Please try again.' });
-			}
-			avatarFilename = uploaded.filename;
-		}
-
 		try {
+			if (removeAvatar) {
+				avatarFilename = '';
+			} else if (file instanceof File && file.size > 0) {
+				const uploaded = await uploadImage(api, file);
+				if (uploaded) avatarFilename = uploaded.filename;
+			}
+
 			await updateUser(api, currentUser.id, name, username, email, avatarFilename, bio);
 		} catch {
 			return fail(400, {
