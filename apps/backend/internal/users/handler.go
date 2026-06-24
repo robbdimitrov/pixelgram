@@ -53,6 +53,10 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Name, username, email and password are required.")
 		return
 	}
+	if len([]rune(name)) > 100 {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Name must be 100 characters or fewer.")
+		return
+	}
 	if !validation.ValidUsername(username) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
@@ -196,6 +200,10 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Name and username are required.")
 		return
 	}
+	if len([]rune(name)) > 100 {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Name must be 100 characters or fewer.")
+		return
+	}
 	if !validation.ValidUsername(username) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Username must be 3-30 characters and contain only lowercase letters, numbers, periods, or underscores.")
 		return
@@ -299,6 +307,10 @@ func (h Handler) updateFollow(
 		return
 	}
 	targetUserID := r.PathValue("userId")
+	if n, err := strconv.ParseInt(targetUserID, 10, 64); err != nil || n <= 0 {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid user ID.")
+		return
+	}
 	if currentUserID == targetUserID {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Cannot follow yourself.")
 		return
