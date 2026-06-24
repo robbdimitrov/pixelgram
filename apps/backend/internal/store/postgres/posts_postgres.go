@@ -295,9 +295,22 @@ func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) er
 		}
 		defer database.Rollback(ctx, tx)
 
-		if _, err := tx.Exec(ctx, `INSERT INTO likes (user_id, post_id)
-			SELECT $1, id FROM posts WHERE public_id = $2 ON CONFLICT DO NOTHING`, userID, postID); err != nil {
+		likeTag, err := tx.Exec(ctx, `INSERT INTO likes (user_id, post_id)
+			SELECT $1, id FROM posts WHERE public_id = $2 ON CONFLICT DO NOTHING`, userID, postID)
+		if err != nil {
 			return err
+		}
+		if likeTag.RowsAffected() == 0 {
+			// Distinguish "post gone" from "already liked" atomically.
+			var exists bool
+			if err := tx.QueryRow(ctx,
+				`SELECT EXISTS (SELECT 1 FROM posts WHERE public_id = $1)`, postID).Scan(&exists); err != nil {
+				return err
+			}
+			if !exists {
+				return store.ErrNotFound
+			}
+			return tx.Commit(ctx)
 		}
 
 		var recipientID string
@@ -331,10 +344,23 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 		}
 		defer database.Rollback(ctx, tx)
 
-		if _, err := tx.Exec(ctx, `DELETE FROM likes
+		unlikeTag, err := tx.Exec(ctx, `DELETE FROM likes
 			WHERE user_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)`,
-			userID, postID); err != nil {
+			userID, postID)
+		if err != nil {
 			return err
+		}
+		if unlikeTag.RowsAffected() == 0 {
+			// Distinguish "post gone" from "not liked" atomically.
+			var exists bool
+			if err := tx.QueryRow(ctx,
+				`SELECT EXISTS (SELECT 1 FROM posts WHERE public_id = $1)`, postID).Scan(&exists); err != nil {
+				return err
+			}
+			if !exists {
+				return store.ErrNotFound
+			}
+			return tx.Commit(ctx)
 		}
 
 		var recipientID string

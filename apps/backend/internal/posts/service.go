@@ -105,29 +105,13 @@ func (s *Service) DeletePost(ctx context.Context, command DeletePostCommand) err
 }
 
 func (s *Service) LikePost(ctx context.Context, publicID, userID string) error {
-	return s.updateLike(ctx, publicID, userID, s.repository.LikePost)
+	return s.repository.LikePost(ctx, publicID, userID)
 }
 
 func (s *Service) UnlikePost(ctx context.Context, publicID, userID string) error {
-	return s.updateLike(ctx, publicID, userID, s.repository.UnlikePost)
+	return s.repository.UnlikePost(ctx, publicID, userID)
 }
 
 func (s *Service) ListPopularPosts(ctx context.Context, viewerID string) ([]Post, error) {
 	return s.repository.ListPopularPosts(ctx, viewerID, 20)
-}
-
-func (s *Service) updateLike(
-	ctx context.Context,
-	publicID string,
-	userID string,
-	update func(context.Context, string, string) error,
-) error {
-	exists, err := s.repository.PostExists(ctx, publicID)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return store.ErrNotFound
-	}
-	return update(ctx, publicID, userID)
 }

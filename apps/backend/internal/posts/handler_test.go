@@ -13,6 +13,7 @@ import (
 	"pixelgram/backend/internal/blobstore"
 	"pixelgram/backend/internal/httpx"
 	"pixelgram/backend/internal/pagination"
+	"pixelgram/backend/internal/store"
 	"pixelgram/backend/internal/uploads"
 )
 
@@ -64,11 +65,17 @@ func (s *fakeStore) PostExists(_ context.Context, _ string) (bool, error) {
 }
 
 func (s *fakeStore) LikePost(_ context.Context, _ string, _ string) error {
+	if !s.exists {
+		return store.ErrNotFound
+	}
 	s.liked = true
 	return s.err
 }
 
 func (s *fakeStore) UnlikePost(_ context.Context, _ string, _ string) error {
+	if !s.exists {
+		return store.ErrNotFound
+	}
 	s.unliked = true
 	return s.err
 }
