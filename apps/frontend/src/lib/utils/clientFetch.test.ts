@@ -19,9 +19,8 @@ describe('fetchJson', () => {
 		await expect(fetchJson(res)).rejects.toThrow('HTTP 500');
 	});
 
-	it('returns null for empty body', async () => {
+	it('throws on empty body', async () => {
 		const res = new Response('', { status: 200 });
-		const result = await fetchJson(res);
-		expect(result).toBeNull();
+		await expect(fetchJson(res)).rejects.toThrow('Empty response body');
 	});
 });

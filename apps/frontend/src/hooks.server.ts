@@ -5,11 +5,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	res.headers.set('X-Content-Type-Options', 'nosniff');
 	res.headers.set('X-Frame-Options', 'SAMEORIGIN');
 	res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	res.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
 	return res;
 };
 
 export const handleError: HandleServerError = ({ error, event }) => {
 	const message = error instanceof Error ? error.message : 'Internal error';
 	console.error(`[error] ${event.request.method} ${event.url.pathname}: ${message}`);
-	return { message };
+	return { message: 'Internal error' };
 };
