@@ -347,9 +347,24 @@ spec:
         resources:
           limits:
             memory: 256Mi
+            cpu: 500m
           requests:
             memory: 128Mi
             cpu: 100m
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 4195
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: 4195
+          failureThreshold: 6
+          periodSeconds: 10
+          timeoutSeconds: 3
         volumeMounts:
         - name: broker-pipelines
           mountPath: /etc/connect
