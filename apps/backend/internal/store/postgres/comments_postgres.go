@@ -135,8 +135,8 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 		if err == nil {
 			deleted = true
 			payload := fmt.Sprintf(
-				`{"op":"uncomment","comment_id":%s,"actor_id":%q}`,
-				commentID, userID,
+				`{"op":"uncomment","comment_id":%d,"actor_id":%q}`,
+				deletedID, userID,
 			)
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
