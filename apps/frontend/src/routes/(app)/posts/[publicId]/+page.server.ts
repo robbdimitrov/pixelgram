@@ -37,13 +37,14 @@ export const actions: Actions = {
 	comment: async ({ fetch, cookies, request, params }) => {
 		const data = await request.formData();
 		const body = ((data.get('body') as string) ?? '').trim();
-		if (!body) return { success: false };
+		if (!body || body.length > 400) return { success: false };
 		const comment = await createComment(apiClient({ fetch, cookies }), params.publicId, body);
 		return { success: true, comment };
 	},
 	deleteComment: async ({ fetch, cookies, request, params }) => {
 		const data = await request.formData();
 		const commentId = Number(data.get('commentId'));
+		if (!Number.isInteger(commentId) || commentId <= 0) return { success: false };
 		await deleteComment(apiClient({ fetch, cookies }), params.publicId, commentId);
 		return { success: true };
 	},

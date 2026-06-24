@@ -40,7 +40,7 @@ export const actions: Actions = {
 		const api = apiClient(event);
 		const data = await event.request.formData();
 		const userId = Number(data.get('userId'));
-		if (!userId) return { success: false };
+		if (!Number.isInteger(userId) || userId <= 0) return { success: false };
 		await followUser(api, userId);
 		return { success: true };
 	},
@@ -48,7 +48,7 @@ export const actions: Actions = {
 		const api = apiClient(event);
 		const data = await event.request.formData();
 		const userId = Number(data.get('userId'));
-		if (!userId) return { success: false };
+		if (!Number.isInteger(userId) || userId <= 0) return { success: false };
 		await unfollowUser(api, userId);
 		return { success: true };
 	}
