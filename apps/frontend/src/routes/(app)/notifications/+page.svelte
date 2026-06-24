@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { invalidate } from '$app/navigation';
 	import { Heart, MessageCircle, UserPlus } from '@lucide/svelte';
 	import { createPagination } from '$lib/createPagination.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -10,11 +12,17 @@
 
 	let { data }: { data: PageData } = $props();
 
+	onMount(() => {
+		invalidate('app:unreadCount');
+	});
+
 	const pagination = createPagination(
 		() => ({ items: data.notifications, nextCursor: data.nextCursor }),
 		async (cursor) => {
 			const res = await fetch(`/notifications?cursor=${encodeURIComponent(cursor)}`);
-			return fetchJson<{ items: Notification[]; nextCursor: string | null }>(res);
+			const page = await fetchJson<{ items: Notification[]; nextCursor: string | null }>(res);
+			invalidate('app:unreadCount');
+			return page;
 		}
 	);
 
