@@ -24,12 +24,12 @@ func NewFeedRepository(client *Client, threshold int64) *FeedRepository {
 
 func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pagination.Cursor, limit int) ([]posts.Post, *pagination.Cursor, error) {
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryFeedPage(ctx, `SELECT `+postColumns+`, f.created AS cursor_created
+	return r.queryFeedPage(ctx, `SELECT `+postColumns+`, posts.created AS cursor_created
 		FROM feed f
 		JOIN posts ON posts.id = f.post_id
 		JOIN users u ON u.id = posts.user_id
 		WHERE f.user_id = $1
-		  AND (NOT $2 OR (f.created, posts.id) < ($3, $4))
+		  AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
 
 		UNION ALL
 
