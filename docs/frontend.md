@@ -64,6 +64,10 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
 
 No data is fetched on component mount. The browser never calls the backend directly.
 
+Backend error bodies are not rendered as UI copy. Server API helpers preserve
+HTTP status codes for control flow, then map failures to frontend-owned messages
+before they can reach SvelteKit error pages, form failures, or pagination state.
+
 ## SSR Boundary
 
 Everything runs in the Node server. `apiClient(event)` resolves backend paths against `BACKEND_URL` env var and forwards the session cookie. These requests are server-to-server and never cross CORS.

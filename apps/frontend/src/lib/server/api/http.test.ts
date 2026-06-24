@@ -42,9 +42,23 @@ describe('unwrap', () => {
 		expect(result).toBeNull();
 	});
 
-	it('includes error text in thrown error for non-ok responses', async () => {
-		const res = new Response('Not found', { status: 404 });
-		await expect(unwrap(res)).rejects.toThrow('Not found');
+	it('uses frontend-owned messages for non-ok responses', async () => {
+		const res = new Response(JSON.stringify({ message: 'backend-specific failure' }), {
+			status: 404
+		});
+		const backendMessage = new Response(JSON.stringify({ message: 'backend-specific failure' }), {
+			status: 404
+		});
+		await expect(unwrap(res)).rejects.toThrow('Not found.');
+		await expect(unwrap(backendMessage)).rejects.not.toThrow('backend-specific failure');
+	});
+
+	it('preserves the HTTP status on API errors', async () => {
+		const res = new Response('Forbidden', { status: 403 });
+		await expect(unwrap(res)).rejects.toMatchObject({
+			status: 403,
+			message: 'You do not have permission to do that.'
+		});
 	});
 });
 

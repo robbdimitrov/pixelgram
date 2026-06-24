@@ -12,6 +12,8 @@
 	import type { SearchItem, SearchType } from '$lib/server/api/search';
 	import { Hash, FileText, Users } from '@lucide/svelte';
 
+	type InternalPath = `/${string}`;
+
 	let { data }: { data: PageData } = $props();
 
 	const TABS: { label: string; value: SearchType }[] = [
@@ -20,13 +22,13 @@
 		{ label: 'Hashtags', value: 'hashtags' }
 	];
 
-	function buildUrl(q: string, type: SearchType): string {
+	function buildUrl(q: string, type: SearchType): InternalPath {
 		const params = new URLSearchParams({ q, type });
 		return `/search?${params.toString()}`;
 	}
 
 	function navigate(q: string, type: SearchType) {
-		goto(resolve(buildUrl(q, type) as any), { replaceState: true });
+		goto(resolve(buildUrl(q, type)), { replaceState: true });
 	}
 
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;

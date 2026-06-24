@@ -3,30 +3,45 @@
 Thumbs.db
 
 # Build
-dist
+dist/
 build/
 .svelte-kit/
+.next/
+bin/
+target/
+**/src/cogito.rs
+/apps/*/service
+/apps/*/*service
+/apps/*/*apigateway
 
-# Dependency directory
-node_modules
+# Dependencies
+node_modules/
+vendor/
+venv/
+__pycache__/
 
-# Editors
-.vscode
-.antigravitycli
-antigravity*
-.claude
-.vscode
-.idea/
+# Logs & Caches
+*.log
+npm-debug.log*
+.eslintcache
+*.tsbuildinfo
+coverage/
 
 # Environment files
 .env
 .env.*
 !.env.example
 
-# Logs
-*.log
-npm-debug.log*
+# Editors
+.vscode/
+*.code-workspace
+.idea/
+*.sw*
 
-# Testing
-coverage/
+# AI Assistants
+.antigravitycli
+antigravity*
+.claude
+
+# Misc
 scratch/

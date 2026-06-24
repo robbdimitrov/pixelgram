@@ -45,11 +45,15 @@
 
 	<div class="tabs tabs-bordered justify-center font-bold">
 		<a class="tab" href={resolve(`/@${username}`)}>Posts</a>
-		<a class="tab" class:tab-active={data.mode === 'followers'} href={resolve(`/@${username}/followers`)}
-			>Followers</a
+		<a
+			class="tab"
+			class:tab-active={data.mode === 'followers'}
+			href={resolve(`/@${username}/followers`)}>Followers</a
 		>
-		<a class="tab" class:tab-active={data.mode === 'following'} href={resolve(`/@${username}/following`)}
-			>Following</a
+		<a
+			class="tab"
+			class:tab-active={data.mode === 'following'}
+			href={resolve(`/@${username}/following`)}>Following</a
 		>
 	</div>
 

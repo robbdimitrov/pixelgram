@@ -251,8 +251,7 @@
 							placeholder="Write a caption..."
 							maxlength={MAX_DESCRIPTION}
 							autocomplete="off"
-							oninput={handleDescriptionInput}
-						></textarea>
+							oninput={handleDescriptionInput}></textarea>
 						<div class="absolute left-6 sm:left-8">
 							<Typeahead
 								onselect={handleTypeaheadSelect}

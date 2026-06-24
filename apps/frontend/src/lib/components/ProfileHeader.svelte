@@ -36,10 +36,14 @@
 			class="flex w-full flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between sm:text-left"
 		>
 			<div class="grid min-w-0 gap-1">
-				<h1 class="wrap-break-word text-2xl font-black tracking-tight text-base-content sm:text-3xl">
+				<h1
+					class="wrap-break-word text-2xl font-black tracking-tight text-base-content sm:text-3xl"
+				>
 					{profileUser.name || profileUser.username}
 				</h1>
-				<p class="wrap-break-word text-sm font-bold text-base-content/60">@{profileUser.username}</p>
+				<p class="wrap-break-word text-sm font-bold text-base-content/60">
+					@{profileUser.username}
+				</p>
 			</div>
 
 			{#if isCurrentUser}
@@ -96,11 +100,17 @@
 		<div
 			class="flex items-center justify-center gap-6 text-sm font-bold text-base-content/70 md:justify-start"
 		>
-			<a href={resolve(`/@${profileUser.username}`)} class="transition-colors hover:text-base-content">
+			<a
+				href={resolve(`/@${profileUser.username}`)}
+				class="transition-colors hover:text-base-content"
+			>
 				<strong class="font-black text-base-content">{profileUser.posts}</strong>
 				{pluralize(profileUser.posts, 'post')}
 			</a>
-			<a href={resolve(`/@${profileUser.username}/likes`)} class="transition-colors hover:text-base-content">
+			<a
+				href={resolve(`/@${profileUser.username}/likes`)}
+				class="transition-colors hover:text-base-content"
+			>
 				<strong class="font-black text-base-content">{profileUser.likes}</strong>
 				{pluralize(profileUser.likes, 'like')}
 			</a>

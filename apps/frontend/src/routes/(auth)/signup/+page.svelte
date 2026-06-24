@@ -149,7 +149,9 @@
 		>
 		<p class="text-sm text-base-content/70">
 			Already have an account?
-			<a href={resolve('/login')} class="ml-1 font-extrabold text-base-content hover:text-primary">Log in</a>
+			<a href={resolve('/login')} class="ml-1 font-extrabold text-base-content hover:text-primary"
+				>Log in</a
+			>
 		</p>
 	</div>
 </section>

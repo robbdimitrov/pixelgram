@@ -218,8 +218,7 @@
 					placeholder="Tell people about yourself..."
 					maxlength="300"
 					autocomplete="off"
-					class="textarea textarea-bordered h-24 w-full resize-none rounded-xl"
-				></textarea>
+					class="textarea textarea-bordered h-24 w-full resize-none rounded-xl"></textarea>
 			</div>
 		</div>
 
