@@ -5,16 +5,12 @@
 Three services are deployed through Kubernetes:
 
 - `apps/backend` — Go API using `net/http` and `pgx`
-- `apps/database` — `migrate/migrate` migration image, run as a backend init
-  container
-- `apps/frontend` — SvelteKit 2 SSR application using Svelte 5, strict
-  TypeScript, Vite, adapter-node, Tailwind v4, DaisyUI 5, and Lucide
+- `apps/database` — `migrate/migrate` migration image, run as a backend init container
+- `apps/frontend` — SvelteKit 2 SSR application using Svelte 5, strict TypeScript, Vite, adapter-node, Tailwind v4, DaisyUI 5, and Lucide
 
-Each service owns its dependencies and Dockerfile. There is no monorepo or npm
-workspace tooling.
+Each service owns its dependencies and Dockerfile. There is no monorepo or npm workspace tooling.
 
-Before changing files under `apps/backend/` or `apps/frontend/`, read that
-directory's `AGENTS.md`.
+Before changing files under `apps/backend/` or `apps/frontend/`, read that directory's `AGENTS.md`.
 
 ## Commands
 
@@ -51,117 +47,70 @@ kubectl delete namespace phasma
 
 ## Engineering Standards
 
-- Follow SOLID, KISS, DRY, YAGNI, and the Pareto principle. Keep changes
-  focused, prefer simple local patterns, and do not build for hypothetical
-  requirements.
-- Before adding code, search for an existing abstraction, helper, or platform
-  primitive to extend or compose. Add an abstraction only when it removes
-  concrete complexity or duplication.
-- Match the conventions, idioms, structure, and naming of the surrounding code
-  so the codebase reads as if written by one person. Follow established
-  patterns over personal preference.
-- Name variables, functions, types, and constants precisely. Avoid vague names
-  and non-standard abbreviations. Use named constants for repeated or
-  policy-significant values.
-- Prefer concise code only when it remains clear and maintainable.
-- Use standard-library, platform, and established project primitives before
-  introducing custom implementations or dependencies.
-- Keep changes cohesive. Resolve directly related defects discovered in the
-  code being changed, but do not expand into unrelated cleanup.
-- Comments are concise and explain constraints, invariants, security decisions,
-  or non-obvious intent. Do not narrate straightforward code, preserve
-  implementation history, or use comments to compensate for unclear names and
-  structure.
-- Do not suppress compiler, linter, type-checker, or test warnings to make
-  checks pass. Fix the underlying issue so changed code is correct,
-  warning-free, and error-free. Use a narrowly scoped suppression only when
-  required by an external API, generated code, or a documented false positive,
-  and explain why it is safe.
-- Regenerate generated code instead of editing it manually.
-- Write behavior-oriented tests focused on critical paths, complex logic, and
-  high-risk failure modes rather than chasing coverage percentages.
+- Follow SOLID, KISS, DRY, YAGNI, and the Pareto principle. Keep changes focused; do not build for hypothetical requirements.
+- Search for an existing helper, abstraction, or platform primitive before adding one. Add abstractions only when they remove concrete complexity or duplication.
+- Match surrounding structure, naming, and idioms so the codebase reads as one system.
+- Use precise names and standard initialisms. Prefer clarity over compressed code and named constants over repeated policy-significant literals.
+- Keep related fixes together; do not expand a task into unrelated cleanup.
+- Comments explain constraints, invariants, security decisions, or non-obvious intent. Do not narrate straightforward code or preserve implementation history.
+- Do not suppress compiler, linter, type-checker, or test warnings to make checks pass. Fix the underlying issue. Use a narrowly scoped suppression only when required by an external API, generated code, or a documented false positive, and explain why it is safe.
+- Write behavior-oriented tests for critical paths, complex logic, and risky failure modes. Do not chase coverage percentages.
 - Services must remain stateless and correct with multiple replicas.
 
 ## Git and Commits
 
-- Use one logical change per commit. Do not bundle unrelated fixes, refactors,
-  or infrastructure changes. Tests required by a behavior change belong in the
-  same commit.
-- Write commit subjects in Conventional Commits format (`type(scope): description`)
-  using imperative present tense. Include a scope when it adds useful context.
-- Commit messages are a single line, at most 72 characters, with no body,
-  trailers, or issue references.
-- Review the staged diff before committing and ensure it contains only the
-  intended change.
-- Create commits only when the user explicitly requests them.
+- Keep one logical change per commit. Tests required by a behavior change belong in the same commit.
+- Use Conventional Commits (`type(scope): description`) in imperative present tense. Include a scope when it adds useful context.
+- Commit messages are one line, at most 72 characters, with no body, trailers, or issue references.
+- Review the staged diff before committing. Create commits only when the user explicitly requests them.
 
 ## Secure Engineering
 
 Security controls are design constraints, not review-time additions.
 
-- Validate untrusted data at the boundary where it enters the system and bound
-  external reads before parsing or allocation.
-- Authorization defaults to deny. Keep ownership checks next to the protected
-  data operation and make them atomic where practical.
-- Use parameterized queries exclusively. Never interpolate request data into SQL.
-- Keep secrets out of code, committed configuration, URLs, client storage, and
-  logs.
-- Use standard-library cryptography and constant-time comparisons for
-  credentials, MACs, and tokens. Do not invent cryptographic protocols.
-- Make cross-replica check-then-act operations atomic with transactions, locks,
-  or database constraints. Retried writes and event processing must be
-  idempotent.
-- Every outbound network call requires an explicit timeout, bounded response
-  read, deliberate retry policy, destination validation where user-influenced,
-  and safe error handling.
-- Never render user-controlled HTML directly. Validate user-controlled URLs
-  against an explicit scheme and origin policy.
-- Use structured logging without secrets, credentials, request bodies,
-  unnecessary personal data, or user-controlled text in log messages.
-- Keep dependencies current and justify each new dependency's maintenance,
-  security, and runtime cost.
-- Containers run non-root with a read-only root filesystem, all capabilities
-  dropped, and `seccompProfile: RuntimeDefault`.
+- Validate untrusted data where it enters the system. Bound request bodies, multipart fields, stream reads, pagination, and collection sizes before parsing or allocation.
+- Authentication and authorization default to deny. Never trust a client-supplied user ID; derive identity from the validated session and keep ownership checks next to the protected operation.
+- Use parameterized SQL exclusively. Make check-then-act operations atomic with a transaction, row lock, or database constraint.
+- Keep secrets out of code, committed configuration, URLs, browser storage, generated artifacts, and logs.
+- Use established cryptographic primitives and constant-time comparisons for credentials, MACs, and tokens. Do not invent cryptographic protocols.
+- Never render user-controlled HTML directly. Validate user-controlled URLs against an explicit scheme and origin policy.
+- Log structured operational metadata without credentials, session values, request bodies, unnecessary personal data, or raw user-controlled text.
+- Justify new dependencies by their maintenance, security, image-size, and runtime cost.
+- Containers run non-root with a read-only root filesystem, all capabilities dropped, and `seccompProfile: RuntimeDefault`.
+
+## Resilience
+
+- Hard dependencies (database, required backends) must be available at startup — fail fast if they are not. Soft dependencies (cache, rate limiter, search) must not block startup; start degraded and self-heal.
+- Self-heal soft dependencies: attempt a synchronous connection first, then on failure retry in the background with exponential backoff and log on entering degraded mode and on recovery. The client library owns reconnection once the initial connection succeeds.
+- Prefer client primitives that survive reconnection over state computed at startup. Do not cache server-side state that is lost when a connection resets.
+
+## Kubernetes Resources
+
+- Set CPU requests on every container; omit CPU limits. CFS quota throttles at the limit even when the node has spare cycles, causing latency spikes.
+- Always set memory requests and limits. Memory is not compressible — OOM kill is preferable to silently exhausting node memory.
+- Pin third-party images to specific versions. Never use `:latest`.
 
 ## Database Migrations
 
-- Migrations live in `apps/database/migrations/` and use paired
-  `NNNNNN_description.up.sql` and `.down.sql` files.
+- Migrations live in `apps/database/migrations/` as paired `NNNNNN_description.up.sql` and `.down.sql` files.
 - Use two-space indentation.
-- Applied migration history is append-only. Fix deployed schemas with corrective
-  migrations rather than rewriting existing files.
-- Migrations run through the backend deployment's init container and must
-  complete before the backend starts.
+- Applied migration history is append-only. Correct deployed schemas with a new migration rather than rewriting an existing one.
+- Migrations run through the backend deployment's init container and must complete before the backend starts.
 
 ## Definition of Done
 
-Implementation is not completion. Before reporting a change as complete:
+Before reporting a change complete:
 
-1. Identify every untrusted input touched, where it is validated, and what size
-   or resource bounds apply.
-2. Confirm the authentication, authorization, and ownership checks gating each protected operation.
-3. Confirm every check-then-act sequence is atomic where concurrent requests or
-   replicas can race.
-4. Confirm external calls have timeouts, bounded responses, deliberate retry
-   policies, and safe error handling.
-5. Confirm background work has panic recovery, the correct context lifetime, and
-   cross-replica coordination where needed.
-6. Test how crafted input could expose data, inject content, bypass limits, or
-   create disproportionate work.
-7. Add behavior-oriented tests for the critical success and failure paths.
-8. Review the complete diff in context for correctness, security, unnecessary
-   complexity, duplication, inconsistent naming, stale comments, and accidental
-   unrelated changes.
-9. Fix issues found during review, then run the relevant formatters, linters,
-   tests, and build checks in proportion to the change's risk.
-10. Report any verification that could not be run and any remaining risk
-    explicitly. Do not describe partially verified work as fully complete.
+1. Identify touched untrusted inputs, validation, and resource bounds.
+2. Confirm authentication, authorization, and ownership checks.
+3. Confirm concurrent or cross-replica operations are atomic and retried work is idempotent.
+4. Confirm network calls have timeouts, bounded reads, and deliberate retries.
+5. Add or update behavior-oriented tests for critical success and failure paths.
+6. Review the complete diff for correctness, security, unnecessary complexity, duplication, stale comments, and unrelated changes.
+7. Run relevant formatters, linters, tests, and builds in proportion to risk.
+8. Report checks that could not run and remaining risk explicitly.
 
 ## Specs
 
-- Before making any code changes, read the relevant spec in `docs/`
-  (architecture, data-model, api, security, business-rules, design-system,
-  frontend, or infrastructure).
-- Update the relevant spec to reflect any change — new endpoints, schema
-  changes, rule additions, security controls, or infrastructure modifications —
-  before marking work complete.
+- Before making any code changes, read the relevant spec in `docs/` (architecture, api, data-model, security, business-rules, design-system, frontend, or infrastructure).
+- Update the relevant spec to reflect the change — new endpoints, schema changes, rule additions, security controls, or infrastructure modifications — before marking work complete.
