@@ -87,6 +87,10 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	username := strings.ToLower(r.PathValue("username"))
+	if !validation.ValidUsername(username) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid username.")
+		return
+	}
 	currentUserID, _ := httpx.UserID(r)
 
 	user, found, err := h.Service.GetUserByUsername(r.Context(), username, currentUserID)
