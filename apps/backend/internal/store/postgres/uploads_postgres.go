@@ -17,45 +17,57 @@ func NewUploadRepository(client *Client) *UploadRepository {
 	return &UploadRepository{db: client.db}
 }
 
-func (r *UploadRepository) CreateUpload(ctx context.Context, userID, filename string) (bool, error) {
+func (r *UploadRepository) CreateUpload(ctx context.Context, userID, filename string) (bool, []string, error) {
 	var created bool
+	var expired []string
 	err := r.db.Write(ctx, func() error {
-		tag, err := r.db.Pool().Exec(ctx, `INSERT INTO uploads (user_id, filename)
-			SELECT $1, $2
-			WHERE (SELECT count(*) FROM uploads WHERE user_id = $1) < $3`,
-			userID, filename, maxPendingUploads)
+		tx, err := r.db.Pool().Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer database.Rollback(ctx, tx)
+
+		// Delete this user's expired uploads inside the transaction.
+		rows, err := tx.Query(ctx, `DELETE FROM uploads
+			WHERE user_id = $1 AND created <= now() - $2::interval RETURNING filename`,
+			userID, "1 hour")
+		if err != nil {
+			return err
+		}
+		expired = []string{}
+		for rows.Next() {
+			var f string
+			if err := rows.Scan(&f); err != nil {
+				rows.Close()
+				return err
+			}
+			expired = append(expired, f)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		// Lock remaining rows and count atomically before inserting.
+		var count int
+		if err := tx.QueryRow(ctx,
+			`SELECT count(*) FROM (SELECT id FROM uploads WHERE user_id = $1 FOR UPDATE) locked`,
+			userID).Scan(&count); err != nil {
+			return err
+		}
+		if count >= maxPendingUploads {
+			return tx.Commit(ctx)
+		}
+
+		tag, err := tx.Exec(ctx,
+			`INSERT INTO uploads (user_id, filename) VALUES ($1, $2)`, userID, filename)
 		if err != nil {
 			return err
 		}
 		created = tag.RowsAffected() > 0
-		return nil
+		return tx.Commit(ctx)
 	})
-	return created, err
-}
-
-func (r *UploadRepository) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
-	var filenames []string
-	err := r.db.Write(ctx, func() error {
-		rows, err := r.db.Pool().Query(ctx, `DELETE FROM uploads
-			WHERE created <= now() - $1::interval RETURNING filename`, "1 hour")
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-		filenames = []string{}
-		for rows.Next() {
-			var filename string
-			if err := rows.Scan(&filename); err != nil {
-				return err
-			}
-			filenames = append(filenames, filename)
-		}
-		return rows.Err()
-	})
-	if err != nil {
-		return nil, err
-	}
-	return filenames, nil
+	return created, expired, err
 }
 
 var _ uploads.Repository = (*UploadRepository)(nil)

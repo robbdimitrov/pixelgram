@@ -70,9 +70,8 @@ func (Sessions) UpdatePasswordHash(context.Context, int, string) error { return 
 
 type Uploads struct{}
 
-func (Uploads) DeleteExpiredUploads(context.Context) ([]string, error) { return nil, nil }
-func (Uploads) CreateUpload(context.Context, string, string) (bool, error) {
-	return false, nil
+func (Uploads) CreateUpload(context.Context, string, string) (bool, []string, error) {
+	return false, nil, nil
 }
 
 type Posts struct{}

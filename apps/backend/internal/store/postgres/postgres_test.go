@@ -1343,11 +1343,8 @@ func (c *Client) ChangePassword(ctx context.Context, userID, passwordHash, curre
 }
 
 func (c *Client) CreateUpload(ctx context.Context, userID, filename string) (bool, error) {
-	return NewUploadRepository(c).CreateUpload(ctx, userID, filename)
-}
-
-func (c *Client) DeleteExpiredUploads(ctx context.Context) ([]string, error) {
-	return NewUploadRepository(c).DeleteExpiredUploads(ctx)
+	created, _, err := NewUploadRepository(c).CreateUpload(ctx, userID, filename)
+	return created, err
 }
 
 func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string, tags ...string) (string, bool, error) {

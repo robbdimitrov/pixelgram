@@ -36,24 +36,20 @@ type fakeStore struct {
 	filename    string
 }
 
-func (s *fakeStore) DeleteExpiredUploads(_ context.Context) ([]string, error) {
-	return s.expired, s.err
-}
-
-func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) (bool, error) {
+func (s *fakeStore) CreateUpload(_ context.Context, userID, filename string) (bool, []string, error) {
 	if s.createErr != nil {
-		return false, s.createErr
+		return false, s.expired, s.createErr
 	}
 	if s.err != nil {
-		return false, s.err
+		return false, s.expired, s.err
 	}
 	if !s.capacity {
-		return false, nil
+		return false, s.expired, nil
 	}
 	s.created = true
 	s.createdUser = userID
 	s.filename = filename
-	return true, nil
+	return true, s.expired, nil
 }
 
 func TestCreateFileMissingFile(t *testing.T) {

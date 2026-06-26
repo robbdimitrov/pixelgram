@@ -12,11 +12,8 @@ type serviceRepository struct {
 	createErr error
 }
 
-func (r serviceRepository) DeleteExpiredUploads(context.Context) ([]string, error) {
-	return r.expired, nil
-}
-func (r serviceRepository) CreateUpload(context.Context, string, string) (bool, error) {
-	return r.created, r.createErr
+func (r serviceRepository) CreateUpload(context.Context, string, string) (bool, []string, error) {
+	return r.created, r.expired, r.createErr
 }
 
 func TestServiceRegisterPreservesExpiredFilesWhenCreateFails(t *testing.T) {
