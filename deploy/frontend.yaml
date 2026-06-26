@@ -50,8 +50,6 @@ spec:
           value: "8080"
         - name: BODY_SIZE_LIMIT
           value: 1100K
-        - name: ORIGIN
-          value: http://localhost:8080
         - name: PROTOCOL_HEADER
           value: x-forwarded-proto
         - name: HOST_HEADER

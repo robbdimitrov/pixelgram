@@ -12,6 +12,7 @@ REGISTRY="${REGISTRY:-localhost:5000/phasma}"
 APP_HOST="${APP_HOST:-phasma.localhost}"
 LOCAL_PORT="${LOCAL_PORT:-8080}"
 REMOTE_PORT="${REMOTE_PORT:-8080}"
+LOCAL_ORIGIN="${LOCAL_ORIGIN:-http://${APP_HOST}:${LOCAL_PORT}}"
 PORT_FORWARD_LOG="${PORT_FORWARD_LOG:-/tmp/phasma-port-forward-${LOCAL_PORT}.log}"
 PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/phasma-port-forward-${LOCAL_PORT}.pid}"
 SEAWEEDFS_IMAGE="chrislusf/seaweedfs:3.76"
@@ -101,6 +102,29 @@ ensure_secret_key() {
     -p "{\"data\":{\"${key}\":\"${encoded}\"}}" >/dev/null
 }
 
+ensure_tls_secret() {
+  local secret_name="frontend-tls"
+  local tmpdir
+  if kubectl -n "${NS}" get secret "${secret_name}" >/dev/null 2>&1; then
+    return
+  fi
+  command -v openssl >/dev/null || die "missing required tool for local TLS secret: openssl"
+
+  log "creating self-signed TLS secret for ${APP_HOST}"
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir}"' RETURN
+  openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+    -keyout "${tmpdir}/tls.key" \
+    -out "${tmpdir}/tls.crt" \
+    -subj "/CN=${APP_HOST}" \
+    -addext "subjectAltName=DNS:${APP_HOST}" >/dev/null 2>&1
+  kubectl -n "${NS}" create secret tls "${secret_name}" \
+    --cert="${tmpdir}/tls.crt" \
+    --key="${tmpdir}/tls.key" >/dev/null
+  trap - RETURN
+  rm -rf "${tmpdir}"
+}
+
 port_pids() {
   if command -v lsof >/dev/null; then
     lsof -nP -iTCP:"${LOCAL_PORT}" -sTCP:LISTEN -t 2>/dev/null || true
@@ -127,7 +151,7 @@ handle_existing_port_forward() {
 
   while IFS= read -r pid; do
     if is_frontend_port_forward "${pid}"; then
-      echo "Frontend port-forward is already running on http://${APP_HOST}:${LOCAL_PORT}/ (pid ${pid})."
+      echo "Frontend port-forward is already running on ${LOCAL_ORIGIN}/ (pid ${pid})."
       return 0
     fi
   done <<< "${pids}"
@@ -163,7 +187,9 @@ apply_manifests() {
   log "creating namespace and applying manifests"
   ensure_namespace
   ensure_secret
+  ensure_tls_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
+  kubectl -n "${NS}" set env deployment/frontend ORIGIN="${LOCAL_ORIGIN}" >/dev/null
   kubectl -n "${NS}" delete pvc image-storage-pvc --ignore-not-found
 }
 
@@ -253,7 +279,7 @@ start_port_forward_background() {
   fi
 
   if ps -p "${supervisor_pid}" >/dev/null 2>&1; then
-    echo "Background port-forward is starting on http://${APP_HOST}:${LOCAL_PORT}/ (supervisor pid ${supervisor_pid})."
+    echo "Background port-forward is starting on ${LOCAL_ORIGIN}/ (supervisor pid ${supervisor_pid})."
     return 0
   fi
 
@@ -267,7 +293,7 @@ print_summary() {
 
 ==> phasma is up
 
-  Frontend       http://${APP_HOST}:${LOCAL_PORT}
+  Frontend       ${LOCAL_ORIGIN}
   Gateway        in-cluster: http://backend:8080
   Namespace      ${NS}
   Context        $(kubectl config current-context 2>/dev/null || echo "unknown")

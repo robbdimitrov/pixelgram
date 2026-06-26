@@ -44,7 +44,7 @@ NetworkPolicies default-deny pod ingress in the namespace, then allow only the f
 
 ## Ingress
 
-nginx Ingress at `phasma.localhost`. Routes all traffic to `frontend:8080`. `proxy-body-size: 2m` accommodates 1 MB image uploads plus multipart overhead.
+nginx Ingress at `phasma.localhost`. Routes HTTPS traffic to `frontend:8080` and redirects HTTP to HTTPS. `proxy-body-size: 2m` accommodates 1 MB image uploads plus multipart overhead. Local deployment creates a self-signed `frontend-tls` Secret; production should replace it with an ingress-managed certificate.
 
 ## Secrets
 
@@ -147,7 +147,8 @@ The `database` StatefulSet runs PostgreSQL with `-c wal_level=logical` to enable
 | `BODY_SIZE_LIMIT` | literal `"1100K"` | Allows resized image uploads plus multipart overhead before action validation |
 | `NODE_ENV` | literal `"production"` | Enables production-mode SvelteKit/runtime security defaults |
 | `PORT` | literal `"8080"` | Listen port |
-| `ORIGIN` | literal | SvelteKit origin |
 | `PROTOCOL_HEADER` | literal | Proxy protocol header |
 | `HOST_HEADER` | literal | Proxy host header |
 | `ADDRESS_HEADER` | literal | Proxy client IP header |
+
+The frontend production manifest does not hardcode `ORIGIN`; adapter-node derives the request origin from `X-Forwarded-Proto` and `X-Forwarded-Host` set by the ingress. `scripts/deploy.sh` sets a local `ORIGIN` override only for direct service port-forwarding.

@@ -9,6 +9,7 @@ metadata:
     # Uploads stream through the frontend BFF, so the request body reaches the
     # ingress. Allow the backend's 1 MB image limit plus multipart overhead.
     nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   # The SvelteKit server is the only public entry point; it proxies /api and
@@ -24,8 +25,7 @@ spec:
                 name: frontend
                 port:
                   number: 8080
-  # Production TLS — enable with an ingress-managed certificate (e.g. cert-manager):
-  # tls:
-  #   - hosts:
-  #       - phasma.localhost
-  #     secretName: phasma-tls
+  tls:
+    - hosts:
+        - phasma.localhost
+      secretName: frontend-tls
