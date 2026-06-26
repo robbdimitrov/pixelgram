@@ -7,11 +7,12 @@ import (
 
 	"phasma/backend/internal/httpx"
 	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/validation"
 )
 
 type Application interface {
 	ListNotifications(ctx context.Context, query ListQuery) ([]Notification, *pagination.Cursor, error)
-	MarkRead(ctx context.Context, id int64, userID int64) error
+	MarkRead(ctx context.Context, publicID string, userID int64) error
 	UnreadCount(ctx context.Context, userID int64) (int, error)
 }
 
@@ -65,14 +66,13 @@ func (h Handler) MarkRead(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil || id <= 0 {
+	publicID := r.PathValue("id")
+	if !validation.ValidUUID(publicID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid notification ID.")
 		return
 	}
 
-	if err := h.Service.MarkRead(ctx, id, userID); err != nil {
+	if err := h.Service.MarkRead(ctx, publicID, userID); err != nil {
 		httpx.WriteStoreError(w, err)
 		return
 	}

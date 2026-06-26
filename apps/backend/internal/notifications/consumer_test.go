@@ -28,7 +28,7 @@ type fakeRepo struct {
 func (r *fakeRepo) ListNotifications(_ context.Context, _ int64, _ *pagination.Cursor, _ int) ([]Notification, error) {
 	return nil, nil
 }
-func (r *fakeRepo) MarkRead(_ context.Context, _ int64, _ int64) error  { return nil }
+func (r *fakeRepo) MarkRead(_ context.Context, _ string, _ int64) error { return nil }
 func (r *fakeRepo) UnreadCount(_ context.Context, _ int64) (int, error) { return 0, nil }
 
 func (r *fakeRepo) DeleteByEntity(_ context.Context, entityType, entityID string) error {

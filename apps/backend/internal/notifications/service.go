@@ -37,8 +37,8 @@ func (s *Service) ListNotifications(ctx context.Context, query ListQuery) ([]Not
 	return items, nextCursor, nil
 }
 
-func (s *Service) MarkRead(ctx context.Context, id int64, userID int64) error {
-	return s.repository.MarkRead(ctx, id, userID)
+func (s *Service) MarkRead(ctx context.Context, publicID string, userID int64) error {
+	return s.repository.MarkRead(ctx, publicID, userID)
 }
 
 func (s *Service) UnreadCount(ctx context.Context, userID int64) (int, error) {

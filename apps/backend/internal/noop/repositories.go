@@ -133,7 +133,7 @@ type Notifications struct{}
 func (Notifications) ListNotifications(context.Context, int64, *pagination.Cursor, int) ([]notifications.Notification, error) {
 	return nil, nil
 }
-func (Notifications) MarkRead(context.Context, int64, int64) error         { return nil }
+func (Notifications) MarkRead(context.Context, string, int64) error         { return nil }
 func (Notifications) UnreadCount(context.Context, int64) (int, error)      { return 0, nil }
 func (Notifications) DeleteByEntity(context.Context, string, string) error { return nil }
 func (Notifications) DeleteByActorAndType(context.Context, int64, int64, string, string) error {

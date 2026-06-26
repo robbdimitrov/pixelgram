@@ -28,7 +28,7 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 
 	var result []notifications.Notification
 	err := r.db.Read(ctx, func() error {
-		rows, err := r.db.Pool().Query(ctx, `SELECT id, external_id, user_id, actor_id, type, entity_id, read, created
+		rows, err := r.db.Pool().Query(ctx, `SELECT id, public_id::text, external_id, user_id, actor_id, type, entity_id, read, created
 			FROM notifications
 			WHERE user_id = $1
 			AND (NOT $2 OR (created, id) < ($3, $4))
@@ -41,7 +41,7 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 		result = []notifications.Notification{}
 		for rows.Next() {
 			var n notifications.Notification
-			if err := rows.Scan(&n.ID, &n.ExternalID, &n.UserID, &n.ActorID,
+			if err := rows.Scan(&n.ID, &n.PublicID, &n.ExternalID, &n.UserID, &n.ActorID,
 				&n.Type, &n.EntityID, &n.Read, &n.Created); err != nil {
 				return err
 			}
@@ -55,10 +55,10 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 	return result, nil
 }
 
-func (r *NotificationRepository) MarkRead(ctx context.Context, id int64, userID int64) error {
+func (r *NotificationRepository) MarkRead(ctx context.Context, publicID string, userID int64) error {
 	return r.db.Write(ctx, func() error {
 		tag, err := r.db.Pool().Exec(ctx,
-			`UPDATE notifications SET read = true WHERE id = $1 AND user_id = $2`, id, userID)
+			`UPDATE notifications SET read = true WHERE public_id = $1 AND user_id = $2`, publicID, userID)
 		if err != nil {
 			return err
 		}

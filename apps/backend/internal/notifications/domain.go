@@ -3,7 +3,8 @@ package notifications
 import "time"
 
 type Notification struct {
-	ID         int64     `json:"id"`
+	ID         int64     `json:"-"`
+	PublicID   string    `json:"id"`
 	ExternalID string    `json:"-"`
 	UserID     int64     `json:"userId"`
 	ActorID    int64     `json:"actorId"`
