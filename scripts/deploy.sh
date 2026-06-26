@@ -25,9 +25,11 @@ ROLL_OUT_REST=(
   statefulset/storage
   statefulset/cache
   statefulset/search
+  statefulset/broker
   deployment/backend
   deployment/frontend
 )
+ROLL_OUT_CONNECT=(deployment/connect)
 
 log() {
   echo "==> $*"
@@ -190,7 +192,6 @@ apply_manifests() {
   ensure_tls_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
   kubectl -n "${NS}" set env deployment/frontend ORIGIN="${LOCAL_ORIGIN}" >/dev/null
-  kubectl -n "${NS}" delete pvc image-storage-pvc --ignore-not-found
 }
 
 rollout_restart() {
@@ -234,6 +235,10 @@ restart_stack() {
 
   log "waiting for application services"
   wait_for_rollouts "${ROLL_OUT_REST[@]}"
+
+  log "restarting connect (after broker is ready)"
+  rollout_restart "${ROLL_OUT_CONNECT[@]}"
+  wait_for_rollouts "${ROLL_OUT_CONNECT[@]}"
 }
 
 start_port_forward_background() {

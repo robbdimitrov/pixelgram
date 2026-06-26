@@ -72,6 +72,12 @@ spec:
               key: meili-master-key
         - name: REDPANDA_BROKERS
           value: broker:9092
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            memory: 128Mi
+            cpu: 100m
         volumeMounts:
         - name: pipelines
           mountPath: /etc/connect

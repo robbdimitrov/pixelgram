@@ -7,7 +7,7 @@ RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-RUN addgroup -S phasma && adduser -S -G phasma phasma
+RUN addgroup -S phasma && adduser -S -u 1000 -G phasma phasma
 COPY --from=builder --chown=phasma:phasma /app/build ./build
 COPY --from=builder --chown=phasma:phasma /app/package*.json ./
 RUN npm ci --omit=dev

@@ -1,0 +1,90 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: database-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: database
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cache-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: cache
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: broker-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: broker
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: search-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: search
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: storage-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: storage
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend-pdb
+  labels:
+    app: phasma
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: frontend
