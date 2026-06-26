@@ -30,7 +30,6 @@ export function mapUser(dto: UserDto): User {
 
 export function mapPost(dto: PostDto): Post {
 	return {
-		id: dto.id,
 		publicId: dto.publicId,
 		userId: dto.userId,
 		username: dto.username,
@@ -48,7 +47,6 @@ export function mapPost(dto: PostDto): Post {
 export function mapComment(dto: CommentDto): Comment {
 	return {
 		id: dto.id,
-		postId: dto.postId,
 		userId: dto.userId,
 		username: dto.username,
 		avatar: dto.avatar,

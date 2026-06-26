@@ -13,7 +13,7 @@ import (
 
 type Comment struct {
 	ID       int       `json:"id"`
-	PostID   int       `json:"postId"`
+	PostID   int       `json:"-"`
 	UserID   int       `json:"userId"`
 	Username string    `json:"username"`
 	Avatar   *string   `json:"avatar"`

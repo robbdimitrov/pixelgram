@@ -45,7 +45,7 @@
 
 	{#if pagination.items.length > 0}
 		<div class="grid grid-cols-3 gap-2 sm:gap-4">
-			{#each pagination.items as post (post.id)}
+			{#each pagination.items as post (post.publicId)}
 				<div class="aspect-square">
 					<Thumbnail {post} />
 				</div>

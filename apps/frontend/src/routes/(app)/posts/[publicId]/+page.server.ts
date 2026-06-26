@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import {
 	getPost,
@@ -37,7 +37,7 @@ export const actions: Actions = {
 	comment: async ({ fetch, cookies, request, params }) => {
 		const data = await request.formData();
 		const body = ((data.get('body') as string) ?? '').trim();
-		if (!body || body.length > 400) return { success: false };
+		if (!body || body.length > 400) return fail(400, { error: 'Comment must be 1–400 characters.' });
 		const comment = await createComment(apiClient({ fetch, cookies }), params.publicId, body);
 		return { success: true, comment };
 	},

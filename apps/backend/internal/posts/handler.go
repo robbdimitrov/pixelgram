@@ -12,7 +12,7 @@ import (
 )
 
 type Post struct {
-	ID          int       `json:"id"`
+	ID          int       `json:"-"`
 	PublicID    string    `json:"publicId"`
 	UserID      int       `json:"userId"`
 	Username    string    `json:"username"`

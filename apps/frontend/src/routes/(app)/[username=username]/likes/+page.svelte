@@ -30,7 +30,7 @@
 	{/if}
 
 	<div class="flex w-full flex-col gap-6">
-		{#each pagination.items as post (post.id)}
+		{#each pagination.items as post (post.publicId)}
 			<PostCard {post} currentUserId={data.currentUser.id} singleView={false} />
 		{/each}
 	</div>

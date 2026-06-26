@@ -56,9 +56,12 @@
 		});
 	}
 
+	let commentLoadError = $state('');
+
 	async function loadMoreComments() {
 		if (!nextCommentsCursor || isLoadingMoreComments) return;
 		isLoadingMoreComments = true;
+		commentLoadError = '';
 		try {
 			const res = await fetch(
 				`/posts/${initialPost.publicId}/comments?cursor=${encodeURIComponent(nextCommentsCursor)}`
@@ -66,6 +69,8 @@
 			const data = await fetchJson<{ items: Comment[]; nextCursor: string | null }>(res);
 			comments = [...comments, ...data.items];
 			nextCommentsCursor = data.nextCursor;
+		} catch (e) {
+			commentLoadError = e instanceof Error ? e.message : 'Could not load more comments.';
 		} finally {
 			isLoadingMoreComments = false;
 		}
@@ -276,6 +281,9 @@
 						</div>
 					{/each}
 
+					{#if commentLoadError}
+						<p class="text-sm text-error">{commentLoadError}</p>
+					{/if}
 					{#if nextCommentsCursor}
 						<button
 							type="button"

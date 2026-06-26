@@ -42,7 +42,6 @@ export interface PostIdDto {
 }
 
 export interface PostDto {
-	id: number;
 	publicId: string;
 	userId: number;
 	username: string;
@@ -61,7 +60,6 @@ export interface ImageFilenameDto {
 }
 
 export interface Post {
-	id: number;
 	publicId: string;
 	userId: number;
 	username: string;
@@ -77,7 +75,6 @@ export interface Post {
 
 export interface CommentDto {
 	id: number;
-	postId: number;
 	userId: number;
 	username: string;
 	avatar: string | null;
@@ -87,7 +84,6 @@ export interface CommentDto {
 
 export interface Comment {
 	id: number;
-	postId: number;
 	userId: number;
 	username: string;
 	avatar: string | null;

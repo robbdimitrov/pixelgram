@@ -18,7 +18,6 @@ const baseUserDto: UserDto = {
 };
 
 const basePostDto: PostDto = {
-	id: 42,
 	publicId: 'abc123',
 	userId: 1,
 	username: 'johndoe',
@@ -34,7 +33,6 @@ const basePostDto: PostDto = {
 
 const baseCommentDto: CommentDto = {
 	id: 7,
-	postId: 42,
 	userId: 1,
 	username: 'johndoe',
 	avatar: null,

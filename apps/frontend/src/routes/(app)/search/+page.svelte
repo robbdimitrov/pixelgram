@@ -113,7 +113,7 @@
 					Popular posts
 				</h2>
 				<div class="grid grid-cols-3 gap-2">
-					{#each data.popular as post (post.id)}
+					{#each data.popular as post (post.publicId)}
 						<Thumbnail {post} />
 					{/each}
 				</div>
