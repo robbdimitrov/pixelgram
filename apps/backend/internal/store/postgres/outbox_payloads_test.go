@@ -53,13 +53,13 @@ func TestMarshalOutboxPayloadUsesEmptyArrays(t *testing.T) {
 			field: "hashtags",
 		},
 		{
-			name: "deleted post comment ids",
+			name: "deleted post comment public ids",
 			payload: entityPostDeletePayload{
-				Table:      "posts",
-				Op:         "delete",
-				CommentIDs: []int64{},
+				Table:            "posts",
+				Op:               "delete",
+				CommentPublicIDs: []string{},
 			},
-			field: "comment_ids",
+			field: "comment_public_ids",
 		},
 	}
 
@@ -92,7 +92,7 @@ func TestMarshalOutboxPayloadUsesEmptyArrays(t *testing.T) {
 func TestMarshalOutboxPayloadPreservesActivityContract(t *testing.T) {
 	payload, err := marshalOutboxPayload(activityPayload{
 		Op:        "uncomment",
-		CommentID: 99,
+		CommentID: "550e8400-e29b-41d4-a716-446655440099",
 		ActorID:   "7",
 	})
 	if err != nil {
@@ -112,7 +112,7 @@ func TestMarshalOutboxPayloadPreservesActivityContract(t *testing.T) {
 	if _, ok := decoded["recipient_id"]; ok {
 		t.Fatalf("recipient_id present in uncomment payload: %s", payload)
 	}
-	if decoded["comment_id"] != float64(99) {
+	if decoded["comment_id"] != "550e8400-e29b-41d4-a716-446655440099" {
 		t.Fatalf("comment_id = %#v", decoded["comment_id"])
 	}
 }

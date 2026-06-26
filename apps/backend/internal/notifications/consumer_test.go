@@ -62,8 +62,8 @@ func activityRecord(topic string, partition int32, offset int64, data []byte) *k
 	return &kgo.Record{Topic: topic, Partition: partition, Offset: offset, Value: data}
 }
 
-func entityDeletePayload(postID string, commentIDs []int64) []byte {
-	p := entityChangesPayload{Table: "posts", Op: "delete", PostID: postID, CommentIDs: commentIDs}
+func entityDeletePayload(postID string, commentPublicIDs []string) []byte {
+	p := entityChangesPayload{Table: "posts", Op: "delete", PostID: postID, CommentPublicIDs: commentPublicIDs}
 	b, _ := json.Marshal(p)
 	return b
 }
@@ -120,14 +120,14 @@ func TestHandleCommentCreatesNotification(t *testing.T) {
 	repo := &fakeRepo{}
 	c := newTestConsumer(repo)
 
-	payload := activityPayload{Op: "comment", PostID: "post-uuid", CommentID: 42, ActorID: "1", RecipientID: "2"}
+	payload := activityPayload{Op: "comment", PostID: "post-uuid", CommentID: "550e8400-e29b-41d4-a716-446655440042", ActorID: "1", RecipientID: "2"}
 	c.handleComment(context.Background(), payload, "ext-2")
 
 	if len(repo.created) != 1 {
 		t.Fatalf("created %d notifications, want 1", len(repo.created))
 	}
 	n := repo.created[0]
-	if n.Type != "comment" || n.ActorID != 1 || n.UserID != 2 || n.EntityID != "42" || n.ExternalID != "ext-2" {
+	if n.Type != "comment" || n.ActorID != 1 || n.UserID != 2 || n.EntityID != "550e8400-e29b-41d4-a716-446655440042" || n.ExternalID != "ext-2" {
 		t.Fatalf("unexpected notification: %+v", n)
 	}
 }
@@ -136,7 +136,7 @@ func TestHandleCommentSelfSkipped(t *testing.T) {
 	repo := &fakeRepo{}
 	c := newTestConsumer(repo)
 
-	payload := activityPayload{Op: "comment", CommentID: 42, ActorID: "3", RecipientID: "3"}
+	payload := activityPayload{Op: "comment", CommentID: "550e8400-e29b-41d4-a716-446655440042", ActorID: "3", RecipientID: "3"}
 	c.handleComment(context.Background(), payload, "ext-3")
 
 	if len(repo.created) != 0 {
@@ -148,14 +148,14 @@ func TestHandleUncommentDeletesByEntity(t *testing.T) {
 	repo := &fakeRepo{}
 	c := newTestConsumer(repo)
 
-	payload := activityPayload{Op: "uncomment", CommentID: 99}
+	payload := activityPayload{Op: "uncomment", CommentID: "550e8400-e29b-41d4-a716-446655440099"}
 	c.handleUncomment(context.Background(), payload)
 
 	if len(repo.deletedByEntity) != 1 {
 		t.Fatalf("DeleteByEntity called %d times, want 1", len(repo.deletedByEntity))
 	}
 	d := repo.deletedByEntity[0]
-	if d.entityType != "comment" || d.entityID != "99" {
+	if d.entityType != "comment" || d.entityID != "550e8400-e29b-41d4-a716-446655440099" {
 		t.Fatalf("unexpected delete params: %+v", d)
 	}
 }
@@ -208,7 +208,9 @@ func TestHandleEntityChangesPostDeleteCleansLikesAndComments(t *testing.T) {
 	repo := &fakeRepo{}
 	c := newTestConsumer(repo)
 
-	rec := activityRecord(topicEntityChanges, 0, 0, entityDeletePayload("post-uuid", []int64{10, 11}))
+	cid1 := "550e8400-e29b-41d4-a716-446655440010"
+	cid2 := "550e8400-e29b-41d4-a716-446655440011"
+	rec := activityRecord(topicEntityChanges, 0, 0, entityDeletePayload("post-uuid", []string{cid1, cid2}))
 	c.handleEntityChanges(context.Background(), rec)
 
 	if len(repo.deletedByEntity) != 3 {
@@ -217,11 +219,11 @@ func TestHandleEntityChangesPostDeleteCleansLikesAndComments(t *testing.T) {
 	if repo.deletedByEntity[0].entityType != "post" || repo.deletedByEntity[0].entityID != "post-uuid" {
 		t.Fatalf("first deletion: want post/post-uuid, got %+v", repo.deletedByEntity[0])
 	}
-	if repo.deletedByEntity[1].entityType != "comment" || repo.deletedByEntity[1].entityID != "10" {
-		t.Fatalf("second deletion: want comment/10, got %+v", repo.deletedByEntity[1])
+	if repo.deletedByEntity[1].entityType != "comment" || repo.deletedByEntity[1].entityID != cid1 {
+		t.Fatalf("second deletion: want comment/%s, got %+v", cid1, repo.deletedByEntity[1])
 	}
-	if repo.deletedByEntity[2].entityType != "comment" || repo.deletedByEntity[2].entityID != "11" {
-		t.Fatalf("third deletion: want comment/11, got %+v", repo.deletedByEntity[2])
+	if repo.deletedByEntity[2].entityType != "comment" || repo.deletedByEntity[2].entityID != cid2 {
+		t.Fatalf("third deletion: want comment/%s, got %+v", cid2, repo.deletedByEntity[2])
 	}
 }
 

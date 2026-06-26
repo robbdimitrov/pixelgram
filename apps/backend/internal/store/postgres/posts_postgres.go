@@ -220,19 +220,19 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 
-		// Collect comment IDs before deletion for notification cleanup.
-		commentRows, err := tx.Query(ctx, `SELECT id FROM comments WHERE post_id = $1`, postDBID)
+		// Collect comment public IDs before deletion for notification cleanup.
+		commentRows, err := tx.Query(ctx, `SELECT public_id::text FROM comments WHERE post_id = $1`, postDBID)
 		if err != nil {
 			return err
 		}
-		commentIDs := []int64{}
+		commentPublicIDs := []string{}
 		for commentRows.Next() {
-			var cid int64
+			var cid string
 			if err := commentRows.Scan(&cid); err != nil {
 				commentRows.Close()
 				return err
 			}
-			commentIDs = append(commentIDs, cid)
+			commentPublicIDs = append(commentPublicIDs, cid)
 		}
 		commentRows.Close()
 		if err := commentRows.Err(); err != nil {
@@ -252,13 +252,13 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		}
 
 		postPayload, err := marshalOutboxPayload(entityPostDeletePayload{
-			Table:      "posts",
-			Op:         "delete",
-			ID:         int64(postDBID),
-			PostID:     postID,
-			AuthorID:   userID,
-			Filename:   filename,
-			CommentIDs: commentIDs,
+			Table:            "posts",
+			Op:               "delete",
+			ID:               int64(postDBID),
+			PostID:           postID,
+			AuthorID:         userID,
+			Filename:         filename,
+			CommentPublicIDs: commentPublicIDs,
 		})
 		if err != nil {
 			return err

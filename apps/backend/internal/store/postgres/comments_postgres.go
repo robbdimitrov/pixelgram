@@ -34,10 +34,10 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 
 		if err := tx.QueryRow(ctx, `INSERT INTO comments (post_id, user_id, body)
 			SELECT id, $2, $3 FROM posts WHERE public_id = $1
-			RETURNING id, post_id, user_id,
+			RETURNING id, public_id::text, post_id, user_id,
 			(SELECT username FROM users WHERE id = $2),
 			(SELECT avatar FROM users WHERE id = $2), body, created`,
-			postID, userID, body).Scan(&comment.ID, &comment.PostID, &comment.UserID,
+			postID, userID, body).Scan(&comment.ID, &comment.PublicID, &comment.PostID, &comment.UserID,
 			&comment.Username, &avatar, &comment.Body, &comment.Created); err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 
 		payload, err := marshalOutboxPayload(activityPayload{
 			Op:          "comment",
-			CommentID:   int64(comment.ID),
+			CommentID:   comment.PublicID,
 			PostID:      postID,
 			ActorID:     userID,
 			RecipientID: recipientID,
@@ -88,16 +88,16 @@ func (r *CommentRepository) ListComments(ctx context.Context, postID string, cur
 		// post_exists=true/false so we can distinguish "no comments" from "post gone".
 		rows, err := r.db.Pool().Query(ctx, `WITH post AS (SELECT id FROM posts WHERE public_id = $1),
 page AS (
-    SELECT c.id, c.post_id, c.user_id, u.username, u.avatar, c.body, c.created
+    SELECT c.id, c.public_id::text, c.post_id, c.user_id, u.username, u.avatar, c.body, c.created
     FROM comments c JOIN users u ON u.id = c.user_id
     WHERE c.post_id = (SELECT id FROM post)
       AND (NOT $2 OR (c.created, c.id) < ($3, $4))
     ORDER BY c.created DESC, c.id DESC LIMIT $5
 )
-SELECT id, post_id, user_id, username, avatar, body, created, true AS post_exists
+SELECT id, public_id, post_id, user_id, username, avatar, body, created, true AS post_exists
 FROM page
 UNION ALL
-SELECT NULL::integer, NULL::integer, NULL::integer,
+SELECT NULL::integer, NULL::text, NULL::integer, NULL::integer,
        NULL::text, NULL::text, NULL::text, NULL::timestamptz,
        (SELECT id FROM post) IS NOT NULL
 WHERE NOT EXISTS (SELECT 1 FROM page)`,
@@ -109,13 +109,13 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		result = []comments.Comment{}
 		for rows.Next() {
 			var id, postID, userID *int
-			var username *string
+			var publicID, username *string
 			var avatar sql.NullString
 			var body *string
 			var created *time.Time
 			var postExists bool
 			var cr comments.Comment
-			if err := rows.Scan(&id, &postID, &userID, &username, &avatar, &body, &created, &postExists); err != nil {
+			if err := rows.Scan(&id, &publicID, &postID, &userID, &username, &avatar, &body, &created, &postExists); err != nil {
 				return err
 			}
 			if id == nil {
@@ -126,6 +126,7 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 				return nil
 			}
 			cr.ID = *id
+			cr.PublicID = *publicID
 			cr.PostID = *postID
 			cr.UserID = *userID
 			cr.Username = *username
@@ -158,12 +159,12 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 		}
 		defer database.Rollback(ctx, tx)
 
-		var deletedID int
+		var deletedPublicID string
 		err = tx.QueryRow(ctx, `DELETE FROM comments
-			WHERE id = $1
+			WHERE public_id = $1
 			  AND post_id = (SELECT id FROM posts WHERE public_id = $2)
-			  AND user_id = $3 RETURNING id`,
-			commentID, postID, userID).Scan(&deletedID)
+			  AND user_id = $3 RETURNING public_id::text`,
+			commentID, postID, userID).Scan(&deletedPublicID)
 		if err == nil {
 			deleted = true
 			if _, err := tx.Exec(ctx,
@@ -173,7 +174,7 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 			}
 			payload, err := marshalOutboxPayload(activityPayload{
 				Op:        "uncomment",
-				CommentID: int64(deletedID),
+				CommentID: deletedPublicID,
 				ActorID:   userID,
 			})
 			if err != nil {
@@ -191,7 +192,7 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 		// Comment exists but isn't owned by this user, or doesn't exist at all.
 		if err := tx.QueryRow(ctx, `SELECT EXISTS(
 			  SELECT 1 FROM comments
-			  WHERE id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)
+			  WHERE public_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)
 			)`, commentID, postID).Scan(&forbidden); err != nil {
 			return err
 		}

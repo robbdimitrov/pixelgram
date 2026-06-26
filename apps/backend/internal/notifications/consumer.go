@@ -108,16 +108,16 @@ func (c *Consumer) handleRecordSafely(ctx context.Context, record *kgo.Record) {
 }
 
 type entityChangesPayload struct {
-	Table      string  `json:"table"`
-	Op         string  `json:"op"`
-	PostID     string  `json:"post_id"`
-	CommentIDs []int64 `json:"comment_ids"`
+	Table            string   `json:"table"`
+	Op               string   `json:"op"`
+	PostID           string   `json:"post_id"`
+	CommentPublicIDs []string `json:"comment_public_ids"`
 }
 
 type activityPayload struct {
 	Op          string `json:"op"`
 	PostID      string `json:"post_id"`
-	CommentID   int64  `json:"comment_id"`
+	CommentID   string `json:"comment_id"`
 	ActorID     string `json:"actor_id"`
 	RecipientID string `json:"recipient_id"`
 }
@@ -146,9 +146,8 @@ func (c *Consumer) handleEntityChanges(ctx context.Context, record *kgo.Record) 
 	if err := c.repo.DeleteByEntity(ctx, "post", payload.PostID); err != nil {
 		slog.Warn("notifications consumer: failed to delete notifications for post", "post_id", payload.PostID, "error", err)
 	}
-	for _, cid := range payload.CommentIDs {
-		entityID := strconv.FormatInt(cid, 10)
-		if err := c.repo.DeleteByEntity(ctx, "comment", entityID); err != nil {
+	for _, cid := range payload.CommentPublicIDs {
+		if err := c.repo.DeleteByEntity(ctx, "comment", cid); err != nil {
 			slog.Warn("notifications consumer: failed to delete comment notification", "comment_id", cid, "error", err)
 		}
 	}
@@ -217,21 +216,19 @@ func (c *Consumer) handleComment(ctx context.Context, payload activityPayload, e
 	if actorID == recipientID {
 		return
 	}
-	entityID := strconv.FormatInt(payload.CommentID, 10)
 	if err := c.repo.CreateNotification(ctx, Notification{
 		ExternalID: externalID,
 		UserID:     recipientID,
 		ActorID:    actorID,
 		Type:       "comment",
-		EntityID:   entityID,
+		EntityID:   payload.CommentID,
 	}); err != nil {
 		slog.Warn("notifications consumer: failed to create comment notification", "error", err)
 	}
 }
 
 func (c *Consumer) handleUncomment(ctx context.Context, payload activityPayload) {
-	entityID := strconv.FormatInt(payload.CommentID, 10)
-	if err := c.repo.DeleteByEntity(ctx, "comment", entityID); err != nil {
+	if err := c.repo.DeleteByEntity(ctx, "comment", payload.CommentID); err != nil {
 		slog.Warn("notifications consumer: failed to delete comment notification", "error", err)
 	}
 }

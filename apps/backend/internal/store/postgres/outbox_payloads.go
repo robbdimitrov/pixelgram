@@ -25,13 +25,13 @@ type entityPostUpsertPayload struct {
 }
 
 type entityPostDeletePayload struct {
-	Table      string  `json:"table"`
-	Op         string  `json:"op"`
-	ID         int64   `json:"id"`
-	PostID     string  `json:"post_id"`
-	AuthorID   string  `json:"author_id"`
-	Filename   string  `json:"filename"`
-	CommentIDs []int64 `json:"comment_ids"`
+	Table            string   `json:"table"`
+	Op               string   `json:"op"`
+	ID               int64    `json:"id"`
+	PostID           string   `json:"post_id"`
+	AuthorID         string   `json:"author_id"`
+	Filename         string   `json:"filename"`
+	CommentPublicIDs []string `json:"comment_public_ids"`
 }
 
 type entityHashtagUpsertPayload struct {
@@ -44,7 +44,7 @@ type entityHashtagUpsertPayload struct {
 type activityPayload struct {
 	Op          string `json:"op"`
 	PostID      string `json:"post_id,omitempty"`
-	CommentID   int64  `json:"comment_id,omitempty"`
+	CommentID   string `json:"comment_id,omitempty"`
 	ActorID     string `json:"actor_id"`
 	RecipientID string `json:"recipient_id,omitempty"`
 }

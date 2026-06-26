@@ -12,9 +12,10 @@ import (
 )
 
 type Comment struct {
-	ID       int       `json:"id"`
+	ID       int       `json:"-"`
+	PublicID string    `json:"id"`
 	PostID   int       `json:"-"`
-	UserID   int       `json:"userId"`
+	UserID   int       `json:"-"`
 	Username string    `json:"username"`
 	Avatar   *string   `json:"avatar"`
 	Body     string    `json:"body"`
@@ -95,7 +96,7 @@ func (h Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	userID, _ := httpx.UserID(r)
 	postID := r.PathValue("publicId")
 	commentID := r.PathValue("commentId")
-	if !validation.ValidUUID(postID) || !pagination.ParseID(commentID) {
+	if !validation.ValidUUID(postID) || !validation.ValidUUID(commentID) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid ID.")
 		return
 	}
