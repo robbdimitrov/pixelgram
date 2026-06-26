@@ -133,7 +133,7 @@ The `database` StatefulSet runs PostgreSQL with `-c wal_level=logical` to enable
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | secrets | S3 credentials |
 | `DRAGONFLY_URL` | literal | Dragonfly connection |
 | `DRAGONFLY_PASSWORD` | secret | Dragonfly auth |
-| `TRUST_PROXY` | literal `"true"` | Honor X-Forwarded-* headers |
+| `TRUST_PROXY` | literal `"true"` | Honor valid X-Forwarded-* headers from the ingress, which must overwrite client-supplied forwarding headers |
 | `MEILI_URL` | literal | Meilisearch endpoint |
 | `MEILI_MASTER_KEY` | secret | Meilisearch key provisioning |
 | `REDPANDA_BROKERS` | literal | Kafka broker address for consumers |

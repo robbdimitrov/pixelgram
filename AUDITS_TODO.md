@@ -24,10 +24,10 @@
 |---|---|
 | CRITICAL | 0 |
 | HIGH | 0 |
-| MEDIUM | 19 |
+| MEDIUM | 18 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **69** |
+| **Total** | **68** |
 
 ---
 
@@ -49,6 +49,7 @@
 | M-01 | Threaded request contexts through Argon2 password hash and verify semaphore acquisition, with cancellation regression tests. |
 | M-02 | Added backend HSTS on direct TLS or trusted forwarded HTTPS requests, with middleware regression tests. |
 | M-03 | Added frontend HSTS for HTTPS SSR requests, with hook regression tests. |
+| M-04 | Validated trusted `X-Forwarded-For` IP values before using them in rate-limit keys, falling back to `RemoteAddr` for invalid input. |
 | M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
 | M-09 | Disabled ServiceAccount token automounting on backend and frontend pods. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
@@ -59,18 +60,6 @@
 ---
 
 # MEDIUM
-
----
-
-## M-04 · `X-Forwarded-For` used as rate-limit key without IP format validation — allows spoofing when `TRUST_PROXY=true`
-
-**Layer:** Backend
-**File:** `apps/backend/internal/httpx/ratelimit.go` lines 177, 182–190
-**Category:** Rate limit bypass / OWASP A07
-
-**What's wrong:** When `TRUST_PROXY=true`, the leftmost `X-Forwarded-For` element is used verbatim as the rate-limit key without validating that it is a parseable IP address. A client can supply `X-Forwarded-For: fake-ip, real-ip` and bypass per-IP buckets for `POST /sessions` and `POST /users` by rotating fake values.
-
-**Fix:** After extracting the XFF element, validate with `net.ParseIP`. Fall back to `r.RemoteAddr` if parsing fails. Document in deployment config that the upstream proxy must overwrite (not append) XFF.
 
 ---
 

@@ -52,7 +52,7 @@
 
 - Token bucket per policy, keyed by user id > session cookie > client IP.
 - Implemented as a Lua script on Dragonfly (atomic HMGET + HMSET + PEXPIRE).
-- `TRUST_PROXY=true` honors `X-Forwarded-For` for IP extraction; disabled by default.
+- `TRUST_PROXY=true` honors only parseable `X-Forwarded-For` IP values for IP extraction; invalid values fall back to `RemoteAddr`. Enable it only behind an upstream proxy that overwrites forwarding headers.
 - Failure mode: configurable via `RATE_LIMIT_FAIL_OPEN` (default false → fail-closed on Dragonfly error); fail-closed returns HTTP 503. `RATE_LIMIT_FAIL_OPEN` applies only to the token-bucket rate limiter.
 - Login throttle uses separate per-IP (5 failures) and per-email (50 failures) counters in Dragonfly with 15 min TTL, cleared on successful login. When Dragonfly is unavailable, the login throttle always fails open regardless of `RATE_LIMIT_FAIL_OPEN`.
 

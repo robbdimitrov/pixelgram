@@ -79,6 +79,19 @@ func TestClientIPTrustProxy(t *testing.T) {
 	}
 }
 
+func TestClientIPTrustProxyRejectsInvalidForwardedFor(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.RemoteAddr = "10.0.0.1:9999"
+	req.Header.Set("X-Forwarded-For", "fake-ip, 203.0.113.5")
+
+	trustProxy = true
+	defer func() { trustProxy = false }()
+	ip := ClientIP(req)
+	if ip != "10.0.0.1" {
+		t.Fatalf("ClientIP = %q, want fallback RemoteAddr IP", ip)
+	}
+}
+
 func TestRateLimitAllowsExemptPath(t *testing.T) {
 	handler := RateLimit(&denyAllStore{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
