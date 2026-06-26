@@ -14,6 +14,9 @@ LOCAL_PORT="${LOCAL_PORT:-8080}"
 REMOTE_PORT="${REMOTE_PORT:-8080}"
 PORT_FORWARD_LOG="${PORT_FORWARD_LOG:-/tmp/phasma-port-forward-${LOCAL_PORT}.log}"
 PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/phasma-port-forward-${LOCAL_PORT}.pid}"
+SEAWEEDFS_IMAGE="chrislusf/seaweedfs:3.76"
+DRAGONFLY_IMAGE="docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0"
+MEILISEARCH_IMAGE="getmeili/meilisearch:v1.11.3"
 
 SERVICES=(backend database frontend)
 ROLL_OUT_DATABASE=(statefulset/database)
@@ -144,15 +147,15 @@ build_images() {
   make -C "${ROOT}"
   if docker container inspect --format '{{.State.Running}}' phasma-control-plane 2>/dev/null | grep -qx true; then
     log "loading images into kind node"
-    docker pull chrislusf/seaweedfs
-    docker pull docker.dragonflydb.io/dragonflydb/dragonfly
-    docker pull getmeili/meilisearch
+    docker pull "${SEAWEEDFS_IMAGE}"
+    docker pull "${DRAGONFLY_IMAGE}"
+    docker pull "${MEILISEARCH_IMAGE}"
     docker save localhost:5000/phasma/backend | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/phasma/database | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save localhost:5000/phasma/frontend | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save chrislusf/seaweedfs | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save docker.dragonflydb.io/dragonflydb/dragonfly | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save getmeili/meilisearch | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${SEAWEEDFS_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${DRAGONFLY_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${MEILISEARCH_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
   fi
 }
 

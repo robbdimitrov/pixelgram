@@ -189,7 +189,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: redpanda
-        image: docker.redpanda.com/redpandadata/redpanda
+        image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -297,7 +297,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: connect
-        image: docker.redpanda.com/redpandadata/connect
+        image: docker.redpanda.com/redpandadata/connect:4.38.0
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

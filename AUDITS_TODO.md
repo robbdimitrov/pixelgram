@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 6 |
+| HIGH | 5 |
 | MEDIUM | 27 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **84** |
+| **Total** | **83** |
 
 ---
 
@@ -39,6 +39,7 @@
 | H-02 | Added per-record panic recovery and repeated-panic tracking to feed and notifications consumers so a bad Kafka record is skipped without restarting the poll loop. |
 | H-03 | Added an append-only migration that makes nullable ownership and junction-table foreign keys `NOT NULL`. |
 | H-04 | Set the frontend session cookie `Secure` flag explicitly and added `NODE_ENV=production` to the frontend runner image. |
+| H-05 | Pinned Dragonfly, Redpanda, Redpanda Connect, Meilisearch, and SeaweedFS image tags in manifests and local kind image preload commands; verified all pinned tags resolve. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
 
 ---
@@ -62,33 +63,6 @@
 ---
 
 # HIGH
-
----
-
-## H-05 · Five third-party images use no version tag — resolve to `:latest`
-
-**Layer:** Infrastructure
-**Files:**
-- `deploy/cache.yaml` line 53 — `docker.dragonflydb.io/dragonflydb/dragonfly`
-- `deploy/broker.yaml` lines 192, 300 — `docker.redpanda.com/redpandadata/redpanda`, `…/connect`
-- `deploy/broker-backfill.yaml` line 28 — `docker.redpanda.com/redpandadata/connect`
-- `deploy/search.yaml` line 53 — `getmeili/meilisearch`
-- `deploy/storage.yaml` line 53 — `chrislusf/seaweedfs`
-**Category:** Supply chain / unpinned images
-
-**What's wrong:** Images with no tag resolve to `:latest`. `scripts/deploy.sh` also `docker pull`s these images with no tag. `imagePullPolicy: IfNotPresent` only partially mitigates: a fresh node or forced pull fetches whatever `:latest` is at that moment.
-
-**Why it matters:** A Redpanda, Meilisearch, or SeaweedFS release could silently change wire protocol, API surface, or configuration defaults — or in a supply chain attack scenario, introduce malicious content.
-
-**Fix:** Pin every image to a specific version tag (ideally digest `image@sha256:…`):
-```yaml
-image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0
-image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
-image: docker.redpanda.com/redpandadata/connect:v4.38.0
-image: getmeili/meilisearch:v1.11.3
-image: chrislusf/seaweedfs:3.76
-```
-Update corresponding `docker pull` calls in `scripts/deploy.sh` to use the same pinned tags.
 
 ---
 

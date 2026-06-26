@@ -18,6 +18,7 @@ All services are deployed to the `phasma` namespace via manifests in `deploy/`. 
 ## Image Registry
 
 All custom images are pushed to `localhost:5000/phasma/<service>`. Built and pushed via top-level `Makefile` targets.
+Third-party images in Kubernetes manifests are pinned to explicit version tags; do not use implicit `latest`.
 
 ## Init Container Sequencing
 
