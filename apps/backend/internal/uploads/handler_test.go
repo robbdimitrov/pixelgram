@@ -230,7 +230,7 @@ func TestServeFile(t *testing.T) {
 	if got := res.Header().Get("ETag"); got != `"`+filename+`"` {
 		t.Errorf("ETag = %q", got)
 	}
-	if got := res.Header().Get("Cache-Control"); got != "private, max-age=86400" {
+	if got := res.Header().Get("Cache-Control"); got != "public, max-age=86400, immutable" {
 		t.Errorf("Cache-Control = %q", got)
 	}
 	if got := res.Header().Get("Content-Type"); got != "image/png" {

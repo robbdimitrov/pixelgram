@@ -11,7 +11,9 @@ import (
 	"image/jpeg"
 	_ "image/png"
 	"io"
+	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	_ "golang.org/x/image/webp"
@@ -71,7 +73,9 @@ func (h Handler) CreateFile(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.Service.Register(ctx, RegisterCommand{UserID: userID, Filename: filename})
 	for _, f := range result.ExpiredFilenames {
-		_ = h.Store.Delete(ctx, f)
+		if delErr := h.Store.Delete(ctx, f); delErr != nil {
+			slog.Warn("failed to delete expired upload blob", "filename", f, "error", delErr)
+		}
 	}
 	if err != nil {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Could not process upload.")
@@ -125,7 +129,7 @@ func (h Handler) ServeFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rc, ct, _, err := h.Store.Get(r.Context(), filename)
+	rc, ct, size, err := h.Store.Get(r.Context(), filename)
 	if errors.Is(err, blobstore.ErrNotFound) {
 		http.NotFound(w, r)
 		return
@@ -136,10 +140,13 @@ func (h Handler) ServeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rc.Close()
 
-	w.Header().Set("Cache-Control", "private, max-age=86400")
+	w.Header().Set("Cache-Control", "public, max-age=86400, immutable")
 	w.Header().Set("ETag", `"`+filename+`"`)
 	if ct != "" {
 		w.Header().Set("Content-Type", ct)
+	}
+	if size > 0 {
+		w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 	}
 	_, _ = io.Copy(w, rc)
 }
@@ -162,7 +169,9 @@ type Files struct {
 }
 
 func (f Files) Delete(filename string) {
-	_ = f.Store.Delete(context.Background(), filename)
+	if err := f.Store.Delete(context.Background(), filename); err != nil {
+		slog.Warn("failed to delete blob", "filename", filename, "error", err)
+	}
 }
 
 // processImage decodes the image to check dimensions, then re-encodes to JPEG.

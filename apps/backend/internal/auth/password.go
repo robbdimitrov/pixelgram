@@ -60,7 +60,15 @@ var DefaultPasswordParams = PasswordParams{
 // parameters. Login verifies against it when no account matches the supplied
 // email so the password-checking step costs the same whether or not the
 // account exists, closing a user-enumeration timing oracle.
-var decoyHash, _ = HashPassword(context.Background(), "decoy password — never matches a real login", DefaultPasswordParams)
+var decoyHash string
+
+func init() {
+	var err error
+	decoyHash, err = HashPassword(context.Background(), "decoy password — never matches a real login", DefaultPasswordParams)
+	if err != nil {
+		panic(fmt.Sprintf("auth: failed to generate decoy hash: %v", err))
+	}
+}
 
 // DecoyHash returns the process-wide decoy Argon2id hash.
 func DecoyHash() string {

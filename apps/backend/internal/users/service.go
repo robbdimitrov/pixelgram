@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"log/slog"
 
 	"phasma/backend/internal/auth"
 	"phasma/backend/internal/blobstore"
@@ -68,7 +69,9 @@ func (s *Service) UpdateProfile(ctx context.Context, command UpdateProfileComman
 	}
 
 	if result.UnusedAvatar != "" {
-		_ = s.blobs.Delete(ctx, result.UnusedAvatar)
+		if err := s.blobs.Delete(ctx, result.UnusedAvatar); err != nil {
+			slog.Warn("failed to delete unused avatar blob", "filename", result.UnusedAvatar, "error", err)
+		}
 	}
 	return UpdateProfileUpdated, nil
 }

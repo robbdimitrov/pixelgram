@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"phasma/backend/internal/auth"
+	"phasma/backend/internal/env"
 	"phasma/backend/internal/store"
 )
 
@@ -25,7 +27,8 @@ func Open(ctx context.Context, databaseURL, sessionSecret string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	config.MaxConns = 10
+	config.MaxConns = int32(env.Int("POSTGRES_MAX_CONNS", 10))
+	config.MaxConnIdleTime = 5 * time.Minute
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {

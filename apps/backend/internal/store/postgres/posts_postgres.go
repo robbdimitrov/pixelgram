@@ -44,8 +44,9 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			return err
 		}
 		var postID int
+		var createdAt time.Time
 		if err := tx.QueryRow(ctx, `INSERT INTO posts (user_id, filename, description)
-			VALUES ($1, $2, $3) RETURNING id, public_id`, userID, filename, description).Scan(&postID, &publicID); err != nil {
+			VALUES ($1, $2, $3) RETURNING id, public_id, created`, userID, filename, description).Scan(&postID, &publicID, &createdAt); err != nil {
 			return err
 		}
 		var username string
@@ -57,11 +58,6 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		descStr := ""
 		if description != nil {
 			descStr = *description
-		}
-
-		var createdAt time.Time
-		if err := tx.QueryRow(ctx, `SELECT created FROM posts WHERE id = $1`, postID).Scan(&createdAt); err != nil {
-			return err
 		}
 
 		hashtags := tags
@@ -497,7 +493,7 @@ func (r *PostRepository) ListPopularPosts(ctx context.Context, viewerID string, 
         JOIN users u ON u.id = posts.user_id
         WHERE posts.created > NOW() - INTERVAL '7 days'
           AND EXISTS (SELECT 1 FROM likes WHERE post_id = posts.id)
-        ORDER BY (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) DESC,
+        ORDER BY likes DESC,
                  posts.created DESC
         LIMIT $2`, viewerID, limit)
 }
