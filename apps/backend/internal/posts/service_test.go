@@ -16,8 +16,14 @@ type serviceRepository struct {
 	exists      bool
 }
 
-func (r *serviceRepository) DeletePost(context.Context, string, string) (string, bool, error) {
-	return r.deletedFile, r.deleted, nil
+func (r *serviceRepository) DeletePost(context.Context, string, string) (string, error) {
+	if r.found && !r.deleted {
+		return "", store.ErrForbidden
+	}
+	if !r.deleted {
+		return "", store.ErrNotFound
+	}
+	return r.deletedFile, nil
 }
 func (r *serviceRepository) GetPost(context.Context, string, string) (Post, bool, error) {
 	return Post{}, r.found, nil

@@ -56,8 +56,14 @@ func (s *fakeStore) GetPost(_ context.Context, _ string, _ string) (Post, bool, 
 	return s.post, s.found, s.err
 }
 
-func (s *fakeStore) DeletePost(_ context.Context, _ string, _ string) (string, bool, error) {
-	return s.deletedFile, s.deleted, s.err
+func (s *fakeStore) DeletePost(_ context.Context, _ string, _ string) (string, error) {
+	if s.found && !s.deleted {
+		return "", store.ErrForbidden
+	}
+	if !s.deleted {
+		return "", store.ErrNotFound
+	}
+	return s.deletedFile, s.err
 }
 
 func (s *fakeStore) PostExists(_ context.Context, _ string) (bool, error) {

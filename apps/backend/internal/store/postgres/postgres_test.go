@@ -1257,9 +1257,9 @@ func TestPostgresRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *tes
 		t.Fatalf("CreateComment() error = %v", err)
 	}
 
-	filename, deleted, err := client.DeletePost(ctx, post.PublicID, stringID(ownerID))
-	if err != nil || !deleted || filename != "shared-post-file" {
-		t.Fatalf("DeletePost() = %q, %v, %v", filename, deleted, err)
+	filename, err := client.DeletePost(ctx, post.PublicID, stringID(ownerID))
+	if err != nil || filename != "shared-post-file" {
+		t.Fatalf("DeletePost() = %q, %v", filename, err)
 	}
 	var posts, likes, comments int
 	if err := client.db.Pool().QueryRow(
@@ -1366,7 +1366,7 @@ func (c *Client) GetPost(ctx context.Context, postID, currentUserID string) (pos
 	return NewPostRepository(c).GetPost(ctx, postID, currentUserID)
 }
 
-func (c *Client) DeletePost(ctx context.Context, postID, userID string) (string, bool, error) {
+func (c *Client) DeletePost(ctx context.Context, postID, userID string) (string, error) {
 	return NewPostRepository(c).DeletePost(ctx, postID, userID)
 }
 

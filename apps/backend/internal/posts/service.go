@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"phasma/backend/internal/pagination"
-	"phasma/backend/internal/store"
 )
 
 type CreatePostCommand struct {
@@ -35,7 +34,7 @@ type Repository interface {
 	GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error)
 	GetPost(ctx context.Context, publicID, currentUserID string) (Post, bool, error)
-	DeletePost(ctx context.Context, publicID, userID string) (string, bool, error)
+	DeletePost(ctx context.Context, publicID, userID string) (string, error)
 	PostExists(ctx context.Context, publicID string) (bool, error)
 	LikePost(ctx context.Context, publicID, userID string) error
 	UnlikePost(ctx context.Context, publicID, userID string) error
@@ -83,25 +82,14 @@ func (s *Service) GetPost(ctx context.Context, publicID, currentUserID string) (
 }
 
 func (s *Service) DeletePost(ctx context.Context, command DeletePostCommand) error {
-	filename, deleted, err := s.repository.DeletePost(ctx, command.PublicID, command.UserID)
+	filename, err := s.repository.DeletePost(ctx, command.PublicID, command.UserID)
 	if err != nil {
 		return err
 	}
-	if deleted {
-		if s.files != nil {
-			s.files.Delete(filename)
-		}
-		return nil
+	if s.files != nil {
+		s.files.Delete(filename)
 	}
-
-	_, found, err := s.repository.GetPost(ctx, command.PublicID, command.UserID)
-	if err != nil {
-		return err
-	}
-	if found {
-		return store.ErrForbidden
-	}
-	return store.ErrNotFound
+	return nil
 }
 
 func (s *Service) LikePost(ctx context.Context, publicID, userID string) error {

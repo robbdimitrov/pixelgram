@@ -173,7 +173,7 @@ func (r *PostRepository) GetPost(ctx context.Context, postID, currentUserID stri
 	return result[0], true, nil
 }
 
-func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) (string, bool, error) {
+func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) (string, error) {
 	var filename string
 	err := r.db.Write(ctx, func() error {
 		tx, err := r.db.Pool().Begin(ctx)
@@ -182,12 +182,26 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		}
 		defer database.Rollback(ctx, tx)
 
+		// Lock the row to prevent concurrent deletes from racing on ownership.
+		var postDBID int
+		var ownerID string
+		if err := tx.QueryRow(ctx,
+			`SELECT id, user_id::text FROM posts WHERE public_id = $1 FOR UPDATE`,
+			postID).Scan(&postDBID, &ownerID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return store.ErrNotFound
+			}
+			return err
+		}
+		if ownerID != userID {
+			return store.ErrForbidden
+		}
+
 		// Look up hashtag names before deleting.
 		hashtagRows, err := tx.Query(ctx,
 			`SELECT h.name FROM hashtags h
 			JOIN post_hashtags ph ON ph.hashtag_id = h.id
-			JOIN posts p ON p.id = ph.post_id
-			WHERE p.public_id = $1`, postID)
+			WHERE ph.post_id = $1`, postDBID)
 		if err != nil {
 			return err
 		}
@@ -202,12 +216,6 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		}
 		hashtagRows.Close()
 		if err := hashtagRows.Err(); err != nil {
-			return err
-		}
-
-		var postDBID int
-		if err := tx.QueryRow(ctx, `SELECT id FROM posts WHERE public_id = $1 AND user_id = $2`,
-			postID, userID).Scan(&postDBID); err != nil {
 			return err
 		}
 
@@ -230,8 +238,8 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 
-		if err := tx.QueryRow(ctx, `DELETE FROM posts WHERE public_id = $1 AND user_id = $2
-			RETURNING filename`, postID, userID).Scan(&filename); err != nil {
+		if err := tx.QueryRow(ctx, `DELETE FROM posts WHERE id = $1 RETURNING filename`,
+			postDBID).Scan(&filename); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename); err != nil {
@@ -278,13 +286,7 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 
 		return tx.Commit(ctx)
 	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "", false, nil
-	}
-	if err != nil {
-		return "", false, err
-	}
-	return filename, true, nil
+	return filename, err
 }
 
 func (r *PostRepository) PostExists(ctx context.Context, postID string) (bool, error) {

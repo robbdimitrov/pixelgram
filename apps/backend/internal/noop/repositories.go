@@ -89,8 +89,8 @@ func (Posts) GetLikedPosts(context.Context, string, *pagination.Cursor, int, str
 func (Posts) GetPost(context.Context, string, string) (posts.Post, bool, error) {
 	return posts.Post{}, false, nil
 }
-func (Posts) DeletePost(context.Context, string, string) (string, bool, error) {
-	return "", false, nil
+func (Posts) DeletePost(context.Context, string, string) (string, error) {
+	return "", nil
 }
 func (Posts) PostExists(context.Context, string) (bool, error)                    { return false, nil }
 func (Posts) LikePost(context.Context, string, string) error                      { return nil }
