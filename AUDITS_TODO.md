@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 9 |
+| HIGH | 7 |
 | MEDIUM | 27 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **87** |
+| **Total** | **85** |
 
 ---
 
@@ -37,6 +37,8 @@
 |---|---|
 | H-01 | Replaced all backend outbox payload string formatting with typed `encoding/json` marshaling and added regression tests for control-character payloads. |
 | H-02 | Added per-record panic recovery and repeated-panic tracking to feed and notifications consumers so a bad Kafka record is skipped without restarting the poll loop. |
+| H-03 | Added an append-only migration that makes nullable ownership and junction-table foreign keys `NOT NULL`. |
+| H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
 
 ---
 
@@ -59,36 +61,6 @@
 ---
 
 # HIGH
-
----
-
-## H-03 · Four junction-table FK columns allow NULL — cascades never fire, UNIQUE constraints defeated
-
-**Layer:** Database
-**Files:**
-- `apps/database/migrations/000003_create_posts.up.sql` — `posts.user_id`, `uploads.user_id`, `likes.post_id`, `likes.user_id`
-- `apps/database/migrations/000008_create_follows.up.sql` — `follows.follower_id`, `follows.followee_id`
-- `apps/database/migrations/000004_create_hashtags.up.sql` — `post_hashtags.post_id`, `post_hashtags.hashtag_id`
-**Category:** Data integrity / missing NOT NULL constraints
-
-**What's wrong:** None of the FK columns on `posts`, `uploads`, `likes`, `follows`, or `post_hashtags` carry `NOT NULL`. PostgreSQL allows `INSERT ... user_id = NULL` silently. A NULL FK value:
-- never participates in `ON DELETE CASCADE` (NULL FK ≠ any parent row)
-- is treated as distinct from every other NULL by `UNIQUE(col_a, col_b)`, making the deduplication guarantee useless
-- leaves orphaned rows that are never cleaned up
-
-**Why it matters:** A direct DB write, an admin script, a future migration bug, or a race condition can create posts/uploads owned by no user (storage leak, quota bypass), likes associated with no post (count inflation), self-like or self-follow via a NULL FK bypass, and orphaned `post_hashtags` rows that permanently inflate hashtag counts.
-
-**Fix:** Add `NOT NULL` to all eight FK columns. Apply as a new migration. Verify no existing NULL rows before applying:
-```sql
-ALTER TABLE posts ALTER COLUMN user_id SET NOT NULL;
-ALTER TABLE uploads ALTER COLUMN user_id SET NOT NULL;
-ALTER TABLE likes ALTER COLUMN post_id SET NOT NULL;
-ALTER TABLE likes ALTER COLUMN user_id SET NOT NULL;
-ALTER TABLE follows ALTER COLUMN follower_id SET NOT NULL;
-ALTER TABLE follows ALTER COLUMN followee_id SET NOT NULL;
-ALTER TABLE post_hashtags ALTER COLUMN post_id SET NOT NULL;
-ALTER TABLE post_hashtags ALTER COLUMN hashtag_id SET NOT NULL;
-```
 
 ---
 
@@ -219,26 +191,6 @@ if (file.size > 1024 * 1024) {
 }
 ```
 3. Document `BODY_SIZE_LIMIT` as a required deployment environment variable.
-
----
-
-## H-11 · `likes`, `follows`, and `post_hashtags` have no PRIMARY KEY — only nullable UNIQUE constraints
-
-**Layer:** Database
-**Files:**
-- `apps/database/migrations/000003_create_posts.up.sql` — `likes`
-- `apps/database/migrations/000008_create_follows.up.sql` — `follows`
-- `apps/database/migrations/000004_create_hashtags.up.sql` — `post_hashtags`
-**Category:** Data integrity / replication
-
-**What's wrong:** The three junction tables declare `UNIQUE(col_a, col_b)` but no `PRIMARY KEY`. Because the individual columns are also not `NOT NULL` (H-03), the UNIQUE constraint cannot guarantee one row per logical pair. Replication tools (Debezium, pglogical) and logical replication slots require a primary key on every table for correct row identity.
-
-**Fix:** After adding `NOT NULL` (H-03), change the UNIQUE constraints to PRIMARY KEY declarations:
-```sql
-ALTER TABLE likes ADD PRIMARY KEY (post_id, user_id);
-ALTER TABLE follows ADD PRIMARY KEY (follower_id, followee_id);
-ALTER TABLE post_hashtags ADD PRIMARY KEY (post_id, hashtag_id);
-```
 
 ---
 

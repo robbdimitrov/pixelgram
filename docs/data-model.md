@@ -44,7 +44,7 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 | Field | Type | Constraints |
 |---|---|---|
 | filename | varchar(255) PK | 32-char lowercase hex |
-| user_id | integer FK → users | ON DELETE CASCADE |
+| user_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
 
 ### posts
@@ -52,7 +52,7 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 |---|---|---|
 | id | serial PK | |
 | public_id | uuid UNIQUE | DEFAULT gen_random_uuid() — external identifier |
-| user_id | integer FK → users | ON DELETE CASCADE |
+| user_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
 | filename | varchar(255) | NOT NULL — blob filename |
 | description | varchar(1000) | nullable |
 | created | timestamptz | NOT NULL |
@@ -60,10 +60,10 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 ### likes
 | Field | Type | Constraints |
 |---|---|---|
-| post_id | integer FK → posts | ON DELETE CASCADE |
-| user_id | integer FK → users | ON DELETE CASCADE |
+| post_id | integer FK → posts | NOT NULL, ON DELETE CASCADE |
+| user_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
-| — | UNIQUE(post_id, user_id) | |
+| — | PRIMARY KEY(post_id, user_id) | |
 
 ### comments
 | Field | Type | Constraints |
@@ -84,18 +84,18 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 ### post_hashtags
 | Field | Type | Constraints |
 |---|---|---|
-| post_id | integer FK → posts | ON DELETE CASCADE |
-| hashtag_id | integer FK → hashtags | ON DELETE CASCADE |
+| post_id | integer FK → posts | NOT NULL, ON DELETE CASCADE |
+| hashtag_id | integer FK → hashtags | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
-| — | UNIQUE(post_id, hashtag_id) | |
+| — | PRIMARY KEY(post_id, hashtag_id) | |
 
 ### follows
 | Field | Type | Constraints |
 |---|---|---|
-| follower_id | integer FK → users | ON DELETE CASCADE |
-| followee_id | integer FK → users | ON DELETE CASCADE |
+| follower_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
+| followee_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
-| — | UNIQUE(follower_id, followee_id) | |
+| — | PRIMARY KEY(follower_id, followee_id) | |
 
 ### notifications
 | Field | Type | Constraints |
