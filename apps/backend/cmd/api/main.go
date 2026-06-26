@@ -76,6 +76,16 @@ func main() {
 		}()
 	}
 
+	var reconcileFollowersDone <-chan struct{}
+	if db != nil {
+		ch := make(chan struct{})
+		reconcileFollowersDone = ch
+		go func() {
+			defer close(ch)
+			reconcileFollowerCountsPeriodically(signalContext, db)
+		}()
+	}
+
 	var consumerWg sync.WaitGroup
 	if brokersEnv := os.Getenv("REDPANDA_BROKERS"); brokersEnv != "" {
 		brokers := strings.Split(brokersEnv, ",")
@@ -148,6 +158,9 @@ func main() {
 	<-sessionCleanupDone
 	if sweepOutboxDone != nil {
 		<-sweepOutboxDone
+	}
+	if reconcileFollowersDone != nil {
+		<-reconcileFollowersDone
 	}
 	consumerWg.Wait()
 }
@@ -303,5 +316,30 @@ func sweepExpiredSessions(ctx context.Context, repository sessionSweeper) {
 	}()
 	if err := repository.DeleteExpiredSessions(ctx); err != nil {
 		slog.Warn("session cleanup failed", "error", err)
+	}
+}
+
+func reconcileFollowerCountsPeriodically(ctx context.Context, db *database.DB) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			reconcileFollowerCounts(ctx, db)
+		}
+	}
+}
+
+func reconcileFollowerCounts(ctx context.Context, db *database.DB) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("follower count reconciliation panicked", "panic", r)
+		}
+	}()
+	if _, err := db.Pool().Exec(ctx,
+		`UPDATE users SET follower_count = (SELECT count(*) FROM follows WHERE followee_id = users.id)`); err != nil {
+		slog.Warn("follower count reconciliation failed", "error", err)
 	}
 }
