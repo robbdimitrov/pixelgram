@@ -98,7 +98,6 @@ func (Posts) ListPopularPosts(context.Context, string, int) ([]posts.Post, error
 
 type Comments struct{}
 
-func (Comments) PostExists(context.Context, string) (bool, error) { return false, nil }
 func (Comments) CreateComment(context.Context, string, string, string) (comments.Comment, error) {
 	return comments.Comment{}, nil
 }

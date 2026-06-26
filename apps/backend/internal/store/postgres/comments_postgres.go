@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -19,15 +20,6 @@ type CommentRepository struct {
 
 func NewCommentRepository(client *Client) *CommentRepository {
 	return &CommentRepository{db: client.db}
-}
-
-func (r *CommentRepository) PostExists(ctx context.Context, postID string) (bool, error) {
-	var exists bool
-	err := r.db.Read(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx,
-			`SELECT EXISTS (SELECT 1 FROM posts WHERE public_id = $1)`, postID).Scan(&exists)
-	})
-	return exists, err
 }
 
 func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, body string) (comments.Comment, error) {
@@ -87,12 +79,23 @@ func (r *CommentRepository) ListComments(ctx context.Context, postID string, cur
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
 	var result []comments.Comment
 	err := r.db.Read(ctx, func() error {
-		rows, err := r.db.Pool().Query(ctx, `SELECT c.id, c.post_id, c.user_id,
-			u.username, u.avatar, c.body, c.created
-			FROM comments c JOIN users u ON u.id = c.user_id
-			WHERE c.post_id = (SELECT id FROM posts WHERE public_id = $1)
-			AND (NOT $2 OR (c.created, c.id) < ($3, $4))
-			ORDER BY c.created DESC, c.id DESC LIMIT $5`,
+		// The UNION ALL sentinel row fires only when the page is empty. It carries
+		// post_exists=true/false so we can distinguish "no comments" from "post gone".
+		rows, err := r.db.Pool().Query(ctx, `WITH post AS (SELECT id FROM posts WHERE public_id = $1),
+page AS (
+    SELECT c.id, c.post_id, c.user_id, u.username, u.avatar, c.body, c.created
+    FROM comments c JOIN users u ON u.id = c.user_id
+    WHERE c.post_id = (SELECT id FROM post)
+      AND (NOT $2 OR (c.created, c.id) < ($3, $4))
+    ORDER BY c.created DESC, c.id DESC LIMIT $5
+)
+SELECT id, post_id, user_id, username, avatar, body, created, true AS post_exists
+FROM page
+UNION ALL
+SELECT NULL::integer, NULL::integer, NULL::integer,
+       NULL::text, NULL::text, NULL::text, NULL::timestamptz,
+       (SELECT id FROM post) IS NOT NULL
+WHERE NOT EXISTS (SELECT 1 FROM page)`,
 			postID, hasCursor, cursorCreated, cursorID, limit+1)
 		if err != nil {
 			return err
@@ -100,14 +103,33 @@ func (r *CommentRepository) ListComments(ctx context.Context, postID string, cur
 		defer rows.Close()
 		result = []comments.Comment{}
 		for rows.Next() {
-			var comment comments.Comment
+			var id, postID, userID *int
+			var username *string
 			var avatar sql.NullString
-			if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID,
-				&comment.Username, &avatar, &comment.Body, &comment.Created); err != nil {
+			var body *string
+			var created *time.Time
+			var postExists bool
+			var cr comments.Comment
+			if err := rows.Scan(&id, &postID, &userID, &username, &avatar, &body, &created, &postExists); err != nil {
 				return err
 			}
-			comment.Avatar = database.NullableString(avatar)
-			result = append(result, comment)
+			if id == nil {
+				// Sentinel row: page is empty.
+				if !postExists {
+					return store.ErrNotFound
+				}
+				return nil
+			}
+			cr.ID = *id
+			cr.PostID = *postID
+			cr.UserID = *userID
+			cr.Username = *username
+			cr.Avatar = database.NullableString(avatar)
+			cr.Body = *body
+			if created != nil {
+				cr.Created = *created
+			}
+			result = append(result, cr)
 		}
 		return rows.Err()
 	})

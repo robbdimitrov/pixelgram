@@ -15,13 +15,13 @@ type serviceRepository struct {
 	deleteErr error
 }
 
-func (r *serviceRepository) PostExists(context.Context, string) (bool, error) {
-	return r.exists, nil
-}
 func (r *serviceRepository) CreateComment(context.Context, string, string, string) (Comment, error) {
 	return Comment{}, nil
 }
 func (r *serviceRepository) ListComments(context.Context, string, *pagination.Cursor, int) ([]Comment, *pagination.Cursor, error) {
+	if !r.exists {
+		return nil, nil, store.ErrNotFound
+	}
 	return []Comment{}, nil, nil
 }
 func (r *serviceRepository) DeleteComment(context.Context, string, string, string) (bool, error) {

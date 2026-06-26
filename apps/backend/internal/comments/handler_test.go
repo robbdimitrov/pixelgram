@@ -18,10 +18,6 @@ type fakeStore struct {
 	requestedLimit  int
 }
 
-func (s *fakeStore) PostExists(context.Context, string) (bool, error) {
-	return true, nil
-}
-
 func (s *fakeStore) CreateComment(context.Context, string, string, string) (Comment, error) {
 	return Comment{}, nil
 }

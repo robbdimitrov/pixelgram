@@ -26,7 +26,6 @@ type DeleteCommentCommand struct {
 }
 
 type Repository interface {
-	PostExists(ctx context.Context, publicID string) (bool, error)
 	CreateComment(ctx context.Context, publicID, userID, body string) (Comment, error)
 	ListComments(ctx context.Context, publicID string, cursor *pagination.Cursor, limit int) ([]Comment, *pagination.Cursor, error)
 	DeleteComment(ctx context.Context, publicID, commentID, userID string) (bool, error)
@@ -45,13 +44,6 @@ func (s *Service) CreateComment(ctx context.Context, command CreateCommentComman
 }
 
 func (s *Service) ListComments(ctx context.Context, query ListQuery) ([]Comment, *pagination.Cursor, error) {
-	exists, err := s.repository.PostExists(ctx, query.PublicID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if !exists {
-		return nil, nil, store.ErrNotFound
-	}
 	return s.repository.ListComments(ctx, query.PublicID, query.Cursor, query.Limit)
 }
 
