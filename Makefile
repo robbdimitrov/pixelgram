@@ -1,24 +1,25 @@
 .DEFAULT_GOAL := all
 
 IMAGE_PREFIX ?= localhost:5000/phasma
+GIT_SHA ?= $(shell git rev-parse --short HEAD)
 
 .PHONY: all
 all: backend database frontend
 
 .PHONY: backend
 backend:
-	docker build -t $(IMAGE_PREFIX)/backend apps/backend
-	docker push $(IMAGE_PREFIX)/backend
+	docker build -t $(IMAGE_PREFIX)/backend:$(GIT_SHA) apps/backend
+	docker push $(IMAGE_PREFIX)/backend:$(GIT_SHA)
 
 .PHONY: database
 database:
-	docker build -t $(IMAGE_PREFIX)/database apps/database
-	docker push $(IMAGE_PREFIX)/database
+	docker build -t $(IMAGE_PREFIX)/database:$(GIT_SHA) apps/database
+	docker push $(IMAGE_PREFIX)/database:$(GIT_SHA)
 
 .PHONY: frontend
 frontend:
-	docker build -t $(IMAGE_PREFIX)/frontend apps/frontend
-	docker push $(IMAGE_PREFIX)/frontend
+	docker build -t $(IMAGE_PREFIX)/frontend:$(GIT_SHA) apps/frontend
+	docker push $(IMAGE_PREFIX)/frontend:$(GIT_SHA)
 
 .PHONY: format
 format:

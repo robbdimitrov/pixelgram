@@ -170,15 +170,17 @@ handle_existing_port_forward() {
 build_images() {
   log "building images"
   export DOCKER_BUILDKIT=1
-  make -C "${ROOT}"
+  GIT_SHA="$(git -C "${ROOT}" rev-parse --short HEAD)"
+  export GIT_SHA
+  make -C "${ROOT}" GIT_SHA="${GIT_SHA}"
   if docker container inspect --format '{{.State.Running}}' phasma-control-plane 2>/dev/null | grep -qx true; then
     log "loading images into kind node"
     docker pull "${SEAWEEDFS_IMAGE}"
     docker pull "${DRAGONFLY_IMAGE}"
     docker pull "${MEILISEARCH_IMAGE}"
-    docker save localhost:5000/phasma/backend | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save localhost:5000/phasma/database | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save localhost:5000/phasma/frontend | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${REGISTRY}/backend:${GIT_SHA}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${REGISTRY}/database:${GIT_SHA}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${REGISTRY}/frontend:${GIT_SHA}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save "${SEAWEEDFS_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save "${DRAGONFLY_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save "${MEILISEARCH_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
@@ -192,6 +194,9 @@ apply_manifests() {
   ensure_tls_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
   kubectl -n "${NS}" set env deployment/frontend ORIGIN="${LOCAL_ORIGIN}" >/dev/null
+  kubectl -n "${NS}" set image deployment/backend backend="${REGISTRY}/backend:${GIT_SHA}" >/dev/null
+  kubectl -n "${NS}" set image statefulset/database database="${REGISTRY}/database:${GIT_SHA}" >/dev/null
+  kubectl -n "${NS}" set image deployment/frontend frontend="${REGISTRY}/frontend:${GIT_SHA}" >/dev/null
 }
 
 rollout_restart() {

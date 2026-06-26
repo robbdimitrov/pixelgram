@@ -91,7 +91,7 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | cache | 256 Mi | 128 Mi | 100 m |
 | search | 512 Mi | 256 Mi | 100 m |
 | storage | 256 Mi | 128 Mi | 100 m |
-| broker | 512 Mi | 256 Mi | 250 m |
+| broker | 512 Mi | 256 Mi | 200 m |
 | connect | 256 Mi | 128 Mi | 100 m |
 
 Redpanda is configured without `dev-container` mode or overprovisioning. The

@@ -124,8 +124,8 @@ Pre-materialized feed table. Populated by the `feed-consumer` on post creation (
 
 | Field | Type | Constraints |
 |---|---|---|
-| user_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
-| post_id | integer FK → posts | NOT NULL, ON DELETE CASCADE |
+| user_id | bigint FK → users | NOT NULL, ON DELETE CASCADE |
+| post_id | bigint FK → posts | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
 | — | PRIMARY KEY (user_id, post_id) | |
 

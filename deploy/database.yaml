@@ -54,6 +54,8 @@ spec:
         - wal_level=logical
         securityContext:
           allowPrivilegeEscalation: false
+          # readOnlyRootFilesystem intentionally omitted: PostgreSQL requires
+          # write access to PGDATA and /var/run/postgresql for socket and PID files.
           capabilities:
             drop:
             - ALL

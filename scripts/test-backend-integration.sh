@@ -4,6 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 network="phasma-test-$$"
 database="phasma-postgres-test-$$"
+db_password="$(openssl rand -hex 16 2>/dev/null || LC_ALL=C tr -dc 'a-f0-9' </dev/urandom | head -c 32)"
 
 cleanup() {
   docker rm -f "$database" >/dev/null 2>&1 || true
@@ -13,7 +14,7 @@ trap cleanup EXIT INT TERM
 
 docker network create "$network" >/dev/null
 docker run -d --name "$database" --network "$network" \
-  -e POSTGRES_PASSWORD=phasma \
+  -e POSTGRES_PASSWORD="$db_password" \
   -e POSTGRES_DB=phasma \
   -p 127.0.0.1::5432 \
   postgres:18.4-alpine >/dev/null
@@ -38,11 +39,11 @@ docker run --rm --network "$network" \
   -v "$root/apps/database/migrations:/migrations:ro" \
   migrate/migrate:v4.18.1 \
   -path=/migrations \
-  -database="postgres://postgres:phasma@${database}:5432/phasma?sslmode=disable" \
+  -database="postgres://postgres:${db_password}@${database}:5432/phasma?sslmode=disable" \
   up
 
 port=$(docker port "$database" 5432/tcp | sed 's/.*://')
-export PHASMA_TEST_DATABASE_URL="postgres://postgres:phasma@127.0.0.1:${port}/phasma?sslmode=disable"
+export PHASMA_TEST_DATABASE_URL="postgres://postgres:${db_password}@127.0.0.1:${port}/phasma?sslmode=disable"
 export GOCACHE="${GOCACHE:-/tmp/phasma-go-build}"
 
 cd "$root/apps/backend"
