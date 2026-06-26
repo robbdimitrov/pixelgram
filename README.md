@@ -51,7 +51,7 @@ graph TD
 | --- | --- | --- |
 | [frontend](/apps/frontend) | TypeScript | SvelteKit SSR application; sole public entry point and BFF. |
 | [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes, and uploads. |
-| [database](/apps/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
+| [database](/apps/database) | PostgreSQL | Versioned schema migrations managed by `migrate/migrate`. |
 
 ### Infrastructure
 
