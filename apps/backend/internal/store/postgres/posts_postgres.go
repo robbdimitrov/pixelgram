@@ -127,37 +127,39 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 }
 
 func (r *PostRepository) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	exists, err := usernameExists(ctx, r.db, username)
-	if err != nil {
-		return nil, nil, err
-	}
-	if !exists {
-		return nil, nil, store.ErrNotFound
-	}
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryPostPage(ctx, `SELECT `+postColumns+`, posts.created AS cursor_created
-		FROM posts JOIN users u ON u.id = posts.user_id
-		WHERE u.username = $2
-		AND (NOT $3 OR (posts.created, posts.id) < ($4, $5))
-		ORDER BY posts.created DESC, posts.id DESC LIMIT $6`,
+	return r.queryPostPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
+page AS (
+    SELECT `+postColumns+`, posts.created AS cursor_created
+    FROM posts JOIN users u ON u.id = posts.user_id
+    WHERE posts.user_id = (SELECT id FROM urow)
+    AND (NOT $3 OR (posts.created, posts.id) < ($4, $5))
+    ORDER BY posts.created DESC, posts.id DESC LIMIT $6
+)
+SELECT *, true AS user_exists FROM page
+UNION ALL
+SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+       (SELECT id FROM urow) IS NOT NULL
+WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
 func (r *PostRepository) GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	exists, err := usernameExists(ctx, r.db, username)
-	if err != nil {
-		return nil, nil, err
-	}
-	if !exists {
-		return nil, nil, store.ErrNotFound
-	}
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryPostPage(ctx, `SELECT `+postColumns+`, likes.created AS cursor_created
-		FROM posts JOIN users u ON u.id = posts.user_id
-		INNER JOIN likes ON likes.post_id = posts.id
-		WHERE likes.user_id = (SELECT id FROM users WHERE username = $2)
-		AND (NOT $3 OR (likes.created, posts.id) < ($4, $5))
-		ORDER BY likes.created DESC, posts.id DESC LIMIT $6`,
+	return r.queryPostPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
+page AS (
+    SELECT `+postColumns+`, likes.created AS cursor_created
+    FROM posts JOIN users u ON u.id = posts.user_id
+    INNER JOIN likes ON likes.post_id = posts.id
+    WHERE likes.user_id = (SELECT id FROM urow)
+    AND (NOT $3 OR (likes.created, posts.id) < ($4, $5))
+    ORDER BY likes.created DESC, posts.id DESC LIMIT $6
+)
+SELECT *, true AS user_exists FROM page
+UNION ALL
+SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+       (SELECT id FROM urow) IS NOT NULL
+WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
@@ -476,6 +478,83 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 			}
 			item.post.Avatar = database.NullableString(avatar)
 			item.post.Description = database.NullableString(description)
+			result = append(result, item)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	hasMore := len(result) > limit
+	if hasMore {
+		result = result[:limit]
+	}
+	items := make([]posts.Post, len(result))
+	for i, item := range result {
+		items[i] = item.post
+	}
+	if !hasMore {
+		return items, nil, nil
+	}
+	last := result[len(result)-1]
+	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.post.ID)}, nil
+}
+
+// queryPostPageOrNotFound wraps a query that uses the UNION ALL sentinel pattern.
+// The query must produce 14 columns: the 12 from postColumns, cursor_created, and
+// user_exists bool. The sentinel row fires (with all NULLs except user_exists) when
+// the page is empty, allowing a single round-trip to distinguish not-found from empty.
+func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *pagination.Cursor, error) {
+	type row struct {
+		post          posts.Post
+		cursorCreated time.Time
+	}
+	var result []row
+	err := r.db.Read(ctx, func() error {
+		rows, err := r.db.Pool().Query(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		result = []row{}
+		for rows.Next() {
+			var id *int
+			var publicID *string
+			var userID *int
+			var username, name *string
+			var avatar, description sql.NullString
+			var filename *string
+			var likes *int
+			var liked *bool
+			var comments *int
+			var created, cursorCreated *time.Time
+			var userExists bool
+			if err := rows.Scan(&id, &publicID, &userID, &username, &name, &avatar,
+				&filename, &description, &likes, &liked, &comments, &created,
+				&cursorCreated, &userExists); err != nil {
+				return err
+			}
+			if id == nil {
+				// Sentinel row: page is empty.
+				if !userExists {
+					return store.ErrNotFound
+				}
+				return nil
+			}
+			var item row
+			item.post.ID = *id
+			item.post.PublicID = *publicID
+			item.post.UserID = *userID
+			item.post.Username = *username
+			item.post.Name = *name
+			item.post.Avatar = database.NullableString(avatar)
+			item.post.Filename = *filename
+			item.post.Description = database.NullableString(description)
+			item.post.Likes = *likes
+			item.post.Liked = *liked
+			item.post.Comments = *comments
+			item.post.Created = *created
+			item.cursorCreated = *cursorCreated
 			result = append(result, item)
 		}
 		return rows.Err()

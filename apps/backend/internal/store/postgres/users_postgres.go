@@ -94,40 +94,42 @@ func (r *UserRepository) GetUserByID(ctx context.Context, userID, currentUserID 
 }
 
 func (r *UserRepository) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
-	exists, err := usernameExists(ctx, r.db, username)
-	if err != nil {
-		return nil, nil, err
-	}
-	if !exists {
-		return nil, nil, store.ErrNotFound
-	}
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryUserPage(ctx, `SELECT `+userColumns+`, f.created AS cursor_created
-		FROM follows f
-		JOIN users target ON target.id = f.followee_id
-		JOIN users u ON u.id = f.follower_id
-		WHERE target.username = $2
-		AND (NOT $3 OR (f.created, u.id) < ($4, $5))
-		ORDER BY f.created DESC, u.id DESC LIMIT $6`,
+	return r.queryUserPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
+page AS (
+    SELECT `+userColumns+`, f.created AS cursor_created
+    FROM follows f
+    JOIN users target ON target.id = f.followee_id
+    JOIN users u ON u.id = f.follower_id
+    WHERE target.id = (SELECT id FROM urow)
+    AND (NOT $3 OR (f.created, u.id) < ($4, $5))
+    ORDER BY f.created DESC, u.id DESC LIMIT $6
+)
+SELECT *, true AS user_exists FROM page
+UNION ALL
+SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+       (SELECT id FROM urow) IS NOT NULL
+WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
 func (r *UserRepository) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
-	exists, err := usernameExists(ctx, r.db, username)
-	if err != nil {
-		return nil, nil, err
-	}
-	if !exists {
-		return nil, nil, store.ErrNotFound
-	}
 	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryUserPage(ctx, `SELECT `+userColumns+`, f.created AS cursor_created
-		FROM follows f
-		JOIN users target ON target.id = f.follower_id
-		JOIN users u ON u.id = f.followee_id
-		WHERE target.username = $2
-		AND (NOT $3 OR (f.created, u.id) < ($4, $5))
-		ORDER BY f.created DESC, u.id DESC LIMIT $6`,
+	return r.queryUserPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
+page AS (
+    SELECT `+userColumns+`, f.created AS cursor_created
+    FROM follows f
+    JOIN users target ON target.id = f.follower_id
+    JOIN users u ON u.id = f.followee_id
+    WHERE target.id = (SELECT id FROM urow)
+    AND (NOT $3 OR (f.created, u.id) < ($4, $5))
+    ORDER BY f.created DESC, u.id DESC LIMIT $6
+)
+SELECT *, true AS user_exists FROM page
+UNION ALL
+SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+       (SELECT id FROM urow) IS NOT NULL
+WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
@@ -179,6 +181,79 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 			}
 			item.user.Avatar = database.NullableString(avatar)
 			item.user.Bio = database.NullableString(bio)
+			result = append(result, item)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	hasMore := len(result) > limit
+	if hasMore {
+		result = result[:limit]
+	}
+	items := make([]users.User, len(result))
+	for i, item := range result {
+		items[i] = item.user
+	}
+	if !hasMore {
+		return items, nil, nil
+	}
+	last := result[len(result)-1]
+	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.user.ID)}, nil
+}
+
+// queryUserPageOrNotFound wraps a query that uses the UNION ALL sentinel pattern.
+// The query must produce 14 columns: the 12 from userColumns, cursor_created, and
+// user_exists bool. The sentinel row fires (with all NULLs except user_exists) when
+// the page is empty, allowing a single round-trip to distinguish not-found from empty.
+func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]users.User, *pagination.Cursor, error) {
+	type row struct {
+		user          users.User
+		cursorCreated time.Time
+	}
+	var result []row
+	err := r.db.Read(ctx, func() error {
+		rows, err := r.db.Pool().Query(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		result = []row{}
+		for rows.Next() {
+			var id *int
+			var name, username, email *string
+			var avatar, bio sql.NullString
+			var userPosts, userLikes, followers, following *int
+			var isFollowing *bool
+			var created, cursorCreated *time.Time
+			var userExists bool
+			if err := rows.Scan(&id, &name, &username, &email, &avatar, &bio,
+				&userPosts, &userLikes, &followers, &following, &isFollowing,
+				&created, &cursorCreated, &userExists); err != nil {
+				return err
+			}
+			if id == nil {
+				// Sentinel row: page is empty.
+				if !userExists {
+					return store.ErrNotFound
+				}
+				return nil
+			}
+			var item row
+			item.user.ID = *id
+			item.user.Name = *name
+			item.user.Username = *username
+			item.user.Email = *email
+			item.user.Avatar = database.NullableString(avatar)
+			item.user.Bio = database.NullableString(bio)
+			item.user.Posts = *userPosts
+			item.user.Likes = *userLikes
+			item.user.Followers = *followers
+			item.user.Following = *following
+			item.user.IsFollowing = *isFollowing
+			item.user.Created = *created
+			item.cursorCreated = *cursorCreated
 			result = append(result, item)
 		}
 		return rows.Err()
