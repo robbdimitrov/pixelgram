@@ -22,12 +22,12 @@
 
 | Severity | Count |
 |---|---|
-| CRITICAL | 1 |
+| CRITICAL | 0 |
 | HIGH | 2 |
 | MEDIUM | 22 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **75** |
+| **Total** | **74** |
 
 ---
 
@@ -49,24 +49,7 @@
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
 | M-12 | Removed the CPU limit from the Redpanda Connect deployment while keeping its CPU request and memory limit. |
 | M-14 | Added `runAsGroup` and `fsGroup` to the frontend pod security context. |
-
----
-
-# CRITICAL
-
----
-
-## C-01 · Redpanda running in `--mode=dev-container` — no durability
-
-**Layer:** Infrastructure
-**File:** `deploy/broker.yaml` line 212
-**Category:** Production safety / data loss
-
-**What's wrong:** The Redpanda broker starts with `--mode=dev-container` and `--overprovisioned`. This mode disables fsync guarantees, relaxes resource checks, and is explicitly documented by Redpanda as unsuitable for production. Data loss on broker restart is possible.
-
-**Why it matters:** Any message in the outbox pipeline (feed fan-out, Meilisearch sync, S3 cleanup, notifications) can be silently lost on a broker pod restart. Persistent data is not durably written to disk.
-
-**Fix:** Remove `--mode=dev-container` and `--overprovisioned`. Configure production settings: `--set=redpanda.developer_mode=false`, explicit `--smp`, memory, and I/O tuner. Review Redpanda's production deployment guide.
+| C-01 | Removed Redpanda `dev-container` mode and overprovisioning, and explicitly disabled developer mode and default write caching. |
 
 ---
 

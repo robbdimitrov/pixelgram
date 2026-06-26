@@ -200,7 +200,7 @@ spec:
         args:
         - --smp=1
         - --memory=256M
-        - --overprovisioned
+        - --reserve-memory=0M
         - --node-id=0
         - --kafka-addr=0.0.0.0:9092
         - --advertise-kafka-addr=broker-0.broker:9092
@@ -209,7 +209,8 @@ spec:
         - --schema-registry-addr=0.0.0.0:8081
         - --rpc-addr=0.0.0.0:33145
         - --advertise-rpc-addr=broker-0.broker:33145
-        - --mode=dev-container
+        - --set=redpanda.developer_mode=false
+        - --set=redpanda.write_caching_default=false
         - --set=redpanda.auto_create_topics_enabled=true
         ports:
         - name: kafka

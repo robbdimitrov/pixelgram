@@ -94,6 +94,11 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | broker | 512 Mi | 256 Mi | 250 m |
 | connect | 256 Mi | 128 Mi | 100 m |
 
+Redpanda is configured without `dev-container` mode or overprovisioning. The
+single-node local deployment keeps explicit `--smp`, `--memory`, and
+`--reserve-memory` startup values while disabling developer mode and default
+write caching.
+
 ## Health Probes
 
 | Service | Liveness | Readiness | Startup |
