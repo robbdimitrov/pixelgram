@@ -358,6 +358,10 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", payload); err != nil {
 			return err
 		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO audit_log (user_id, action) VALUES ($1, 'profile_updated')`, userID); err != nil {
+			return err
+		}
 		return tx.Commit(ctx)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -384,6 +388,10 @@ func (r *UserRepository) ChangePassword(ctx context.Context, userID, passwordHas
 		}
 		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND id != $2`,
 			userID, r.db.HashSession(currentSessionID)); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO audit_log (user_id, action) VALUES ($1, 'password_changed')`, userID); err != nil {
 			return err
 		}
 		return tx.Commit(ctx)
