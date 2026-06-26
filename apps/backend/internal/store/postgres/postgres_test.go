@@ -336,7 +336,7 @@ func TestPostgresRepositoryCommentCursorPagination(t *testing.T) {
 	items, terminal, err := client.ListComments(
 		ctx,
 		post.PublicID,
-		&pagination.Cursor{Created: created, ID: want[len(want)-1]},
+		&pagination.Cursor{Created: created, ID: int64(want[len(want)-1])},
 		2,
 	)
 	if err != nil {

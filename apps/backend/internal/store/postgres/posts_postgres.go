@@ -495,10 +495,10 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 		return items, nil, nil
 	}
 	last := result[len(result)-1]
-	return items, &pagination.Cursor{Created: last.cursorCreated, ID: last.post.ID}, nil
+	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.post.ID)}, nil
 }
 
-func cursorValues(cursor *pagination.Cursor) (bool, time.Time, int) {
+func cursorValues(cursor *pagination.Cursor) (bool, time.Time, int64) {
 	if cursor == nil {
 		return false, time.Time{}, 0
 	}

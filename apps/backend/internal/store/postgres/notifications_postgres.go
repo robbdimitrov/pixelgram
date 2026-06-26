@@ -23,7 +23,7 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 	if cursor != nil {
 		hasCursor = true
 		cursorCreated = cursor.Created
-		cursorID = int64(cursor.ID)
+		cursorID = cursor.ID
 	}
 
 	var result []notifications.Notification

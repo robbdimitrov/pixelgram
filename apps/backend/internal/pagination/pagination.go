@@ -10,7 +10,7 @@ import (
 
 type Cursor struct {
 	Created time.Time `json:"created"`
-	ID      int       `json:"id"`
+	ID      int64     `json:"id"`
 }
 
 type Pagination struct {

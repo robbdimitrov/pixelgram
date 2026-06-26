@@ -197,7 +197,7 @@ func (r *FeedRepository) queryFeedPage(ctx context.Context, query string, limit 
 		return items, nil, nil
 	}
 	last := result[len(result)-1]
-	return items, &pagination.Cursor{Created: last.cursorCreated, ID: last.post.ID}, nil
+	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.post.ID)}, nil
 }
 
 var _ feed.Repository = (*FeedRepository)(nil)

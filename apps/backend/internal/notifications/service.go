@@ -33,7 +33,7 @@ func (s *Service) ListNotifications(ctx context.Context, query ListQuery) ([]Not
 		return items, nil, nil
 	}
 	last := items[len(items)-1]
-	nextCursor := &pagination.Cursor{Created: last.Created, ID: int(last.ID)}
+	nextCursor := &pagination.Cursor{Created: last.Created, ID: last.ID}
 	return items, nextCursor, nil
 }
 

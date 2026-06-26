@@ -198,7 +198,7 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 		return items, nil, nil
 	}
 	last := result[len(result)-1]
-	return items, &pagination.Cursor{Created: last.cursorCreated, ID: last.user.ID}, nil
+	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.user.ID)}, nil
 }
 
 func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID string) error {

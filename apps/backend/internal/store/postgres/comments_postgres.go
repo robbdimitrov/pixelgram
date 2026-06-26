@@ -147,7 +147,7 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 	}
 	result = result[:limit]
 	last := result[len(result)-1]
-	return result, &pagination.Cursor{Created: last.Created, ID: last.ID}, nil
+	return result, &pagination.Cursor{Created: last.Created, ID: int64(last.ID)}, nil
 }
 
 func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error) {
