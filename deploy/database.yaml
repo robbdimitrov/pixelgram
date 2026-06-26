@@ -81,7 +81,7 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: database-secret
               key: postgres-password
         - name: POSTGRES_DB
           value: phasma

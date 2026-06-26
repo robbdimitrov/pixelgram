@@ -68,25 +68,43 @@ ensure_namespace() {
 }
 
 ensure_secret() {
-  local secret_name="database-credentials"
-  if kubectl -n "${NS}" get secret "${secret_name}" >/dev/null 2>&1; then
-    ensure_secret_key "${secret_name}" postgres-password
-    ensure_secret_key "${secret_name}" session-hash-secret
-    ensure_secret_key "${secret_name}" s3-access-key
-    ensure_secret_key "${secret_name}" s3-secret-key
-    ensure_secret_key "${secret_name}" dragonfly-password
-    ensure_secret_key "${secret_name}" meili-master-key
-    return
+  # database-secret
+  if ! kubectl -n "${NS}" get secret database-secret >/dev/null 2>&1; then
+    kubectl -n "${NS}" create secret generic database-secret \
+      --from-literal=postgres-password="$(random_secret)"
+  else
+    ensure_secret_key database-secret postgres-password
   fi
-
-  log "creating generated application secrets"
-  kubectl -n "${NS}" create secret generic "${secret_name}" \
-    --from-literal=postgres-password="$(random_secret)" \
-    --from-literal=session-hash-secret="$(random_secret)" \
-    --from-literal=s3-access-key="$(random_secret)" \
-    --from-literal=s3-secret-key="$(random_secret)" \
-    --from-literal=dragonfly-password="$(random_secret)" \
-    --from-literal=meili-master-key="$(random_secret)"
+  # backend-secret
+  if ! kubectl -n "${NS}" get secret backend-secret >/dev/null 2>&1; then
+    kubectl -n "${NS}" create secret generic backend-secret \
+      --from-literal=session-hash-secret="$(random_secret)"
+  else
+    ensure_secret_key backend-secret session-hash-secret
+  fi
+  # storage-secret
+  if ! kubectl -n "${NS}" get secret storage-secret >/dev/null 2>&1; then
+    kubectl -n "${NS}" create secret generic storage-secret \
+      --from-literal=s3-access-key="$(random_secret)" \
+      --from-literal=s3-secret-key="$(random_secret)"
+  else
+    ensure_secret_key storage-secret s3-access-key
+    ensure_secret_key storage-secret s3-secret-key
+  fi
+  # cache-secret
+  if ! kubectl -n "${NS}" get secret cache-secret >/dev/null 2>&1; then
+    kubectl -n "${NS}" create secret generic cache-secret \
+      --from-literal=dragonfly-password="$(random_secret)"
+  else
+    ensure_secret_key cache-secret dragonfly-password
+  fi
+  # search-secret
+  if ! kubectl -n "${NS}" get secret search-secret >/dev/null 2>&1; then
+    kubectl -n "${NS}" create secret generic search-secret \
+      --from-literal=meili-master-key="$(random_secret)"
+  else
+    ensure_secret_key search-secret meili-master-key
+  fi
 }
 
 ensure_secret_key() {

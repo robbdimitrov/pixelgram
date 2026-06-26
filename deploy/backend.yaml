@@ -66,7 +66,7 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: database-secret
               key: postgres-password
       containers:
       - name: backend
@@ -92,7 +92,7 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: database-secret
               key: postgres-password
         - name: POSTGRES_DB
           value: phasma
@@ -109,33 +109,33 @@ spec:
         - name: S3_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: storage-secret
               key: s3-access-key
         - name: S3_SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: storage-secret
               key: s3-secret-key
         - name: DRAGONFLY_URL
           value: redis://cache:6379
         - name: DRAGONFLY_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: cache-secret
               key: dragonfly-password
         - name: TRUST_PROXY
           value: "true"
         - name: SESSION_HASH_SECRET
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: backend-secret
               key: session-hash-secret
         - name: MEILI_URL
           value: http://search:7700
         - name: MEILI_MASTER_KEY
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: search-secret
               key: meili-master-key
         - name: REDPANDA_BROKERS
           value: broker:9092

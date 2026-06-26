@@ -55,16 +55,16 @@ All PostgreSQL connections use `sslmode=require`. The `database` StatefulSet is 
 
 ## Secrets
 
-All secrets are in the `database-credentials` Secret. Required keys:
+Secrets are split per service to limit blast radius:
 
-| Key | Consumer |
-|---|---|
-| `postgres-password` | PostgreSQL, migration init container, backend DATABASE_URL |
-| `session-hash-secret` | Backend HMAC session hashing |
-| `s3-access-key` | Backend S3 client, SeaweedFS config |
-| `s3-secret-key` | Backend S3 client, SeaweedFS config |
-| `dragonfly-password` | Backend Dragonfly client |
-| `meili-master-key` | Backend Meilisearch key provisioning, Meilisearch service |
+| Secret | Key | Consumer |
+|---|---|---|
+| `database-secret` | `postgres-password` | PostgreSQL, migration init container, backend DATABASE_URL |
+| `backend-secret` | `session-hash-secret` | Backend HMAC session hashing |
+| `storage-secret` | `s3-access-key` | Backend S3 client, SeaweedFS config |
+| `storage-secret` | `s3-secret-key` | Backend S3 client, SeaweedFS config |
+| `cache-secret` | `dragonfly-password` | Backend Dragonfly client |
+| `search-secret` | `meili-master-key` | Backend Meilisearch key provisioning, Meilisearch service |
 
 ## Security Context (all pods)
 

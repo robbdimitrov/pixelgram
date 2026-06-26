@@ -79,7 +79,7 @@ spec:
         - name: DRAGONFLY_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: cache-secret
               key: dragonfly-password
         readinessProbe:
           tcpSocket:
