@@ -303,7 +303,8 @@ func sweepExpiredOutbox(ctx context.Context, db *database.DB) {
 			slog.Error("outbox cleanup panicked", "panic", r)
 		}
 	}()
-	if _, err := db.Pool().Exec(ctx, "DELETE FROM outbox WHERE created < now() - interval '7 days'"); err != nil {
+	if _, err := db.Pool().Exec(ctx,
+		"DELETE FROM outbox WHERE published_at IS NOT NULL AND created < now() - interval '7 days'"); err != nil {
 		slog.Warn("outbox cleanup failed", "error", err)
 	}
 }
