@@ -6,7 +6,7 @@ All endpoints are served by the Go backend on port 8080. All responses are JSON.
 
 1. `RequestID` — accepts `X-Request-ID` or generates a 16-byte hex id; echoes it in the response header.
 2. `Logger` — structured JSON request log with method, route pattern, path, status, duration.
-3. `SecurityHeaders` — sets `X-XSS-Protection: 0`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'`.
+3. `SecurityHeaders` — sets `X-XSS-Protection: 0`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'`, and `Strict-Transport-Security: max-age=31536000; includeSubDomains` on HTTPS or trusted forwarded HTTPS requests.
 4. `OriginGuard` — for POST/PUT/PATCH/DELETE, rejects requests where `Origin` header is present but does not match the request host.
 5. `RateLimit` — token bucket via Dragonfly Lua script; key priority: user id > session cookie > client IP.
 6. `RequireSession` — validates `session` cookie; refreshes sliding TTL; injects `userID` into context. Exempt: `POST /sessions`, `POST /users`, `GET /health`, `OPTIONS`.

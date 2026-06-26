@@ -24,10 +24,10 @@
 |---|---|
 | CRITICAL | 0 |
 | HIGH | 0 |
-| MEDIUM | 21 |
+| MEDIUM | 19 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **71** |
+| **Total** | **69** |
 
 ---
 
@@ -47,6 +47,8 @@
 | H-10 | Set frontend `BODY_SIZE_LIMIT=1100K` and added 1 MB server-side file size checks before forwarding image uploads. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
 | M-01 | Threaded request contexts through Argon2 password hash and verify semaphore acquisition, with cancellation regression tests. |
+| M-02 | Added backend HSTS on direct TLS or trusted forwarded HTTPS requests, with middleware regression tests. |
+| M-03 | Added frontend HSTS for HTTPS SSR requests, with hook regression tests. |
 | M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
 | M-09 | Disabled ServiceAccount token automounting on backend and frontend pods. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
@@ -57,37 +59,6 @@
 ---
 
 # MEDIUM
-
----
-
-## M-02 · Missing `Strict-Transport-Security` header in backend security middleware
-
-**Layer:** Backend
-**File:** `apps/backend/internal/httpx/middleware.go` lines 92–103
-**Category:** Security misconfiguration / OWASP A05
-
-**What's wrong:** `SecurityHeaders` sets five of six standard security headers but omits `Strict-Transport-Security`.
-
-**Fix:**
-```go
-w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
-```
-Guard with a `trustProxy` / TLS check to skip in plain-HTTP development environments.
-
----
-
-## M-03 · Missing `Strict-Transport-Security` header in frontend server hooks
-
-**Layer:** Frontend
-**File:** `apps/frontend/src/hooks.server.ts` lines 3–9
-**Category:** Security misconfiguration / OWASP A05
-
-**What's wrong:** `hooks.server.ts` sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Cross-Origin-Opener-Policy` but omits `Strict-Transport-Security`. Without HSTS, browsers can be downgraded from HTTPS to HTTP.
-
-**Fix:**
-```ts
-res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
-```
 
 ---
 

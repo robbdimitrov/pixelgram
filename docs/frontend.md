@@ -72,6 +72,8 @@ before they can reach SvelteKit error pages, form failures, or pagination state.
 
 Everything runs in the Node server. `apiClient(event)` resolves backend paths against `BACKEND_URL` env var and forwards the session cookie. These requests are server-to-server and never cross CORS.
 
+`hooks.server.ts` sets browser security headers for every response and adds `Strict-Transport-Security` when the public request URL is HTTPS.
+
 Browser → SvelteKit server: form POST or page navigation.
 Browser fetches for pagination: `GET /feed`, `GET /@{username}`, `GET /posts/{id}/comments`, `GET /search` — all route to SvelteKit `+server.ts` handlers, which call the backend server-side.
 

@@ -77,12 +77,14 @@
 - `X-Frame-Options: SAMEORIGIN`
 - `Referrer-Policy: no-referrer`
 - `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains` when the request is HTTPS or trusted forwarded HTTPS
 
 ## HTTP Security Headers (frontend)
 
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
 - `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains` for HTTPS requests
 - SvelteKit nonce-based `Content-Security-Policy`: `default-src 'self'; script-src 'self'` plus nonce; `style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`
 
 ## Search Filter Injection Prevention
