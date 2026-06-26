@@ -44,11 +44,20 @@ spec:
         image: localhost:5000/phasma/database
         imagePullPolicy: IfNotPresent
         securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
             drop:
             - ALL
+        resources:
+          limits:
+            memory: 64Mi
+          requests:
+            memory: 32Mi
+            cpu: 50m
         env:
         - name: POSTGRES_PASSWORD
           valueFrom:

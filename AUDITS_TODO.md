@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 5 |
-| MEDIUM | 27 |
+| HIGH | 4 |
+| MEDIUM | 26 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **83** |
+| **Total** | **81** |
 
 ---
 
@@ -40,7 +40,9 @@
 | H-03 | Added an append-only migration that makes nullable ownership and junction-table foreign keys `NOT NULL`. |
 | H-04 | Set the frontend session cookie `Secure` flag explicitly and added `NODE_ENV=production` to the frontend runner image. |
 | H-05 | Pinned Dragonfly, Redpanda, Redpanda Connect, Meilisearch, and SeaweedFS image tags in manifests and local kind image preload commands; verified all pinned tags resolve. |
+| H-09 | Made the migration image and backend init container run explicitly as uid/gid 65532. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
+| M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
 
 ---
 
@@ -114,20 +116,6 @@
 - connect → broker:9092
 - connect → search:7700
 - connect → storage:8333
-
----
-
-## H-09 · Migration init container may run as root — conflicts with pod-level `runAsNonRoot: true`
-
-**Layer:** Infrastructure
-**Files:**
-- `deploy/backend.yaml` lines 42–57
-- `apps/database/Dockerfile`
-**Category:** Container hardening / privilege
-
-**What's wrong:** The backend pod's pod-level `securityContext` sets `runAsNonRoot: true` and `runAsUser: 65532`. The init container does not override `runAsUser`. `apps/database/Dockerfile` is `FROM migrate/migrate:v4.18.1` with no `USER` instruction — the `migrate/migrate` image historically runs as root (UID 0). If so, the kubelet refuses to start the init container (`container has runAsNonRoot and image will run as root`), crash-looping the backend deployment.
-
-**Fix:** Add `USER 65532` to `apps/database/Dockerfile`, or add `runAsUser: 65532` to the init container's own `securityContext`. Verify the actual UID of the upstream image: `docker inspect --format '{{.Config.User}}' migrate/migrate:v4.18.1`.
 
 ---
 
@@ -297,26 +285,6 @@ if (!ALLOWED_TYPES.has(file.type)) {
 **Fix:** Add to the pod spec of both Deployments:
 ```yaml
 automountServiceAccountToken: false
-```
-
----
-
-## M-10 · Migration init container has no resource limits
-
-**Layer:** Infrastructure
-**File:** `deploy/backend.yaml` lines 42–57
-**Category:** Resource management
-
-**What's wrong:** The migration init container has no `resources` block. During every backend rollout, it can consume unbounded CPU and memory, affecting the scheduler's bin-packing decisions and starving other containers.
-
-**Fix:**
-```yaml
-resources:
-  limits:
-    memory: 64Mi
-  requests:
-    memory: 32Mi
-    cpu: 50m
 ```
 
 ---

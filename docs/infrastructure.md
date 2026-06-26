@@ -22,7 +22,7 @@ Third-party images in Kubernetes manifests are pinned to explicit version tags; 
 
 ## Init Container Sequencing
 
-The backend pod runs the `database` migration image as an init container before the backend container starts. Migrations must complete successfully before the backend accepts traffic.
+The backend pod runs the `database` migration image as a non-root init container before the backend container starts. Migrations must complete successfully before the backend accepts traffic.
 
 ## Services and Networking
 
@@ -68,6 +68,7 @@ All secrets are in the `database-credentials` Secret. Required keys:
 | Service | UID |
 |---|---|
 | backend | 65532 |
+| backend migration init container | 65532 |
 | frontend | 1000 |
 | database | 70 |
 | cache | 1000 |
@@ -82,6 +83,7 @@ All secrets are in the `database-credentials` Secret. Required keys:
 |---|---|---|---|
 | frontend | 768 Mi | 256 Mi | 250 m |
 | backend | 256 Mi | 128 Mi | 100 m |
+| backend migration init container | 64 Mi | 32 Mi | 50 m |
 | database | 512 Mi | 512 Mi | 500 m |
 | cache | 256 Mi | 128 Mi | 100 m |
 | search | 512 Mi | 256 Mi | 100 m |
