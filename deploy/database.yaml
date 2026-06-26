@@ -55,6 +55,12 @@ spec:
         args:
         - -c
         - wal_level=logical
+        - -c
+        - ssl=on
+        - -c
+        - ssl_cert_file=/certs/tls.crt
+        - -c
+        - ssl_key_file=/certs/tls.key
         securityContext:
           allowPrivilegeEscalation: false
           # readOnlyRootFilesystem intentionally omitted: PostgreSQL requires
@@ -116,6 +122,14 @@ spec:
         volumeMounts:
         - mountPath: /var/lib/postgresql
           name: database-storage
+        - mountPath: /certs
+          name: database-tls
+          readOnly: true
+      volumes:
+      - name: database-tls
+        secret:
+          secretName: database-tls
+          defaultMode: 0640
   volumeClaimTemplates:
   - metadata:
       name: database-storage

@@ -127,6 +127,29 @@ ensure_tls_secret() {
   rm -rf "${tmpdir}"
 }
 
+ensure_database_tls_secret() {
+  local secret_name="database-tls"
+  local tmpdir
+  if kubectl -n "${NS}" get secret "${secret_name}" >/dev/null 2>&1; then
+    return
+  fi
+  command -v openssl >/dev/null || die "missing required tool for database TLS secret: openssl"
+
+  log "creating self-signed TLS secret for database"
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir}"' RETURN
+  openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+    -keyout "${tmpdir}/tls.key" \
+    -out "${tmpdir}/tls.crt" \
+    -subj "/CN=database" \
+    -addext "subjectAltName=DNS:database,DNS:database.phasma.svc.cluster.local" >/dev/null 2>&1
+  kubectl -n "${NS}" create secret tls "${secret_name}" \
+    --cert="${tmpdir}/tls.crt" \
+    --key="${tmpdir}/tls.key" >/dev/null
+  trap - RETURN
+  rm -rf "${tmpdir}"
+}
+
 port_pids() {
   if command -v lsof >/dev/null; then
     lsof -nP -iTCP:"${LOCAL_PORT}" -sTCP:LISTEN -t 2>/dev/null || true
@@ -192,6 +215,7 @@ apply_manifests() {
   ensure_namespace
   ensure_secret
   ensure_tls_secret
+  ensure_database_tls_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
   kubectl -n "${NS}" set env deployment/frontend ORIGIN="${LOCAL_ORIGIN}" >/dev/null
   kubectl -n "${NS}" set image deployment/backend backend="${REGISTRY}/backend:${GIT_SHA}" >/dev/null

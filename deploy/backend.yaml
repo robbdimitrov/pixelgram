@@ -97,7 +97,7 @@ spec:
         - name: POSTGRES_DB
           value: phasma
         - name: DATABASE_URL
-          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)
+          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)?sslmode=require
         - name: S3_ENDPOINT
           value: http://storage:8333
         - name: S3_BUCKET

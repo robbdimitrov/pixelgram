@@ -49,6 +49,10 @@ NetworkPolicies default-deny pod ingress in the namespace, then allow only the f
 
 nginx Ingress at `phasma.localhost`. Routes HTTPS traffic to `frontend:8080` and redirects HTTP to HTTPS. `proxy-body-size: 2m` accommodates 1 MB image uploads plus multipart overhead. Local deployment creates a self-signed `frontend-tls` Secret; production should replace it with an ingress-managed certificate.
 
+## Database TLS
+
+All PostgreSQL connections use `sslmode=require`. The `database` StatefulSet is configured with `-c ssl=on`, `-c ssl_cert_file=/certs/tls.crt`, and `-c ssl_key_file=/certs/tls.key`. The cert and key are mounted from the `database-tls` Secret at `/certs` with mode `0640` so that the postgres user (uid/gid 70, `fsGroup: 70`) can read the key file. Local deployment generates a self-signed `database-tls` Secret with CN `database` and SANs for the Kubernetes service name; production should replace it with a properly issued certificate.
+
 ## Secrets
 
 All secrets are in the `database-credentials` Secret. Required keys:
