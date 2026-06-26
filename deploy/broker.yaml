@@ -181,6 +181,7 @@ spec:
         app: phasma
         tier: broker
     spec:
+      serviceAccountName: broker
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
       securityContext:
@@ -284,6 +285,7 @@ spec:
         tier: broker
         component: connect
     spec:
+      serviceAccountName: connect
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
       securityContext:

@@ -41,6 +41,7 @@ spec:
         app: phasma
         tier: storage
     spec:
+      serviceAccountName: storage
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
       securityContext:

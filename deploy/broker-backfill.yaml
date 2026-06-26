@@ -16,6 +16,7 @@ spec:
         tier: broker
     spec:
       restartPolicy: Never
+      serviceAccountName: connect
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true

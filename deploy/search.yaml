@@ -41,6 +41,7 @@ spec:
         app: phasma
         tier: search
     spec:
+      serviceAccountName: search
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
       securityContext:

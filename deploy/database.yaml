@@ -38,6 +38,7 @@ spec:
         app: phasma
         tier: database
     spec:
+      serviceAccountName: database
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
       securityContext:

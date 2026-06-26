@@ -35,6 +35,7 @@ spec:
         app: phasma
         tier: frontend
     spec:
+      serviceAccountName: frontend
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
