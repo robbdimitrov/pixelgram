@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 7 |
+| HIGH | 6 |
 | MEDIUM | 27 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **85** |
+| **Total** | **84** |
 
 ---
 
@@ -38,6 +38,7 @@
 | H-01 | Replaced all backend outbox payload string formatting with typed `encoding/json` marshaling and added regression tests for control-character payloads. |
 | H-02 | Added per-record panic recovery and repeated-panic tracking to feed and notifications consumers so a bad Kafka record is skipped without restarting the poll loop. |
 | H-03 | Added an append-only migration that makes nullable ownership and junction-table foreign keys `NOT NULL`. |
+| H-04 | Set the frontend session cookie `Secure` flag explicitly and added `NODE_ENV=production` to the frontend runner image. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
 
 ---
@@ -61,22 +62,6 @@
 ---
 
 # HIGH
-
----
-
-## H-04 · Session cookie missing `Secure` flag — `NODE_ENV=production` absent from Dockerfile
-
-**Layer:** Frontend
-**Files:**
-- `apps/frontend/src/lib/server/api/auth.ts` lines 15–19
-- `apps/frontend/Dockerfile` line 16
-**Category:** Session management / cookie security
-
-**What's wrong:** `applySessionCookie` calls `cookies.set('session', sessionID, { path: '/', httpOnly: true, sameSite: 'strict', maxAge })` without `secure: true`. SvelteKit defaults `secure` to `true` only when `process.env.NODE_ENV === 'production'`. The Dockerfile sets `ENV PORT=8080` but never `NODE_ENV=production`. At runtime, `NODE_ENV` is undefined, so SvelteKit defaults to `secure: false`.
-
-**Why it matters:** The session cookie is sent over plain HTTP. Any network observer or MITM attacker who can intercept HTTP traffic (possible given TLS is also commented out — see M-10) can steal the session token.
-
-**Fix:** Add `ENV NODE_ENV=production` to the runner stage of the Dockerfile. This also fixes SvelteKit's security-sensitive defaults for all other cookie operations, CSP nonce behavior, and stack trace suppression. Alternatively add `secure: true` explicitly to `cookies.set()`.
 
 ---
 

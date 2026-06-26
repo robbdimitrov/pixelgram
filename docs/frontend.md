@@ -114,8 +114,10 @@ State: `items`, `cursor`, `loading`, `error`. Resets when `getInitial()` returns
 On login, the backend sets `Set-Cookie: session=...` on its own origin.
 `applySessionCookie()` in `auth.ts` accepts only a 28-character unpadded
 base64url token (`[A-Za-z0-9_-]{28}`), parses the `Set-Cookie` header, and
-re-emits it on the SvelteKit origin. The cookie is then included in all
-subsequent `apiClient` calls via `event.cookies.get('session')`.
+re-emits it on the SvelteKit origin with `HttpOnly`, `Secure`,
+`SameSite=Strict`, `Path=/`, and the backend-provided `Max-Age`. The cookie is
+then included in all subsequent `apiClient` calls via
+`event.cookies.get('session')`.
 
 ## Active Sessions
 

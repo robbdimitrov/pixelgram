@@ -15,6 +15,7 @@ export function applySessionCookie(headers: Headers, cookies: Pick<Cookies, 'set
 		cookies.set('session', sessionID, {
 			path: '/',
 			httpOnly: true,
+			secure: true,
 			sameSite: 'strict',
 			maxAge
 		});

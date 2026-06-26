@@ -12,6 +12,7 @@ COPY --from=builder --chown=phasma:phasma /app/build ./build
 COPY --from=builder --chown=phasma:phasma /app/package*.json ./
 RUN npm ci --omit=dev
 USER phasma
+ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 CMD ["node", "build"]

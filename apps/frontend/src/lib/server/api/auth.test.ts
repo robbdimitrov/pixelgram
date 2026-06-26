@@ -14,6 +14,7 @@ describe('applySessionCookie', () => {
 		expect(set).toHaveBeenCalledWith('session', '_-AAAAAAAAAAAAAAAAAAAAAAAAAA', {
 			path: '/',
 			httpOnly: true,
+			secure: true,
 			sameSite: 'strict',
 			maxAge: 3600
 		});

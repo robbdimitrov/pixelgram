@@ -133,6 +133,7 @@ The `database` StatefulSet runs PostgreSQL with `-c wal_level=logical` to enable
 | Variable | Source | Purpose |
 |---|---|---|
 | `BACKEND_URL` | literal | Backend service URL |
+| `NODE_ENV` | literal `"production"` | Enables production-mode SvelteKit/runtime security defaults |
 | `PORT` | literal `"8080"` | Listen port |
 | `ORIGIN` | literal | SvelteKit origin |
 | `PROTOCOL_HEADER` | literal | Proxy protocol header |
