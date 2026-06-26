@@ -26,5 +26,6 @@ export const GET: RequestHandler = async ({ fetch, cookies, params }) => {
 		const value = upstream.headers.get(name);
 		if (value) headers.set(name, value);
 	}
+	headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
 	return new Response(upstream.body, { status: 200, headers });
 };

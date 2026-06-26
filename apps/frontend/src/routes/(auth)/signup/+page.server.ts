@@ -15,6 +15,9 @@ export const actions: Actions = {
 		if (!name || !username || !email || !password) {
 			return fail(400, { error: 'All fields are required.' });
 		}
+		if (name.length > 100) {
+			return fail(400, { error: 'Name must be 100 characters or fewer.' });
+		}
 
 		const created = await createUser(api, name, username, email, password);
 		if (!created) {

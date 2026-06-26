@@ -59,6 +59,7 @@
 				id="name"
 				name="name"
 				placeholder="John Doe"
+				maxlength="100"
 				autocomplete="name"
 				required
 				class="input input-bordered w-full rounded-xl"

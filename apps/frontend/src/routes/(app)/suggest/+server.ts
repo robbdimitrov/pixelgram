@@ -12,10 +12,10 @@ export const GET: RequestHandler = async (event) => {
 	const q = event.url.searchParams.get('q') ?? '';
 
 	if (!VALID_TYPES.has(type)) {
-		throw error(400, JSON.stringify({ message: 'type must be users or hashtags' }));
+		throw error(400, 'Invalid request type.');
 	}
 	if (q.length < 1 || q.length > MAX_Q_LENGTH) {
-		throw error(400, JSON.stringify({ message: 'q must be 1–50 characters' }));
+		throw error(400, 'Search query must be 1–50 characters.');
 	}
 
 	const client = apiClient(event);

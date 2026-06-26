@@ -11,13 +11,14 @@ const config = {
 			directives: {
 				'default-src': ['self'],
 				'script-src': ['self'],
-				'style-src': ['self', 'unsafe-inline'],
+				'style-src': ['self'],
 				'img-src': ['self', 'data:', 'blob:'],
 				'connect-src': ['self'],
 				'font-src': ['self'],
 				'object-src': ['none'],
 				'base-uri': ['self'],
-				'form-action': ['self']
+				'form-action': ['self'],
+				'frame-ancestors': ['self']
 			}
 		}
 	}

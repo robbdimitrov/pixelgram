@@ -26,7 +26,7 @@ export interface User {
 	id: number;
 	name: string;
 	username: string;
-	email: string;
+	email?: string;
 	avatar: string | null;
 	bio: string | null;
 	posts: number;

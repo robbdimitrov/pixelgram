@@ -6,6 +6,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	res.headers.set('X-Frame-Options', 'SAMEORIGIN');
 	res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 	res.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+	res.headers.set(
+		'Permissions-Policy',
+		'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()'
+	);
 	if (event.url.protocol === 'https:') {
 		res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 	}

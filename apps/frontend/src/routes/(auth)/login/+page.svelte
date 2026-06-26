@@ -78,7 +78,6 @@
 					id="password"
 					name="password"
 					placeholder="Password"
-					minlength="4"
 					maxlength="30"
 					autocomplete="current-password"
 					required

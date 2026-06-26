@@ -5,7 +5,14 @@ import { uploadImage } from '$lib/server/api/posts';
 import { apiClient } from '$lib/server/api/client';
 import { validateImageUpload } from '$lib/server/imageUpload';
 
-export const load: PageServerLoad = ({ parent }) => parent();
+export const load: PageServerLoad = async ({ fetch, cookies, parent }) => {
+	const [parentData, currentUserWithEmail] = await Promise.all([
+		parent(),
+		getCurrent(apiClient({ fetch, cookies }))
+	]);
+	if (!currentUserWithEmail) throw redirect(303, '/login');
+	return { ...parentData, currentUser: currentUserWithEmail };
+};
 
 export const actions: Actions = {
 	default: async ({ fetch, cookies, request }) => {
