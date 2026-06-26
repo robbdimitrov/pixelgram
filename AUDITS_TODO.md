@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 3 |
+| HIGH | 2 |
 | MEDIUM | 22 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **76** |
+| **Total** | **75** |
 
 ---
 
@@ -40,6 +40,7 @@
 | H-03 | Added an append-only migration that makes nullable ownership and junction-table foreign keys `NOT NULL`. |
 | H-04 | Set the frontend session cookie `Secure` flag explicitly and added `NODE_ENV=production` to the frontend runner image. |
 | H-05 | Pinned Dragonfly, Redpanda, Redpanda Connect, Meilisearch, and SeaweedFS image tags in manifests and local kind image preload commands; verified all pinned tags resolve. |
+| H-08 | Added namespace NetworkPolicies with default-deny ingress and explicit allows for the frontend entry point and required internal service paths. |
 | H-09 | Made the migration image and backend init container run explicitly as uid/gid 65532. |
 | H-10 | Set frontend `BODY_SIZE_LIMIT=1100K` and added 1 MB server-side file size checks before forwarding image uploads. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
@@ -98,29 +99,6 @@
 **Why it matters:** Depending on the adapter-node version, a mismatched `ORIGIN` may silently skip the CSRF check, allowing cross-origin form submissions to authenticated endpoints.
 
 **Fix:** Set `ORIGIN` to the actual public URL at deploy time (e.g., `https://phasma.example.com`). Inject via a ConfigMap or per-environment values layer — never hardcode a development value in the production manifest.
-
----
-
-## H-08 · No NetworkPolicy — all pods can reach all other pods bidirectionally
-
-**Layer:** Infrastructure
-**File:** `deploy/` — absence of resource
-**Category:** Network security / lateral movement
-
-**What's wrong:** No `NetworkPolicy` object exists. Default Kubernetes behavior allows unrestricted pod-to-pod traffic across the namespace. PostgreSQL port 5432, Redpanda 9092, Dragonfly 6379, Meilisearch 7700, and the broker admin API 9644 are all reachable from every pod.
-
-**Why it matters:** A compromised pod has direct socket access to all internal services and their credentials. An attacker who achieves RCE in the frontend SSR container can directly connect to PostgreSQL and read all user data, including session HMAC hashes and Argon2id password hashes.
-
-**Fix:** Define default-deny ingress (and preferably egress) NetworkPolicies, then selectively allow only required pod-to-pod paths:
-- backend → database:5432
-- backend → cache:6379
-- backend → search:7700
-- backend → storage:8333
-- backend → broker:9092
-- connect → database:5432
-- connect → broker:9092
-- connect → search:7700
-- connect → storage:8333
 
 ---
 

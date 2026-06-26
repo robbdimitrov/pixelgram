@@ -28,6 +28,7 @@ The backend pod runs the `database` migration image as a non-root init container
 
 All services are cluster-internal only. The nginx Ingress exposes only the `frontend` service on port 8080.
 Workloads do not need Kubernetes API access and disable automatic ServiceAccount token mounting.
+NetworkPolicies default-deny pod ingress in the namespace, then allow only the frontend public port and the backend, database, cache, search, storage, and broker paths required by the service graph.
 
 | Service name | Port | Protocol |
 |---|---|---|
