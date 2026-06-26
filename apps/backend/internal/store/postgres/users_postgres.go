@@ -17,9 +17,9 @@ import (
 )
 
 const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,
-	(SELECT count(*) FROM posts WHERE user_id = u.id) AS posts,
+	u.post_count AS posts,
 	(SELECT count(*) FROM likes WHERE user_id = u.id) AS likes,
-	(SELECT count(*) FROM follows WHERE followee_id = u.id) AS followers,
+	u.follower_count AS followers,
 	(SELECT count(*) FROM follows WHERE follower_id = u.id) AS following,
 	EXISTS (SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = u.id) AS is_following,
 	u.created`

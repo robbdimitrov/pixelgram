@@ -42,6 +42,11 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 			return err
 		}
 
+		if _, err := tx.Exec(ctx,
+			`UPDATE posts SET comment_count = comment_count + 1 WHERE public_id = $1`, postID); err != nil {
+			return err
+		}
+
 		var recipientID string
 		if err := tx.QueryRow(ctx,
 			`SELECT user_id::text FROM posts WHERE public_id = $1`, postID).Scan(&recipientID); err != nil {
@@ -161,6 +166,11 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 			commentID, postID, userID).Scan(&deletedID)
 		if err == nil {
 			deleted = true
+			if _, err := tx.Exec(ctx,
+				`UPDATE posts SET comment_count = GREATEST(comment_count - 1, 0)
+				WHERE public_id = $1`, postID); err != nil {
+				return err
+			}
 			payload, err := marshalOutboxPayload(activityPayload{
 				Op:        "uncomment",
 				CommentID: int64(deletedID),

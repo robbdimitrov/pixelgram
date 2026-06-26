@@ -50,9 +50,7 @@ func (r *SearchRepository) SearchHashtags(ctx context.Context, q string) ([]sear
 	var results []search.HashtagResult
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx,
-			`SELECT h.name, (
-			  SELECT COUNT(*) FROM post_hashtags ph WHERE ph.hashtag_id = h.id
-			) AS post_count
+			`SELECT h.name, h.post_count
 			FROM hashtags h
 			WHERE h.name % $1
 			ORDER BY similarity(h.name, $1) DESC, h.name

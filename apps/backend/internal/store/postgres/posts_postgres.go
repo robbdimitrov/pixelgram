@@ -16,10 +16,10 @@ import (
 
 const postColumns = `posts.id, posts.public_id, posts.user_id, u.username, u.name, u.avatar,
 	posts.filename, posts.description,
-	(SELECT count(*) FROM likes WHERE post_id = posts.id) AS likes,
+	posts.like_count AS likes,
 	EXISTS (SELECT 1 FROM likes
 	WHERE post_id = posts.id AND likes.user_id = $1) AS liked,
-	(SELECT count(*) FROM comments WHERE post_id = posts.id) AS comments,
+	posts.comment_count AS comments,
 	posts.created`
 
 type PostRepository struct {
@@ -51,7 +51,10 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		}
 		var username string
 		var followerCount int64
-		if err := tx.QueryRow(ctx, `SELECT username, follower_count FROM users WHERE id = $1`, userID).Scan(&username, &followerCount); err != nil {
+		if err := tx.QueryRow(ctx,
+			`UPDATE users SET post_count = post_count + 1
+			WHERE id = $1 RETURNING username, follower_count`,
+			userID).Scan(&username, &followerCount); err != nil {
 			return err // hard fail — wrong count means wrong fan-out decision
 		}
 
@@ -86,18 +89,16 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		}
 
 		for _, tag := range tags {
-			if _, err := tx.Exec(ctx,
-				`INSERT INTO hashtags (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`, tag); err != nil {
+			var postCount int
+			if err := tx.QueryRow(ctx,
+				`INSERT INTO hashtags (name) VALUES ($1)
+				ON CONFLICT (name) DO UPDATE SET post_count = hashtags.post_count + 1
+				RETURNING post_count`, tag).Scan(&postCount); err != nil {
 				return err
 			}
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO post_hashtags (post_id, hashtag_id)
 				SELECT $1, id FROM hashtags WHERE name = $2 ON CONFLICT DO NOTHING`, postID, tag); err != nil {
-				return err
-			}
-			var postCount int
-			if err := tx.QueryRow(ctx,
-				`SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)`, tag).Scan(&postCount); err != nil {
 				return err
 			}
 			hashtagPayload, err := marshalOutboxPayload(entityHashtagUpsertPayload{
@@ -245,6 +246,10 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		if _, err := tx.Exec(ctx, `UPDATE users SET avatar = $1 WHERE avatar = $2`, "", filename); err != nil {
 			return err
 		}
+		if _, err := tx.Exec(ctx,
+			`UPDATE users SET post_count = GREATEST(post_count - 1, 0) WHERE id = $1`, userID); err != nil {
+			return err
+		}
 
 		postPayload, err := marshalOutboxPayload(entityPostDeletePayload{
 			Table:      "posts",
@@ -266,7 +271,8 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		for _, tag := range hashtags {
 			var postCount int
 			if err := tx.QueryRow(ctx,
-				`SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)`, tag).Scan(&postCount); err != nil {
+				`UPDATE hashtags SET post_count = GREATEST(post_count - 1, 0)
+				WHERE name = $1 RETURNING post_count`, tag).Scan(&postCount); err != nil {
 				return err
 			}
 			hashtagPayload, err := marshalOutboxPayload(entityHashtagUpsertPayload{
@@ -324,6 +330,11 @@ func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) er
 			return tx.Commit(ctx)
 		}
 
+		if _, err := tx.Exec(ctx,
+			`UPDATE posts SET like_count = like_count + 1 WHERE public_id = $1`, postID); err != nil {
+			return err
+		}
+
 		var recipientID string
 		if err := tx.QueryRow(ctx,
 			`SELECT user_id::text FROM posts WHERE public_id = $1`, postID).Scan(&recipientID); err != nil {
@@ -377,6 +388,11 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 				return store.ErrNotFound
 			}
 			return tx.Commit(ctx)
+		}
+
+		if _, err := tx.Exec(ctx,
+			`UPDATE posts SET like_count = GREATEST(like_count - 1, 0) WHERE public_id = $1`, postID); err != nil {
+			return err
 		}
 
 		var recipientID string
