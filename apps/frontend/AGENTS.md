@@ -65,5 +65,5 @@ BACKEND_URL=http://localhost:8080 node build
 - Security headers are set in `src/hooks.server.ts`.
 - CSP uses nonce mode configured in `svelte.config.js`. Do not introduce inline scripts without the request nonce.
 - Never render user-controlled HTML directly. Validate user-controlled `href` and `src` values against an explicit scheme and origin policy.
-- The theme helper writes both a cookie and `localStorage`. The nonce-bearing script in `app.html` reads the cookie before paint to avoid FOUC, and `+layout.server.ts` exposes the theme to layout data.
+- The theme helper writes a cookie. The nonce-bearing script in `app.html` reads the cookie before paint to avoid FOUC, and `+layout.server.ts` exposes the theme to layout data.
 - The container runs as uid 1000 with a read-only root filesystem. The health probe is `/health`.

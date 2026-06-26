@@ -84,8 +84,12 @@
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
 - `Referrer-Policy: strict-origin-when-cross-origin`
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()`
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains` for HTTPS requests
-- SvelteKit nonce-based `Content-Security-Policy`: `default-src 'self'; script-src 'self'` plus nonce; `style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`
+- SvelteKit nonce-based `Content-Security-Policy`: `default-src 'self'; script-src 'self'` plus nonce; `style-src 'self'` plus nonce; `img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'`
+
+The uploads proxy route (`/uploads/[key]`) also sets `Cross-Origin-Resource-Policy: cross-origin` to allow image embedding from other origins.
 
 ## Search Filter Injection Prevention
 

@@ -17,17 +17,20 @@ All services are deployed to the `phasma` namespace via manifests in `deploy/`. 
 
 ## Image Registry
 
-All custom images are pushed to `localhost:5000/phasma/<service>`. Built and pushed via top-level `Makefile` targets.
+All custom images are pushed to `localhost:5000/phasma/<service>:<git-sha>`, where the tag is the short Git commit SHA (`GIT_SHA ?= $(shell git rev-parse --short HEAD)`). Built and pushed via top-level `Makefile` targets; `scripts/deploy.sh` passes the SHA to `make` and uses `kubectl set image` to roll out each new tag.
 Third-party images in Kubernetes manifests are pinned to explicit version tags; do not use implicit `latest`.
 
 ## Init Container Sequencing
 
 The backend pod runs the `database` migration image as a non-root init container before the backend container starts. Migrations must complete successfully before the backend accepts traffic.
 
+## Service Accounts
+
+Each workload has a dedicated `ServiceAccount` defined in `deploy/serviceaccounts.yaml` with `automountServiceAccountToken: false`. Dedicated accounts allow per-workload RBAC if needed in future without granting access at a shared default account. No RBAC rules are currently bound to any of these accounts.
+
 ## Services and Networking
 
 All services are cluster-internal only. The nginx Ingress exposes only the `frontend` service on port 8080.
-Workloads do not need Kubernetes API access and disable automatic ServiceAccount token mounting.
 NetworkPolicies default-deny pod ingress in the namespace, then allow only the frontend public port and the backend, database, cache, search, storage, and broker paths required by the service graph.
 
 | Service name | Port | Protocol |
@@ -96,8 +99,8 @@ All secrets are in the `database-credentials` Secret. Required keys:
 
 Redpanda is configured without `dev-container` mode or overprovisioning. The
 single-node local deployment keeps explicit `--smp`, `--memory`, and
-`--reserve-memory` startup values while disabling developer mode and default
-write caching.
+`--reserve-memory` startup values while disabling developer mode, default
+write caching, and automatic topic creation (`auto_create_topics_enabled=false`).
 
 ## Health Probes
 
@@ -109,7 +112,12 @@ write caching.
 | cache | tcpSocket :6379 | tcpSocket :6379 | tcpSocket :6379, 30×2 s |
 | search | GET /health | GET /health | GET /health, 30×2 s |
 | storage | tcpSocket :8333 | tcpSocket :8333 | tcpSocket :8333, 30×2 s |
-| broker | GET :9644/v1/status/ready | GET :9644/v1/status/ready | GET :9644/v1/status/ready, 30×2 s |
+| broker | GET :9644/v1/status/ready | GET :9644/v1/status/ready | GET :9644/v1/status/ready, 60×2 s |
+| connect | GET :4195/ready | GET :4195/ready | GET :4195/ready, 30×2 s |
+
+## Pod Disruption Budgets
+
+`deploy/pdb.yaml` defines a `PodDisruptionBudget` with `maxUnavailable: 0` for each workload: `database`, `cache`, `broker`, `search`, `storage`, `backend`, and `frontend`. This prevents voluntary disruptions (node drains, rolling upgrades) from taking down any single-replica stateful service without operator awareness.
 
 ## Migration Strategy
 

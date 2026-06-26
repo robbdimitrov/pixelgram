@@ -96,6 +96,7 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 | followee_id | integer FK → users | NOT NULL, ON DELETE CASCADE |
 | created | timestamptz | NOT NULL |
 | — | PRIMARY KEY(follower_id, followee_id) | |
+| — | CHECK `follower_id != followee_id` | enforced in DB and service layer |
 
 ### notifications
 | Field | Type | Constraints |
@@ -104,7 +105,7 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 | external_id | varchar(255) UNIQUE | NOT NULL — idempotency key (outbox row id carried through Kafka) |
 | user_id | bigint FK → users | NOT NULL, ON DELETE CASCADE — recipient |
 | actor_id | bigint FK → users | NOT NULL, ON DELETE CASCADE — who triggered the event |
-| type | varchar(20) | NOT NULL — `like`, `comment`, or `follow` |
+| type | varchar(20) | NOT NULL — CHECK `type IN ('like', 'comment', 'follow')` |
 | entity_id | varchar(255) | NOT NULL — post public_id, comment id, or actor user id |
 | read | boolean | NOT NULL DEFAULT false |
 | created | timestamptz | NOT NULL DEFAULT now() |
@@ -147,6 +148,8 @@ Pre-materialized feed table. Populated by the `feed-consumer` on post creation (
 | outbox | outbox_created_idx | TTL cleanup |
 | notifications | notifications_user_id_created_idx | keyset pagination per user |
 | notifications | notifications_type_entity_idx | bulk delete by type and entity |
+| notifications | notifications_user_id_unread_idx (partial, WHERE read = false) | fast unread count and list |
+| posts | posts_filename_idx (partial, WHERE filename != '') | orphan-upload checks |
 | feed | feed_user_id_created_idx | keyset pagination per user |
 
 ## Meilisearch Indexes
@@ -168,6 +171,6 @@ Pre-materialized feed table. Populated by the `feed-consumer` on post creation (
 - Session creation is serialized on the owning user row and retains at most the
   100 newest sessions per user.
 - Hashtag names are lowercased and de-duplicated before storage; they are created idempotently (`ON CONFLICT DO NOTHING`).
-- `follows(follower_id, followee_id)` is inserted with `ON CONFLICT DO NOTHING`; self-follow is blocked at the service layer.
+- `follows(follower_id, followee_id)` is inserted with `ON CONFLICT DO NOTHING`; self-follow is blocked at both the service layer and a database `CHECK` constraint.
 - `feed(user_id, post_id)` inserts use `ON CONFLICT DO NOTHING`; post-deletion rows are removed by `ON DELETE CASCADE`, not by the consumer.
 - `notifications` inserts use `ON CONFLICT (external_id) DO NOTHING`; `external_id` is the outbox row id relayed through Kafka, ensuring idempotent replay.
