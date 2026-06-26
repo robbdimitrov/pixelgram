@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 10 |
+| HIGH | 9 |
 | MEDIUM | 27 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **88** |
+| **Total** | **87** |
 
 ---
 
@@ -36,6 +36,7 @@
 | ID | Fix |
 |---|---|
 | H-01 | Replaced all backend outbox payload string formatting with typed `encoding/json` marshaling and added regression tests for control-character payloads. |
+| H-02 | Added per-record panic recovery and repeated-panic tracking to feed and notifications consumers so a bad Kafka record is skipped without restarting the poll loop. |
 
 ---
 
@@ -58,25 +59,6 @@
 ---
 
 # HIGH
-
----
-
-## H-02 · Kafka consumers have no poison-pill protection — one bad record causes infinite CPU-spinning retry
-
-**Layer:** Backend
-**Files:**
-- `apps/backend/internal/feed/consumer.go` lines 41–73
-- `apps/backend/internal/notifications/consumer.go` lines 40–73
-**Category:** Availability / goroutine leak
-
-**What's wrong:** Both consumers wrap the poll loop in an anonymous function with `recover()`. If `c.handle()` panics on a specific record, the panic unwinds through `EachRecord`, skipping `CommitUncommittedOffsets`. The outer loop immediately restarts, `PollFetches` returns the same uncommitted records, and the cycle repeats at CPU speed indefinitely.
-
-**Why it matters:** A single malformed outbox message halts all feed fan-out or all notification delivery for the entire application with 100% CPU consumption on one core until a manual operator restart.
-
-**Fix:**
-1. Add per-record panic recovery inside the `EachRecord` callback so one bad record is skipped without aborting the batch.
-2. Commit offsets after each successful batch before restarting the outer loop.
-3. Track failure count per partition+offset; after N failures log at ERROR and advance the offset (dead-letter pattern).
 
 ---
 

@@ -57,7 +57,7 @@ postgres (WAL) → connect (pg_cdc on outbox)
 - Auth boundary: `httpx.RequireSession` wraps all routes except the explicit public allowlist.
 - Feature modules: `users`, `sessions`, `posts`, `comments`, `uploads`, `search`, `notifications`, `feed`.
 - Upload handler decodes and re-encodes images to JPEG, stripping EXIF/GPS metadata and enforcing a 25 MP pixel dimension limit before storage.
-- `notifications-consumer` and `feed-consumer`: franz-go consumer groups, each subscribing to both `entity-changes` and `activity` topics with distinct consumer group names so each receives the full stream independently.
+- `notifications-consumer` and `feed-consumer`: franz-go consumer groups, each subscribing to both `entity-changes` and `activity` topics with distinct consumer group names so each receives the full stream independently. Record handling recovers panics per record and continues the batch so a single malformed or buggy event cannot restart the whole poll loop indefinitely.
 - Session cleanup goroutine: sweeps expired sessions and deletes `outbox` rows older than 7 days every hour.
 
 ### Database (migrate/migrate)

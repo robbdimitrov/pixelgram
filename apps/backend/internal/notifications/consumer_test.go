@@ -17,6 +17,7 @@ type fakeRepo struct {
 	createErr          error
 	deletedByEntity    []struct{ entityType, entityID string }
 	deleteByEntityErr  error
+	panicCreate        bool
 	deletedByActorType []struct {
 		actorID, recipientID int64
 		notifType, entityID  string
@@ -44,6 +45,9 @@ func (r *fakeRepo) DeleteByActorAndType(_ context.Context, actorID, recipientID 
 }
 
 func (r *fakeRepo) CreateNotification(_ context.Context, n Notification) error {
+	if r.panicCreate {
+		panic("create panic")
+	}
 	r.created = append(r.created, n)
 	return r.createErr
 }
@@ -265,6 +269,20 @@ func TestHandleActivityIdempotencyViaExternalID(t *testing.T) {
 			}
 			return repo.created[0].ExternalID
 		}(), wantExtID)
+	}
+}
+
+func TestHandleRecordSafelyRecoversPanic(t *testing.T) {
+	repo := &fakeRepo{panicCreate: true}
+	c := newTestConsumer(repo)
+	data, _ := json.Marshal(activityPayload{Op: "like", PostID: "p", ActorID: "1", RecipientID: "2"})
+	record := activityRecord(topicActivity, 3, 77, data)
+
+	c.handleRecordSafely(context.Background(), record)
+
+	key := recordKey{topic: topicActivity, partition: 3, offset: 77}
+	if c.panicCounts[key] != 1 {
+		t.Fatalf("panic count = %d, want 1", c.panicCounts[key])
 	}
 }
 

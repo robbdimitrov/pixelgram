@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/twmb/franz-go/pkg/kgo"
+
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/posts"
 )
@@ -24,6 +26,7 @@ type fakeRepo struct {
 	pruneFollowerID       int64
 	pruneFolloweeID       int64
 	pruneErr              error
+	panicInsert           bool
 	getFollowersCalled    bool
 	getRecentCalled       bool
 	getFollowerCountCalls []int64
@@ -34,6 +37,9 @@ func (r *fakeRepo) ListFeed(_ context.Context, _ string, _ *pagination.Cursor, _
 }
 
 func (r *fakeRepo) InsertEntries(_ context.Context, entries []Entry) error {
+	if r.panicInsert {
+		panic("insert panic")
+	}
 	r.insertedEntries = append(r.insertedEntries, entries)
 	return r.insertErr
 }
@@ -129,6 +135,24 @@ func TestHandleEntityChangesNormalFansOut(t *testing.T) {
 	}
 	if batch[0].UserID != 42 {
 		t.Fatalf("first entry userID = %d, want 42 (author)", batch[0].UserID)
+	}
+}
+
+func TestHandleRecordSafelyRecoversPanic(t *testing.T) {
+	repo := &fakeRepo{panicInsert: true}
+	c := newConsumerWithRepo(repo)
+	record := &kgo.Record{
+		Topic:     topicEntityChanges,
+		Partition: 1,
+		Offset:    7,
+		Value:     entityChangesMsg(42, 100, 0),
+	}
+
+	c.handleRecordSafely(context.Background(), record)
+
+	key := recordKey{topic: topicEntityChanges, partition: 1, offset: 7}
+	if c.panicCounts[key] != 1 {
+		t.Fatalf("panic count = %d, want 1", c.panicCounts[key])
 	}
 }
 

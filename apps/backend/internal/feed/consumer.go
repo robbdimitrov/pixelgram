@@ -15,11 +15,19 @@ const (
 	topicEntityChanges  = "entity-changes"
 	topicActivity       = "activity"
 	followBackfillLimit = 50
+	maxRecordPanics     = 3
 )
 
 type Consumer struct {
-	client *kgo.Client
-	repo   Repository
+	client      *kgo.Client
+	repo        Repository
+	panicCounts map[recordKey]int
+}
+
+type recordKey struct {
+	topic     string
+	partition int32
+	offset    int64
 }
 
 func NewConsumer(brokers []string, repo Repository) (*Consumer, error) {
@@ -31,7 +39,7 @@ func NewConsumer(brokers []string, repo Repository) (*Consumer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Consumer{client: client, repo: repo}, nil
+	return &Consumer{client: client, repo: repo, panicCounts: map[recordKey]int{}}, nil
 }
 
 func (c *Consumer) Close() {
@@ -60,7 +68,7 @@ func (c *Consumer) Run(ctx context.Context) {
 					slog.Warn("feed consumer: fetch error", "topic", topic, "partition", partition, "error", err)
 				})
 				fetches.EachRecord(func(record *kgo.Record) {
-					c.handle(ctx, record)
+					c.handleRecordSafely(ctx, record)
 				})
 				if err := c.client.CommitUncommittedOffsets(ctx); err != nil {
 					slog.Warn("feed consumer: commit failed", "error", err)
@@ -71,6 +79,33 @@ func (c *Consumer) Run(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (c *Consumer) handleRecordSafely(ctx context.Context, record *kgo.Record) {
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			return
+		}
+		key := recordKey{topic: record.Topic, partition: record.Partition, offset: record.Offset}
+		if c.panicCounts == nil {
+			c.panicCounts = map[recordKey]int{}
+		}
+		c.panicCounts[key]++
+		attrs := []any{
+			"topic", record.Topic,
+			"partition", record.Partition,
+			"offset", record.Offset,
+			"panic", recovered,
+			"failures", c.panicCounts[key],
+		}
+		if c.panicCounts[key] >= maxRecordPanics {
+			slog.Error("feed consumer: skipping repeatedly panicking record", attrs...)
+			return
+		}
+		slog.Warn("feed consumer: skipping panicking record", attrs...)
+	}()
+	c.handle(ctx, record)
 }
 
 type entityChangesPayload struct {
