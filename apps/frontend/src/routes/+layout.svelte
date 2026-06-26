@@ -1,9 +1,15 @@
 <script lang="ts">
 	import '../app.css';
+	import { onMount } from 'svelte';
 	import { navigating } from '$app/state';
 	import type { LayoutData } from './$types';
+	import { setThemeContext } from '$lib/theme.svelte';
 
-	let { children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
+	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
+
+	const themeController = setThemeContext(() => data.theme);
+
+	onMount(() => themeController.start());
 </script>
 
 {#if navigating.to}

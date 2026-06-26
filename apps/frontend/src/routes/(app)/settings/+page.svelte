@@ -2,17 +2,18 @@
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { ChevronRight } from '@lucide/svelte';
-	import { theme } from '$lib/theme';
+	import { getThemeContext } from '$lib/theme.svelte';
+	import type { ThemeMode } from '$lib/theme';
 
-	type ThemeOption = 'light' | 'dark' | 'system';
-	const options: ThemeOption[] = ['light', 'dark', 'system'];
+	const theme = getThemeContext();
+	const options: ThemeMode[] = ['light', 'dark', 'system'];
 
-	function optionTitle(opt: ThemeOption) {
+	function optionTitle(opt: ThemeMode) {
 		return opt.charAt(0).toUpperCase() + opt.slice(1);
 	}
 
-	function isActive(opt: ThemeOption) {
-		return $theme === opt;
+	function isActive(opt: ThemeMode) {
+		return theme.mode === opt;
 	}
 </script>
 

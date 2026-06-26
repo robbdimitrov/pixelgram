@@ -1,7 +1,12 @@
 import type { Handle, HandleServerError } from '@sveltejs/kit';
+import { parseTheme } from '$lib/theme';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const res = await resolve(event);
+	const theme = parseTheme(event.cookies.get('theme'));
+	const res = await resolve(event, {
+		transformPageChunk: ({ html }) =>
+			html.replace('data-theme="system"', `data-theme="${theme}"`)
+	});
 	res.headers.set('X-Content-Type-Options', 'nosniff');
 	res.headers.set('X-Frame-Options', 'SAMEORIGIN');
 	res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');

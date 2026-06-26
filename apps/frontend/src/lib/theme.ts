@@ -1,25 +1,8 @@
-import { browser } from '$app/environment';
-import { writable } from 'svelte/store';
+export const THEME_MODES = ['system', 'light', 'dark'] as const;
 
-function readCookieTheme(): string {
-	if (!browser) return 'light';
-	const m = document.cookie.match(/(?:^|;)\s*theme=([^;]+)/);
-	return m?.[1] ?? 'light';
+export type ThemeMode = (typeof THEME_MODES)[number];
+export type ResolvedTheme = Exclude<ThemeMode, 'system'>;
+
+export function parseTheme(value: string | undefined): ThemeMode {
+	return THEME_MODES.find((theme) => theme === value) ?? 'system';
 }
-
-function createTheme() {
-	const { subscribe, set: _set } = writable(readCookieTheme());
-
-	function set(value: string) {
-		_set(value);
-		if (browser) {
-			document.documentElement.setAttribute('data-theme', value);
-			const secure = location.protocol === 'https:' ? '; Secure' : '';
-			document.cookie = `theme=${value}; path=/; max-age=31536000; samesite=lax${secure}`;
-		}
-	}
-
-	return { subscribe, set };
-}
-
-export const theme = createTheme();
