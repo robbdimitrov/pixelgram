@@ -26,8 +26,8 @@ type Service struct {
 	throttle          LoginThrottle
 	now               func() time.Time
 	generateSessionID func() (string, error)
-	verifyPassword    func(string, string) (bool, error)
-	hashPassword      func(string, auth.PasswordParams) (string, error)
+	verifyPassword    func(context.Context, string, string) (bool, error)
+	hashPassword      func(context.Context, string, auth.PasswordParams) (string, error)
 	decoyHash         string
 }
 
@@ -67,7 +67,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 	if credentials != nil {
 		hash = credentials.PasswordHash
 	}
-	verified, err := s.verifyPassword(input.Password, hash)
+	verified, err := s.verifyPassword(ctx, input.Password, hash)
 	if err != nil {
 		verified = false
 	}
@@ -77,7 +77,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 	}
 
 	if auth.NeedsRehash(credentials.PasswordHash, targetPasswordParams) {
-		if newHash, err := s.hashPassword(input.Password, targetPasswordParams); err == nil {
+		if newHash, err := s.hashPassword(ctx, input.Password, targetPasswordParams); err == nil {
 			if err := s.repository.UpdatePasswordHash(ctx, credentials.ID, newHash); err != nil {
 				slog.Warn("failed to upgrade password hash", "error", err)
 			}

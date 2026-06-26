@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+	"errors"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -10,7 +12,7 @@ import (
 )
 
 func TestHashPasswordVerifies(t *testing.T) {
-	hash, err := HashPassword("password123", DefaultPasswordParams)
+	hash, err := HashPassword(context.Background(), "password123", DefaultPasswordParams)
 	if err != nil {
 		t.Fatalf("HashPassword returned error: %v", err)
 	}
@@ -19,7 +21,7 @@ func TestHashPasswordVerifies(t *testing.T) {
 		t.Fatalf("hash used unexpected PHC prefix: %s", hash)
 	}
 
-	ok, err := VerifyPassword("password123", hash)
+	ok, err := VerifyPassword(context.Background(), "password123", hash)
 	if err != nil {
 		t.Fatalf("VerifyPassword returned error: %v", err)
 	}
@@ -29,12 +31,12 @@ func TestHashPasswordVerifies(t *testing.T) {
 }
 
 func TestVerifyPasswordRejectsWrongPassword(t *testing.T) {
-	hash, err := HashPassword("password123", DefaultPasswordParams)
+	hash, err := HashPassword(context.Background(), "password123", DefaultPasswordParams)
 	if err != nil {
 		t.Fatalf("HashPassword returned error: %v", err)
 	}
 
-	ok, err := VerifyPassword("wrong-password", hash)
+	ok, err := VerifyPassword(context.Background(), "wrong-password", hash)
 	if err != nil {
 		t.Fatalf("VerifyPassword returned error: %v", err)
 	}
@@ -49,7 +51,7 @@ func TestVerifyPasswordSupportsNodeArgon2Hash(t *testing.T) {
 	// }).
 	const nodeHash = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQxMjM0NTY3OA$hbwqGankDMxbQ5fN303ASdxPeikPPqvxOYodhOKwtOY"
 
-	ok, err := VerifyPassword("password123", nodeHash)
+	ok, err := VerifyPassword(context.Background(), "password123", nodeHash)
 	if err != nil {
 		t.Fatalf("VerifyPassword returned error: %v", err)
 	}
@@ -59,7 +61,7 @@ func TestVerifyPasswordSupportsNodeArgon2Hash(t *testing.T) {
 }
 
 func TestInvalidPasswordHash(t *testing.T) {
-	ok, err := VerifyPassword("password123", "not-a-phc-hash")
+	ok, err := VerifyPassword(context.Background(), "password123", "not-a-phc-hash")
 	if err == nil {
 		t.Fatal("expected invalid hash error")
 	}
@@ -93,7 +95,7 @@ func TestHashConcurrencyLimitIsRespected(t *testing.T) {
 			if c := current.Load(); c > peak.Load() {
 				peak.Store(c)
 			}
-			_, err := HashPassword("p", DefaultPasswordParams)
+			_, err := HashPassword(context.Background(), "p", DefaultPasswordParams)
 			current.Add(-1)
 			if err != nil {
 				errored.Store(true)
@@ -111,7 +113,7 @@ func TestHashBehaviorUnchangedUnderCap(t *testing.T) {
 	done := make(chan error, 4)
 	for range 4 {
 		go func() {
-			_, err := HashPassword("password", DefaultPasswordParams)
+			_, err := HashPassword(context.Background(), "password", DefaultPasswordParams)
 			done <- err
 		}()
 	}
@@ -119,5 +121,51 @@ func TestHashBehaviorUnchangedUnderCap(t *testing.T) {
 		if err := <-done; err != nil {
 			t.Errorf("HashPassword error: %v", err)
 		}
+	}
+}
+
+func TestHashPasswordAcquireRespectsCanceledContext(t *testing.T) {
+	old := hashSemaphore
+	hashSemaphore = semaphore.NewWeighted(1)
+	t.Cleanup(func() { hashSemaphore = old })
+
+	if err := hashSemaphore.Acquire(context.Background(), 1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { hashSemaphore.Release(1) })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := HashPassword(ctx, "password", DefaultPasswordParams)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("HashPassword() error = %v, want context.Canceled", err)
+	}
+}
+
+func TestVerifyPasswordAcquireRespectsCanceledContext(t *testing.T) {
+	hash, err := HashPassword(context.Background(), "password123", DefaultPasswordParams)
+	if err != nil {
+		t.Fatalf("HashPassword returned error: %v", err)
+	}
+
+	old := hashSemaphore
+	hashSemaphore = semaphore.NewWeighted(1)
+	t.Cleanup(func() { hashSemaphore = old })
+
+	if err := hashSemaphore.Acquire(context.Background(), 1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { hashSemaphore.Release(1) })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	ok, err := VerifyPassword(ctx, "password123", hash)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("VerifyPassword() error = %v, want context.Canceled", err)
+	}
+	if ok {
+		t.Fatal("canceled verification should not succeed")
 	}
 }

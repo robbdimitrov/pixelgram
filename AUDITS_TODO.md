@@ -24,10 +24,10 @@
 |---|---|
 | CRITICAL | 0 |
 | HIGH | 0 |
-| MEDIUM | 22 |
+| MEDIUM | 21 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **72** |
+| **Total** | **71** |
 
 ---
 
@@ -46,6 +46,7 @@
 | H-09 | Made the migration image and backend init container run explicitly as uid/gid 65532. |
 | H-10 | Set frontend `BODY_SIZE_LIMIT=1100K` and added 1 MB server-side file size checks before forwarding image uploads. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
+| M-01 | Threaded request contexts through Argon2 password hash and verify semaphore acquisition, with cancellation regression tests. |
 | M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
 | M-09 | Disabled ServiceAccount token automounting on backend and frontend pods. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
@@ -56,25 +57,6 @@
 ---
 
 # MEDIUM
-
----
-
-## M-01 · Argon2 semaphore acquisition ignores request context — goroutines pile up under load
-
-**Layer:** Backend
-**File:** `apps/backend/internal/auth/password.go` lines 75, 95
-**Category:** Resource management / DoS
-
-**What's wrong:** `hashSemaphore.Acquire(context.Background(), 1)` blocks indefinitely — `context.Background()` never cancels. The `if err != nil` branch is dead code. When all `ARGON_MAX_CONCURRENCY` slots are occupied, additional login/registration goroutines block here indefinitely, holding stack memory with no timeout.
-
-**Fix:** Thread the request context through:
-```go
-func HashPassword(ctx context.Context, password string, params PasswordParams) (string, error) {
-    if err := hashSemaphore.Acquire(ctx, 1); err != nil {
-        return "", err
-    }
-```
-Update all call sites to pass the request context.
 
 ---
 

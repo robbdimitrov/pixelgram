@@ -27,7 +27,7 @@
 
 - Minimum 8 characters, maximum 1024 characters.
 - Hashed with Argon2id PHC format: `memory=19456 KiB`, `iterations=2`, `parallelism=1`, `saltSize=16 bytes`, `hashSize=32 bytes`.
-- Concurrent hash operations are bounded by a semaphore (default 4, configurable via `ARGON_MAX_CONCURRENCY`) to cap memory usage (~19 MiB per hash).
+- Concurrent hash operations are bounded by a semaphore (default 4, configurable via `ARGON_MAX_CONCURRENCY`) to cap memory usage (~19 MiB per hash). Requests waiting for a hash slot honor request cancellation.
 - Hashes are upgraded silently to current parameters on next login (`NeedsRehash` check).
 - A pre-computed decoy hash is verified when the email is not found, preventing timing-oracle user enumeration.
 

@@ -20,7 +20,7 @@ func NewService(repository Repository, blobs blobstore.Store) *Service {
 }
 
 func (s *Service) CreateUser(ctx context.Context, command CreateUserCommand) (int, error) {
-	passwordHash, err := auth.HashPassword(command.Password, auth.DefaultPasswordParams)
+	passwordHash, err := auth.HashPassword(ctx, command.Password, auth.DefaultPasswordParams)
 	if err != nil {
 		return 0, err
 	}
@@ -82,12 +82,12 @@ func (s *Service) ChangePassword(ctx context.Context, command ChangePasswordComm
 		return ChangePasswordUserNotFound, nil
 	}
 
-	valid, err := auth.VerifyPassword(command.CurrentPassword, user.PasswordHash)
+	valid, err := auth.VerifyPassword(ctx, command.CurrentPassword, user.PasswordHash)
 	if err != nil || !valid {
 		return ChangePasswordWrongPassword, nil
 	}
 
-	passwordHash, err := auth.HashPassword(command.NewPassword, auth.DefaultPasswordParams)
+	passwordHash, err := auth.HashPassword(ctx, command.NewPassword, auth.DefaultPasswordParams)
 	if err != nil {
 		return ChangePasswordChanged, err
 	}

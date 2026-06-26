@@ -132,7 +132,7 @@ func TestServiceLoginEmailKeyUsesHigherThreshold(t *testing.T) {
 		ResetAt: now.Add(time.Minute),
 	}}}
 	service := newTestService(&fakeRepository{}, throttle, now)
-	service.verifyPassword = func(string, string) (bool, error) { return false, nil }
+	service.verifyPassword = func(context.Context, string, string) (bool, error) { return false, nil }
 
 	_, err := service.Login(context.Background(), LoginInput{
 		Email:    "test@example.com",
@@ -173,7 +173,7 @@ func TestServiceLoginVerifiesDecoyHashForUnknownAccount(t *testing.T) {
 	service := newTestService(&fakeRepository{}, &fakeThrottle{}, now)
 	called := false
 	var gotHash string
-	service.verifyPassword = func(_, hash string) (bool, error) {
+	service.verifyPassword = func(_ context.Context, _, hash string) (bool, error) {
 		called = true
 		gotHash = hash
 		return false, nil
@@ -203,7 +203,7 @@ func TestServiceLoginSuccessCreatesSessionAndClearsFailures(t *testing.T) {
 	}
 	throttle := &fakeThrottle{}
 	service := newTestService(repository, throttle, now)
-	service.verifyPassword = func(password, hash string) (bool, error) {
+	service.verifyPassword = func(_ context.Context, password, hash string) (bool, error) {
 		return password == "password123" && hash == "encoded-hash", nil
 	}
 
@@ -243,7 +243,7 @@ func TestServiceLoginPasswordVerificationErrorIsInvalidCredentials(t *testing.T)
 	}
 	throttle := &fakeThrottle{}
 	service := newTestService(repository, throttle, now)
-	service.verifyPassword = func(string, string) (bool, error) {
+	service.verifyPassword = func(context.Context, string, string) (bool, error) {
 		return false, errors.New("invalid password hash")
 	}
 
@@ -268,7 +268,7 @@ func TestServiceLoginThrottleDownFailsOpen(t *testing.T) {
 	}
 	throttle := &fakeThrottle{err: errors.New("dragonfly down")}
 	service := newTestService(repository, throttle, now)
-	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
+	service.verifyPassword = func(context.Context, string, string) (bool, error) { return true, nil }
 
 	// Throttle is down but login should still reach password verification and succeed.
 	_, err := service.Login(context.Background(), LoginInput{
@@ -380,8 +380,8 @@ func TestServiceLoginRehashesWeakHash(t *testing.T) {
 		credentials: &UserCredentials{ID: 3, PasswordHash: weakHash},
 	}
 	service := newTestService(repository, &fakeThrottle{}, now)
-	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
-	service.hashPassword = func(password string, _ auth.PasswordParams) (string, error) {
+	service.verifyPassword = func(context.Context, string, string) (bool, error) { return true, nil }
+	service.hashPassword = func(_ context.Context, password string, _ auth.PasswordParams) (string, error) {
 		return "new-strong-hash", nil
 	}
 
@@ -404,9 +404,9 @@ func TestServiceLoginSkipsRehashForCurrentParams(t *testing.T) {
 		credentials: &UserCredentials{ID: 3, PasswordHash: currentParamsHash},
 	}
 	service := newTestService(repository, &fakeThrottle{}, now)
-	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
+	service.verifyPassword = func(context.Context, string, string) (bool, error) { return true, nil }
 	rehashCalled := false
-	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
+	service.hashPassword = func(context.Context, string, auth.PasswordParams) (string, error) {
 		rehashCalled = true
 		return "", nil
 	}
@@ -430,8 +430,8 @@ func TestServiceLoginPersistErrorDoesNotFailLogin(t *testing.T) {
 		updatePasswordErr: errors.New("db down"),
 	}
 	service := newTestService(repository, &fakeThrottle{}, now)
-	service.verifyPassword = func(string, string) (bool, error) { return true, nil }
-	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
+	service.verifyPassword = func(context.Context, string, string) (bool, error) { return true, nil }
+	service.hashPassword = func(context.Context, string, auth.PasswordParams) (string, error) {
 		return "new-hash", nil
 	}
 
@@ -455,7 +455,7 @@ func newTestService(repository Repository, throttle LoginThrottle, now time.Time
 		return "AAAAAAAAAAAAAAAAAAAAAAAAAAAA", nil
 	}
 	// Use a no-op hasher by default so existing tests don't trigger slow rehashes.
-	service.hashPassword = func(string, auth.PasswordParams) (string, error) {
+	service.hashPassword = func(context.Context, string, auth.PasswordParams) (string, error) {
 		return "rehashed", nil
 	}
 	return service

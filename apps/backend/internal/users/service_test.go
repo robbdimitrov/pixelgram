@@ -107,7 +107,7 @@ func TestServiceCreateUserHashesPassword(t *testing.T) {
 	if !strings.HasPrefix(repository.createdPasswordHash, "$argon2id$") {
 		t.Fatalf("password hash = %q", repository.createdPasswordHash)
 	}
-	valid, err := auth.VerifyPassword("password123", repository.createdPasswordHash)
+	valid, err := auth.VerifyPassword(context.Background(), "password123", repository.createdPasswordHash)
 	if err != nil || !valid {
 		t.Fatalf("VerifyPassword() = %v, %v", valid, err)
 	}
@@ -144,7 +144,7 @@ func TestServiceUpdateProfileOutcomes(t *testing.T) {
 }
 
 func TestServiceChangePassword(t *testing.T) {
-	oldHash, err := auth.HashPassword("old-password", auth.DefaultPasswordParams)
+	oldHash, err := auth.HashPassword(context.Background(), "old-password", auth.DefaultPasswordParams)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +162,7 @@ func TestServiceChangePassword(t *testing.T) {
 	if err != nil || outcome != ChangePasswordChanged {
 		t.Fatalf("ChangePassword() = %v, %v", outcome, err)
 	}
-	valid, err := auth.VerifyPassword("new-password", repository.updatedPasswordHash)
+	valid, err := auth.VerifyPassword(context.Background(), "new-password", repository.updatedPasswordHash)
 	if err != nil || !valid {
 		t.Fatalf("new password hash is invalid: %v, %v", valid, err)
 	}
@@ -172,7 +172,7 @@ func TestServiceChangePassword(t *testing.T) {
 }
 
 func TestServiceChangePasswordStopsForInvalidCredentials(t *testing.T) {
-	oldHash, err := auth.HashPassword("old-password", auth.DefaultPasswordParams)
+	oldHash, err := auth.HashPassword(context.Background(), "old-password", auth.DefaultPasswordParams)
 	if err != nil {
 		t.Fatal(err)
 	}

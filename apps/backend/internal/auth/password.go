@@ -60,19 +60,19 @@ var DefaultPasswordParams = PasswordParams{
 // parameters. Login verifies against it when no account matches the supplied
 // email so the password-checking step costs the same whether or not the
 // account exists, closing a user-enumeration timing oracle.
-var decoyHash, _ = HashPassword("decoy password — never matches a real login", DefaultPasswordParams)
+var decoyHash, _ = HashPassword(context.Background(), "decoy password — never matches a real login", DefaultPasswordParams)
 
 // DecoyHash returns the process-wide decoy Argon2id hash.
 func DecoyHash() string {
 	return decoyHash
 }
 
-func HashPassword(password string, params PasswordParams) (string, error) {
+func HashPassword(ctx context.Context, password string, params PasswordParams) (string, error) {
 	if params.Memory == 0 || params.Iterations == 0 || params.Parallelism == 0 {
 		return "", ErrInvalidHash
 	}
 
-	if err := hashSemaphore.Acquire(context.Background(), 1); err != nil {
+	if err := hashSemaphore.Acquire(ctx, 1); err != nil {
 		return "", err
 	}
 	defer hashSemaphore.Release(1)
@@ -86,13 +86,13 @@ func HashPassword(password string, params PasswordParams) (string, error) {
 	return encodePHC(params, salt, hash), nil
 }
 
-func VerifyPassword(password, encodedHash string) (bool, error) {
+func VerifyPassword(ctx context.Context, password, encodedHash string) (bool, error) {
 	params, salt, expected, err := parsePHC(encodedHash)
 	if err != nil {
 		return false, err
 	}
 
-	if err := hashSemaphore.Acquire(context.Background(), 1); err != nil {
+	if err := hashSemaphore.Acquire(ctx, 1); err != nil {
 		return false, err
 	}
 	defer hashSemaphore.Release(1)
