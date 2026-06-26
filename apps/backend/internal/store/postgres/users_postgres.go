@@ -44,10 +44,17 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 			VALUES ($1, $2, $3, $4) RETURNING id`, name, username, email, passwordHash).Scan(&id); err != nil {
 			return err
 		}
-		payload := fmt.Sprintf(
-			`{"table":"users","op":"upsert","id":%d,"user_id":"%d","username":%q,"bio":""}`,
-			id, id, username,
-		)
+		payload, err := marshalOutboxPayload(entityUserUpsertPayload{
+			Table:    "users",
+			Op:       "upsert",
+			ID:       int64(id),
+			UserID:   strconv.Itoa(id),
+			Username: username,
+			Bio:      "",
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", payload); err != nil {
 			return err
@@ -223,10 +230,14 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 			followeeID); err != nil {
 			return err
 		}
-		payload := fmt.Sprintf(
-			`{"op":"follow","actor_id":%q,"recipient_id":%q}`,
-			followerID, followeeID,
-		)
+		payload, err := marshalOutboxPayload(activityPayload{
+			Op:          "follow",
+			ActorID:     followerID,
+			RecipientID: followeeID,
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
 			return err
@@ -260,10 +271,14 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 				followeeID); err != nil {
 				return err
 			}
-			payload := fmt.Sprintf(
-				`{"op":"unfollow","actor_id":%q,"recipient_id":%q}`,
-				followerID, followeeID,
-			)
+			payload, err := marshalOutboxPayload(activityPayload{
+				Op:          "unfollow",
+				ActorID:     followerID,
+				RecipientID: followeeID,
+			})
+			if err != nil {
+				return err
+			}
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
 				return err
@@ -328,10 +343,17 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 		if bio != nil {
 			bioStr = *bio
 		}
-		payload := fmt.Sprintf(
-			`{"table":"users","op":"upsert","id":%d,"user_id":"%d","username":%q,"bio":%q}`,
-			userIDInt, userIDInt, username, bioStr,
-		)
+		payload, err := marshalOutboxPayload(entityUserUpsertPayload{
+			Table:    "users",
+			Op:       "upsert",
+			ID:       userIDInt,
+			UserID:   strconv.FormatInt(userIDInt, 10),
+			Username: username,
+			Bio:      bioStr,
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", payload); err != nil {
 			return err

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 
@@ -57,10 +56,16 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 			return err
 		}
 
-		payload := fmt.Sprintf(
-			`{"op":"comment","comment_id":%d,"post_id":%q,"actor_id":%q,"recipient_id":%q}`,
-			comment.ID, postID, userID, recipientID,
-		)
+		payload, err := marshalOutboxPayload(activityPayload{
+			Op:          "comment",
+			CommentID:   int64(comment.ID),
+			PostID:      postID,
+			ActorID:     userID,
+			RecipientID: recipientID,
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
 			return err
@@ -134,10 +139,14 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 			commentID, postID, userID).Scan(&deletedID)
 		if err == nil {
 			deleted = true
-			payload := fmt.Sprintf(
-				`{"op":"uncomment","comment_id":%d,"actor_id":%q}`,
-				deletedID, userID,
-			)
+			payload, err := marshalOutboxPayload(activityPayload{
+				Op:        "uncomment",
+				CommentID: int64(deletedID),
+				ActorID:   userID,
+			})
+			if err != nil {
+				return err
+			}
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
 				return err

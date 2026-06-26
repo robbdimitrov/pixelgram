@@ -66,7 +66,7 @@ postgres (WAL) → connect (pg_cdc on outbox)
 
 ## Key Integration Patterns
 
-- **Outbox pattern**: every domain mutation writes a row to `outbox` inside the same transaction. The outbox is append-only; Redpanda Connect reads new rows via WAL CDC (`pg_cdc` input on `public.outbox`) and publishes to the appropriate Redpanda topic (`entity-changes` or `activity`). WAL position tracking gives at-least-once delivery; downstream consumers are idempotent.
+- **Outbox pattern**: every domain mutation writes a row to `outbox` inside the same transaction. Payloads are marshaled from typed Go structs with `encoding/json`, never assembled with string formatting. The outbox is append-only; Redpanda Connect reads new rows via WAL CDC (`pg_cdc` input on `public.outbox`) and publishes to the appropriate Redpanda topic (`entity-changes` or `activity`). WAL position tracking gives at-least-once delivery; downstream consumers are idempotent.
 - **CDC relay**: Redpanda Connect monitors the PostgreSQL WAL for INSERT events on `outbox`. Two pipelines run in Connect: `sync-search` (entity-changes → Meilisearch) and `cleanup-s3` (post deletes → S3 DELETE). A one-shot Kubernetes Job (`broker-backfill`) seeds existing data on first deploy.
 - **Circuit breaker**: all PostgreSQL operations go through `database.DB.Read`/`Write`, which runs through a circuit breaker (5 consecutive transient failures → open; 30 s cooldown).
 - **Token bucket rate limiting**: implemented in Lua on Dragonfly; keyed by `{policy}:user:{id}` > `{policy}:session:{id}` > `{policy}:ip:{ip}`.

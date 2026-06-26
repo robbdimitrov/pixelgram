@@ -110,7 +110,7 @@ Staging table for image blobs before they become a post or avatar. A row is cons
 | created | timestamptz | NOT NULL DEFAULT now() |
 
 ### outbox
-Transactional outbox for Redpanda. Written in the same transaction as the entity mutation; Redpanda Connect reads new rows via WAL CDC and publishes to the appropriate topic. Append-only; rows are never updated or deleted by the relay. A periodic cleanup removes rows older than 7 days.
+Transactional outbox for Redpanda. Written in the same transaction as the entity mutation; Redpanda Connect reads new rows via WAL CDC and publishes to the appropriate topic. Payloads are generated with `encoding/json` from typed backend structs so control characters and quotes are encoded as valid JSON. Append-only; rows are never updated or deleted by the relay. A periodic cleanup removes rows older than 7 days.
 
 | Field | Type | Constraints |
 |---|---|---|

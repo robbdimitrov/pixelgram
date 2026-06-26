@@ -1,0 +1,1437 @@
+# Security, Bugs & Issues Audit
+
+**Date:** 2026-06-26
+**Scope:** Full codebase — backend (Go), frontend (SvelteKit), infrastructure (Kubernetes / Docker), database (PostgreSQL migrations + query layer)
+**Layers audited:** OWASP Top 10, authentication & session management, authorization, input validation, cryptography, race conditions, resource management, network security, container hardening, supply chain, business logic, data integrity
+
+---
+
+## Severity Legend
+
+| Level | Meaning |
+|---|---|
+| CRITICAL | Exploitable immediately with high impact; stop-the-world fix |
+| HIGH | Significant security or data-integrity impact; fix before next release |
+| MEDIUM | Real risk requiring specific conditions or effort to exploit |
+| LOW | Hardening gap, incorrect behaviour, or technical debt with limited blast radius |
+| INFO | Confirmed safe / noted for future awareness |
+
+---
+
+## Executive Summary
+
+| Severity | Count |
+|---|---|
+| CRITICAL | 1 |
+| HIGH | 10 |
+| MEDIUM | 27 |
+| LOW | 35 |
+| INFO | 15 |
+| **Total** | **88** |
+
+---
+
+## Completed Fixes
+
+| ID | Fix |
+|---|---|
+| H-01 | Replaced all backend outbox payload string formatting with typed `encoding/json` marshaling and added regression tests for control-character payloads. |
+
+---
+
+# CRITICAL
+
+---
+
+## C-01 · Redpanda running in `--mode=dev-container` — no durability
+
+**Layer:** Infrastructure
+**File:** `deploy/broker.yaml` line 212
+**Category:** Production safety / data loss
+
+**What's wrong:** The Redpanda broker starts with `--mode=dev-container` and `--overprovisioned`. This mode disables fsync guarantees, relaxes resource checks, and is explicitly documented by Redpanda as unsuitable for production. Data loss on broker restart is possible.
+
+**Why it matters:** Any message in the outbox pipeline (feed fan-out, Meilisearch sync, S3 cleanup, notifications) can be silently lost on a broker pod restart. Persistent data is not durably written to disk.
+
+**Fix:** Remove `--mode=dev-container` and `--overprovisioned`. Configure production settings: `--set=redpanda.developer_mode=false`, explicit `--smp`, memory, and I/O tuner. Review Redpanda's production deployment guide.
+
+---
+
+# HIGH
+
+---
+
+## H-02 · Kafka consumers have no poison-pill protection — one bad record causes infinite CPU-spinning retry
+
+**Layer:** Backend
+**Files:**
+- `apps/backend/internal/feed/consumer.go` lines 41–73
+- `apps/backend/internal/notifications/consumer.go` lines 40–73
+**Category:** Availability / goroutine leak
+
+**What's wrong:** Both consumers wrap the poll loop in an anonymous function with `recover()`. If `c.handle()` panics on a specific record, the panic unwinds through `EachRecord`, skipping `CommitUncommittedOffsets`. The outer loop immediately restarts, `PollFetches` returns the same uncommitted records, and the cycle repeats at CPU speed indefinitely.
+
+**Why it matters:** A single malformed outbox message halts all feed fan-out or all notification delivery for the entire application with 100% CPU consumption on one core until a manual operator restart.
+
+**Fix:**
+1. Add per-record panic recovery inside the `EachRecord` callback so one bad record is skipped without aborting the batch.
+2. Commit offsets after each successful batch before restarting the outer loop.
+3. Track failure count per partition+offset; after N failures log at ERROR and advance the offset (dead-letter pattern).
+
+---
+
+## H-03 · Four junction-table FK columns allow NULL — cascades never fire, UNIQUE constraints defeated
+
+**Layer:** Database
+**Files:**
+- `apps/database/migrations/000003_create_posts.up.sql` — `posts.user_id`, `uploads.user_id`, `likes.post_id`, `likes.user_id`
+- `apps/database/migrations/000008_create_follows.up.sql` — `follows.follower_id`, `follows.followee_id`
+- `apps/database/migrations/000004_create_hashtags.up.sql` — `post_hashtags.post_id`, `post_hashtags.hashtag_id`
+**Category:** Data integrity / missing NOT NULL constraints
+
+**What's wrong:** None of the FK columns on `posts`, `uploads`, `likes`, `follows`, or `post_hashtags` carry `NOT NULL`. PostgreSQL allows `INSERT ... user_id = NULL` silently. A NULL FK value:
+- never participates in `ON DELETE CASCADE` (NULL FK ≠ any parent row)
+- is treated as distinct from every other NULL by `UNIQUE(col_a, col_b)`, making the deduplication guarantee useless
+- leaves orphaned rows that are never cleaned up
+
+**Why it matters:** A direct DB write, an admin script, a future migration bug, or a race condition can create posts/uploads owned by no user (storage leak, quota bypass), likes associated with no post (count inflation), self-like or self-follow via a NULL FK bypass, and orphaned `post_hashtags` rows that permanently inflate hashtag counts.
+
+**Fix:** Add `NOT NULL` to all eight FK columns. Apply as a new migration. Verify no existing NULL rows before applying:
+```sql
+ALTER TABLE posts ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE uploads ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE likes ALTER COLUMN post_id SET NOT NULL;
+ALTER TABLE likes ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE follows ALTER COLUMN follower_id SET NOT NULL;
+ALTER TABLE follows ALTER COLUMN followee_id SET NOT NULL;
+ALTER TABLE post_hashtags ALTER COLUMN post_id SET NOT NULL;
+ALTER TABLE post_hashtags ALTER COLUMN hashtag_id SET NOT NULL;
+```
+
+---
+
+## H-04 · Session cookie missing `Secure` flag — `NODE_ENV=production` absent from Dockerfile
+
+**Layer:** Frontend
+**Files:**
+- `apps/frontend/src/lib/server/api/auth.ts` lines 15–19
+- `apps/frontend/Dockerfile` line 16
+**Category:** Session management / cookie security
+
+**What's wrong:** `applySessionCookie` calls `cookies.set('session', sessionID, { path: '/', httpOnly: true, sameSite: 'strict', maxAge })` without `secure: true`. SvelteKit defaults `secure` to `true` only when `process.env.NODE_ENV === 'production'`. The Dockerfile sets `ENV PORT=8080` but never `NODE_ENV=production`. At runtime, `NODE_ENV` is undefined, so SvelteKit defaults to `secure: false`.
+
+**Why it matters:** The session cookie is sent over plain HTTP. Any network observer or MITM attacker who can intercept HTTP traffic (possible given TLS is also commented out — see M-10) can steal the session token.
+
+**Fix:** Add `ENV NODE_ENV=production` to the runner stage of the Dockerfile. This also fixes SvelteKit's security-sensitive defaults for all other cookie operations, CSP nonce behavior, and stack trace suppression. Alternatively add `secure: true` explicitly to `cookies.set()`.
+
+---
+
+## H-05 · Five third-party images use no version tag — resolve to `:latest`
+
+**Layer:** Infrastructure
+**Files:**
+- `deploy/cache.yaml` line 53 — `docker.dragonflydb.io/dragonflydb/dragonfly`
+- `deploy/broker.yaml` lines 192, 300 — `docker.redpanda.com/redpandadata/redpanda`, `…/connect`
+- `deploy/broker-backfill.yaml` line 28 — `docker.redpanda.com/redpandadata/connect`
+- `deploy/search.yaml` line 53 — `getmeili/meilisearch`
+- `deploy/storage.yaml` line 53 — `chrislusf/seaweedfs`
+**Category:** Supply chain / unpinned images
+
+**What's wrong:** Images with no tag resolve to `:latest`. `scripts/deploy.sh` also `docker pull`s these images with no tag. `imagePullPolicy: IfNotPresent` only partially mitigates: a fresh node or forced pull fetches whatever `:latest` is at that moment.
+
+**Why it matters:** A Redpanda, Meilisearch, or SeaweedFS release could silently change wire protocol, API surface, or configuration defaults — or in a supply chain attack scenario, introduce malicious content.
+
+**Fix:** Pin every image to a specific version tag (ideally digest `image@sha256:…`):
+```yaml
+image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0
+image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
+image: docker.redpanda.com/redpandadata/connect:v4.38.0
+image: getmeili/meilisearch:v1.11.3
+image: chrislusf/seaweedfs:3.76
+```
+Update corresponding `docker pull` calls in `scripts/deploy.sh` to use the same pinned tags.
+
+---
+
+## H-06 · Ingress TLS block commented out — all traffic is plain HTTP
+
+**Layer:** Infrastructure
+**File:** `deploy/ingress.yaml` lines 27–32
+**Category:** Transport security / no TLS
+
+**What's wrong:** The `spec.tls` stanza is fully commented out. The ingress also lacks `nginx.ingress.kubernetes.io/ssl-redirect: "true"`. All traffic is unencrypted HTTP.
+
+**Why it matters:** Session cookies, session tokens, image uploads, and all API payloads are transmitted in plaintext. Combined with H-04 (`Secure` flag missing) and H-07 (ORIGIN hardcoded to `http://localhost`), the entire authentication system is exposed to passive interception.
+
+**Fix:** Uncomment and populate the TLS block. Add the SSL redirect annotation. Use cert-manager with a Let's Encrypt ACME issuer for a real domain or a self-signed ClusterIssuer for local kind development.
+
+---
+
+## H-07 · `ORIGIN` env var hardcoded to `http://localhost:8080` — breaks SvelteKit CSRF protection for any real deployment
+
+**Layer:** Infrastructure
+**File:** `deploy/frontend.yaml` line 49
+**Category:** CSRF / application misconfiguration
+
+**What's wrong:** SvelteKit validates that the `Origin` request header matches the `ORIGIN` environment variable on all mutating form actions. With `ORIGIN: http://localhost:8080`, any request from the actual deployment hostname has a mismatched origin, causing either silent CSRF bypass or total rejection of all form POSTs from the real domain.
+
+**Why it matters:** Depending on the adapter-node version, a mismatched `ORIGIN` may silently skip the CSRF check, allowing cross-origin form submissions to authenticated endpoints.
+
+**Fix:** Set `ORIGIN` to the actual public URL at deploy time (e.g., `https://phasma.example.com`). Inject via a ConfigMap or per-environment values layer — never hardcode a development value in the production manifest.
+
+---
+
+## H-08 · No NetworkPolicy — all pods can reach all other pods bidirectionally
+
+**Layer:** Infrastructure
+**File:** `deploy/` — absence of resource
+**Category:** Network security / lateral movement
+
+**What's wrong:** No `NetworkPolicy` object exists. Default Kubernetes behavior allows unrestricted pod-to-pod traffic across the namespace. PostgreSQL port 5432, Redpanda 9092, Dragonfly 6379, Meilisearch 7700, and the broker admin API 9644 are all reachable from every pod.
+
+**Why it matters:** A compromised pod has direct socket access to all internal services and their credentials. An attacker who achieves RCE in the frontend SSR container can directly connect to PostgreSQL and read all user data, including session HMAC hashes and Argon2id password hashes.
+
+**Fix:** Define default-deny ingress (and preferably egress) NetworkPolicies, then selectively allow only required pod-to-pod paths:
+- backend → database:5432
+- backend → cache:6379
+- backend → search:7700
+- backend → storage:8333
+- backend → broker:9092
+- connect → database:5432
+- connect → broker:9092
+- connect → search:7700
+- connect → storage:8333
+
+---
+
+## H-09 · Migration init container may run as root — conflicts with pod-level `runAsNonRoot: true`
+
+**Layer:** Infrastructure
+**Files:**
+- `deploy/backend.yaml` lines 42–57
+- `apps/database/Dockerfile`
+**Category:** Container hardening / privilege
+
+**What's wrong:** The backend pod's pod-level `securityContext` sets `runAsNonRoot: true` and `runAsUser: 65532`. The init container does not override `runAsUser`. `apps/database/Dockerfile` is `FROM migrate/migrate:v4.18.1` with no `USER` instruction — the `migrate/migrate` image historically runs as root (UID 0). If so, the kubelet refuses to start the init container (`container has runAsNonRoot and image will run as root`), crash-looping the backend deployment.
+
+**Fix:** Add `USER 65532` to `apps/database/Dockerfile`, or add `runAsUser: 65532` to the init container's own `securityContext`. Verify the actual UID of the upstream image: `docker inspect --format '{{.Config.User}}' migrate/migrate:v4.18.1`.
+
+---
+
+## H-10 · `BODY_SIZE_LIMIT` default (512 KB) is less than the upload target (900 KB)
+
+**Layer:** Frontend
+**Files:**
+- `apps/frontend/src/routes/(app)/upload/+page.server.ts` line 9
+- `apps/frontend/src/routes/(app)/settings/profile/+page.server.ts` line 15
+**Category:** DoS / input validation mismatch
+
+**What's wrong:** The adapter-node's built-in body size limit defaults to `512K` (`BODY_SIZE_LIMIT` env var). The client-side image resizer targets `900 KB` (`RESIZED_TARGET_BYTES = 900 * 1024`). Files in the range 512 KB–900 KB are rejected by the Node server with a generic HTTP 413 before the action handler is invoked. Additionally, neither upload action validates file size server-side before forwarding to the backend, so a raw API client can bypass client-side resizing entirely.
+
+**Fix:**
+1. Set `BODY_SIZE_LIMIT=1100K` in the Dockerfile or Kubernetes deployment.
+2. Add server-side size validation in both upload actions before forwarding:
+```ts
+if (file.size > 1024 * 1024) {
+  return fail(413, { error: 'Image must be smaller than 1 MB.' });
+}
+```
+3. Document `BODY_SIZE_LIMIT` as a required deployment environment variable.
+
+---
+
+## H-11 · `likes`, `follows`, and `post_hashtags` have no PRIMARY KEY — only nullable UNIQUE constraints
+
+**Layer:** Database
+**Files:**
+- `apps/database/migrations/000003_create_posts.up.sql` — `likes`
+- `apps/database/migrations/000008_create_follows.up.sql` — `follows`
+- `apps/database/migrations/000004_create_hashtags.up.sql` — `post_hashtags`
+**Category:** Data integrity / replication
+
+**What's wrong:** The three junction tables declare `UNIQUE(col_a, col_b)` but no `PRIMARY KEY`. Because the individual columns are also not `NOT NULL` (H-03), the UNIQUE constraint cannot guarantee one row per logical pair. Replication tools (Debezium, pglogical) and logical replication slots require a primary key on every table for correct row identity.
+
+**Fix:** After adding `NOT NULL` (H-03), change the UNIQUE constraints to PRIMARY KEY declarations:
+```sql
+ALTER TABLE likes ADD PRIMARY KEY (post_id, user_id);
+ALTER TABLE follows ADD PRIMARY KEY (follower_id, followee_id);
+ALTER TABLE post_hashtags ADD PRIMARY KEY (post_id, hashtag_id);
+```
+
+---
+
+# MEDIUM
+
+---
+
+## M-01 · Argon2 semaphore acquisition ignores request context — goroutines pile up under load
+
+**Layer:** Backend
+**File:** `apps/backend/internal/auth/password.go` lines 75, 95
+**Category:** Resource management / DoS
+
+**What's wrong:** `hashSemaphore.Acquire(context.Background(), 1)` blocks indefinitely — `context.Background()` never cancels. The `if err != nil` branch is dead code. When all `ARGON_MAX_CONCURRENCY` slots are occupied, additional login/registration goroutines block here indefinitely, holding stack memory with no timeout.
+
+**Fix:** Thread the request context through:
+```go
+func HashPassword(ctx context.Context, password string, params PasswordParams) (string, error) {
+    if err := hashSemaphore.Acquire(ctx, 1); err != nil {
+        return "", err
+    }
+```
+Update all call sites to pass the request context.
+
+---
+
+## M-02 · Missing `Strict-Transport-Security` header in backend security middleware
+
+**Layer:** Backend
+**File:** `apps/backend/internal/httpx/middleware.go` lines 92–103
+**Category:** Security misconfiguration / OWASP A05
+
+**What's wrong:** `SecurityHeaders` sets five of six standard security headers but omits `Strict-Transport-Security`.
+
+**Fix:**
+```go
+w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+```
+Guard with a `trustProxy` / TLS check to skip in plain-HTTP development environments.
+
+---
+
+## M-03 · Missing `Strict-Transport-Security` header in frontend server hooks
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/hooks.server.ts` lines 3–9
+**Category:** Security misconfiguration / OWASP A05
+
+**What's wrong:** `hooks.server.ts` sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Cross-Origin-Opener-Policy` but omits `Strict-Transport-Security`. Without HSTS, browsers can be downgraded from HTTPS to HTTP.
+
+**Fix:**
+```ts
+res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+```
+
+---
+
+## M-04 · `X-Forwarded-For` used as rate-limit key without IP format validation — allows spoofing when `TRUST_PROXY=true`
+
+**Layer:** Backend
+**File:** `apps/backend/internal/httpx/ratelimit.go` lines 177, 182–190
+**Category:** Rate limit bypass / OWASP A07
+
+**What's wrong:** When `TRUST_PROXY=true`, the leftmost `X-Forwarded-For` element is used verbatim as the rate-limit key without validating that it is a parseable IP address. A client can supply `X-Forwarded-For: fake-ip, real-ip` and bypass per-IP buckets for `POST /sessions` and `POST /users` by rotating fake values.
+
+**Fix:** After extracting the XFF element, validate with `net.ParseIP`. Fall back to `r.RemoteAddr` if parsing fails. Document in deployment config that the upstream proxy must overwrite (not append) XFF.
+
+---
+
+## M-05 · Meilisearch scoped API key never expires
+
+**Layer:** Backend
+**File:** `apps/backend/internal/search/meili.go` lines 50–55
+**Category:** Credential management / OWASP A02
+
+**What's wrong:** `"expiresAt": nil` creates a permanent Meilisearch key. If it leaks (memory dump, crash report, log), an attacker retains indefinite read/write access to all search indexes containing usernames, bios, and post descriptions.
+
+**Fix:** Set a finite expiry and implement key rotation at startup:
+```go
+"expiresAt": time.Now().UTC().Add(365 * 24 * time.Hour).Format(time.RFC3339),
+```
+
+---
+
+## M-06 · Meilisearch scoped key has wildcard index access instead of explicit index list
+
+**Layer:** Backend
+**File:** `apps/backend/internal/search/meili.go` line 53
+**Category:** Least privilege / OWASP A01
+
+**What's wrong:** `"indexes": []string{"*"}` grants `documents.add` and `documents.delete` on all current and future Meilisearch indexes.
+
+**Fix:**
+```go
+"indexes": []string{"users", "posts", "hashtags"},
+```
+
+---
+
+## M-07 · CSP `style-src` allows `unsafe-inline` — enables CSS-based data exfiltration
+
+**Layer:** Frontend
+**File:** `apps/frontend/svelte.config.js` line 14
+**Category:** CSP / OWASP A03
+
+**What's wrong:** `'style-src': ['self', 'unsafe-inline']` permits arbitrary inline CSS. CSS attribute selector attacks (`input[value^="a"] { background: url(...) }`) can exfiltrate form values from the DOM for any forms that rehydrate server values.
+
+**Why it matters:** Tailwind v4 generates external CSS; DaisyUI v5 does not require inline styles. `unsafe-inline` is entirely unnecessary.
+
+**Fix:** Remove `unsafe-inline` from `style-src`:
+```js
+'style-src': ['self']
+```
+
+---
+
+## M-08 · No MIME type validation on server-side file receipt in upload actions
+
+**Layer:** Frontend
+**Files:**
+- `apps/frontend/src/routes/(app)/upload/+page.server.ts` lines 10–15
+- `apps/frontend/src/routes/(app)/settings/profile/+page.server.ts` lines 21–32
+**Category:** Input validation / OWASP A03
+
+**What's wrong:** Both upload action handlers check only `file instanceof File && file.size > 0`. A raw multipart POST can bypass the browser's `accept="image/jpeg,..."` restriction and submit arbitrary binary content (a PDF, a large binary, a crafted file) to the SvelteKit layer.
+
+**Fix:**
+```ts
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+if (!ALLOWED_TYPES.has(file.type)) {
+  return fail(400, { error: 'Please select a JPEG, PNG, GIF, or WEBP image.' });
+}
+```
+
+---
+
+## M-09 · Service account token auto-mounted on backend and frontend pods
+
+**Layer:** Infrastructure
+**Files:** `deploy/backend.yaml`, `deploy/frontend.yaml`
+**Category:** Least privilege / OWASP A01
+
+**What's wrong:** All other workloads (database, cache, storage, search, broker, connect, broker-backfill) explicitly set `automountServiceAccountToken: false`. Backend and frontend omit this field entirely, causing Kubernetes to mount the default ServiceAccount's JWT at `/var/run/secrets/kubernetes.io/serviceaccount/token`. Neither service needs Kubernetes API access.
+
+**Fix:** Add to the pod spec of both Deployments:
+```yaml
+automountServiceAccountToken: false
+```
+
+---
+
+## M-10 · Migration init container has no resource limits
+
+**Layer:** Infrastructure
+**File:** `deploy/backend.yaml` lines 42–57
+**Category:** Resource management
+
+**What's wrong:** The migration init container has no `resources` block. During every backend rollout, it can consume unbounded CPU and memory, affecting the scheduler's bin-packing decisions and starving other containers.
+
+**Fix:**
+```yaml
+resources:
+  limits:
+    memory: 64Mi
+  requests:
+    memory: 32Mi
+    cpu: 50m
+```
+
+---
+
+## M-11 · Broker backfill Job container has no resource limits
+
+**Layer:** Infrastructure
+**File:** `deploy/broker-backfill.yaml` lines 26–83
+**Category:** Resource management
+
+**What's wrong:** The `broker-backfill` Job container has no `resources` block. The backfill reads all users from PostgreSQL and publishes to Redpanda — potentially CPU/memory intensive.
+
+**Fix:**
+```yaml
+resources:
+  limits:
+    memory: 256Mi
+  requests:
+    memory: 128Mi
+    cpu: 100m
+```
+
+---
+
+## M-12 · `connect` Deployment has a CPU limit — causes CFS throttling, violates project policy
+
+**Layer:** Infrastructure
+**File:** `deploy/broker.yaml` lines 348–350
+**Category:** Performance / resource management
+
+**What's wrong:** `connect` sets `cpu: 500m` under `limits`. AGENTS.md explicitly prohibits CPU limits: "CFS quota throttles at the limit even when the node has spare cycles, causing latency spikes." This pipeline processes outbox events, syncs search indexes, and runs S3 cleanup — CPU throttling directly introduces delays.
+
+**Fix:** Remove the `cpu: 500m` entry from the `limits` section, leaving only `memory: 256Mi`.
+
+---
+
+## M-13 · No PodDisruptionBudget for any workload
+
+**Layer:** Infrastructure
+**File:** `deploy/` — absence of resource
+**Category:** Availability
+
+**What's wrong:** No `PodDisruptionBudget` objects exist. During voluntary disruptions (node drain, cluster upgrades), all pods can be evicted simultaneously. StatefulSets (database, cache, search, storage, broker) are particularly at risk: ungraceful simultaneous eviction can interrupt replication, cause WAL corruption, or interrupt active connections.
+
+**Fix:** Define PDBs for each workload. For single-replica StatefulSets, `maxUnavailable: 0` forces drain to wait for rescheduling:
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: database-pdb
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: phasma
+      tier: database
+```
+
+---
+
+## M-14 · Frontend pod `securityContext` missing `runAsGroup` and `fsGroup`
+
+**Layer:** Infrastructure
+**File:** `deploy/frontend.yaml` lines 36–41
+**Category:** Container hardening
+
+**What's wrong:** The frontend pod sets `runAsNonRoot: true`, `runAsUser: 1000`, and `seccompProfile`, but omits `runAsGroup` and `fsGroup`. Without `runAsGroup`, the process's primary group defaults to GID 0 (root). Every other workload sets all three fields.
+
+**Fix:**
+```yaml
+runAsGroup: 1000
+fsGroup: 1000
+```
+
+---
+
+## M-15 · Database connections unencrypted — migration uses `sslmode=disable`, backend has no sslmode
+
+**Layer:** Infrastructure
+**Files:**
+- `apps/database/run.sh` line 5
+- `deploy/backend.yaml` line 87
+**Category:** Transport security / data in transit
+
+**What's wrong:** `run.sh` builds the migration DSN with `?sslmode=disable`. The backend `DATABASE_URL` has no `sslmode` parameter — pgx defaults to `prefer`, which falls back to plaintext when the server has no TLS configured. Combined with no NetworkPolicy (H-08), all database traffic is interceptable.
+
+**Fix:** Configure PostgreSQL with a TLS certificate (mounted as a Secret). Update both DSNs to `sslmode=require`. Alternatively deploy a service mesh (Linkerd, Istio) for pod-to-pod mTLS.
+
+---
+
+## M-16 · All credentials consolidated in a single `database-credentials` Secret — large blast radius
+
+**Layer:** Infrastructure
+**File:** `deploy/backend.yaml` (all `secretKeyRef` references)
+**Category:** Secret management
+
+**What's wrong:** Six distinct credentials (PostgreSQL password, session HMAC key, S3 access key, S3 secret key, Dragonfly password, Meilisearch master key) are in one Secret. Any RBAC misconfiguration or pod compromise that can read this Secret gains all credentials simultaneously, including the session HMAC key (usable to forge session tokens).
+
+**Fix:** Split into per-service Secrets (`backend-secret`, `database-secret`, `cache-secret`, `search-secret`, `storage-secret`). Mount only the Secrets each workload needs. Consider an external secret store (Vault, AWS Secrets Manager) with dynamic short-lived credentials.
+
+---
+
+## M-17 · No `metadata.namespace` in any manifest — accidental default-namespace deployment if `-n phasma` is omitted
+
+**Layer:** Infrastructure
+**File:** `deploy/` — all YAML files
+**Category:** Operational security
+
+**What's wrong:** None of the nine YAML files set `metadata.namespace`. Running `kubectl apply -f ./deploy` without `-n phasma` deploys all resources (including Secrets) to the `default` namespace, which typically has broader RBAC access.
+
+**Fix:** Add `namespace: phasma` to `metadata` in every manifest.
+
+---
+
+## M-18 · No dedicated ServiceAccounts or RBAC resources — all pods share the `default` ServiceAccount
+
+**Layer:** Infrastructure
+**File:** `deploy/` — absence of resources
+**Category:** Least privilege / RBAC
+
+**What's wrong:** No `ServiceAccount`, `Role`, or `RoleBinding` objects exist. All pods use the `default` ServiceAccount. A compromised pod's SA token can be used to impersonate any other pod's identity for Kubernetes API calls.
+
+**Fix:** Create a dedicated `ServiceAccount` per workload with `automountServiceAccountToken: false`. Define `Role`/`RoleBinding` only for workloads that genuinely require Kubernetes API access (none appear to here).
+
+---
+
+## M-19 · Custom images built and deployed with no version tag — `localhost:5000/phasma/*:latest`
+
+**Layer:** Infrastructure
+**Files:** `Makefile` lines 10, 14, 18; `deploy/backend.yaml` lines 44, 60; `deploy/frontend.yaml` line 43
+**Category:** Supply chain
+
+**What's wrong:** All three custom images are built and pushed with no tag (defaulting to `:latest`) and referenced in manifests without tags. On a fresh node, `IfNotPresent` pulls `:latest`. In a multi-node cluster, different nodes could run different image versions silently.
+
+**Fix:** Tag images with a deterministic identifier (git SHA):
+```makefile
+GIT_SHA ?= $(shell git rev-parse --short HEAD)
+docker build -t $(IMAGE_PREFIX)/backend:$(GIT_SHA) apps/backend
+```
+Reference the tag explicitly in deployment manifests.
+
+---
+
+## M-20 · Correlated N+1 subqueries per user row — 5 extra queries per row in every user list
+
+**Layer:** Database
+**File:** `apps/backend/internal/store/postgres/users_postgres.go` lines 19–25
+**Category:** N+1 / performance / DoS amplification
+
+**What's wrong:** `userColumns` embeds five correlated subqueries per returned user row (`COUNT posts`, `COUNT likes`, `COUNT followers`, `COUNT following`, `EXISTS is_following`). `ListSuggestedUsers` returns up to 10 users → 50 inner queries per request. `ListFollowers`/`ListFollowing` fire up to `limit × 5` inner queries.
+
+**Fix:** Use the existing denormalized `users.follower_count` for followers. Add similar denormalized `post_count` and `like_count` columns for posts/likes on the users table, maintained within write transactions. The `is_following` subquery can remain as it is user-specific and not cacheable.
+
+---
+
+## M-21 · Correlated N+1 subqueries per post row — 3 extra queries per row in every post list
+
+**Layer:** Database
+**File:** `apps/backend/internal/store/postgres/posts_postgres.go` lines 19–25
+**Category:** N+1 / performance / DoS amplification
+
+**What's wrong:** `postColumns` embeds three correlated subqueries per returned post row (`COUNT likes`, `EXISTS liked`, `COUNT comments`). With `limit=50` this is 150 subqueries per page. `ListPopularPosts` additionally re-computes like count in its `ORDER BY`, meaning the count fires twice per row for that endpoint.
+
+**Fix:** Add denormalized `like_count` and `comment_count` columns on `posts`, maintained by triggers or within like/comment write transactions. The `liked` boolean can remain as a parameterized subquery.
+
+---
+
+## M-22 · `SearchHashtags` fires one correlated COUNT subquery per result row
+
+**Layer:** Database
+**File:** `apps/backend/internal/store/postgres/search_postgres.go` lines 50–77
+**Category:** N+1 / performance
+
+**What's wrong:** Up to 8 correlated `COUNT(*)` subqueries fire for every typeahead keystroke request.
+
+**Fix:** Add a `post_count int NOT NULL DEFAULT 0` column to `hashtags`, maintained by post creation/deletion transactions.
+
+---
+
+## M-23 · `notifications.type` has no CHECK constraint — arbitrary type values accepted
+
+**Layer:** Database
+**File:** `apps/database/migrations/000010_create_notifications.up.sql` line 7
+**Category:** Data integrity / input validation
+
+**What's wrong:** `type varchar(50) NOT NULL` — any string up to 50 characters can be inserted. The business rules specify exactly three valid values: `like`, `comment`, `follow`. An unrecognised type is never deleted by `DeleteByActorAndType`, leaking rows forever.
+
+**Fix:**
+```sql
+ALTER TABLE notifications ADD CONSTRAINT notifications_type_check CHECK (type IN ('like', 'comment', 'follow'));
+ALTER TABLE notifications ALTER COLUMN type TYPE varchar(20);
+```
+
+---
+
+## M-24 · Self-follow is not enforced at the database level — only blocked in the HTTP handler
+
+**Layer:** Database
+**File:** `apps/database/migrations/000008_create_follows.up.sql`
+**Category:** Business rule enforcement / data integrity
+
+**What's wrong:** The `follows` table has no `CHECK (follower_id <> followee_id)` constraint. Any path that bypasses the HTTP handler — a direct DB write, a future internal call, a Kafka consumer bug — can insert a self-follow row, causing the user to appear in their own feed query results.
+
+**Fix:**
+```sql
+ALTER TABLE follows ADD CONSTRAINT follows_no_self_follow CHECK (follower_id <> followee_id);
+```
+
+---
+
+## M-25 · `bigint` FK columns in `notifications` and `feed` reference `serial` (int4) PKs — type mismatch
+
+**Layer:** Database
+**Files:**
+- `apps/database/migrations/000010_create_notifications.up.sql`
+- `apps/database/migrations/000011_create_feed.up.sql`
+**Category:** Schema inconsistency / correctness
+
+**What's wrong:** `notifications.user_id`, `notifications.actor_id`, `feed.user_id`, `feed.post_id` are all `bigint`, while the referenced `users.id` and `posts.id` are `serial` (int4, 32-bit). PostgreSQL allows this via implicit cast but may cause index type mismatches under some plan conditions. `pagination.Cursor.ID` is typed as `int` — on a theoretical 32-bit host, notification IDs exceeding `MaxInt32` would silently truncate.
+
+**Fix:** Standardize on `integer` to match existing PKs (update `notifications` and `feed`), or migrate `users.id` and `posts.id` to `bigserial` for future-proofing. Update `pagination.Cursor.ID` from `int` to `int64` regardless.
+
+---
+
+## M-26 · Missing partial index for unread notification count — full user-notification range scan per request
+
+**Layer:** Database
+**File:** `apps/backend/internal/store/postgres/notifications_postgres.go` lines 72–78
+**Category:** Performance / missing index
+
+**What's wrong:** `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false`. The existing index `notifications_user_id_created_idx` narrows by `user_id` then scans all rows for that user to filter `read = false`. This runs on every authenticated page that shows the notification badge.
+
+**Fix:**
+```sql
+CREATE INDEX notifications_user_id_unread_idx ON notifications(user_id) WHERE read = false;
+```
+
+---
+
+# LOW
+
+---
+
+## L-01 · S3 blob delete errors silently discarded — orphaned blobs accumulate
+
+**Layer:** Backend
+**Files:**
+- `apps/backend/internal/uploads/handler.go` lines 73–75, 164–166
+- `apps/backend/internal/users/service.go` line 71
+**Category:** Resource leak / data retention
+
+**What's wrong:** `_ = h.Store.Delete(ctx, f)` and `_ = s.blobs.Delete(ctx, result.UnusedAvatar)`. S3 delete failures are silently dropped. No retry, no dead-letter queue, no periodic cleanup job.
+
+**Fix:** Log failures at WARN with the key. For post-deletion blob cleanup, consider an async retry queue or a periodic S3 reconciliation job cross-referencing DB filenames with S3 objects.
+
+---
+
+## L-02 · `Cache-Control: private` on an unauthenticated public upload endpoint
+
+**Layer:** Backend
+**File:** `apps/backend/internal/uploads/handler.go` line 139
+**Category:** Misconfiguration
+
+**What's wrong:** `Cache-Control: private, max-age=86400` on `GET /uploads/{filename}`, which has no authentication requirement. `private` tells CDNs not to cache, forcing every image request to the origin. Since filenames are content-addressed 32-char hex values (never reused), the appropriate directive is `public, immutable`.
+
+**Fix:** Change to `Cache-Control: public, max-age=86400, immutable`. Alternatively add authentication to file serving and keep `private` semantics.
+
+---
+
+## L-03 · `Content-Length` never set in `ServeFile` — size return value discarded
+
+**Layer:** Backend
+**File:** `apps/backend/internal/uploads/handler.go` lines 128–145
+**Category:** Correctness / HTTP compliance
+
+**What's wrong:** `rc, ct, _, err := h.Store.Get(...)` — the size value is discarded. `Content-Length` is never set. Browsers cannot show download progress; proxies cannot validate complete transfer.
+
+**Fix:**
+```go
+rc, ct, size, err := h.Store.Get(r.Context(), filename)
+if size > 0 {
+    w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+}
+```
+
+---
+
+## L-04 · `DeletePost` two-query pattern returns wrong error code under concurrent deletion
+
+**Layer:** Backend
+**File:** `apps/backend/internal/posts/service.go` lines 85–105
+**Category:** TOCTOU / correctness
+
+**What's wrong:** `DeletePost` makes two separate DB round-trips: delete attempt, then existence check. If the post's real owner deletes it concurrently between the two queries, `GetPost` returns not-found, and the requester (a different user who should get 403) receives 404.
+
+**Fix:** Encode the distinction in a single SQL CTE that atomically distinguishes "deleted", "forbidden", and "not found" outcomes.
+
+---
+
+## L-05 · `ListComments` `PostExists` check is not atomic with the list query
+
+**Layer:** Backend + Database
+**Files:**
+- `apps/backend/internal/comments/service.go` lines 47–55
+- `apps/backend/internal/store/postgres/comments_postgres.go` lines 81–118
+**Category:** TOCTOU / correctness
+
+**What's wrong:** `PostExists` and `ListComments` are two separate DB calls. If the post is deleted between them, `ListComments` returns an empty array (HTTP 200) instead of 404. A client receives a misleading success response.
+
+**Fix:** Remove `PostExists` and let `ListComments` detect missing post inline via a CTE that returns a `post_exists` flag, returning `ErrNotFound` if zero rows and post is absent.
+
+---
+
+## L-06 · Pending-upload count cap not atomically enforced — can be exceeded under concurrent requests
+
+**Layer:** Backend + Database
+**Files:**
+- `apps/backend/internal/store/postgres/uploads_postgres.go` lines 22–29
+- `apps/backend/internal/uploads/service.go` lines 28–35
+**Category:** Race condition / quota enforcement
+
+**What's wrong:** Under PostgreSQL `READ COMMITTED`, two concurrent transactions can both evaluate `count(*) < 20` as true before either commits. Both insert, momentarily exceeding the cap. Additionally, `DeleteExpiredUploads` and `CreateUpload` are separate DB calls with no wrapping transaction.
+
+**Fix:** Merge both operations into one transaction scoped to the requesting user. Add `FOR UPDATE` to the count subquery to serialize concurrent requests per user.
+
+---
+
+## L-07 · `MaxConns = 10` hardcoded — not configurable, exhausts PostgreSQL in multi-replica deployments
+
+**Layer:** Backend
+**File:** `apps/backend/internal/database/database.go` line 29
+**Category:** Operational / resource management
+
+**What's wrong:** With N replicas, the total connection count is `10N`. PostgreSQL's default `max_connections = 100`; ten replicas exhaust the entire limit.
+
+**Fix:**
+```go
+config.MaxConns = int32(env.Int("POSTGRES_MAX_CONNS", 10))
+config.MaxConnIdleTime = 5 * time.Minute
+```
+
+---
+
+## L-08 · `X-Request-ID` reflected in response and logs without length bound
+
+**Layer:** Backend
+**File:** `apps/backend/internal/httpx/middleware.go` lines 62–70
+**Category:** Input validation / log injection
+
+**What's wrong:** Client-supplied `X-Request-ID` is used verbatim as a log field with no maximum length check. A 64 KB value inflates every structured log line for that request.
+
+**Fix:**
+```go
+if id == "" || len(id) > 64 {
+    id = newRequestID()
+}
+```
+
+---
+
+## L-09 · `posts.filename` has no index — full table scan on avatar cleanup check
+
+**Layer:** Database
+**File:** `apps/backend/internal/store/postgres/users_postgres.go` lines 291–319
+**Category:** Missing index / performance
+
+**What's wrong:** Inside `UpdateUser`, a transaction executes `SELECT EXISTS (SELECT 1 FROM posts WHERE filename = $1 ...)`. `posts.filename` has no index. Every profile update triggers a sequential scan of the entire `posts` table inside a write transaction holding a row lock.
+
+**Fix:**
+```sql
+CREATE INDEX posts_filename_idx ON posts(filename) WHERE filename IS NOT NULL;
+```
+
+---
+
+## L-10 · Migration sequence gap — `000005` is missing
+
+**Layer:** Database
+**File:** `apps/database/migrations/` — `000004_create_hashtags` followed directly by `000006_create_comments`
+**Category:** Migration integrity
+
+**What's wrong:** If migration 000005 was applied in any environment and then deleted, `migrate down` past the gap or `migrate goto 5` produces an error leaving the environment unable to roll back.
+
+**Fix:** If 000005 was never applied anywhere, add a no-op placeholder pair (`000005_placeholder.up.sql` / `.down.sql` with only a SQL comment). If it was applied, audit the `schema_migrations` table and document the intentional removal.
+
+---
+
+## L-11 · Down migrations missing `IF EXISTS` — non-idempotent and fragile
+
+**Layer:** Database
+**Files:**
+- `apps/database/migrations/000008_create_follows.down.sql`
+- `apps/database/migrations/000009_create_outbox.down.sql`
+- `apps/database/migrations/000010_create_notifications.down.sql`
+- `apps/database/migrations/000011_create_feed.down.sql`
+**Category:** Migration reliability
+
+**What's wrong:** `DROP TABLE follows`, `DROP INDEX outbox_created_idx`, etc. — none use `IF EXISTS`. Running a down migration twice (possible after a failed partial rollback) errors and leaves the migration marked dirty, requiring manual intervention. Earlier migrations (000001–000004) correctly use `IF EXISTS`.
+
+**Fix:** Add `IF EXISTS` to every `DROP TABLE` and `DROP INDEX` in these four down migration files.
+
+---
+
+## L-12 · Celebrity feed path lacks maximum post age bound — unbounded historical scan
+
+**Layer:** Database
+**File:** `apps/backend/internal/store/postgres/feed_postgres.go` lines 26–53
+**Category:** Performance / unbounded query
+
+**What's wrong:** The celebrity branch of `ListFeed` scans all historical posts for followed celebrities with only a cursor bound — no minimum post age. A user following many celebrities with years of post history triggers a large scan on every feed page load.
+
+**Fix:** Add a maximum age filter consistent with `ListPopularPosts`:
+```sql
+AND posts.created > now() - interval '90 days'
+```
+
+---
+
+## L-13 · `users.follower_count` denormalized counter has no recovery mechanism
+
+**Layer:** Database
+**File:** `apps/database/migrations/000012_add_follower_count.up.sql`
+**Category:** Data integrity / denormalization drift
+
+**What's wrong:** All correctness depends on `FollowUser` and `UnfollowUser` atomically incrementing/decrementing `follower_count`. Any bypass (direct DB write, admin script, migration bug, partial commit) silently skews the counter. Because `follower_count > 10000` gates the celebrity fan-out path, drift causes incorrect feed behavior at scale with no visibility.
+
+**Fix:** Add a periodic reconciliation job:
+```sql
+UPDATE users SET follower_count = (SELECT count(*) FROM follows WHERE followee_id = users.id);
+```
+Or add a trigger on `follows` INSERT/DELETE to maintain the count independently of application code.
+
+---
+
+## L-14 · No audit trail for sensitive mutations — password changes, email changes, session revocations
+
+**Layer:** Database
+**Files:** `apps/backend/internal/store/postgres/users_postgres.go`, `sessions_postgres.go`
+**Category:** Missing audit trail / OWASP A09
+
+**What's wrong:** Password changes, email/username updates, and session revocations leave no durable record in the database. If an account is compromised and the attacker changes the password (revoking all other sessions), there is no database-level record of when the change occurred or from which session.
+
+**Fix:** Add an `audit_log` table and write a row (action type + timestamp, no credential values) inside the same transaction as password changes, email/username changes, and bulk session revocations.
+
+---
+
+## L-15 · Sequential integer PKs on `comments` exposed externally — no `public_id`
+
+**Layer:** Database
+**File:** `apps/database/migrations/000006_create_comments.up.sql`
+**Category:** Information disclosure / OWASP A01
+
+**What's wrong:** `comments.id` is a `serial` (auto-increment) integer. It is the only identifier, returned directly in API responses and stored as `entity_id` in notifications. An attacker who receives any comment ID can infer the total comment count and iterate all comments by ID.
+
+**Fix:** Add `public_id uuid UNIQUE NOT NULL DEFAULT gen_random_uuid()` to `comments` and use it as the external identifier in API responses, outbox payloads, and notification `entity_id`.
+
+---
+
+## L-16 · Theme cookie written via `document.cookie` without `Secure` flag
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/lib/theme.ts` line 17
+**Category:** Cookie security
+
+**What's wrong:** `document.cookie = \`theme=${value}; path=/; max-age=31536000; samesite=lax\`` — no `Secure` attribute. Transmitted over plain HTTP.
+
+**Fix:**
+```ts
+const secure = location.protocol === 'https:' ? '; Secure' : '';
+document.cookie = `theme=${value}; path=/; max-age=31536000; samesite=lax${secure}`;
+```
+
+---
+
+## L-17 · Theme written to `localStorage` — redundant and XSS-accessible
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/lib/theme.ts` line 19
+**Category:** Data exposure
+
+**What's wrong:** `localStorage.setItem('theme', value)` — the anti-FOUC script in `app.html` reads from `document.cookie`, not `localStorage`. The `localStorage` write is dead code that normalizes a pattern accessible to any XSS payload.
+
+**Fix:** Remove the `localStorage.setItem('theme', value)` call entirely.
+
+---
+
+## L-18 · Login form `minlength="4"` contradicts the 8-character password policy
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/routes/(auth)/login/+page.svelte` line 79
+**Category:** Form validation inconsistency
+
+**What's wrong:** The password policy requires a minimum of 8 characters (enforced by the backend, stated in `docs/security.md`). The login form has `minlength="4"` while the signup form correctly uses `minlength="8"`.
+
+**Fix:** Change to `minlength="8"` or remove `minlength` from the login form entirely (users may have pre-policy shorter passwords).
+
+---
+
+## L-19 · HTTP status codes leaked to UI via pagination error state
+
+**Layer:** Frontend
+**Files:**
+- `apps/frontend/src/lib/utils/clientFetch.ts` lines 2–3
+- `apps/frontend/src/lib/createPagination.svelte.ts` line 33
+**Category:** Information disclosure
+
+**What's wrong:** `fetchJson()` throws `new Error(\`HTTP ${res.status}\`)`. This message is stored in reactive `error` state and rendered directly in the UI (e.g., `feed/+page.svelte` line 45). Users see "HTTP 429", "HTTP 503", "HTTP 403" — status codes that confirm rate limit triggers, service unavailability, and forbidden access patterns.
+
+**Fix:**
+```ts
+if (res.status === 401) throw new Error('Please sign in to continue.');
+if (res.status === 429) throw new Error('Too many requests. Please try again later.');
+if (!res.ok) throw new Error('Could not load more items. Please try again.');
+```
+
+---
+
+## L-20 · CSP missing `frame-ancestors` directive — relies solely on deprecated `X-Frame-Options`
+
+**Layer:** Frontend
+**File:** `apps/frontend/svelte.config.js` lines 9–22
+**Category:** CSP / clickjacking
+
+**What's wrong:** Modern browsers give precedence to CSP `frame-ancestors` over `X-Frame-Options` when both are present. Without `frame-ancestors` in CSP, clickjacking protection depends entirely on `X-Frame-Options`, which is deprecated in the CSP3 spec.
+
+**Fix:** Add `'frame-ancestors': ['self']` to the CSP directives.
+
+---
+
+## L-21 · Missing `Permissions-Policy` header — unrestricted access to browser feature APIs
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/hooks.server.ts` lines 3–9
+**Category:** Security headers / OWASP A05
+
+**What's wrong:** No `Permissions-Policy` header. An XSS payload in this origin would have access to any feature API (camera, microphone, geolocation) the user has previously granted.
+
+**Fix:**
+```ts
+res.headers.set(
+  'Permissions-Policy',
+  'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()'
+);
+```
+
+---
+
+## L-22 · Image proxy missing `Cross-Origin-Resource-Policy` header
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/routes/uploads/[key]/+server.ts` lines 23–29
+**Category:** Security headers
+
+**What's wrong:** The image proxy does not set `Cross-Origin-Resource-Policy`. Without CORP, images can be loaded by cross-origin pages, enabling Spectre-class side-channel reads of pixel data.
+
+**Fix:**
+```ts
+headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+```
+
+---
+
+## L-23 · `suggest` endpoint errors are double-encoded JSON strings
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/routes/(app)/suggest/+server.ts` lines 15–18
+**Category:** Error handling / information disclosure
+
+**What's wrong:** `throw error(400, JSON.stringify({ message: '...' }))` — `error()` expects a plain string. The resulting error message is the raw JSON string `{"message":"type must be users or hashtags"}`, leaking internal field names.
+
+**Fix:**
+```ts
+throw error(400, 'Invalid request type.');
+throw error(400, 'Search query must be 1–50 characters.');
+```
+
+---
+
+## L-24 · User email serialized into browser hydration payload for all authenticated pages
+
+**Layer:** Frontend
+**Files:**
+- `apps/frontend/src/routes/(app)/+layout.server.ts` lines 7–13
+- `apps/frontend/src/lib/utils/mappers.ts` line 17
+**Category:** Sensitive data exposure
+
+**What's wrong:** `getCurrent()` returns a `User` object including `email`. This is returned from the layout server and SvelteKit serializes it into the `window.__sveltekit_*` hydration payload. The email is in every authenticated page's HTML source — readable by crawlers, browser extensions, and shared browser profiles.
+
+**Fix:**
+```ts
+const { email: _, ...currentUser } = await getCurrent(client);
+return { currentUser, unreadCount };
+```
+
+---
+
+## L-25 · Signup form `name` field has no `maxlength` or server-side length validation
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/routes/(auth)/signup/+page.svelte` lines 57–66
+**Category:** Input validation
+
+**What's wrong:** The `name` input has no `maxlength` HTML attribute (unlike `username: maxlength="30"`, `password: maxlength="30"`). The server action trims the name but performs no length check before forwarding to the backend.
+
+**Fix:** Add `maxlength="100"` to the input and validate in the server action:
+```ts
+if (name.length > 100) return fail(400, { error: 'Name must be 100 characters or fewer.' });
+```
+
+---
+
+## L-26 · `broker` and `connect` excluded from deployment rollout restart
+
+**Layer:** Infrastructure
+**File:** `scripts/deploy.sh` lines 19–28
+**Category:** Operational
+
+**What's wrong:** `ROLL_OUT_DATABASE` and `ROLL_OUT_REST` do not include `statefulset/broker` or `deployment/connect`. After rebuilding images, these workloads continue running their old versions silently with no error or warning.
+
+**Fix:** Add `statefulset/broker` and `deployment/connect` to the rollout list (or a separate group that waits for broker readiness before restarting connect).
+
+---
+
+## L-27 · `connect` Deployment missing `startupProbe` — liveness probe may kill slow-starting pod
+
+**Layer:** Infrastructure
+**File:** `deploy/broker.yaml` lines 354–367
+**Category:** Availability
+
+**What's wrong:** `connect` has `readinessProbe` and `livenessProbe` but no `startupProbe`. On startup it must establish PostgreSQL CDC, Kafka consumer group, and Meilisearch HTTP connections. If this takes more than `10 + (6 × 10) = 70 seconds`, the liveness probe kills the pod and triggers a crash loop. All other services use `startupProbe` with `failureThreshold: 30, periodSeconds: 2` (60-second window).
+
+**Fix:**
+```yaml
+startupProbe:
+  httpGet:
+    path: /ready
+    port: 4195
+  failureThreshold: 30
+  periodSeconds: 2
+```
+
+---
+
+## L-28 · Redpanda `auto_create_topics_enabled=true` — any pod can create arbitrary topics
+
+**Layer:** Infrastructure
+**File:** `deploy/broker.yaml` line 213
+**Category:** Attack surface reduction
+
+**What's wrong:** Any Kafka client that can reach port 9092 (i.e., every pod — no NetworkPolicy) can create an arbitrarily named topic by producing to it. A compromised pod could flood the broker with topics (storage DoS) or create topics that interfere with existing consumer groups.
+
+**Fix:** Remove `--set=redpanda.auto_create_topics_enabled=true`. Pre-create required topics (`entity-changes`) with explicit partition and replication configurations via an init container or Job.
+
+---
+
+## L-29 · Redpanda Pandaproxy (8082) and Schema Registry (8081) active but unused
+
+**Layer:** Infrastructure
+**File:** `deploy/broker.yaml` lines 207–220
+**Category:** Attack surface reduction
+
+**What's wrong:** Redpanda starts with `--pandaproxy-addr=0.0.0.0:8082` and `--schema-registry-addr=0.0.0.0:8081`. No other workload uses these APIs. Both ports are actively listening inside the pod and reachable from any pod (no NetworkPolicy). The Pandaproxy HTTP Kafka proxy and Schema Registry APIs provide Kafka management capabilities without authentication.
+
+**Fix:** Remove `--pandaproxy-addr` and `--schema-registry-addr` from the Redpanda startup flags and the corresponding `containerPort` entries.
+
+---
+
+## L-30 · Frontend Dockerfile `phasma` user created without explicit UID — drift risk with base image upgrades
+
+**Layer:** Infrastructure
+**File:** `apps/frontend/Dockerfile` line 10
+**Category:** Container hardening
+
+**What's wrong:** `adduser -S -G phasma phasma` without specifying a UID. Alpine assigns the next available UID from 1000 upward. The `frontend.yaml` pod spec hardcodes `runAsUser: 1000`. If the base image introduces a new system user before this step, `phasma` receives a different UID and file permissions break.
+
+**Fix:**
+```dockerfile
+adduser -S -u 1000 -G phasma phasma
+```
+
+---
+
+## L-31 · Integration test script uses hardcoded password `phasma` and `sslmode=disable`
+
+**Layer:** Infrastructure
+**File:** `scripts/test-backend-integration.sh` lines 16, 41, 45
+**Category:** Test security hygiene
+
+**What's wrong:** Hardcoded password `phasma` and `sslmode=disable` normalize insecure patterns. If this pattern is adapted for a staging environment, insecure defaults carry forward.
+
+**Fix:** Generate a random password at script startup (consistent with `deploy.sh`'s `random_secret` function). Pass it through the local variable.
+
+---
+
+## L-32 · Stale `deploy.sh` deletion of non-existent PVC `image-storage-pvc`
+
+**Layer:** Infrastructure
+**File:** `scripts/deploy.sh` line 164
+**Category:** Stale artifact / operational confusion
+
+**What's wrong:** `kubectl -n "${NS}" delete pvc image-storage-pvc --ignore-not-found` — no manifest defines this PVC. Stale artifact from a prior design (images on PVC vs. SeaweedFS). Misleads operators during incident response.
+
+**Fix:** Remove line 164 from `scripts/deploy.sh`.
+
+---
+
+# INFO
+
+---
+
+## I-01 · Username path parameter not validated before DB query
+
+**Layer:** Backend
+**File:** `apps/backend/internal/users/handler.go` lines 88–107
+**Category:** Input validation (defense-in-depth)
+
+The query is fully parameterized; no injection risk. A malformed username returns not-found with minimal overhead. Adding format validation returns 400 fast and is consistent with other identifier validation. Not an active vulnerability.
+
+---
+
+## I-02 · Users can like their own posts — business rule unspecified, notification suppressed but count inflated
+
+**Layer:** Backend
+**File:** `apps/backend/internal/posts/handler.go` lines 162–184
+**Category:** Business logic
+
+Self-liking is permitted. The notification consumer correctly suppresses self-like notifications, but the like row is inserted and the like count incremented, allowing like-count inflation. Confirm with product whether self-likes should be blocked.
+
+---
+
+## I-03 · Post authors cannot delete comments on their own posts
+
+**Layer:** Backend
+**File:** `apps/backend/internal/store/postgres/comments_postgres.go` lines 130–134
+**Category:** Business logic / moderation
+
+Only comment authors can delete their comments. Post authors have no moderation capability. Most social platforms allow post authors to moderate their comment section. Clarify with product.
+
+---
+
+## I-04 · `decoyHash` init failure silently loses timing protection against user enumeration
+
+**Layer:** Backend
+**File:** `apps/backend/internal/auth/password.go` line 63
+**Category:** Cryptographic timing / hardening
+
+If `HashPassword` fails at package init, `decoyHash` is `""`. `VerifyPassword(password, "")` returns almost instantly (no Argon2 computation), re-introducing a timing oracle for user enumeration. `crypto/rand` failure on modern Linux is near-impossible, but the silent failure is worth hardening.
+
+**Fix:**
+```go
+func init() {
+    var err error
+    decoyHash, err = HashPassword("decoy password...", DefaultPasswordParams)
+    if err != nil {
+        panic(fmt.Sprintf("auth: failed to generate decoy hash: %v", err))
+    }
+}
+```
+
+---
+
+## I-05 · Broker CPU request in manifest (200m) does not match documentation (250m)
+
+**Layer:** Infrastructure
+**Files:** `docs/infrastructure.md` line 87; `deploy/broker.yaml` line 228
+**Category:** Doc/config inconsistency
+
+Decide on the correct value and update both to match.
+
+---
+
+## I-06 · All workloads run at a single replica — rolling updates cause brief unavailability
+
+**Layer:** Infrastructure
+**File:** All manifests
+**Category:** Availability (design decision)
+
+Acknowledged in existing comments. For production, scale backend and frontend to ≥ 2 replicas and enable anti-affinity.
+
+---
+
+## I-07 · No pod anti-affinity rules — all replicas can co-locate on the same node
+
+**Layer:** Infrastructure
+**File:** All Deployment and StatefulSet files
+**Category:** Availability (design decision)
+
+When replicas scale beyond 1, all could land on the same node. Add `preferredDuringSchedulingIgnoredDuringExecution` anti-affinity keyed on `app: phasma` and `topologyKey: kubernetes.io/hostname`.
+
+---
+
+## I-08 · `comment` action returns HTTP 200 with `success: false` on validation failure
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/routes/(app)/posts/[publicId]/+page.server.ts` lines 40–42
+**Category:** Logic bug
+
+Should use `fail(400, { error: '...' })` so SvelteKit form enhancement can distinguish success from failure in `result.type`. Currently a 400-level failure arrives as `result.type === 'success'` with `success: false`.
+
+---
+
+## I-09 · `loadMoreComments` silently swallows errors
+
+**Layer:** Frontend
+**File:** `apps/frontend/src/lib/components/PostCard.svelte` lines 59–71
+**Category:** Logic bug
+
+`try/finally` with no `catch`. Fetch or JSON-parse errors for comment pagination are silently dropped, no `commentLoadError` state updated.
+
+---
+
+## I-10 · No row-level security — single DB role with full row access to all tables
+
+**Layer:** Database
+**File:** All migrations
+**Category:** Defense-in-depth
+
+The application connects as a single user with full read/write access. Any process with the same credentials can read all user emails, hashed passwords, and session HMAC hashes. Define a least-privilege application role with only the permissions it needs.
+
+---
+
+## I-11 · `data-model.md` documents `feed` FK columns as `integer`; migrations use `bigint`
+
+**Layer:** Database
+**Files:** `docs/data-model.md` line 128; `apps/database/migrations/000011_create_feed.up.sql`
+**Category:** Documentation inconsistency
+
+Correct the documentation to reflect actual column types.
+
+---
+
+## I-12 · PostgreSQL container intentionally omits `readOnlyRootFilesystem` — documented
+
+**Layer:** Infrastructure
+**File:** `deploy/database.yaml` lines 55–59
+**Category:** Container hardening (intentional)
+
+PostgreSQL requires write access to `PGDATA`. The omission is correct and documented in `docs/infrastructure.md`. Add an inline comment in `database.yaml` to make the intentional omission clear to future reviewers.
+
+---
+
+## I-13 · `usernameExists` TOCTOU in `GetPosts`, `GetLikedPosts`, `ListFollowers`, `ListFollowing`
+
+**Layer:** Backend
+**Files:** `apps/backend/internal/store/postgres/posts_postgres.go` lines 124–138, 140–156; `apps/backend/internal/store/postgres/users_postgres.go` lines 89–106, 108–128
+**Category:** TOCTOU / correctness
+
+`GetPosts`, `GetLikedPosts`, `ListFollowers`, and `ListFollowing` all call `usernameExists` as a separate DB query before the main list query. If the target user account is deleted between the two queries, the main query returns an empty result set (HTTP 200, empty list) instead of 404. This is the same pattern as L-05 (`ListComments`), but across four more endpoints. Not a security issue — the worst case is a misleading empty list.
+
+**Fix:** Merge the existence check into the main query via a CTE or an `EXISTS` condition on the result, consistent with the single-query approach already used in `GetPost`.
+
+---
+
+## I-15 · Outbox rows deleted unconditionally after 7 days regardless of relay consumption
+
+**Layer:** Backend
+**File:** `apps/backend/cmd/api/main.go` lines 293–295
+**Category:** Data loss / operational reliability
+
+`sweepExpiredOutbox` deletes all outbox rows older than 7 days without checking whether Redpanda Connect has already consumed and published them. If the `connect` deployment (the relay between the outbox table and Kafka) is down for more than 7 days — due to a crash, a bad config, or an unnoticed issue — those outbox events are permanently discarded without any alert. The corresponding feed entries, search index updates, and notification side effects are silently lost.
+
+**Fix:** Options in order of preference: (1) Track a `consumed_at` timestamp or `published bool` column on the outbox table and only delete rows where `published = true`; (2) Log a warning when the hourly sweep deletes rows that have not been flagged as consumed; (3) Shorten the sweep window to 24 hours and add monitoring on the Redpanda Connect lag.
+
+---
+
+## I-14 · `CreatePost` issues a separate `SELECT created FROM posts` inside the transaction — unnecessary round-trip
+
+**Layer:** Backend
+**File:** `apps/backend/internal/store/postgres/posts_postgres.go` lines 65–67
+**Category:** Performance / correctness
+
+After `INSERT INTO posts ... RETURNING id, public_id`, a second query `SELECT created FROM posts WHERE id = $1` is issued in the same transaction to retrieve the `created` timestamp. The `RETURNING` clause of the INSERT could return all three columns in one round-trip: `RETURNING id, public_id, created`. The extra query adds latency inside a write transaction that holds locks on the `users` row.
+
+**Fix:**
+```go
+if err := tx.QueryRow(ctx, `INSERT INTO posts (user_id, filename, description)
+    VALUES ($1, $2, $3) RETURNING id, public_id, created`,
+    userID, filename, description).Scan(&postID, &publicID, &createdAt); err != nil {
+    return err
+}
+```
+
+---
+
+# MEDIUM (additional)
+
+---
+
+## M-27 · No limit on number of hashtags extracted per post — DoS amplification in `CreatePost` transaction
+
+**Layer:** Backend
+**Files:** `apps/backend/internal/posts/extract.go` line 12; `apps/backend/internal/store/postgres/posts_postgres.go` lines 70–111
+**Category:** Input validation / DoS amplification
+
+**What's wrong:** `ExtractHashtags` calls `FindAllStringSubmatch(description, -1)` with unlimited matches. A 1000-rune description can contain approximately 166 distinct hashtags (e.g., repeating `#a #b #c ...`). For each hashtag, `CreatePost` executes four SQL statements inside the same transaction:
+
+1. `INSERT INTO hashtags ... ON CONFLICT DO NOTHING`
+2. `INSERT INTO post_hashtags ... ON CONFLICT DO NOTHING`
+3. `SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)` (correlated subquery)
+4. `INSERT INTO outbox ...`
+
+With 166 hashtags, this produces ~664 extra DB operations per authenticated `POST /posts` request — all within a single long-running transaction that holds locks on the `users` row. The mutation rate limit allows 30-burst + 1/s per user, giving an attacker sustained Argon2-free DB amplification. The transaction also holds the user row lock for the full duration, serializing other writes for that user.
+
+**Fix:** Cap the number of hashtags processed per post (e.g., 20):
+```go
+const maxHashtags = 20
+
+func ExtractHashtags(description string) []string {
+    matches := hashtagPattern.FindAllStringSubmatch(description, -1)
+    seen := make(map[string]bool)
+    var tags []string
+    for _, m := range matches {
+        if len(tags) >= maxHashtags {
+            break
+        }
+        tag := strings.ToLower(m[1])
+        if !seen[tag] {
+            seen[tag] = true
+            tags = append(tags, tag)
+        }
+    }
+    return tags
+}
+```
+
+---
+
+# LOW (additional)
+
+---
+
+## L-34 · `ListPopularPosts` executes two correlated likes subqueries per result row
+
+**Layer:** Backend
+**File:** `apps/backend/internal/store/postgres/posts_postgres.go` lines 471–479
+**Category:** Performance / N+1
+
+**What's wrong:** `postColumns` already computes `(SELECT count(*) FROM likes WHERE post_id = posts.id) AS likes`. The `ListPopularPosts` query then adds a second, identical correlated subquery in the ORDER BY clause:
+
+```sql
+ORDER BY (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) DESC
+```
+
+PostgreSQL executes both subqueries independently, doubling the work on the `likes` table for every row. With a LIMIT of 20, that is 40 correlated subqueries against `likes` instead of 20.
+
+**Fix:** Reference the column alias from the SELECT:
+```sql
+ORDER BY likes DESC, posts.created DESC
+```
+
+---
+
+## L-35 · `Notification.ID`, `Notification.UserID`, `Notification.ActorID` are sequential integers in API JSON and URL paths
+
+**Layer:** Backend
+**Files:** `apps/backend/internal/notifications/domain.go` lines 6–9; `apps/backend/internal/notifications/handler.go` lines 68–73
+**Category:** Information disclosure / OWASP A01
+
+**What's wrong:** The `Notification` struct serializes `ID int64 \`json:"id"\``, `UserID int64 \`json:"userId"\``, and `ActorID int64 \`json:"actorId"\`` — all sequential bigserial/integer primary keys — into every `GET /notifications` response. Additionally, `PATCH /notifications/{id}` accepts the sequential integer ID directly in the URL path. This leaks:
+
+- `ID`: total notification count and creation order across all users.
+- `UserID`: the recipient's sequential user ID (redundant with the current session, but confirms the mapping).
+- `ActorID`: the actor's sequential user ID, linking username to internal integer across responses.
+
+The `MarkRead` URL `PATCH /notifications/12345` reveals that at least 12,345 notification rows exist in the system. While ownership is checked (`WHERE id = $1 AND user_id = $2`), the integer ID itself is an oracle.
+
+**Fix:**
+1. Add a `public_id uuid DEFAULT gen_random_uuid()` column to `notifications` and use it in the list response and the `MarkRead` URL path.
+2. Remove `json:"userId"` and `json:"actorId"` from the `Notification` struct — neither integer is needed by the frontend (the actor username and entity data are sufficient).
+
+---
+
+## L-33 · `Post.ID`, `Post.UserID`, `Comment.PostID`, `Comment.UserID` expose sequential internal IDs in API responses
+
+**Layer:** Backend
+**Files:** `apps/backend/internal/posts/handler.go` (Post struct, lines 14–27); `apps/backend/internal/comments/handler.go` (Comment struct, lines 14–27)
+**Category:** Information disclosure / OWASP A01
+
+**What's wrong:** The `Post` struct has `ID int \`json:"id"\`` alongside `PublicID string \`json:"publicId"\``. The `Comment` struct has `ID int \`json:"id"\``, `PostID int \`json:"postId"\``, and `UserID int \`json:"userId"\`` — all sequential integers. These are returned in every API response:
+
+- `Post.ID` leaks the total post count and post creation order.
+- `Post.UserID` leaks the internal sequential user ID for the post author.
+- `Comment.PostID` maps a known comment to the internal sequential post ID, linking it to the public UUID.
+- `Comment.UserID` leaks the internal sequential user ID for the comment author.
+
+An observer who receives any response can infer user registration order, post creation order, and the comment count for any post with comments. L-15 covers `comments.id` lacking a `public_id` — this finding extends the scope to the other integer fields.
+
+**Fix:**
+1. Remove `Post.ID` from the JSON response (it is unused by the frontend; pagination uses `Post.PublicID` and `Post.Created`). Add `json:"-"` to the `ID` field if it must remain in the struct for internal use.
+2. Remove `Comment.PostID` and `Comment.UserID` from the JSON response — neither is used for routing (the post UUID is already in the URL). Use `json:"-"` on both.
+3. Once L-15 is addressed (adding `public_id` to comments), use the UUID as `Comment.ID`'s JSON value rather than the sequential integer.
+
+---
+
+# Cross-Layer Issue Index
+
+Issues that span multiple layers are referenced below:
+
+| Finding | Backend | Frontend | Infra | Database |
+|---|---|---|---|---|
+| Outbox JSON `%q` encoding | H-01 | — | — | H-01 |
+| `ListComments` TOCTOU | L-05 | — | — | L-05 |
+| Upload count race | L-06 | — | — | L-06 |
+| Missing HSTS | M-02 | M-03 | — | — |
+| TLS not enforced | — | H-04 | H-06 | M-15 |
+| TOCTOU list endpoints | I-13 | — | — | L-05 |
+| Sequential IDs exposed | L-33 | — | — | L-15 |
+
+---
+
+*End of audit — 89 findings across 4 layers.*

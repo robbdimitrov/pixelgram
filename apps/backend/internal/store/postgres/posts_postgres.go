@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -66,20 +64,26 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			return err
 		}
 
-		// Build hashtag array for payload.
-		hashtagsJSON := "["
-		for i, tag := range tags {
-			if i > 0 {
-				hashtagsJSON += ","
-			}
-			hashtagsJSON += fmt.Sprintf("%q", tag)
+		hashtags := tags
+		if hashtags == nil {
+			hashtags = []string{}
 		}
-		hashtagsJSON += "]"
 
-		postPayload := fmt.Sprintf(
-			`{"table":"posts","op":"upsert","id":%d,"post_id":%q,"author_id":%q,"description":%q,"username":%q,"hashtags":%s,"created":%q,"follower_count":%d}`,
-			postID, publicID, userID, descStr, username, hashtagsJSON, createdAt.UTC().Format(time.RFC3339Nano), followerCount,
-		)
+		postPayload, err := marshalOutboxPayload(entityPostUpsertPayload{
+			Table:         "posts",
+			Op:            "upsert",
+			ID:            int64(postID),
+			PostID:        publicID,
+			AuthorID:      userID,
+			Description:   descStr,
+			Username:      username,
+			Hashtags:      hashtags,
+			Created:       createdAt.UTC().Format(time.RFC3339Nano),
+			FollowerCount: followerCount,
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", postPayload); err != nil {
 			return err
@@ -100,10 +104,15 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 				`SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)`, tag).Scan(&postCount); err != nil {
 				return err
 			}
-			hashtagPayload := fmt.Sprintf(
-				`{"table":"hashtags","op":"upsert","name":%q,"post_count":%d}`,
-				tag, postCount,
-			)
+			hashtagPayload, err := marshalOutboxPayload(entityHashtagUpsertPayload{
+				Table:     "hashtags",
+				Op:        "upsert",
+				Name:      tag,
+				PostCount: postCount,
+			})
+			if err != nil {
+				return err
+			}
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", hashtagPayload); err != nil {
 				return err
@@ -211,7 +220,7 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		if err != nil {
 			return err
 		}
-		var commentIDs []int64
+		commentIDs := []int64{}
 		for commentRows.Next() {
 			var cid int64
 			if err := commentRows.Scan(&cid); err != nil {
@@ -233,19 +242,18 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 
-		commentIDsJSON := "["
-		for i, cid := range commentIDs {
-			if i > 0 {
-				commentIDsJSON += ","
-			}
-			commentIDsJSON += strconv.FormatInt(cid, 10)
+		postPayload, err := marshalOutboxPayload(entityPostDeletePayload{
+			Table:      "posts",
+			Op:         "delete",
+			ID:         int64(postDBID),
+			PostID:     postID,
+			AuthorID:   userID,
+			Filename:   filename,
+			CommentIDs: commentIDs,
+		})
+		if err != nil {
+			return err
 		}
-		commentIDsJSON += "]"
-
-		postPayload := fmt.Sprintf(
-			`{"table":"posts","op":"delete","id":%d,"post_id":%q,"author_id":%q,"filename":%q,"comment_ids":%s}`,
-			postDBID, postID, userID, filename, commentIDsJSON,
-		)
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", postPayload); err != nil {
 			return err
@@ -257,10 +265,15 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 				`SELECT count(*) FROM post_hashtags WHERE hashtag_id = (SELECT id FROM hashtags WHERE name = $1)`, tag).Scan(&postCount); err != nil {
 				return err
 			}
-			hashtagPayload := fmt.Sprintf(
-				`{"table":"hashtags","op":"upsert","name":%q,"post_count":%d}`,
-				tag, postCount,
-			)
+			hashtagPayload, err := marshalOutboxPayload(entityHashtagUpsertPayload{
+				Table:     "hashtags",
+				Op:        "upsert",
+				Name:      tag,
+				PostCount: postCount,
+			})
+			if err != nil {
+				return err
+			}
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "entity-changes", hashtagPayload); err != nil {
 				return err
@@ -319,10 +332,15 @@ func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) er
 			return err
 		}
 
-		payload := fmt.Sprintf(
-			`{"op":"like","post_id":%q,"actor_id":%q,"recipient_id":%q}`,
-			postID, userID, recipientID,
-		)
+		payload, err := marshalOutboxPayload(activityPayload{
+			Op:          "like",
+			PostID:      postID,
+			ActorID:     userID,
+			RecipientID: recipientID,
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
 			return err
@@ -369,10 +387,15 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 
-		payload := fmt.Sprintf(
-			`{"op":"unlike","post_id":%q,"actor_id":%q,"recipient_id":%q}`,
-			postID, userID, recipientID,
-		)
+		payload, err := marshalOutboxPayload(activityPayload{
+			Op:          "unlike",
+			PostID:      postID,
+			ActorID:     userID,
+			RecipientID: recipientID,
+		})
+		if err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO outbox (topic, payload) VALUES ($1, $2)`, "activity", payload); err != nil {
 			return err
