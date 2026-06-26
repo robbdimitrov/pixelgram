@@ -46,6 +46,7 @@ func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pa
 		AND NOT EXISTS (
 		  SELECT 1 FROM feed WHERE feed.user_id = $1 AND feed.post_id = posts.id
 		)
+		AND posts.created > now() - interval '90 days'
 		AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
 
 		ORDER BY cursor_created DESC, id DESC LIMIT $5`,

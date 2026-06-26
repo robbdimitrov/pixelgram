@@ -1,2 +1,2 @@
-DROP INDEX outbox_created_idx;
-DROP TABLE outbox;
+DROP INDEX IF EXISTS outbox_created_idx;
+DROP TABLE IF EXISTS outbox;
