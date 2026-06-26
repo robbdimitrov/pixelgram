@@ -14,5 +14,6 @@ RUN npm ci --omit=dev
 USER phasma
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV BODY_SIZE_LIMIT=1100K
 EXPOSE 8080
 CMD ["node", "build"]

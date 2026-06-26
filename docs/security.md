@@ -58,6 +58,10 @@
 
 ## Upload Security
 
+- Frontend upload and avatar actions reject files over 1 MB and MIME types
+  outside JPEG, PNG, GIF, and WEBP before proxying bytes to the backend. These
+  checks are usability and load-shedding controls; the backend remains the
+  authoritative validator.
 - File content is validated against magic bytes (not extension or MIME header): JPEG `\xff\xd8\xff`, PNG `\x89PNG\r\n\x1a\n`, GIF `GIF8`, WEBP `RIFF....WEBP`.
 - Multipart read is bounded to 1 MB + 1 byte; files exceeding 1 MB are rejected before any further processing.
 - All accepted images are decoded and re-encoded to JPEG at 90% quality. Re-encoding strips embedded metadata (EXIF, GPS coordinates, ICC profiles) and eliminates polyglot payloads that pass the magic byte check. Re-encoded output is rejected if it exceeds 1 MB.

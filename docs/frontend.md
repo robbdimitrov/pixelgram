@@ -82,6 +82,14 @@ Browser fetches for pagination: `GET /feed`, `GET /@{username}`, `GET /posts/{id
 - Streams response body directly from backend without buffering.
 - Forwards: `content-type`, `content-length`, `etag`, `last-modified`, `cache-control`.
 
+## Upload Actions
+
+Post image and avatar form actions validate that submitted files are JPEG, PNG,
+GIF, or WEBP images and no larger than 1 MB before forwarding them to the
+backend. The production SvelteKit server sets `BODY_SIZE_LIMIT=1100K` so the
+900 KB client-side resize target plus multipart overhead reaches the action
+handler for explicit validation.
+
 ## Key Frontend Routes (API Endpoints)
 
 | Path | Method | Handler | Backend call |

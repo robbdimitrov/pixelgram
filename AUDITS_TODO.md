@@ -23,11 +23,11 @@
 | Severity | Count |
 |---|---|
 | CRITICAL | 1 |
-| HIGH | 4 |
-| MEDIUM | 26 |
+| HIGH | 3 |
+| MEDIUM | 25 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **81** |
+| **Total** | **79** |
 
 ---
 
@@ -41,7 +41,9 @@
 | H-04 | Set the frontend session cookie `Secure` flag explicitly and added `NODE_ENV=production` to the frontend runner image. |
 | H-05 | Pinned Dragonfly, Redpanda, Redpanda Connect, Meilisearch, and SeaweedFS image tags in manifests and local kind image preload commands; verified all pinned tags resolve. |
 | H-09 | Made the migration image and backend init container run explicitly as uid/gid 65532. |
+| H-10 | Set frontend `BODY_SIZE_LIMIT=1100K` and added 1 MB server-side file size checks before forwarding image uploads. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
+| M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
 
 ---
@@ -116,28 +118,6 @@
 - connect → broker:9092
 - connect → search:7700
 - connect → storage:8333
-
----
-
-## H-10 · `BODY_SIZE_LIMIT` default (512 KB) is less than the upload target (900 KB)
-
-**Layer:** Frontend
-**Files:**
-- `apps/frontend/src/routes/(app)/upload/+page.server.ts` line 9
-- `apps/frontend/src/routes/(app)/settings/profile/+page.server.ts` line 15
-**Category:** DoS / input validation mismatch
-
-**What's wrong:** The adapter-node's built-in body size limit defaults to `512K` (`BODY_SIZE_LIMIT` env var). The client-side image resizer targets `900 KB` (`RESIZED_TARGET_BYTES = 900 * 1024`). Files in the range 512 KB–900 KB are rejected by the Node server with a generic HTTP 413 before the action handler is invoked. Additionally, neither upload action validates file size server-side before forwarding to the backend, so a raw API client can bypass client-side resizing entirely.
-
-**Fix:**
-1. Set `BODY_SIZE_LIMIT=1100K` in the Dockerfile or Kubernetes deployment.
-2. Add server-side size validation in both upload actions before forwarding:
-```ts
-if (file.size > 1024 * 1024) {
-  return fail(413, { error: 'Image must be smaller than 1 MB.' });
-}
-```
-3. Document `BODY_SIZE_LIMIT` as a required deployment environment variable.
 
 ---
 
@@ -250,26 +230,6 @@ res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomain
 **Fix:** Remove `unsafe-inline` from `style-src`:
 ```js
 'style-src': ['self']
-```
-
----
-
-## M-08 · No MIME type validation on server-side file receipt in upload actions
-
-**Layer:** Frontend
-**Files:**
-- `apps/frontend/src/routes/(app)/upload/+page.server.ts` lines 10–15
-- `apps/frontend/src/routes/(app)/settings/profile/+page.server.ts` lines 21–32
-**Category:** Input validation / OWASP A03
-
-**What's wrong:** Both upload action handlers check only `file instanceof File && file.size > 0`. A raw multipart POST can bypass the browser's `accept="image/jpeg,..."` restriction and submit arbitrary binary content (a PDF, a large binary, a crafted file) to the SvelteKit layer.
-
-**Fix:**
-```ts
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
-if (!ALLOWED_TYPES.has(file.type)) {
-  return fail(400, { error: 'Please select a JPEG, PNG, GIF, or WEBP image.' });
-}
 ```
 
 ---

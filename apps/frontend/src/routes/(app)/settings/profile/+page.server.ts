@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { getCurrent, updateUser } from '$lib/server/api/users';
 import { uploadImage } from '$lib/server/api/posts';
 import { apiClient } from '$lib/server/api/client';
+import { validateImageUpload } from '$lib/server/imageUpload';
 
 export const load: PageServerLoad = ({ parent }) => parent();
 
@@ -30,7 +31,11 @@ export const actions: Actions = {
 			if (removeAvatar) {
 				avatarFilename = '';
 			} else if (file instanceof File && file.size > 0) {
-				const uploaded = await uploadImage(api, file);
+				const image = validateImageUpload(file, 'Please select an image.');
+				if (!image.ok) {
+					return fail(image.status, { error: image.error });
+				}
+				const uploaded = await uploadImage(api, image.file);
 				if (uploaded) avatarFilename = uploaded.filename;
 			}
 
