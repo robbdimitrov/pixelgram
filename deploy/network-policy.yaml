@@ -1,6 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: default-deny-ingress
 spec:
   podSelector: {}
@@ -10,6 +11,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-frontend-public
 spec:
   podSelector:
@@ -26,6 +28,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-backend-from-frontend
 spec:
   podSelector:
@@ -47,6 +50,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-database-from-apps
 spec:
   podSelector:
@@ -72,6 +76,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-cache-from-backend
 spec:
   podSelector:
@@ -93,6 +98,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-search-from-apps
 spec:
   podSelector:
@@ -118,6 +124,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-storage-from-apps
 spec:
   podSelector:
@@ -143,6 +150,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  namespace: phasma
   name: allow-broker-kafka-from-apps
 spec:
   podSelector:

@@ -1,6 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  namespace: phasma
   name: broker-backfill
   labels:
     app: phasma
