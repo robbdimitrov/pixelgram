@@ -26,44 +26,32 @@ graph TD
 
     subgraph cluster ["Kubernetes Cluster"]
         Web["Frontend / BFF<br>(SvelteKit SSR)"]:::frontend
-        API["Backend API<br>(Go)"]:::backend
+        API["Backend<br>(Go)"]:::backend
 
         subgraph data ["Data & Storage"]
-            DB[("PostgreSQL<br>source of truth")]:::database
-            Cache[("Dragonfly<br>rate limiting")]:::cache
-            Blob[("SeaweedFS<br>image objects")]:::storage
-            Search[("Meilisearch<br>search index")]:::storage
-            Broker[("Redpanda<br>Kafka broker")]:::broker
+            DB[("PostgreSQL<br>(source of truth)")]:::database
+            Search[("Meilisearch<br>(search index)")]:::search
         end
-        Connect["Redpanda Connect<br>(CDC relay)"]:::relay
     end
 
     Browser --> Web
     Web --> API
-    
-    API --> DB & Cache & Blob & Search
-    
-    DB -->|WAL CDC| Connect
-    Connect --> Broker
-    Broker -->|entity-changes<br>activity| API
-    Connect -->|sync-search| Search
+    API --> DB & Search
 
-    %% Standardized Accessible Color Palette
-    classDef frontend fill:#0284c7,stroke:#0369a1,stroke-width:2px,color:#fff
-    classDef gateway fill:#4f46e5,stroke:#4338ca,stroke-width:2px,color:#fff
-    classDef backend fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    classDef database fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
-    classDef cache fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
-    classDef broker fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    classDef storage fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    classDef relay fill:#475569,stroke:#334155,stroke-width:2px,color:#fff
+    classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
+    classDef backend fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff
+    classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+    classDef search fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#fff
+
+    style cluster fill:transparent,stroke:#64748b
+    style data fill:transparent,stroke:transparent
 ```
 
 | Service | Language | Description |
 | --- | --- | --- |
+| [frontend](/apps/frontend) | TypeScript | SvelteKit SSR application; sole public entry point and BFF. |
 | [backend](/apps/backend) | Go | HTTP API handling users, sessions, images, likes, and uploads. |
 | [database](/apps/database) | PostgreSQL | Schema migrations managed by `migrate/migrate`. |
-| [frontend](/apps/frontend) | TypeScript | SvelteKit SSR application styled with Tailwind CSS and DaisyUI. |
 
 ### Infrastructure
 
