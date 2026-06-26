@@ -24,10 +24,10 @@
 |---|---|
 | CRITICAL | 0 |
 | HIGH | 0 |
-| MEDIUM | 18 |
+| MEDIUM | 16 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **68** |
+| **Total** | **66** |
 
 ---
 
@@ -50,6 +50,8 @@
 | M-02 | Added backend HSTS on direct TLS or trusted forwarded HTTPS requests, with middleware regression tests. |
 | M-03 | Added frontend HSTS for HTTPS SSR requests, with hook regression tests. |
 | M-04 | Validated trusted `X-Forwarded-For` IP values before using them in rate-limit keys, falling back to `RemoteAddr` for invalid input. |
+| M-05 | Set Meilisearch scoped API keys to expire after one year and added provisioning payload regression coverage. |
+| M-06 | Restricted the Meilisearch scoped API key to the `users`, `posts`, and `hashtags` indexes. |
 | M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
 | M-09 | Disabled ServiceAccount token automounting on backend and frontend pods. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
@@ -60,36 +62,6 @@
 ---
 
 # MEDIUM
-
----
-
-## M-05 · Meilisearch scoped API key never expires
-
-**Layer:** Backend
-**File:** `apps/backend/internal/search/meili.go` lines 50–55
-**Category:** Credential management / OWASP A02
-
-**What's wrong:** `"expiresAt": nil` creates a permanent Meilisearch key. If it leaks (memory dump, crash report, log), an attacker retains indefinite read/write access to all search indexes containing usernames, bios, and post descriptions.
-
-**Fix:** Set a finite expiry and implement key rotation at startup:
-```go
-"expiresAt": time.Now().UTC().Add(365 * 24 * time.Hour).Format(time.RFC3339),
-```
-
----
-
-## M-06 · Meilisearch scoped key has wildcard index access instead of explicit index list
-
-**Layer:** Backend
-**File:** `apps/backend/internal/search/meili.go` line 53
-**Category:** Least privilege / OWASP A01
-
-**What's wrong:** `"indexes": []string{"*"}` grants `documents.add` and `documents.delete` on all current and future Meilisearch indexes.
-
-**Fix:**
-```go
-"indexes": []string{"users", "posts", "hashtags"},
-```
 
 ---
 

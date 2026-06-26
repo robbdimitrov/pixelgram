@@ -11,9 +11,12 @@ import (
 )
 
 const (
-	meiliTimeout     = 5 * time.Second
-	meiliMaxResponse = 1 << 20 // 1 MiB
+	meiliTimeout      = 5 * time.Second
+	meiliMaxResponse  = 1 << 20 // 1 MiB
+	meiliScopedKeyTTL = 365 * 24 * time.Hour
 )
+
+var meiliScopedIndexes = []string{"users", "posts", "hashtags"}
 
 // MeiliClient wraps net/http to communicate with a Meilisearch instance.
 // It provisions a scoped key on construction and uses it for all subsequent
@@ -44,13 +47,13 @@ func NewMeiliClient(ctx context.Context, baseURL, masterKey string) (*MeiliClien
 	return c, nil
 }
 
-// provisionScopedKey creates a scoped API key with document and search actions
-// on all indexes using the master key.
+// provisionScopedKey creates a finite-lived scoped API key with document and
+// search actions on the indexes owned by this service using the master key.
 func (c *MeiliClient) provisionScopedKey(ctx context.Context, masterKey string) (string, error) {
 	body := map[string]any{
 		"actions":     []string{"search", "documents.add", "documents.delete"},
-		"indexes":     []string{"*"},
-		"expiresAt":   nil,
+		"indexes":     meiliScopedIndexes,
+		"expiresAt":   time.Now().UTC().Add(meiliScopedKeyTTL).Format(time.RFC3339),
 		"description": "phasma-backend scoped key",
 	}
 	var result struct {

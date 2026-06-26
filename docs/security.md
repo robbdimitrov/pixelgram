@@ -99,5 +99,5 @@
 
 ## Meilisearch Key Isolation
 
-- The master key is used once at startup to provision a scoped API key with only `search`, `documents.add`, and `documents.delete` actions.
+- The master key is used once at startup to provision a one-year scoped API key with only `search`, `documents.add`, and `documents.delete` actions on the `users`, `posts`, and `hashtags` indexes.
 - All subsequent Meilisearch operations use the scoped key; the master key is not retained in memory.

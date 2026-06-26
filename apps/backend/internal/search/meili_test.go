@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 // newTestMeiliClient builds a MeiliClient that points at srv and bypasses
@@ -96,6 +98,58 @@ func TestMeiliDoJSONErrorDoesNotLeakKey(t *testing.T) {
 	err := c.doJSON(context.Background(), http.MethodPost, "/keys", secretKey, nil, nil)
 	if err != nil && strings.Contains(err.Error(), secretKey) {
 		t.Fatalf("error leaks key: %v", err)
+	}
+}
+
+func TestMeiliProvisionScopedKeyLimitsScopeAndExpiry(t *testing.T) {
+	var payload struct {
+		Actions     []string `json:"actions"`
+		Indexes     []string `json:"indexes"`
+		ExpiresAt   string   `json:"expiresAt"`
+		Description string   `json:"description"`
+	}
+	var gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		if r.URL.Path != "/keys" || r.Method != http.MethodPost {
+			t.Fatalf("request = %s %s, want POST /keys", r.Method, r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode key payload: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"scoped-abc"}`))
+	}))
+	defer srv.Close()
+
+	before := time.Now().UTC().Add(meiliScopedKeyTTL - time.Minute)
+	c := newTestMeiliClient(srv.URL)
+	key, err := c.provisionScopedKey(context.Background(), "master-key")
+	after := time.Now().UTC().Add(meiliScopedKeyTTL + time.Minute)
+	if err != nil {
+		t.Fatalf("provisionScopedKey: %v", err)
+	}
+	if key != "scoped-abc" {
+		t.Fatalf("key = %q, want scoped-abc", key)
+	}
+	if gotAuth != "Bearer master-key" {
+		t.Fatalf("Authorization = %q, want Bearer master-key", gotAuth)
+	}
+	if !slices.Equal(payload.Actions, []string{"search", "documents.add", "documents.delete"}) {
+		t.Fatalf("actions = %v", payload.Actions)
+	}
+	if !slices.Equal(payload.Indexes, []string{"users", "posts", "hashtags"}) {
+		t.Fatalf("indexes = %v", payload.Indexes)
+	}
+	expiresAt, err := time.Parse(time.RFC3339, payload.ExpiresAt)
+	if err != nil {
+		t.Fatalf("expiresAt = %q is not RFC3339: %v", payload.ExpiresAt, err)
+	}
+	if expiresAt.Before(before) || expiresAt.After(after) {
+		t.Fatalf("expiresAt = %v, want within %v and %v", expiresAt, before, after)
+	}
+	if payload.Description == "" {
+		t.Fatal("description should be set")
 	}
 }
 
