@@ -24,10 +24,10 @@
 |---|---|
 | CRITICAL | 1 |
 | HIGH | 3 |
-| MEDIUM | 25 |
+| MEDIUM | 22 |
 | LOW | 35 |
 | INFO | 15 |
-| **Total** | **79** |
+| **Total** | **76** |
 
 ---
 
@@ -44,7 +44,10 @@
 | H-10 | Set frontend `BODY_SIZE_LIMIT=1100K` and added 1 MB server-side file size checks before forwarding image uploads. |
 | H-11 | Promoted `likes`, `follows`, and `post_hashtags` pair constraints from nullable unique constraints to primary keys in the same corrective migration. |
 | M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
+| M-09 | Disabled ServiceAccount token automounting on backend and frontend pods. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
+| M-12 | Removed the CPU limit from the Redpanda Connect deployment while keeping its CPU request and memory limit. |
+| M-14 | Added `runAsGroup` and `fsGroup` to the frontend pod security context. |
 
 ---
 
@@ -234,21 +237,6 @@ res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomain
 
 ---
 
-## M-09 · Service account token auto-mounted on backend and frontend pods
-
-**Layer:** Infrastructure
-**Files:** `deploy/backend.yaml`, `deploy/frontend.yaml`
-**Category:** Least privilege / OWASP A01
-
-**What's wrong:** All other workloads (database, cache, storage, search, broker, connect, broker-backfill) explicitly set `automountServiceAccountToken: false`. Backend and frontend omit this field entirely, causing Kubernetes to mount the default ServiceAccount's JWT at `/var/run/secrets/kubernetes.io/serviceaccount/token`. Neither service needs Kubernetes API access.
-
-**Fix:** Add to the pod spec of both Deployments:
-```yaml
-automountServiceAccountToken: false
-```
-
----
-
 ## M-11 · Broker backfill Job container has no resource limits
 
 **Layer:** Infrastructure
@@ -266,18 +254,6 @@ resources:
     memory: 128Mi
     cpu: 100m
 ```
-
----
-
-## M-12 · `connect` Deployment has a CPU limit — causes CFS throttling, violates project policy
-
-**Layer:** Infrastructure
-**File:** `deploy/broker.yaml` lines 348–350
-**Category:** Performance / resource management
-
-**What's wrong:** `connect` sets `cpu: 500m` under `limits`. AGENTS.md explicitly prohibits CPU limits: "CFS quota throttles at the limit even when the node has spare cycles, causing latency spikes." This pipeline processes outbox events, syncs search indexes, and runs S3 cleanup — CPU throttling directly introduces delays.
-
-**Fix:** Remove the `cpu: 500m` entry from the `limits` section, leaving only `memory: 256Mi`.
 
 ---
 
@@ -301,22 +277,6 @@ spec:
     matchLabels:
       app: phasma
       tier: database
-```
-
----
-
-## M-14 · Frontend pod `securityContext` missing `runAsGroup` and `fsGroup`
-
-**Layer:** Infrastructure
-**File:** `deploy/frontend.yaml` lines 36–41
-**Category:** Container hardening
-
-**What's wrong:** The frontend pod sets `runAsNonRoot: true`, `runAsUser: 1000`, and `seccompProfile`, but omits `runAsGroup` and `fsGroup`. Without `runAsGroup`, the process's primary group defaults to GID 0 (root). Every other workload sets all three fields.
-
-**Fix:**
-```yaml
-runAsGroup: 1000
-fsGroup: 1000
 ```
 
 ---

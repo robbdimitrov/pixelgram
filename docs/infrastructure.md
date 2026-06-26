@@ -27,6 +27,7 @@ The backend pod runs the `database` migration image as a non-root init container
 ## Services and Networking
 
 All services are cluster-internal only. The nginx Ingress exposes only the `frontend` service on port 8080.
+Workloads do not need Kubernetes API access and disable automatic ServiceAccount token mounting.
 
 | Service name | Port | Protocol |
 |---|---|---|
@@ -60,6 +61,7 @@ All secrets are in the `database-credentials` Secret. Required keys:
 ## Security Context (all pods)
 
 - `runAsNonRoot: true`
+- `automountServiceAccountToken: false`
 - `allowPrivilegeEscalation: false`
 - `readOnlyRootFilesystem: true` (backend, frontend, cache, search, storage init, broker, connect; not PostgreSQL)
 - `capabilities: drop: [ALL]`
