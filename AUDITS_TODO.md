@@ -20,14 +20,14 @@
 
 ## Executive Summary
 
-| Severity | Count |
-|---|---|
-| CRITICAL | 0 |
-| HIGH | 0 |
-| MEDIUM | 16 |
-| LOW | 35 |
-| INFO | 15 |
-| **Total** | **66** |
+| Severity | Count | Remaining |
+|---|---|---|
+| CRITICAL | 0 | 0 |
+| HIGH | 0 | 0 |
+| MEDIUM | 16 | 6 |
+| LOW | 35 | 7 |
+| INFO | 15 | 8 |
+| **Total** | **66** | **21** |
 
 ---
 
@@ -55,9 +55,54 @@
 | M-08 | Added frontend server-side MIME validation for post image and avatar upload actions. |
 | M-09 | Disabled ServiceAccount token automounting on backend and frontend pods. |
 | M-10 | Added CPU and memory requests plus a memory limit to the backend migration init container. |
+| M-11 | Added CPU and memory requests and limits to the broker-backfill Job container. |
 | M-12 | Removed the CPU limit from the Redpanda Connect deployment while keeping its CPU request and memory limit. |
+| M-13 | Added PodDisruptionBudgets for all workloads with `maxUnavailable: 0`. |
 | M-14 | Added `runAsGroup` and `fsGroup` to the frontend pod security context. |
+| M-17 | Added `namespace: phasma` to `metadata` in every deploy manifest. |
+| M-18 | Created dedicated ServiceAccounts for each workload and wired them into pod specs. |
+| M-19 | Tagged all custom images with the git SHA (`GIT_SHA`) in the Makefile; deploy script injects the tag via `kubectl set image`. |
+| M-23 | Added `notifications_type_check` CHECK constraint and narrowed column to `varchar(20)` in migration 000014. |
+| M-24 | Added `follows_no_self_follow` CHECK constraint in migration 000014. |
+| M-26 | Added partial index `notifications_user_id_unread_idx` for unread notification count in migration 000014. |
+| M-27 | Capped hashtag extraction at 20 per post in `ExtractHashtags`. |
 | C-01 | Removed Redpanda `dev-container` mode and overprovisioning, and explicitly disabled developer mode and default write caching. |
+| M-07 | Removed `unsafe-inline` from CSP `style-src` in `svelte.config.js`. |
+| L-07 | Made `MaxConns` configurable via `POSTGRES_MAX_CONNS` env var with `MaxConnIdleTime: 5 min`. |
+| L-08 | Added length bound (64 chars) to `X-Request-ID` middleware; generates new ID if over limit. |
+| L-02 | Changed upload `Cache-Control` from `private` to `public, max-age=86400, immutable`. |
+| L-03 | Set `Content-Length` from blob store size in `ServeFile`. |
+| L-01 | Log S3 blob delete failures at WARN in uploads handler and user service. |
+| L-09 | Added `posts_filename_idx` partial index on `posts(filename)` in migration 000014. |
+| L-10 | Added no-op placeholder migration pair `000005_placeholder` to close the sequence gap. |
+| L-11 | Added `IF EXISTS` to all `DROP TABLE` and `DROP INDEX` statements in migrations 000008–000011 down files. |
+| L-12 | Added 90-day age bound to the celebrity fan-out branch of `ListFeed`. |
+| L-16 | Added `; Secure` to the theme cookie when on HTTPS. |
+| L-17 | Removed `localStorage.setItem('theme', value)` dead code. |
+| L-18 | Removed incorrect `minlength="4"` from the login form password field. |
+| L-19 | Mapped HTTP 401/429/other error codes to user-friendly messages in `fetchJson`. |
+| L-20 | Added `frame-ancestors: ['self']` to the frontend CSP. |
+| L-21 | Added `Permissions-Policy` header (camera, microphone, geolocation, etc.) in `hooks.server.ts`. |
+| L-22 | Added `Cross-Origin-Resource-Policy: cross-origin` to the image proxy route. |
+| L-23 | Fixed double-encoded JSON error messages in the `/suggest` endpoint. |
+| L-24 | Stripped `email` from the layout hydration payload; profile page fetches it explicitly. |
+| L-25 | Added `maxlength="100"` to the signup name field and server-side length validation. |
+| L-26 | Added `statefulset/broker` to `ROLL_OUT_REST` and `deployment/connect` to a separate `ROLL_OUT_CONNECT` group in `deploy.sh`. |
+| L-27 | Added `startupProbe` to the `connect` Deployment (failureThreshold: 30, periodSeconds: 2). |
+| L-28 | Set `redpanda.auto_create_topics_enabled=false` in the Redpanda startup flags. |
+| L-29 | Removed `--pandaproxy-addr`, `--advertise-pandaproxy-addr`, `--schema-registry-addr` and their containerPorts from the Redpanda StatefulSet. |
+| L-30 | Pinned the frontend Dockerfile `phasma` user to explicit UID 1000 (`-u 1000`). |
+| L-31 | Replaced hardcoded `phasma` password with a randomly generated secret in `test-backend-integration.sh`. |
+| L-32 | Removed stale `kubectl delete pvc image-storage-pvc` line from `deploy.sh`. |
+| L-33 | Suppressed `Post.ID` and `Comment.PostID` from JSON with `json:"-"`; updated frontend to key `{#each}` by `post.publicId`. |
+| L-34 | Fixed `ListPopularPosts` to reference the `likes` column alias in ORDER BY instead of a duplicate correlated subquery. |
+| I-04 | Changed decoy hash initialization to `panic` on failure rather than silently ignoring the error. |
+| I-05 | Corrected broker CPU request in `docs/infrastructure.md` from 250 m to 200 m to match the manifest. |
+| I-08 | Changed the `comment` form action to return `fail(400, ...)` on validation failure instead of `{ success: false }` with HTTP 200. |
+| I-09 | Added `catch` to `loadMoreComments` to capture and display errors via `commentLoadError` state. |
+| I-11 | Corrected `docs/data-model.md` feed FK column types from `integer` to `bigint`. |
+| I-12 | Added inline comment to `database.yaml` explaining why `readOnlyRootFilesystem` is intentionally omitted for PostgreSQL. |
+| I-14 | Combined the `INSERT INTO posts RETURNING id, public_id, created` to eliminate the extra `SELECT created FROM posts` round-trip in `CreatePost`. |
 
 ---
 
