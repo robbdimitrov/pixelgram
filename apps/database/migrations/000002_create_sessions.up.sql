@@ -1,7 +1,7 @@
 CREATE TABLE sessions (
   id varchar(255) PRIMARY KEY,
   public_id uuid UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-  user_id integer NOT NULL REFERENCES users ON DELETE CASCADE,
+  user_id bigint NOT NULL REFERENCES users ON DELETE CASCADE,
   created timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz NOT NULL
 );
