@@ -76,6 +76,47 @@ spec:
             secretKeyRef:
               name: database-secret
               key: postgres-password
+      - name: provision-app-user
+        image: postgres:18.4-alpine
+        imagePullPolicy: IfNotPresent
+        command: [sh, -c]
+        args:
+        - |
+          psql "postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/phasma?sslmode=require" \
+            -v app_pass="${APP_DB_PASSWORD}" \
+            -c "DO \$\$
+                DECLARE v text := :'app_pass';
+                BEGIN
+                  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'phasma_user') THEN
+                    EXECUTE format('CREATE USER phasma_user WITH PASSWORD %%L', v);
+                    GRANT phasma_app TO phasma_user;
+                  ELSE
+                    EXECUTE format('ALTER USER phasma_user WITH PASSWORD %%L', v);
+                  END IF;
+                END \$\$;"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          limits:
+            memory: 64Mi
+          requests:
+            memory: 64Mi
+            cpu: 50m
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: postgres-password
+        - name: APP_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-db-secret
+              key: app-db-password
       containers:
       - name: backend
         image: localhost:5000/phasma/backend
@@ -95,17 +136,15 @@ spec:
             memory: 128Mi
             cpu: 100m
         env:
-        - name: POSTGRES_USER
-          value: postgres
-        - name: POSTGRES_PASSWORD
+        - name: APP_DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-secret
-              key: postgres-password
+              name: app-db-secret
+              key: app-db-password
         - name: POSTGRES_DB
           value: phasma
         - name: DATABASE_URL
-          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@database:5432/$(POSTGRES_DB)?sslmode=require
+          value: postgresql://phasma_user:$(APP_DB_PASSWORD)@database:5432/$(POSTGRES_DB)?sslmode=require
         - name: S3_ENDPOINT
           value: http://storage:8333
         - name: S3_BUCKET

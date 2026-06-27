@@ -107,6 +107,13 @@ ensure_secret() {
   fi
 }
 
+ensure_app_db_secret() {
+  if ! kubectl -n "${NS}" get secret app-db-secret >/dev/null 2>&1; then
+    kubectl -n "${NS}" create secret generic app-db-secret \
+      --from-literal=app-db-password="$(random_secret)"
+  fi
+}
+
 ensure_secret_key() {
   local secret_name="$1"
   local key="$2"
@@ -232,6 +239,7 @@ apply_manifests() {
   log "creating namespace and applying manifests"
   ensure_namespace
   ensure_secret
+  ensure_app_db_secret
   ensure_tls_secret
   ensure_database_tls_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"

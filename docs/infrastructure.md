@@ -22,7 +22,10 @@ Third-party images in Kubernetes manifests are pinned to explicit version tags; 
 
 ## Init Container Sequencing
 
-The backend pod runs the `database` migration image as a non-root init container before the backend container starts. Migrations must complete successfully before the backend accepts traffic.
+The backend pod runs two init containers before the backend container starts:
+
+1. `migration` — runs the `database` migration image as a non-root init container. Migrations must complete successfully before the next init container runs.
+2. `provision-app-user` — connects as the `postgres` superuser and creates (or re-passwords) `phasma_user`, then grants it the `phasma_app` role. The backend container connects as `phasma_user`.
 
 ## Service Accounts
 
@@ -59,7 +62,8 @@ Secrets are split per service to limit blast radius:
 
 | Secret | Key | Consumer |
 |---|---|---|
-| `database-secret` | `postgres-password` | PostgreSQL, migration init container, backend DATABASE_URL |
+| `database-secret` | `postgres-password` | PostgreSQL, migration init container, provision-app-user init container |
+| `app-db-secret` | `app-db-password` | provision-app-user init container, backend DATABASE_URL |
 | `backend-secret` | `session-hash-secret` | Backend HMAC session hashing |
 | `storage-secret` | `s3-access-key` | Backend S3 client, SeaweedFS config |
 | `storage-secret` | `s3-secret-key` | Backend S3 client, SeaweedFS config |
@@ -79,6 +83,7 @@ Secrets are split per service to limit blast radius:
 |---|---|
 | backend | 65532 |
 | backend migration init container | 65532 |
+| backend provision-app-user init container | root (default postgres image) |
 | frontend | 1000 |
 | database | 70 |
 | cache | 1000 |
@@ -94,6 +99,7 @@ Secrets are split per service to limit blast radius:
 | frontend | 768 Mi | 256 Mi | 250 m |
 | backend | 256 Mi | 128 Mi | 100 m |
 | backend migration init container | 64 Mi | 32 Mi | 50 m |
+| backend provision-app-user init container | 64 Mi | 64 Mi | 50 m |
 | database | 512 Mi | 512 Mi | 500 m |
 | cache | 256 Mi | 128 Mi | 100 m |
 | search | 512 Mi | 256 Mi | 100 m |
@@ -141,7 +147,7 @@ The `database` StatefulSet runs PostgreSQL with `-c wal_level=logical` to enable
 
 | Variable | Source | Purpose |
 |---|---|---|
-| `DATABASE_URL` | constructed from secrets | PostgreSQL connection |
+| `DATABASE_URL` | constructed from `app-db-secret` | PostgreSQL connection as `phasma_user` (least-privilege) |
 | `SESSION_HASH_SECRET` | secret | HMAC key for session tokens |
 | `S3_ENDPOINT` | literal | SeaweedFS endpoint |
 | `S3_BUCKET` | literal | S3 bucket name |
