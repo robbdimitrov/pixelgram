@@ -19,9 +19,7 @@ metadata:
     app: phasma
     tier: backend
 spec:
-  # The single replica is a resource policy; backend state is shared through
-  # PostgreSQL and object storage, so the service remains HA-ready.
-  replicas: 1
+  replicas: 2
   strategy:
     type: RollingUpdate
   selector:
@@ -43,6 +41,16 @@ spec:
         fsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: phasma
+                  tier: backend
+              topologyKey: kubernetes.io/hostname
       initContainers:
       - name: migration
         image: localhost:5000/phasma/database

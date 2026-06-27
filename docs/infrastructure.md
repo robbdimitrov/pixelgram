@@ -6,8 +6,8 @@ All services are deployed to the `phasma` namespace via manifests in `deploy/`. 
 
 | Workload | Kind | Replicas | Storage |
 |---|---|---|---|
-| `frontend` | Deployment | 1 | none (emptyDir /tmp) |
-| `backend` | Deployment | 1 | none (stateless) |
+| `frontend` | Deployment | 2 | none (emptyDir /tmp) |
+| `backend` | Deployment | 2 | none (stateless) |
 | `database` | StatefulSet | 1 | PVC 5 Gi (ReadWriteOnce) |
 | `storage` | StatefulSet | 1 | PVC 5 Gi (ReadWriteOnce) + emptyDir /tmp |
 | `cache` | StatefulSet | 1 | PVC 1 Gi (ReadWriteOnce) |
@@ -122,6 +122,10 @@ write caching, and automatic topic creation (`auto_create_topics_enabled=false`)
 ## Pod Disruption Budgets
 
 `deploy/pdb.yaml` defines a `PodDisruptionBudget` with `maxUnavailable: 0` for each workload: `database`, `cache`, `broker`, `search`, `storage`, `backend`, and `frontend`. This prevents voluntary disruptions (node drains, rolling upgrades) from taking down any single-replica stateful service without operator awareness.
+
+## Pod Disruption Budgets
+
+`deploy/pdb.yaml` defines a `PodDisruptionBudget` for each workload. `database`, `cache`, `broker`, `search`, and `storage` use `maxUnavailable: 0` because they are single-replica stateful services; any voluntary disruption would take them down. `backend` and `frontend` use `minAvailable: 1` because they run 2 replicas, which allows rolling updates while keeping one replica available. Pod anti-affinity spreads replicas across nodes to reduce correlated failure risk.
 
 ## Migration Strategy
 

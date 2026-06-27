@@ -19,7 +19,7 @@ metadata:
     app: phasma
     tier: frontend
 spec:
-  replicas: 1
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -44,6 +44,16 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: phasma
+                  tier: frontend
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: frontend
         image: localhost:5000/phasma/frontend

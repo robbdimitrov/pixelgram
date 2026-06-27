@@ -76,7 +76,7 @@ metadata:
   labels:
     app: phasma
 spec:
-  maxUnavailable: 0
+  minAvailable: 1
   selector:
     matchLabels:
       app: phasma
@@ -90,7 +90,7 @@ metadata:
   labels:
     app: phasma
 spec:
-  maxUnavailable: 0
+  minAvailable: 1
   selector:
     matchLabels:
       app: phasma
