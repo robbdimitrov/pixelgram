@@ -163,7 +163,8 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 		err = tx.QueryRow(ctx, `DELETE FROM comments
 			WHERE public_id = $1
 			  AND post_id = (SELECT id FROM posts WHERE public_id = $2)
-			  AND user_id = $3 RETURNING public_id::text`,
+			  AND (user_id = $3 OR post_id IN (SELECT id FROM posts WHERE user_id = $3))
+			RETURNING public_id::text`,
 			commentID, postID, userID).Scan(&deletedPublicID)
 		if err == nil {
 			deleted = true

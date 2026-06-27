@@ -504,6 +504,32 @@ func TestPostgresRepositoryCommentOwnershipAndNotFoundOutcomes(t *testing.T) {
 	}
 }
 
+func TestPostgresRepositoryPostOwnerCanDeleteComments(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	postOwnerID := createTestUser(t, client, "mod_post_owner")
+	commenterID := createTestUser(t, client, "mod_commenter")
+	post := insertTestPost(t, client, postOwnerID, "moderated-post", time.Now())
+
+	comment, err := client.CreateComment(ctx, post.PublicID, stringID(commenterID), "to be moderated")
+	if err != nil {
+		t.Fatalf("CreateComment() error = %v", err)
+	}
+
+	deleted, err := client.DeleteComment(ctx, post.PublicID, stringID(comment.ID), stringID(postOwnerID))
+	if err != nil || !deleted {
+		t.Fatalf("DeleteComment(post owner) = %v, %v; want true, nil", deleted, err)
+	}
+	var remaining int
+	if err := client.db.Pool().QueryRow(ctx,
+		`SELECT count(*) FROM comments WHERE id = $1`, comment.ID).Scan(&remaining); err != nil {
+		t.Fatalf("comment count query error = %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("comment still exists after post owner deletion")
+	}
+}
+
 func TestPostgresRepositorySelfLikeIsNoop(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()

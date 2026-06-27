@@ -44,7 +44,7 @@
 ## Comments
 
 - Body: required, trimmed, 1–400 Unicode code points.
-- Only the comment author can delete a comment.
+- A comment may be deleted by its author or by the owner of the post it belongs to.
 - `ListComments` returns 404 if the post does not exist.
 
 ## Likes
