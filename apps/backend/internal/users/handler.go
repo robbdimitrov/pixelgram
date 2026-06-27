@@ -70,7 +70,7 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.Service.CreateUser(r.Context(), CreateUserCommand{
+	_, err := h.Service.CreateUser(r.Context(), CreateUserCommand{
 		Name: name, Username: username, Email: email, Password: body.Password,
 	})
 	if err != nil {
@@ -82,7 +82,7 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, map[string]int{"id": id})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]string{"username": username})
 }
 
 func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -168,16 +168,12 @@ func (h Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("userId")
 	currentUserID, ok := httpx.UserID(r)
 	if !ok {
 		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
-	if userID != currentUserID {
-		httpx.WriteMessage(w, http.StatusForbidden, "Forbidden")
-		return
-	}
+	userID := currentUserID
 
 	var body struct {
 		Name        string  `json:"name"`
@@ -310,20 +306,20 @@ func (h Handler) updateFollow(
 		httpx.WriteMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
-	targetUserID := r.PathValue("userId")
-	if n, err := strconv.ParseInt(targetUserID, 10, 64); err != nil || n <= 0 {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid user ID.")
-		return
-	}
-	if currentUserID == targetUserID {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Cannot follow yourself.")
+	targetUsername := strings.ToLower(r.PathValue("username"))
+	if !validation.ValidUsername(targetUsername) {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid username.")
 		return
 	}
 
-	err := update(r.Context(), FollowCommand{FollowerID: currentUserID, FolloweeID: targetUserID})
+	err := update(r.Context(), FollowCommand{FollowerID: currentUserID, FolloweeUsername: targetUsername})
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			httpx.WriteMessage(w, http.StatusNotFound, "User Not Found")
+			return
+		}
+		if errors.Is(err, ErrSelfFollow) {
+			httpx.WriteMessage(w, http.StatusBadRequest, "Cannot follow yourself.")
 			return
 		}
 		httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")

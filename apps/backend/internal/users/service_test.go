@@ -10,6 +10,7 @@ import (
 	"phasma/backend/internal/auth"
 	"phasma/backend/internal/blobstore"
 	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type fakeRepository struct {
@@ -28,8 +29,10 @@ type fakeRepository struct {
 	updatedPasswordHash   string
 	deleteSessionsUserID  string
 	deleteSessionsCurrent string
-	followCommand         FollowCommand
-	unfollowCommand       FollowCommand
+	followFollowerID      string
+	followFolloweeID      string
+	unfollowFollowerID    string
+	unfollowFolloweeID    string
 }
 
 func (r *fakeRepository) CreateUser(_ context.Context, _, _, _, passwordHash string) (int, error) {
@@ -78,12 +81,14 @@ func (r *fakeRepository) ChangePassword(_ context.Context, userID, passwordHash,
 }
 
 func (r *fakeRepository) FollowUser(_ context.Context, followerID, followeeID string) error {
-	r.followCommand = FollowCommand{FollowerID: followerID, FolloweeID: followeeID}
+	r.followFollowerID = followerID
+	r.followFolloweeID = followeeID
 	return r.err
 }
 
 func (r *fakeRepository) UnfollowUser(_ context.Context, followerID, followeeID string) error {
-	r.unfollowCommand = FollowCommand{FollowerID: followerID, FolloweeID: followeeID}
+	r.unfollowFollowerID = followerID
+	r.unfollowFolloweeID = followeeID
 	return r.err
 }
 
@@ -212,10 +217,10 @@ func TestServiceChangePasswordStopsForInvalidCredentials(t *testing.T) {
 	}
 }
 
-func TestServiceFollowCommands(t *testing.T) {
-	repository := &fakeRepository{}
+func TestServiceFollowLooksUpTargetByUsername(t *testing.T) {
+	repository := &fakeRepository{found: true, user: User{ID: 2}}
 	service := NewService(repository, blobstore.NewMemoryStore())
-	command := FollowCommand{FollowerID: "1", FolloweeID: "2"}
+	command := FollowCommand{FollowerID: "1", FolloweeUsername: "alice"}
 
 	if err := service.FollowUser(context.Background(), command); err != nil {
 		t.Fatal(err)
@@ -223,8 +228,33 @@ func TestServiceFollowCommands(t *testing.T) {
 	if err := service.UnfollowUser(context.Background(), command); err != nil {
 		t.Fatal(err)
 	}
-	if repository.followCommand != command || repository.unfollowCommand != command {
-		t.Fatalf("commands = %#v, %#v", repository.followCommand, repository.unfollowCommand)
+	if repository.followFollowerID != "1" || repository.followFolloweeID != "2" {
+		t.Fatalf("follow IDs = %q, %q", repository.followFollowerID, repository.followFolloweeID)
+	}
+	if repository.unfollowFollowerID != "1" || repository.unfollowFolloweeID != "2" {
+		t.Fatalf("unfollow IDs = %q, %q", repository.unfollowFollowerID, repository.unfollowFolloweeID)
+	}
+}
+
+func TestServiceFollowRejectsSelf(t *testing.T) {
+	repository := &fakeRepository{found: true, user: User{ID: 1}}
+	service := NewService(repository, blobstore.NewMemoryStore())
+
+	err := service.FollowUser(context.Background(), FollowCommand{FollowerID: "1", FolloweeUsername: "self"})
+
+	if !errors.Is(err, ErrSelfFollow) {
+		t.Fatalf("FollowUser(self) = %v, want ErrSelfFollow", err)
+	}
+}
+
+func TestServiceFollowReturnsNotFoundWhenUserMissing(t *testing.T) {
+	repository := &fakeRepository{found: false}
+	service := NewService(repository, blobstore.NewMemoryStore())
+
+	err := service.FollowUser(context.Background(), FollowCommand{FollowerID: "1", FolloweeUsername: "missing"})
+
+	if !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("FollowUser(missing) = %v, want ErrNotFound", err)
 	}
 }
 

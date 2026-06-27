@@ -12,14 +12,12 @@
 
 	let {
 		post: initialPost,
-		currentUserId,
 		currentUsername,
 		singleView = false,
 		comments: initialComments = [],
 		nextCommentsCursor: initialNextCommentsCursor = null
 	}: {
 		post: Post;
-		currentUserId: number;
 		currentUsername: string;
 		singleView?: boolean;
 		comments?: Comment[];
@@ -100,7 +98,7 @@
 			</div>
 		</div>
 
-		{#if currentUserId === initialPost.userId}
+		{#if initialPost.username === currentUsername}
 			<button
 				type="button"
 				class="absolute right-5 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition-all duration-150 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:hover:text-rose-400 sm:right-6"

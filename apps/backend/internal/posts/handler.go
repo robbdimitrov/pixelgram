@@ -14,7 +14,7 @@ import (
 type Post struct {
 	ID          int       `json:"-"`
 	PublicID    string    `json:"publicId"`
-	UserID      int       `json:"userId"`
+	UserID      int       `json:"-"`
 	Username    string    `json:"username"`
 	Name        string    `json:"name"`
 	Avatar      *string   `json:"avatar"`

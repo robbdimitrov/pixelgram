@@ -39,17 +39,17 @@ export const actions: Actions = {
 	follow: async (event) => {
 		const api = apiClient(event);
 		const data = await event.request.formData();
-		const userId = Number(data.get('userId'));
-		if (!Number.isInteger(userId) || userId <= 0) return { success: false };
-		await followUser(api, userId);
+		const username = (data.get('username') as string) ?? '';
+		if (!username) return { success: false };
+		await followUser(api, username);
 		return { success: true };
 	},
 	unfollow: async (event) => {
 		const api = apiClient(event);
 		const data = await event.request.formData();
-		const userId = Number(data.get('userId'));
-		if (!Number.isInteger(userId) || userId <= 0) return { success: false };
-		await unfollowUser(api, userId);
+		const username = (data.get('username') as string) ?? '';
+		if (!username) return { success: false };
+		await unfollowUser(api, username);
 		return { success: true };
 	}
 };

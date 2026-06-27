@@ -122,6 +122,7 @@ func TestCreateSessionSuccess(t *testing.T) {
 	service := &fakeService{loginOutput: LoginOutput{
 		SessionID: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		UserID:    7,
+		Username:  "alice",
 	}}
 	handler := NewHandler(service)
 	res := httptest.NewRecorder()
@@ -147,7 +148,7 @@ func TestCreateSessionSuccess(t *testing.T) {
 	if got := res.Header().Get("Set-Cookie"); !strings.Contains(got, "session=") || !strings.Contains(got, "HttpOnly") {
 		t.Fatalf("Set-Cookie = %q", got)
 	}
-	if strings.TrimSpace(res.Body.String()) != `{"id":7}` {
+	if strings.TrimSpace(res.Body.String()) != `{"username":"alice"}` {
 		t.Fatalf("body = %q", res.Body.String())
 	}
 }

@@ -1,5 +1,4 @@
 import type { Cookies } from '@sveltejs/kit';
-import type { UserIdDto } from '$lib/types';
 import { unwrap } from './http';
 import type { ApiClient } from './client';
 
@@ -30,13 +29,13 @@ export async function createUser(
 	username: string,
 	email: string,
 	password: string
-): Promise<UserIdDto | null> {
+): Promise<{ username: string } | null> {
 	const res = await fetch('/users', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ name, username: username.trim().toLowerCase(), email, password })
 	});
-	return unwrap<UserIdDto>(res);
+	return unwrap<{ username: string }>(res);
 }
 
 export async function login(fetch: ApiClient, email: string, password: string): Promise<Response> {

@@ -31,7 +31,6 @@ export function mapUser(dto: UserDto): User {
 export function mapPost(dto: PostDto): Post {
 	return {
 		publicId: dto.publicId,
-		userId: dto.userId,
 		username: dto.username,
 		name: dto.name,
 		avatar: dto.avatar,

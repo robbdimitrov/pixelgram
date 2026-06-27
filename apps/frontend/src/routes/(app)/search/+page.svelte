@@ -91,7 +91,7 @@
 								<p class="truncate text-sm text-base-content/60">@{user.username}</p>
 							</a>
 							<form method="POST" action="?/{user.isFollowing ? 'unfollow' : 'follow'}" use:enhance>
-								<input type="hidden" name="userId" value={user.id} />
+								<input type="hidden" name="username" value={user.username} />
 								<button
 									type="submit"
 									class="btn btn-sm h-9 min-h-9 shrink-0 rounded-full px-4 text-xs font-extrabold {user.isFollowing

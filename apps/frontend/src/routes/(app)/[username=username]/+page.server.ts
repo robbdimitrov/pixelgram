@@ -24,10 +24,8 @@ export const actions: Actions = {
 	follow: async ({ fetch, cookies, params }) => {
 		const api = apiClient({ fetch, cookies });
 		const username = stripAt(params.username);
-		const profileUser = await getByUsername(api, username);
-		if (!profileUser) return { success: false };
 		try {
-			await followUser(api, profileUser.id);
+			await followUser(api, username);
 		} catch {
 			return fail(503, { error: 'Could not update follow status.' });
 		}
@@ -36,10 +34,8 @@ export const actions: Actions = {
 	unfollow: async ({ fetch, cookies, params }) => {
 		const api = apiClient({ fetch, cookies });
 		const username = stripAt(params.username);
-		const profileUser = await getByUsername(api, username);
-		if (!profileUser) return { success: false };
 		try {
-			await unfollowUser(api, profileUser.id);
+			await unfollowUser(api, username);
 		} catch {
 			return fail(503, { error: 'Could not update follow status.' });
 		}

@@ -14,6 +14,7 @@ const (
 
 type UserCredentials struct {
 	ID           int
+	Username     string
 	PasswordHash string
 }
 
@@ -51,4 +52,5 @@ type LoginInput struct {
 type LoginOutput struct {
 	SessionID string
 	UserID    int
+	Username  string
 }

@@ -31,8 +31,8 @@ Defaults are overridable via env vars `RATE_LIMIT_{POLICY}_{BURST,RATE}`.
 |---|---|---|
 | GET | /health | Liveness check — 204 No Content |
 | GET | /ready | Readiness check — pings PostgreSQL (2 s timeout) |
-| POST | /users | Create account |
-| POST | /sessions | Login — sets `session` cookie |
+| POST | /users | Create account — returns `{"username": "..."}` on 201 |
+| POST | /sessions | Login — sets `session` cookie, returns `{"username": "..."}` on 201 |
 | GET | /uploads/ | Serve uploaded file blob |
 
 ### Protected (session cookie required)
@@ -77,11 +77,11 @@ failure. Use `DELETE /sessions` to terminate the current session.
 |---|---|---|
 | GET | /users/me | Get current authenticated user |
 | GET | /users/{username} | Get user by username |
-| PUT | /users/{userId} | Update profile or change password (own user only) |
+| PUT | /users/me | Update profile or change password |
 | GET | /users/{username}/followers | List followers (cursor-paginated) |
 | GET | /users/{username}/following | List following (cursor-paginated) |
-| POST | /users/{userId}/follow | Follow a user |
-| DELETE | /users/{userId}/follow | Unfollow a user |
+| POST | /users/{username}/follow | Follow a user |
+| DELETE | /users/{username}/follow | Unfollow a user |
 
 #### Discovery
 | Method | Path | Purpose |
@@ -184,6 +184,25 @@ Notification types: `like` (entityId = post public_id), `comment` (entityId = co
 - Returns 503 if Meilisearch is not configured.
 - Query must be 1–50 UTF-8 runes.
 
-## Email Field Visibility
+## User Object Shape
 
-`email` is stripped from user responses unless the requester's `userID` matches the user's `id`.
+User objects returned by `/users/me`, `/users/{username}`, follower/following lists, and suggested users share this shape:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Alice",
+  "username": "alice",
+  "email": "alice@example.com",
+  "avatar": null,
+  "bio": null,
+  "posts": 12,
+  "likes": 34,
+  "followers": 5,
+  "following": 3,
+  "isFollowing": false,
+  "created": "2026-01-01T00:00:00Z"
+}
+```
+
+`id` is the user's public UUID (`public_id` column). The internal integer primary key is never exposed. `email` is stripped from user responses unless the requester's session belongs to that user.

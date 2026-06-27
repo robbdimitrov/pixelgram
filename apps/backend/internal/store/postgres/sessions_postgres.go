@@ -31,8 +31,8 @@ func NewSessionRepository(client *Client) *SessionRepository {
 func (r *SessionRepository) FindLoginCredentialsByEmail(ctx context.Context, email string) (*sessions.UserCredentials, error) {
 	var credentials sessions.UserCredentials
 	err := r.db.Read(ctx, func() error {
-		return r.db.Pool().QueryRow(ctx, `SELECT id, password FROM users WHERE email = $1`, email).
-			Scan(&credentials.ID, &credentials.PasswordHash)
+		return r.db.Pool().QueryRow(ctx, `SELECT id, username, password FROM users WHERE email = $1`, email).
+			Scan(&credentials.ID, &credentials.Username, &credentials.PasswordHash)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil

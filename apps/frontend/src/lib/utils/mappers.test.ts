@@ -3,7 +3,7 @@ import { mapUser, mapPost, mapComment, mapSession } from '$lib/utils/mappers';
 import type { UserDto, PostDto, CommentDto, SessionDto } from '$lib/types';
 
 const baseUserDto: UserDto = {
-	id: 1,
+	id: '550e8400-e29b-41d4-a716-446655440001',
 	name: 'John Doe',
 	username: 'johndoe',
 	email: 'john@example.com',
@@ -19,7 +19,6 @@ const baseUserDto: UserDto = {
 
 const basePostDto: PostDto = {
 	publicId: 'abc123',
-	userId: 1,
 	username: 'johndoe',
 	name: 'John Doe',
 	avatar: 'avatar.jpg',
@@ -42,7 +41,7 @@ const baseCommentDto: CommentDto = {
 describe('mapUser', () => {
 	it('maps DTO to User with Date object', () => {
 		const user = mapUser(baseUserDto);
-		expect(user.id).toBe(1);
+		expect(user.id).toBe('550e8400-e29b-41d4-a716-446655440001');
 		expect(user.name).toBe('John Doe');
 		expect(user.created).toBeInstanceOf(Date);
 	});

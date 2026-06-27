@@ -1,13 +1,18 @@
 package users
 
 import (
+	"errors"
 	"time"
 
 	"phasma/backend/internal/pagination"
 )
 
+// ErrSelfFollow is returned when a user attempts to follow themselves.
+var ErrSelfFollow = errors.New("cannot follow yourself")
+
 type User struct {
-	ID          int       `json:"id"`
+	ID          int       `json:"-"`
+	PublicID    string    `json:"id"`
 	Name        string    `json:"name"`
 	Username    string    `json:"username"`
 	Email       string    `json:"email"`
@@ -55,8 +60,8 @@ type ChangePasswordCommand struct {
 }
 
 type FollowCommand struct {
-	FollowerID string
-	FolloweeID string
+	FollowerID       string
+	FolloweeUsername string
 }
 
 type ListQuery struct {

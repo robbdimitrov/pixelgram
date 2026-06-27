@@ -46,7 +46,7 @@ export const actions: Actions = {
 				if (uploaded) avatarFilename = uploaded.filename;
 			}
 
-			await updateUser(api, currentUser.id, name, username, email, avatarFilename, bio);
+			await updateUser(api, name, username, email, avatarFilename, bio);
 		} catch {
 			return fail(400, {
 				error: 'Could not save profile. Please check your details and try again.'

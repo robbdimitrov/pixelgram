@@ -3,12 +3,8 @@ export interface CursorPage<T> {
 	nextCursor: string | null;
 }
 
-export interface UserIdDto {
-	id: number;
-}
-
 export interface UserDto {
-	id: number;
+	id: string;
 	name: string;
 	username: string;
 	email: string;
@@ -23,7 +19,7 @@ export interface UserDto {
 }
 
 export interface User {
-	id: number;
+	id: string;
 	name: string;
 	username: string;
 	email?: string;
@@ -43,7 +39,6 @@ export interface PostIdDto {
 
 export interface PostDto {
 	publicId: string;
-	userId: number;
 	username: string;
 	name: string;
 	avatar: string | null;
@@ -61,7 +56,6 @@ export interface ImageFilenameDto {
 
 export interface Post {
 	publicId: string;
-	userId: number;
 	username: string;
 	name: string;
 	avatar: string | null;

@@ -106,6 +106,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (LoginOutput, err
 	return LoginOutput{
 		SessionID: sessionID,
 		UserID:    session.UserID,
+		Username:  credentials.Username,
 	}, nil
 }
 

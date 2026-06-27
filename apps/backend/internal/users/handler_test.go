@@ -135,7 +135,7 @@ func TestCreateUserNormalizesInput(t *testing.T) {
 
 	NewHandler(service).CreateUser(res, req)
 
-	if res.Code != http.StatusCreated || strings.TrimSpace(res.Body.String()) != `{"id":12}` {
+	if res.Code != http.StatusCreated || strings.TrimSpace(res.Body.String()) != `{"username":"test"}` {
 		t.Fatalf("response = %d %q", res.Code, res.Body.String())
 	}
 	want := CreateUserCommand{
@@ -282,40 +282,23 @@ func TestListUsersErrors(t *testing.T) {
 	}
 }
 
-func TestUpdateUserAuthorization(t *testing.T) {
-	tests := []struct {
-		name   string
-		userID string
-		status int
-	}{
-		{"unauthorized", "", http.StatusUnauthorized},
-		{"forbidden", "1", http.StatusForbidden},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			res := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPut, "/users/2", strings.NewReader(`{}`))
-			req.SetPathValue("userId", "2")
-			if test.userID != "" {
-				req = httpx.WithUserID(req, test.userID)
-			}
+func TestUpdateUserRequiresSession(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "/users/me", strings.NewReader(`{}`))
 
-			NewHandler(&fakeService{}).UpdateUser(res, req)
+	NewHandler(&fakeService{}).UpdateUser(res, req)
 
-			if res.Code != test.status {
-				t.Fatalf("status = %d, want %d", res.Code, test.status)
-			}
-		})
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusUnauthorized)
 	}
 }
 
 func TestUpdateUserProfile(t *testing.T) {
 	service := &fakeService{}
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(`{
+	req := httptest.NewRequest(http.MethodPut, "/users/me", strings.NewReader(`{
 		"name":" Test User ","username":" Test ","email":" Test@Example.COM ","avatar":"avatar.jpg"
 	}`))
-	req.SetPathValue("userId", "1")
 	req = httpx.WithUserID(req, "1")
 
 	NewHandler(service).UpdateUser(res, req)
@@ -347,10 +330,9 @@ func TestUpdateUserProfileOutcomes(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			service := &fakeService{profileOutcome: test.outcome, profileErr: test.err}
 			res := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(
+			req := httptest.NewRequest(http.MethodPut, "/users/me", strings.NewReader(
 				`{"name":"Test","username":"test","email":"test@example.com"}`,
 			))
-			req.SetPathValue("userId", "1")
 			req = httpx.WithUserID(req, "1")
 
 			NewHandler(service).UpdateUser(res, req)
@@ -379,10 +361,9 @@ func TestUpdatePasswordOutcomes(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			service := &fakeService{passwordOutcome: test.outcome, passwordErr: test.err}
 			res := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPut, "/users/1", strings.NewReader(
+			req := httptest.NewRequest(http.MethodPut, "/users/me", strings.NewReader(
 				`{"oldPassword":"old-password","password":"new-password"}`,
 			))
-			req.SetPathValue("userId", "1")
 			req.AddCookie(&http.Cookie{Name: "session", Value: "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
 			req = httpx.WithUserID(req, "1")
 
@@ -403,16 +384,16 @@ func TestFollowRoutes(t *testing.T) {
 	handler := NewHandler(service)
 
 	followRes := httptest.NewRecorder()
-	followReq := httpx.WithUserID(httptest.NewRequest(http.MethodPost, "/users/2/follow", nil), "1")
-	followReq.SetPathValue("userId", "2")
+	followReq := httpx.WithUserID(httptest.NewRequest(http.MethodPost, "/users/alice/follow", nil), "1")
+	followReq.SetPathValue("username", "alice")
 	handler.FollowUser(followRes, followReq)
 
 	unfollowRes := httptest.NewRecorder()
-	unfollowReq := httpx.WithUserID(httptest.NewRequest(http.MethodDelete, "/users/2/follow", nil), "1")
-	unfollowReq.SetPathValue("userId", "2")
+	unfollowReq := httpx.WithUserID(httptest.NewRequest(http.MethodDelete, "/users/alice/follow", nil), "1")
+	unfollowReq.SetPathValue("username", "alice")
 	handler.UnfollowUser(unfollowRes, unfollowReq)
 
-	want := FollowCommand{FollowerID: "1", FolloweeID: "2"}
+	want := FollowCommand{FollowerID: "1", FolloweeUsername: "alice"}
 	if followRes.Code != http.StatusNoContent || unfollowRes.Code != http.StatusNoContent {
 		t.Fatalf("statuses = %d, %d", followRes.Code, unfollowRes.Code)
 	}
@@ -430,17 +411,18 @@ func TestFollowUserErrors(t *testing.T) {
 		status  int
 		message string
 	}{
-		{"unauthorized", "", "2", nil, http.StatusUnauthorized, "Unauthorized"},
-		{"self", "1", "1", nil, http.StatusBadRequest, "Cannot follow yourself."},
-		{"not found", "1", "2", store.ErrNotFound, http.StatusNotFound, "User Not Found"},
-		{"internal", "1", "2", errors.New("failed"), http.StatusInternalServerError, "Internal Server Error"},
+		{"unauthorized", "", "alice", nil, http.StatusUnauthorized, "Unauthorized"},
+		{"invalid username", "1", "bad-name!", nil, http.StatusBadRequest, "Invalid username."},
+		{"self", "1", "alice", ErrSelfFollow, http.StatusBadRequest, "Cannot follow yourself."},
+		{"not found", "1", "alice", store.ErrNotFound, http.StatusNotFound, "User Not Found"},
+		{"internal", "1", "alice", errors.New("failed"), http.StatusInternalServerError, "Internal Server Error"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			service := &fakeService{followErr: test.err}
 			res := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodPost, "/users/"+test.target+"/follow", nil)
-			req.SetPathValue("userId", test.target)
+			req.SetPathValue("username", test.target)
 			if test.current != "" {
 				req = httpx.WithUserID(req, test.current)
 			}

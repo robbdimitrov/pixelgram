@@ -16,7 +16,7 @@ func RegisterProtectedRoutes(mux routeRegistrar, handler Handler) {
 	mux.HandleFunc("GET /users/{username}/followers", handler.ListFollowers)
 	mux.HandleFunc("GET /users/{username}/following", handler.ListFollowing)
 	mux.HandleFunc("GET /users/{username}", handler.GetUser)
-	mux.HandleFunc("PUT /users/{userId}", handler.UpdateUser)
-	mux.HandleFunc("POST /users/{userId}/follow", handler.FollowUser)
-	mux.HandleFunc("DELETE /users/{userId}/follow", handler.UnfollowUser)
+	mux.HandleFunc("PUT /users/me", handler.UpdateUser)
+	mux.HandleFunc("POST /users/{username}/follow", handler.FollowUser)
+	mux.HandleFunc("DELETE /users/{username}/follow", handler.UnfollowUser)
 }

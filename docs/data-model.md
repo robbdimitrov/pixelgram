@@ -19,7 +19,8 @@ outbox (transactional outbox for Kafka entity-changes and activity events)
 ### users
 | Field | Type | Constraints |
 |---|---|---|
-| id | serial PK | auto-increment |
+| id | serial PK | auto-increment — internal only, never exposed in API |
+| public_id | uuid | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() — external identifier; exposed as `id` in API responses |
 | name | varchar(255) | NOT NULL |
 | username | varchar(30) | UNIQUE, NOT NULL, CHECK `^[a-z0-9._]{3,30}$` |
 | email | varchar(255) | UNIQUE, NOT NULL |

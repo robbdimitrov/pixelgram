@@ -34,14 +34,13 @@ export async function getFollowing(
 
 export async function updateUser(
 	fetch: ApiClient,
-	userId: number,
 	name: string,
 	username: string,
 	email: string,
 	avatar: string,
 	bio: string
 ): Promise<null> {
-	const res = await fetch(`/users/${userId}`, {
+	const res = await fetch(`/users/me`, {
 		method: 'PUT',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ name, username: username.trim().toLowerCase(), email, avatar, bio })
@@ -51,11 +50,10 @@ export async function updateUser(
 
 export async function changePassword(
 	fetch: ApiClient,
-	userId: number,
 	oldPassword: string,
 	password: string
 ): Promise<null> {
-	const res = await fetch(`/users/${userId}`, {
+	const res = await fetch(`/users/me`, {
 		method: 'PUT',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ password, oldPassword })
@@ -63,13 +61,16 @@ export async function changePassword(
 	return unwrap<null>(res);
 }
 
-export async function followUser(fetch: ApiClient, userId: number): Promise<null> {
-	const res = await fetch(`/users/${userId}/follow`, { method: 'POST', body: '' });
+export async function followUser(fetch: ApiClient, username: string): Promise<null> {
+	const res = await fetch(`/users/${encodeURIComponent(username)}/follow`, {
+		method: 'POST',
+		body: ''
+	});
 	return unwrap<null>(res);
 }
 
-export async function unfollowUser(fetch: ApiClient, userId: number): Promise<null> {
-	const res = await fetch(`/users/${userId}/follow`, { method: 'DELETE' });
+export async function unfollowUser(fetch: ApiClient, username: string): Promise<null> {
+	const res = await fetch(`/users/${encodeURIComponent(username)}/follow`, { method: 'DELETE' });
 	return unwrap<null>(res);
 }
 

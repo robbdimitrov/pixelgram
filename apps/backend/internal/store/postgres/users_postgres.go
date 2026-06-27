@@ -22,7 +22,8 @@ const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,
 	u.follower_count AS followers,
 	(SELECT count(*) FROM follows WHERE follower_id = u.id) AS following,
 	EXISTS (SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = u.id) AS is_following,
-	u.created`
+	u.created,
+	u.public_id::text`
 
 type UserRepository struct {
 	db *database.DB
@@ -107,7 +108,7 @@ page AS (
 )
 SELECT *, true AS user_exists FROM page
 UNION ALL
-SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
        (SELECT id FROM urow) IS NOT NULL
 WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
@@ -127,7 +128,7 @@ page AS (
 )
 SELECT *, true AS user_exists FROM page
 UNION ALL
-SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
        (SELECT id FROM urow) IS NOT NULL
 WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
@@ -143,7 +144,7 @@ func (r *UserRepository) getUser(ctx context.Context, column, value, currentUser
 			FROM users u WHERE u.`+column+` = $2`, currentUserID, value).Scan(
 			&user.ID, &user.Name, &user.Username, &user.Email, &avatar, &bio,
 			&user.Posts, &user.Likes, &user.Followers, &user.Following,
-			&user.IsFollowing, &user.Created,
+			&user.IsFollowing, &user.Created, &user.PublicID,
 		)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -176,7 +177,7 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 			if err := rows.Scan(&item.user.ID, &item.user.Name, &item.user.Username,
 				&item.user.Email, &avatar, &bio, &item.user.Posts, &item.user.Likes,
 				&item.user.Followers, &item.user.Following, &item.user.IsFollowing,
-				&item.user.Created, &item.cursorCreated); err != nil {
+				&item.user.Created, &item.user.PublicID, &item.cursorCreated); err != nil {
 				return err
 			}
 			item.user.Avatar = database.NullableString(avatar)
@@ -204,7 +205,7 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 }
 
 // queryUserPageOrNotFound wraps a query that uses the UNION ALL sentinel pattern.
-// The query must produce 14 columns: the 12 from userColumns, cursor_created, and
+// The query must produce 15 columns: the 13 from userColumns, cursor_created, and
 // user_exists bool. The sentinel row fires (with all NULLs except user_exists) when
 // the page is empty, allowing a single round-trip to distinguish not-found from empty.
 func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]users.User, *pagination.Cursor, error) {
@@ -226,11 +227,13 @@ func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query stri
 			var avatar, bio sql.NullString
 			var userPosts, userLikes, followers, following *int
 			var isFollowing *bool
-			var created, cursorCreated *time.Time
+			var created *time.Time
+			var publicID *string
+			var cursorCreated *time.Time
 			var userExists bool
 			if err := rows.Scan(&id, &name, &username, &email, &avatar, &bio,
 				&userPosts, &userLikes, &followers, &following, &isFollowing,
-				&created, &cursorCreated, &userExists); err != nil {
+				&created, &publicID, &cursorCreated, &userExists); err != nil {
 				return err
 			}
 			if id == nil {
@@ -242,6 +245,7 @@ func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query stri
 			}
 			var item row
 			item.user.ID = *id
+			item.user.PublicID = *publicID
 			item.user.Name = *name
 			item.user.Username = *username
 			item.user.Email = *email
@@ -495,7 +499,7 @@ func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string
 			if err := rows.Scan(&user.ID, &user.Name, &user.Username,
 				&user.Email, &avatar, &bio, &user.Posts, &user.Likes,
 				&user.Followers, &user.Following, &user.IsFollowing,
-				&user.Created); err != nil {
+				&user.Created, &user.PublicID); err != nil {
 				return err
 			}
 			user.Avatar = database.NullableString(avatar)

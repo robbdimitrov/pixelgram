@@ -14,8 +14,8 @@
 
 	let profileUser = $derived(data.profileUser);
 	let isFollowPending = $state(false);
-	let pendingFollowIds = $state(new Set<number>());
-	let followingOverrides = $state(new Map<number, boolean>());
+	let pendingFollowIds = $state(new Set<string>());
+	let followingOverrides = $state(new Map<string, boolean>());
 
 	const isCurrentUser = $derived(data.currentUser.id === profileUser.id);
 	const username = $derived(profileUser.username);

@@ -22,7 +22,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await changePassword(api, currentUser.id, oldPassword, password);
+			await changePassword(api, oldPassword, password);
 		} catch (e) {
 			const status = (e as { status?: number }).status;
 			return fail(400, {

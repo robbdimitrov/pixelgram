@@ -3,10 +3,12 @@ package users
 import (
 	"context"
 	"log/slog"
+	"strconv"
 
 	"phasma/backend/internal/auth"
 	"phasma/backend/internal/blobstore"
 	"phasma/backend/internal/pagination"
+	"phasma/backend/internal/store"
 )
 
 type Service struct {
@@ -104,11 +106,29 @@ func (s *Service) ChangePassword(ctx context.Context, command ChangePasswordComm
 }
 
 func (s *Service) FollowUser(ctx context.Context, command FollowCommand) error {
-	return s.repository.FollowUser(ctx, command.FollowerID, command.FolloweeID)
+	target, found, err := s.repository.GetUserByUsername(ctx, command.FolloweeUsername, command.FollowerID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return store.ErrNotFound
+	}
+	followeeID := strconv.Itoa(target.ID)
+	if followeeID == command.FollowerID {
+		return ErrSelfFollow
+	}
+	return s.repository.FollowUser(ctx, command.FollowerID, followeeID)
 }
 
 func (s *Service) UnfollowUser(ctx context.Context, command FollowCommand) error {
-	return s.repository.UnfollowUser(ctx, command.FollowerID, command.FolloweeID)
+	target, found, err := s.repository.GetUserByUsername(ctx, command.FolloweeUsername, command.FollowerID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return store.ErrNotFound
+	}
+	return s.repository.UnfollowUser(ctx, command.FollowerID, strconv.Itoa(target.ID))
 }
 
 func (s *Service) ListSuggestedUsers(ctx context.Context, viewerID string) ([]User, error) {

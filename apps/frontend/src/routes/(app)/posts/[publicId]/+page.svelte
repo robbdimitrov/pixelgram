@@ -12,7 +12,6 @@
 <div class="mx-auto max-w-xl">
 	<PostCard
 		post={data.post}
-		currentUserId={data.currentUser.id}
 		currentUsername={data.currentUser.username}
 		singleView={true}
 		comments={data.comments}
