@@ -171,7 +171,7 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 		posts := make([]PostResult, 0, len(hits))
 		for _, hit := range hits {
 			posts = append(posts, PostResult{
-				ID:          stringField(hit, "id"),
+				ID:          stringField(hit, "post_id"),
 				Username:    stringField(hit, "username"),
 				Description: stringField(hit, "description"),
 			})

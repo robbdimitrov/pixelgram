@@ -25,8 +25,8 @@ graph TD
     Browser["Browser"]
 
     subgraph cluster ["Kubernetes Cluster"]
-        Web["Frontend / BFF<br>(SvelteKit SSR)"]:::frontend
-        API["Backend<br>(Go)"]:::backend
+        Frontend["Frontend<br>(SvelteKit)"]:::frontend
+        Gateway["Backend<br>(Go)"]:::backend
 
         subgraph data ["Data & Storage"]
             DB[("PostgreSQL<br>(source of truth)")]:::database
@@ -34,9 +34,9 @@ graph TD
         end
     end
 
-    Browser --> Web
-    Web --> API
-    API --> DB & Search
+    Browser --> Frontend
+    Frontend --> Gateway
+    Gateway --> DB & Search
 
     classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
     classDef backend fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff

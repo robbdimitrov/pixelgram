@@ -7,6 +7,7 @@ type entityUserUpsertPayload struct {
 	Op       string `json:"op"`
 	ID       int64  `json:"id"`
 	UserID   string `json:"user_id"`
+	Name     string `json:"name"`
 	Username string `json:"username"`
 	Bio      string `json:"bio"`
 }
