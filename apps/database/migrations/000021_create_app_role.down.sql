@@ -4,4 +4,9 @@ REVOKE SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM phasma
 REVOKE USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public FROM phasma_app;
 REVOKE USAGE ON SCHEMA public FROM phasma_app;
 REVOKE CONNECT ON DATABASE phasma FROM phasma_app;
+DO $$ BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'phasma_user') THEN
+    REVOKE phasma_app FROM phasma_user;
+  END IF;
+END $$;
 DROP ROLE IF EXISTS phasma_app;

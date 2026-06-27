@@ -303,7 +303,18 @@ func sweepExpiredOutbox(ctx context.Context, db *database.DB) {
 			slog.Error("outbox cleanup panicked", "panic", r)
 		}
 	}()
-	if _, err := db.Pool().Exec(ctx,
+	conn, err := db.Pool().Acquire(ctx)
+	if err != nil {
+		slog.Warn("outbox cleanup: acquire connection failed", "error", err)
+		return
+	}
+	defer conn.Release()
+	var acquired bool
+	if err := conn.QueryRow(ctx, `SELECT pg_try_advisory_lock(1)`).Scan(&acquired); err != nil || !acquired {
+		return
+	}
+	defer conn.Exec(context.Background(), `SELECT pg_advisory_unlock(1)`)
+	if _, err := conn.Exec(ctx,
 		"DELETE FROM outbox WHERE published_at IS NOT NULL AND created < now() - interval '7 days'"); err != nil {
 		slog.Warn("outbox cleanup failed", "error", err)
 	}
@@ -339,7 +350,18 @@ func reconcileFollowerCounts(ctx context.Context, db *database.DB) {
 			slog.Error("follower count reconciliation panicked", "panic", r)
 		}
 	}()
-	if _, err := db.Pool().Exec(ctx,
+	conn, err := db.Pool().Acquire(ctx)
+	if err != nil {
+		slog.Warn("follower count reconciliation: acquire connection failed", "error", err)
+		return
+	}
+	defer conn.Release()
+	var acquired bool
+	if err := conn.QueryRow(ctx, `SELECT pg_try_advisory_lock(2)`).Scan(&acquired); err != nil || !acquired {
+		return
+	}
+	defer conn.Exec(context.Background(), `SELECT pg_advisory_unlock(2)`)
+	if _, err := conn.Exec(ctx,
 		`UPDATE users SET follower_count = (SELECT count(*) FROM follows WHERE followee_id = users.id)`); err != nil {
 		slog.Warn("follower count reconciliation failed", "error", err)
 	}
