@@ -26,25 +26,17 @@ Fixed by same change as H-02 — `withRetry` calls `isTransientPostgresError`, s
 
 ---
 
-## MEDIUM
+## MEDIUM ✅
 
-### M-01 — Redpanda Connect uses the Meilisearch master key at runtime 🔄
+### M-01 — Redpanda Connect uses the Meilisearch master key at runtime ✅
 
-`deploy/broker.yaml` (the `connect` Deployment)
-
-The backend deliberately provisions a scoped API key with only `search`, `documents.add`, and `documents.delete` on specific indexes. The Redpanda Connect pipelines use `${MEILI_MASTER_KEY}` directly, giving unrestricted Meilisearch admin access to the connect pod.
-
-Fix: Provision a dedicated Meilisearch API key for the connect pipeline (only `documents.add` and `documents.delete` on `users`, `posts`, `hashtags`) during deployment and pass it to the connect Deployment as a separate secret. Do not pass `MEILI_MASTER_KEY` to connect at all.
+Fixed: `deploy/broker.yaml` passes `MEILI_CONNECT_KEY` (from `connect-secret`) to the connect pod — not `MEILI_MASTER_KEY`. `deploy.sh` `provision_meili_connect_key()` calls the Meilisearch keys API with the master key to create a scoped key restricted to `documents.add` and `documents.delete` on `users`, `posts`, `hashtags` indexes, then stores it in `connect-secret/meili-connect-key`. The master key never reaches the connect pod.
 
 ---
 
-### M-02 — Redpanda Connect and backfill use the Postgres superuser 🔄
+### M-02 — Redpanda Connect and backfill use the Postgres superuser ✅
 
-`deploy/broker.yaml:319`, `deploy/broker-backfill.yaml:49`
-
-Both use `postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/phasma`. The connect service only reads the `outbox` table for CDC fan-out. A breach of the connect pod gives full superuser access to the database.
-
-Fix: Create a dedicated role (e.g. `phasma_connect`) with `SELECT` on `outbox` only (plus replication privileges if using logical replication slots). Add a migration and a `provision-connect-user` step in deploy.sh. Pass those credentials to the connect and backfill Deployments via a new `connect-secret`.
+Fixed: migration `000022_create_connect_role` creates the `phasma_connect` role with `SELECT` on `outbox` only. An init container in both `broker.yaml` and `broker-backfill.yaml` uses the superuser once to create/rotate `phasma_connect_user` and grant the role; the connect container's `DATABASE_URL` uses `phasma_connect_user` from `connect-secret/connect-db-password`.
 
 ---
 
