@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { getByUsername, followUser, unfollowUser } from '$lib/server/api/users';
 import { getUserPosts } from '$lib/server/api/posts';
@@ -26,7 +26,11 @@ export const actions: Actions = {
 		const username = stripAt(params.username);
 		const profileUser = await getByUsername(api, username);
 		if (!profileUser) return { success: false };
-		await followUser(api, profileUser.id);
+		try {
+			await followUser(api, profileUser.id);
+		} catch {
+			return fail(503, { error: 'Could not update follow status.' });
+		}
 		return { success: true };
 	},
 	unfollow: async ({ fetch, cookies, params }) => {
@@ -34,7 +38,11 @@ export const actions: Actions = {
 		const username = stripAt(params.username);
 		const profileUser = await getByUsername(api, username);
 		if (!profileUser) return { success: false };
-		await unfollowUser(api, profileUser.id);
+		try {
+			await unfollowUser(api, profileUser.id);
+		} catch {
+			return fail(503, { error: 'Could not update follow status.' });
+		}
 		return { success: true };
 	}
 };
