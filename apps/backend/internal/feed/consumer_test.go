@@ -15,21 +15,21 @@ import (
 
 // fakeRepo is a typed fake implementing Repository for unit tests.
 type fakeRepo struct {
-	insertedEntries       [][]Entry
-	insertErr             error
-	followers             []int64
-	followersErr          error
-	recentEntries         []Entry
-	recentEntriesErr      error
-	followerCount         int64
-	followerCountErr      error
-	pruneFollowerID       int64
-	pruneFolloweeID       int64
-	pruneErr              error
-	panicInsert           bool
-	getFollowersCalled    bool
-	getRecentCalled       bool
-	getFollowerCountCalls []int64
+	insertedEntries     [][]Entry
+	insertErr           error
+	followers           []int64
+	followersErr        error
+	recentEntries       []Entry
+	recentEntriesErr    error
+	isCelebrity         bool
+	isCelebrityErr      error
+	pruneFollowerID     int64
+	pruneFolloweeID     int64
+	pruneErr            error
+	panicInsert         bool
+	getFollowersCalled  bool
+	getRecentCalled     bool
+	getIsCelebrityCalls []int64
 }
 
 func (r *fakeRepo) ListFeed(_ context.Context, _ string, _ *pagination.Cursor, _ int) ([]posts.Post, *pagination.Cursor, error) {
@@ -60,22 +60,25 @@ func (r *fakeRepo) GetRecentPostEntries(_ context.Context, _ int64, _ int) ([]En
 	return r.recentEntries, r.recentEntriesErr
 }
 
-func (r *fakeRepo) GetUserFollowerCount(_ context.Context, userID int64) (int64, error) {
-	r.getFollowerCountCalls = append(r.getFollowerCountCalls, userID)
-	return r.followerCount, r.followerCountErr
+func (r *fakeRepo) GetUserIsCelebrity(_ context.Context, userID int64) (bool, error) {
+	r.getIsCelebrityCalls = append(r.getIsCelebrityCalls, userID)
+	return r.isCelebrity, r.isCelebrityErr
 }
 
 func newConsumerWithRepo(repo Repository) *Consumer {
 	return &Consumer{repo: repo}
 }
 
-func entityChangesMsg(authorID int64, postID int64, followerCount int64) []byte {
+// entityChangesMsg builds a payload for both old-format (followerCount) and
+// new-format (isCelebrity) events so tests can exercise the backward-compat path.
+func entityChangesMsg(authorID int64, postID int64, followerCount int64, isCelebrity bool) []byte {
 	payload := entityChangesPayload{
 		Table:         "posts",
 		Op:            "upsert",
 		ID:            postID,
 		AuthorID:      fmt.Sprintf("%d", authorID),
 		Created:       time.Now().UTC().Format(time.RFC3339Nano),
+		IsCelebrity:   isCelebrity,
 		FollowerCount: followerCount,
 	}
 	data, _ := json.Marshal(payload)
@@ -88,13 +91,14 @@ func activityMsg(op, actorID, recipientID string) []byte {
 	return data
 }
 
-// handleEntityChanges — celebrity path (FollowerCount > CelebThreshold)
+// handleEntityChanges — celebrity path via FollowerCount (old-format outbox event)
 
 func TestHandleEntityChangesCelebSkipsFanout(t *testing.T) {
-	repo := &fakeRepo{followerCount: CelebThreshold + 1}
+	repo := &fakeRepo{}
 	c := newConsumerWithRepo(repo)
 
-	c.handleEntityChanges(context.Background(), entityChangesMsg(42, 100, CelebThreshold+1))
+	// Old-format event: FollowerCount set, IsCelebrity absent (zero-valued false).
+	c.handleEntityChanges(context.Background(), entityChangesMsg(42, 100, CelebThreshold+1, false))
 
 	if repo.getFollowersCalled {
 		t.Fatal("GetFollowers must not be called for celebrity authors")
@@ -111,16 +115,39 @@ func TestHandleEntityChangesCelebSkipsFanout(t *testing.T) {
 	}
 }
 
-// handleEntityChanges — normal path (FollowerCount <= CelebThreshold)
+// handleEntityChanges — celebrity path via IsCelebrity (new-format outbox event)
+
+func TestHandleEntityChangesCelebIsCelebritySkipsFanout(t *testing.T) {
+	repo := &fakeRepo{}
+	c := newConsumerWithRepo(repo)
+
+	// New-format event: IsCelebrity set, FollowerCount zero.
+	c.handleEntityChanges(context.Background(), entityChangesMsg(42, 100, 0, true))
+
+	if repo.getFollowersCalled {
+		t.Fatal("GetFollowers must not be called when IsCelebrity is true")
+	}
+	if len(repo.insertedEntries) != 1 {
+		t.Fatalf("InsertEntries called %d time(s), want 1", len(repo.insertedEntries))
+	}
+	batch := repo.insertedEntries[0]
+	if len(batch) != 1 {
+		t.Fatalf("inserted %d entries, want 1 (author only)", len(batch))
+	}
+	if batch[0].UserID != 42 || batch[0].PostID != 100 {
+		t.Fatalf("entry = %+v, want userID=42 postID=100", batch[0])
+	}
+}
+
+// handleEntityChanges — normal path (IsCelebrity = false, FollowerCount <= CelebThreshold)
 
 func TestHandleEntityChangesNormalFansOut(t *testing.T) {
 	repo := &fakeRepo{
-		followerCount: CelebThreshold,
-		followers:     []int64{10, 11, 12},
+		followers: []int64{10, 11, 12},
 	}
 	c := newConsumerWithRepo(repo)
 
-	c.handleEntityChanges(context.Background(), entityChangesMsg(42, 100, CelebThreshold))
+	c.handleEntityChanges(context.Background(), entityChangesMsg(42, 100, CelebThreshold, false))
 
 	if !repo.getFollowersCalled {
 		t.Fatal("GetFollowers must be called on the normal path")
@@ -145,7 +172,7 @@ func TestHandleRecordSafelyRecoversPanic(t *testing.T) {
 		Topic:     topicEntityChanges,
 		Partition: 1,
 		Offset:    7,
-		Value:     entityChangesMsg(42, 100, 0),
+		Value:     entityChangesMsg(42, 100, 0, false),
 	}
 
 	c.handleRecordSafely(context.Background(), record)
@@ -159,7 +186,7 @@ func TestHandleRecordSafelyRecoversPanic(t *testing.T) {
 // handleFollow — celebrity recipient skips backfill
 
 func TestHandleFollowCelebSkipsBackfill(t *testing.T) {
-	repo := &fakeRepo{followerCount: CelebThreshold + 1}
+	repo := &fakeRepo{isCelebrity: true}
 	c := newConsumerWithRepo(repo)
 
 	c.handleFollow(context.Background(), "1", "999")
@@ -170,8 +197,8 @@ func TestHandleFollowCelebSkipsBackfill(t *testing.T) {
 	if len(repo.insertedEntries) != 0 {
 		t.Fatal("InsertEntries must not be called when recipient is a celebrity")
 	}
-	if len(repo.getFollowerCountCalls) != 1 || repo.getFollowerCountCalls[0] != 999 {
-		t.Fatalf("GetUserFollowerCount calls = %v, want [999]", repo.getFollowerCountCalls)
+	if len(repo.getIsCelebrityCalls) != 1 || repo.getIsCelebrityCalls[0] != 999 {
+		t.Fatalf("GetUserIsCelebrity calls = %v, want [999]", repo.getIsCelebrityCalls)
 	}
 }
 
@@ -180,7 +207,7 @@ func TestHandleFollowCelebSkipsBackfill(t *testing.T) {
 func TestHandleFollowNormalBackfills(t *testing.T) {
 	now := time.Now().UTC()
 	repo := &fakeRepo{
-		followerCount: CelebThreshold,
+		isCelebrity: false,
 		recentEntries: []Entry{
 			{UserID: 999, PostID: 201, Created: now},
 			{UserID: 999, PostID: 202, Created: now},
@@ -205,5 +232,29 @@ func TestHandleFollowNormalBackfills(t *testing.T) {
 		if e.UserID != 1 {
 			t.Fatalf("backfill entry userID = %d, want 1 (actor)", e.UserID)
 		}
+	}
+}
+
+// handleEntityChanges — truncation warning when GetFollowers returns exactly CelebThreshold entries
+
+func TestHandleEntityChangesFollowerListAtThresholdWarns(t *testing.T) {
+	followers := make([]int64, CelebThreshold)
+	for i := range followers {
+		followers[i] = int64(1000 + i)
+	}
+	repo := &fakeRepo{followers: followers}
+	c := newConsumerWithRepo(repo)
+
+	c.handleEntityChanges(context.Background(), entityChangesMsg(42, 100, 0, false))
+
+	if len(repo.insertedEntries) != 1 {
+		t.Fatalf("InsertEntries called %d time(s), want 1", len(repo.insertedEntries))
+	}
+	batch := repo.insertedEntries[0]
+	if len(batch) != int(CelebThreshold)+1 {
+		t.Fatalf("inserted %d entries, want %d (author + all followers)", len(batch), int(CelebThreshold)+1)
+	}
+	if batch[0].UserID != 42 {
+		t.Fatalf("first entry userID = %d, want 42 (author)", batch[0].UserID)
 	}
 }

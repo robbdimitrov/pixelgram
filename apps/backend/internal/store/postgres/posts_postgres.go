@@ -50,12 +50,12 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			return err
 		}
 		var username string
-		var followerCount int64
+		var isCelebrity bool
 		if err := tx.QueryRow(ctx,
 			`UPDATE users SET post_count = post_count + 1
-			WHERE id = $1 RETURNING username, follower_count`,
-			userID).Scan(&username, &followerCount); err != nil {
-			return err // hard fail — wrong count means wrong fan-out decision
+			WHERE id = $1 RETURNING username, is_celebrity`,
+			userID).Scan(&username, &isCelebrity); err != nil {
+			return err // hard fail — wrong celebrity status means wrong fan-out decision
 		}
 
 		descStr := ""
@@ -69,16 +69,16 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		}
 
 		postPayload, err := marshalOutboxPayload(entityPostUpsertPayload{
-			Table:         "posts",
-			Op:            "upsert",
-			ID:            int64(postID),
-			PostID:        publicID,
-			AuthorID:      userID,
-			Description:   descStr,
-			Username:      username,
-			Hashtags:      hashtags,
-			Created:       createdAt.UTC().Format(time.RFC3339Nano),
-			FollowerCount: followerCount,
+			Table:       "posts",
+			Op:          "upsert",
+			ID:          int64(postID),
+			PostID:      publicID,
+			AuthorID:    userID,
+			Description: descStr,
+			Username:    username,
+			Hashtags:    hashtags,
+			Created:     createdAt.UTC().Format(time.RFC3339Nano),
+			IsCelebrity: isCelebrity,
 		})
 		if err != nil {
 			return err

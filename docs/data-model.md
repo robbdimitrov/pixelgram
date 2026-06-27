@@ -28,6 +28,7 @@ outbox (transactional outbox for Kafka entity-changes and activity events)
 | avatar | varchar(255) | DEFAULT `''` — blob filename |
 | bio | varchar(300) | DEFAULT `''` |
 | follower_count | int | NOT NULL DEFAULT 0 — atomically maintained by follow/unfollow mutations within their transactions |
+| is_celebrity | boolean | NOT NULL DEFAULT false — permanent one-way latch set when `follower_count` first exceeds the celebrity threshold; never reset to false |
 | created | timestamptz | DEFAULT now() |
 
 ### sessions

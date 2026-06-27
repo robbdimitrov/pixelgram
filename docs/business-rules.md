@@ -66,7 +66,8 @@ The feed reads from a pre-materialized `feed` table populated by the `feed-consu
 
 ## Celebrity / Hybrid Fanout
 
-- **Celebrity threshold**: users with `follower_count > 10000` skip fan-out-on-write; only their own feed row is written at post creation time.
+- **Celebrity threshold**: users with more than 10 000 followers skip fan-out-on-write; only their own feed row is written at post creation time.
+- **Permanent latch**: celebrity status (`is_celebrity`) is a one-way boolean on the `users` row, set when `follower_count` first crosses the threshold and never reset. Fan-out routing decisions (both write-path and read-path) use `is_celebrity`, not the volatile `follower_count`, so posts pushed before the threshold was crossed are never lost if a user later loses followers.
 - **Hybrid read**: celebrity posts are merged into each viewer's feed at query time via `UNION ALL` with `NOT EXISTS` dedup against the fan-out inbox, ensuring no duplicate entries appear when both paths would otherwise produce the same row.
 
 ## Notifications

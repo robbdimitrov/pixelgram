@@ -7,16 +7,16 @@ import (
 
 func TestMarshalOutboxPayloadEscapesControlCharactersAsJSON(t *testing.T) {
 	payload, err := marshalOutboxPayload(entityPostUpsertPayload{
-		Table:         "posts",
-		Op:            "upsert",
-		ID:            42,
-		PostID:        "post-id",
-		AuthorID:      "7",
-		Description:   "bell:\a vertical:\v quote:\" slash:\\",
-		Username:      "user",
-		Hashtags:      []string{"go\a", "json\v"},
-		Created:       "2026-06-26T12:00:00Z",
-		FollowerCount: 3,
+		Table:       "posts",
+		Op:          "upsert",
+		ID:          42,
+		PostID:      "post-id",
+		AuthorID:    "7",
+		Description: "bell:\a vertical:\v quote:\" slash:\\",
+		Username:    "user",
+		Hashtags:    []string{"go\a", "json\v"},
+		Created:     "2026-06-26T12:00:00Z",
+		IsCelebrity: false,
 	})
 	if err != nil {
 		t.Fatalf("marshalOutboxPayload() error = %v", err)

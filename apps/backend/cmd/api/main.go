@@ -332,6 +332,7 @@ func sweepExpiredSessions(ctx context.Context, repository sessionSweeper) {
 }
 
 func reconcileFollowerCountsPeriodically(ctx context.Context, db *database.DB) {
+	reconcileFollowerCounts(ctx, db)
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 	for {
@@ -362,7 +363,11 @@ func reconcileFollowerCounts(ctx context.Context, db *database.DB) {
 	}
 	defer conn.Exec(context.Background(), `SELECT pg_advisory_unlock(2)`)
 	if _, err := conn.Exec(ctx,
-		`UPDATE users SET follower_count = (SELECT count(*) FROM follows WHERE followee_id = users.id)`); err != nil {
+		`UPDATE users SET
+			follower_count = f.cnt,
+			is_celebrity   = is_celebrity OR f.cnt > $1
+		FROM LATERAL (SELECT count(*)::int AS cnt FROM follows WHERE followee_id = users.id) AS f`,
+		feed.CelebThreshold); err != nil {
 		slog.Warn("follower count reconciliation failed", "error", err)
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"phasma/backend/internal/database"
+	"phasma/backend/internal/feed"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
 	"phasma/backend/internal/users"
@@ -305,8 +306,11 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 			return tx.Commit(ctx)
 		}
 		if _, err := tx.Exec(ctx,
-			`UPDATE users SET follower_count = follower_count + 1 WHERE id = $1`,
-			followeeID); err != nil {
+			`UPDATE users SET
+				follower_count = follower_count + 1,
+				is_celebrity = is_celebrity OR (follower_count + 1 > $2)
+			WHERE id = $1`,
+			followeeID, feed.CelebThreshold); err != nil {
 			return err
 		}
 		payload, err := marshalOutboxPayload(activityPayload{

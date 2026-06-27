@@ -126,7 +126,7 @@ func (Feed) InsertEntries(context.Context, []feed.Entry) error                  
 func (Feed) PruneByFollowee(context.Context, int64, int64) error                    { return nil }
 func (Feed) GetFollowers(context.Context, int64) ([]int64, error)                   { return nil, nil }
 func (Feed) GetRecentPostEntries(context.Context, int64, int) ([]feed.Entry, error) { return nil, nil }
-func (Feed) GetUserFollowerCount(context.Context, int64) (int64, error)             { return 0, nil }
+func (Feed) GetUserIsCelebrity(context.Context, int64) (bool, error)                { return false, nil }
 
 type Notifications struct{}
 

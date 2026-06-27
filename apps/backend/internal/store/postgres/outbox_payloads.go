@@ -12,16 +12,16 @@ type entityUserUpsertPayload struct {
 }
 
 type entityPostUpsertPayload struct {
-	Table         string   `json:"table"`
-	Op            string   `json:"op"`
-	ID            int64    `json:"id"`
-	PostID        string   `json:"post_id"`
-	AuthorID      string   `json:"author_id"`
-	Description   string   `json:"description"`
-	Username      string   `json:"username"`
-	Hashtags      []string `json:"hashtags"`
-	Created       string   `json:"created"`
-	FollowerCount int64    `json:"follower_count"`
+	Table       string   `json:"table"`
+	Op          string   `json:"op"`
+	ID          int64    `json:"id"`
+	PostID      string   `json:"post_id"`
+	AuthorID    string   `json:"author_id"`
+	Description string   `json:"description"`
+	Username    string   `json:"username"`
+	Hashtags    []string `json:"hashtags"`
+	Created     string   `json:"created"`
+	IsCelebrity bool     `json:"is_celebrity"`
 }
 
 type entityPostDeletePayload struct {

@@ -41,7 +41,7 @@ func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pa
 		  FROM follows fl
 		  JOIN users cu ON cu.id = fl.followee_id
 		  WHERE fl.follower_id = $1
-		    AND cu.follower_count > $6
+		    AND cu.is_celebrity = TRUE
 		)
 		AND NOT EXISTS (
 		  SELECT 1 FROM feed WHERE feed.user_id = $1 AND feed.post_id = posts.id
@@ -50,7 +50,7 @@ func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pa
 		AND (NOT $2 OR (posts.created, posts.id) < ($3, $4))
 
 		ORDER BY cursor_created DESC, id DESC LIMIT $5`,
-		limit, userID, hasCursor, cursorCreated, cursorID, limit+1, r.celebThreshold)
+		limit, userID, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
 // insertEntriesBatchSize keeps bind parameters well under Postgres's 65,535 limit (3 per row).
@@ -145,13 +145,15 @@ func (r *FeedRepository) GetRecentPostEntries(ctx context.Context, userID int64,
 	return entries, err
 }
 
-func (r *FeedRepository) GetUserFollowerCount(ctx context.Context, userID int64) (int64, error) {
-	var count int64
+func (r *FeedRepository) GetUserIsCelebrity(ctx context.Context, userID int64) (bool, error) {
+	var isCelebrity bool
 	err := r.db.Read(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx,
-			`SELECT follower_count FROM users WHERE id = $1`, userID).Scan(&count)
+			`SELECT is_celebrity FROM users WHERE id = $1`, userID).Scan(&isCelebrity)
 	})
-	return count, err
+	// pgx.ErrNoRows is propagated intentionally: if the user was deleted between the follow
+	// event being published and consumed, the caller logs a warning and skips the backfill.
+	return isCelebrity, err
 }
 
 func (r *FeedRepository) queryFeedPage(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *pagination.Cursor, error) {

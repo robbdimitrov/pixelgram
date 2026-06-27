@@ -114,6 +114,7 @@ type entityChangesPayload struct {
 	ID            int64  `json:"id"`
 	AuthorID      string `json:"author_id"`
 	Created       string `json:"created"`
+	IsCelebrity   bool   `json:"is_celebrity"`
 	FollowerCount int64  `json:"follower_count"`
 }
 
@@ -158,7 +159,7 @@ func (c *Consumer) handleEntityChanges(ctx context.Context, data []byte) {
 		created = time.Now().UTC()
 	}
 
-	if payload.FollowerCount > CelebThreshold {
+	if payload.IsCelebrity || payload.FollowerCount > CelebThreshold {
 		if err := c.repo.InsertEntries(ctx, []Entry{{
 			UserID:  authorID,
 			PostID:  payload.ID,
@@ -173,6 +174,10 @@ func (c *Consumer) handleEntityChanges(ctx context.Context, data []byte) {
 	if err != nil {
 		slog.Warn("feed consumer: failed to get followers", "author_id", authorID, "error", err)
 		return
+	}
+	if int64(len(followers)) >= CelebThreshold {
+		slog.Warn("feed consumer: follower list truncated at threshold; some followers may miss this post",
+			"author_id", authorID, "post_id", payload.ID, "returned", len(followers))
 	}
 
 	entries := make([]Entry, 0, len(followers)+1)
@@ -213,12 +218,12 @@ func (c *Consumer) handleFollow(ctx context.Context, actorIDStr, recipientIDStr 
 		return
 	}
 
-	count, err := c.repo.GetUserFollowerCount(ctx, recipientID)
+	isCeleb, err := c.repo.GetUserIsCelebrity(ctx, recipientID)
 	if err != nil {
-		slog.Warn("feed consumer: failed to get follower count", "recipient_id", recipientID, "error", err)
+		slog.Warn("feed consumer: failed to get celebrity status", "recipient_id", recipientID, "error", err)
 		return
 	}
-	if count > CelebThreshold {
+	if isCeleb {
 		return // celebrity posts are served on-read; no backfill
 	}
 
