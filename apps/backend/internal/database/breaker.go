@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"phasma/backend/internal/env"
+	"phasma/backend/internal/store"
 )
 
 type circuitBreaker struct {
@@ -73,7 +74,10 @@ func isTransientPostgresError(err error) bool {
 	if err == nil {
 		return false
 	}
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) ||
+		errors.Is(err, store.ErrNotFound) ||
+		errors.Is(err, store.ErrForbidden) ||
+		errors.Is(err, store.ErrConflict) {
 		return false
 	}
 	var pgErr *pgconn.PgError
