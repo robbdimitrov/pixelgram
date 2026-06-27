@@ -47,7 +47,6 @@ export function mapPost(dto: PostDto): Post {
 export function mapComment(dto: CommentDto): Comment {
 	return {
 		id: dto.id,
-		userId: dto.userId,
 		username: dto.username,
 		avatar: dto.avatar,
 		body: dto.body,

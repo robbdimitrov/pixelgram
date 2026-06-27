@@ -74,8 +74,7 @@ export interface Post {
 }
 
 export interface CommentDto {
-	id: number;
-	userId: number;
+	id: string;
 	username: string;
 	avatar: string | null;
 	body: string;
@@ -83,8 +82,7 @@ export interface CommentDto {
 }
 
 export interface Comment {
-	id: number;
-	userId: number;
+	id: string;
 	username: string;
 	avatar: string | null;
 	body: string;

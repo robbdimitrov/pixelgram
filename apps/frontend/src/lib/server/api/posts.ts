@@ -90,7 +90,7 @@ export async function createComment(
 export async function deleteComment(
 	fetch: ApiClient,
 	publicId: string,
-	commentId: number
+	commentId: string
 ): Promise<null> {
 	const res = await fetch(`/posts/${publicId}/comments/${commentId}`, { method: 'DELETE' });
 	return unwrap<null>(res);

@@ -32,8 +32,7 @@ const basePostDto: PostDto = {
 };
 
 const baseCommentDto: CommentDto = {
-	id: 7,
-	userId: 1,
+	id: '550e8400-e29b-41d4-a716-446655440000',
 	username: 'johndoe',
 	avatar: null,
 	body: 'Nice photo!',
@@ -79,7 +78,7 @@ describe('mapPost', () => {
 describe('mapComment', () => {
 	it('maps DTO to Comment with Date object', () => {
 		const comment = mapComment(baseCommentDto);
-		expect(comment.id).toBe(7);
+		expect(comment.id).toBe('550e8400-e29b-41d4-a716-446655440000');
 		expect(comment.body).toBe('Nice photo!');
 		expect(comment.created).toBeInstanceOf(Date);
 	});

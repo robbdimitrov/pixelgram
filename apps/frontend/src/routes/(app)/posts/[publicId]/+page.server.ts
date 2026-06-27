@@ -44,8 +44,9 @@ export const actions: Actions = {
 	},
 	deleteComment: async ({ fetch, cookies, request, params }) => {
 		const data = await request.formData();
-		const commentId = Number(data.get('commentId'));
-		if (!Number.isInteger(commentId) || commentId <= 0) return { success: false };
+		const commentId = (data.get('commentId') as string) ?? '';
+		if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(commentId))
+			return fail(400, { error: 'Invalid comment ID.' });
 		await deleteComment(apiClient({ fetch, cookies }), params.publicId, commentId);
 		return { success: true };
 	},

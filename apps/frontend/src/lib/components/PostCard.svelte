@@ -13,12 +13,14 @@
 	let {
 		post: initialPost,
 		currentUserId,
+		currentUsername,
 		singleView = false,
 		comments: initialComments = [],
 		nextCommentsCursor: initialNextCommentsCursor = null
 	}: {
 		post: Post;
 		currentUserId: number;
+		currentUsername: string;
 		singleView?: boolean;
 		comments?: Comment[];
 		nextCommentsCursor?: string | null;
@@ -249,7 +251,7 @@
 									{relativeDate(comment.created)}
 								</div>
 							</div>
-							{#if currentUserId === comment.userId}
+							{#if comment.username === currentUsername || initialPost.username === currentUsername}
 								<form
 									method="POST"
 									action="/posts/{initialPost.publicId}?/deleteComment"
