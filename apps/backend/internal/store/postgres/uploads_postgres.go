@@ -51,7 +51,7 @@ func (r *UploadRepository) CreateUpload(ctx context.Context, userID, filename st
 		// Lock remaining rows and count atomically before inserting.
 		var count int
 		if err := tx.QueryRow(ctx,
-			`SELECT count(*) FROM (SELECT id FROM uploads WHERE user_id = $1 FOR UPDATE) locked`,
+			`SELECT count(*) FROM (SELECT filename FROM uploads WHERE user_id = $1 FOR UPDATE) locked`,
 			userID).Scan(&count); err != nil {
 			return err
 		}

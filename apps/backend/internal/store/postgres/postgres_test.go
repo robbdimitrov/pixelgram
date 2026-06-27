@@ -486,19 +486,19 @@ func TestPostgresRepositoryCommentOwnershipAndNotFoundOutcomes(t *testing.T) {
 		t.Fatalf("CreateComment(missing post) error = %v, want not found", err)
 	}
 
-	deleted, err := client.DeleteComment(ctx, post.PublicID, stringID(comment.ID), stringID(otherID))
+	deleted, err := client.DeleteComment(ctx, post.PublicID, comment.PublicID, stringID(otherID))
 	if !deleted || !errors.Is(err, store.ErrForbidden) {
 		t.Fatalf("DeleteComment(non-owner) = %v, %v; want true, forbidden", deleted, err)
 	}
-	deleted, err = client.DeleteComment(ctx, post.PublicID, stringID(comment.ID), stringID(commentOwnerID))
+	deleted, err = client.DeleteComment(ctx, post.PublicID, comment.PublicID, stringID(commentOwnerID))
 	if err != nil || !deleted {
 		t.Fatalf("DeleteComment(owner) = %v, %v", deleted, err)
 	}
-	deleted, err = client.DeleteComment(ctx, post.PublicID, stringID(comment.ID), stringID(commentOwnerID))
+	deleted, err = client.DeleteComment(ctx, post.PublicID, comment.PublicID, stringID(commentOwnerID))
 	if err != nil || deleted {
 		t.Fatalf("DeleteComment(missing) = %v, %v; want false, nil", deleted, err)
 	}
-	deleted, err = client.DeleteComment(ctx, "00000000-0000-0000-0000-000000000000", "999999", stringID(commentOwnerID))
+	deleted, err = client.DeleteComment(ctx, "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", stringID(commentOwnerID))
 	if err != nil || deleted {
 		t.Fatalf("DeleteComment(missing post) = %v, %v; want false, nil", deleted, err)
 	}
@@ -516,7 +516,7 @@ func TestPostgresRepositoryPostOwnerCanDeleteComments(t *testing.T) {
 		t.Fatalf("CreateComment() error = %v", err)
 	}
 
-	deleted, err := client.DeleteComment(ctx, post.PublicID, stringID(comment.ID), stringID(postOwnerID))
+	deleted, err := client.DeleteComment(ctx, post.PublicID, comment.PublicID, stringID(postOwnerID))
 	if err != nil || !deleted {
 		t.Fatalf("DeleteComment(post owner) = %v, %v; want true, nil", deleted, err)
 	}
