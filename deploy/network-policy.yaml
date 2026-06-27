@@ -12,6 +12,161 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   namespace: phasma
+  name: default-deny-egress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: phasma
+  name: allow-dns-egress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: phasma
+  name: allow-frontend-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: phasma
+      tier: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: backend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: phasma
+  name: allow-backend-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: phasma
+      tier: backend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: cache
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: search
+    ports:
+    - protocol: TCP
+      port: 7700
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: storage
+    ports:
+    - protocol: TCP
+      port: 8333
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: broker
+    ports:
+    - protocol: TCP
+      port: 9092
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: phasma
+  name: allow-broker-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: phasma
+      tier: broker
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: search
+    ports:
+    - protocol: TCP
+      port: 7700
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: storage
+    ports:
+    - protocol: TCP
+      port: 8333
+  - to:
+    - podSelector:
+        matchLabels:
+          app: phasma
+          tier: broker
+    ports:
+    - protocol: TCP
+      port: 9092
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: phasma
   name: allow-frontend-public
 spec:
   podSelector:

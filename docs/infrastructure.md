@@ -27,6 +27,12 @@ The backend pod runs two init containers before the backend container starts:
 1. `migration` — runs the `database` migration image as a non-root init container. Migrations must complete successfully before the next init container runs.
 2. `provision-app-user` — connects as the `postgres` superuser and creates (or re-passwords) `phasma_user`, then grants it the `phasma_app` role. The backend container connects as `phasma_user`.
 
+The connect Deployment and broker-backfill Job each run one init container:
+
+1. `provision-connect-user` — connects as the `postgres` superuser and creates (or re-passwords) `phasma_connect_user`, then grants it the `phasma_connect` role. The connect container connects as `phasma_connect_user` with SELECT on `outbox` only.
+
+`deploy.sh` provisions a Meilisearch scoped key (`documents.add` and `documents.delete` on `users`, `posts`, `hashtags` indexes only) after Meilisearch is ready and stores it in `connect-secret`. The connect Deployment is restarted after this provisioning step to pick up the new key.
+
 ## Service Accounts
 
 Each workload has a dedicated `ServiceAccount` defined in `deploy/serviceaccounts.yaml` with `automountServiceAccountToken: false`. Dedicated accounts allow per-workload RBAC if needed in future without granting access at a shared default account. No RBAC rules are currently bound to any of these accounts.
@@ -34,7 +40,7 @@ Each workload has a dedicated `ServiceAccount` defined in `deploy/serviceaccount
 ## Services and Networking
 
 All services are cluster-internal only. The nginx Ingress exposes only the `frontend` service on port 8080.
-NetworkPolicies default-deny pod ingress in the namespace, then allow only the frontend public port and the backend, database, cache, search, storage, and broker paths required by the service graph.
+NetworkPolicies default-deny both ingress and egress in the namespace. Egress is re-opened only for kube-dns (all pods), and for the specific pod-to-pod paths required by the service graph: frontend→backend, backend→database/cache/search/storage/broker, broker→database/search/storage/broker. Ingress is re-opened symmetrically.
 
 | Service name | Port | Protocol |
 |---|---|---|
@@ -69,6 +75,8 @@ Secrets are split per service to limit blast radius:
 | `storage-secret` | `s3-secret-key` | Backend S3 client, SeaweedFS config |
 | `cache-secret` | `dragonfly-password` | Backend Dragonfly client |
 | `search-secret` | `meili-master-key` | Backend Meilisearch key provisioning, Meilisearch service |
+| `connect-secret` | `connect-db-password` | provision-connect-user init container, connect DATABASE_URL |
+| `connect-secret` | `meili-connect-key` | connect Meilisearch scoped key (documents.add/delete only; provisioned by deploy.sh after Meilisearch is ready) |
 
 ## Security Context (all pods)
 
