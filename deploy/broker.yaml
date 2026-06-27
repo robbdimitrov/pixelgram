@@ -153,9 +153,9 @@ spec:
     app: phasma
     tier: broker
   ports:
-  - name: kafka
-    port: 9092
-    targetPort: kafka
+    - name: kafka
+      port: 9092
+      targetPort: kafka
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -192,75 +192,75 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: redpanda
-        image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        command: ["/usr/bin/rpk", "redpanda", "start"]
-        args:
-        - --smp=1
-        - --memory=256M
-        - --reserve-memory=0M
-        - --node-id=0
-        - --kafka-addr=0.0.0.0:9092
-        - --advertise-kafka-addr=broker-0.broker:9092
-        - --rpc-addr=0.0.0.0:33145
-        - --advertise-rpc-addr=broker-0.broker:33145
-        - --set=redpanda.developer_mode=false
-        - --set=redpanda.write_caching_default=false
-        - --set=redpanda.auto_create_topics_enabled=false
-        ports:
-        - name: kafka
-          containerPort: 9092
-        - name: admin
-          containerPort: 9644
-        resources:
-          limits:
-            memory: 512Mi
-          requests:
-            memory: 256Mi
-            cpu: 200m
-        startupProbe:
-          httpGet:
-            path: /v1/status/ready
-            port: 9644
-          failureThreshold: 60
-          periodSeconds: 2
-        readinessProbe:
-          httpGet:
-            path: /v1/status/ready
-            port: 9644
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-        livenessProbe:
-          httpGet:
-            path: /v1/status/ready
-            port: 9644
-          failureThreshold: 6
-          periodSeconds: 10
-          timeoutSeconds: 3
-        volumeMounts:
-        - mountPath: /var/lib/redpanda/data
-          name: broker-data
-        - mountPath: /tmp
-          name: temporary-files
+        - name: redpanda
+          image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          command: ["/usr/bin/rpk", "redpanda", "start"]
+          args:
+            - --smp=1
+            - --memory=256M
+            - --reserve-memory=0M
+            - --node-id=0
+            - --kafka-addr=0.0.0.0:9092
+            - --advertise-kafka-addr=broker-0.broker:9092
+            - --rpc-addr=0.0.0.0:33145
+            - --advertise-rpc-addr=broker-0.broker:33145
+            - --set=redpanda.developer_mode=false
+            - --set=redpanda.write_caching_default=false
+            - --set=redpanda.auto_create_topics_enabled=false
+          ports:
+            - name: kafka
+              containerPort: 9092
+            - name: admin
+              containerPort: 9644
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              memory: 256Mi
+              cpu: 200m
+          startupProbe:
+            httpGet:
+              path: /v1/status/ready
+              port: 9644
+            failureThreshold: 60
+            periodSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /v1/status/ready
+              port: 9644
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /v1/status/ready
+              port: 9644
+            failureThreshold: 6
+            periodSeconds: 10
+            timeoutSeconds: 3
+          volumeMounts:
+            - mountPath: /var/lib/redpanda/data
+              name: broker-data
+            - mountPath: /tmp
+              name: temporary-files
       volumes:
-      - name: temporary-files
-        emptyDir: {}
+        - name: temporary-files
+          emptyDir: {}
   volumeClaimTemplates:
-  - metadata:
-      name: broker-data
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 2Gi
+    - metadata:
+        name: broker-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -296,125 +296,256 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       initContainers:
-      - name: provision-connect-user
-        image: postgres:18.4-alpine
-        imagePullPolicy: IfNotPresent
-        command: [sh, -c]
-        args:
-        - |
-          psql "postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/phasma?sslmode=require" \
-            -v app_pass="${CONNECT_DB_PASSWORD}" \
-            -c "DO \$\$
-                DECLARE v text := :'app_pass';
-                BEGIN
-                  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'phasma_connect_user') THEN
-                    EXECUTE format('CREATE USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
-                  ELSE
-                    EXECUTE format('ALTER USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
-                  END IF;
-                  GRANT phasma_connect TO phasma_connect_user;
-                END \$\$;"
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          limits:
-            memory: 64Mi
-          requests:
-            memory: 64Mi
-            cpu: 50m
-        env:
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: database-secret
-              key: postgres-password
-        - name: CONNECT_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: connect-secret
-              key: connect-db-password
+        - name: provision-connect-user
+          image: postgres:18.4-alpine
+          imagePullPolicy: IfNotPresent
+          command: [sh, -c]
+          args:
+            - |
+              psql "postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/phasma?sslmode=require" \
+                -v app_pass="${CONNECT_DB_PASSWORD}" \
+                -c "DO \$\$
+                    DECLARE v text := :'app_pass';
+                    BEGIN
+                      IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'phasma_connect_user') THEN
+                        EXECUTE format('CREATE USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
+                      ELSE
+                        EXECUTE format('ALTER USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
+                      END IF;
+                      GRANT phasma_connect TO phasma_connect_user;
+                    END \$\$;"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            limits:
+              memory: 64Mi
+            requests:
+              memory: 64Mi
+              cpu: 50m
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: postgres-password
+            - name: CONNECT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: connect-secret
+                  key: connect-db-password
       containers:
-      - name: connect
-        image: docker.redpanda.com/redpandadata/connect:4.38.0
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        command: ["/redpanda-connect", "run", "/etc/connect/relay.yaml"]
-        env:
-        - name: CONNECT_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: connect-secret
-              key: connect-db-password
-        - name: POSTGRES_DB
-          value: phasma
-        - name: DATABASE_URL
-          value: postgresql://phasma_connect_user:$(CONNECT_DB_PASSWORD)@database:5432/$(POSTGRES_DB)?sslmode=require
-        - name: S3_ENDPOINT
-          value: http://storage:8333
-        - name: S3_BUCKET
-          value: phasma
-        - name: S3_REGION
-          value: us-east-1
-        - name: S3_FORCE_PATH_STYLE
-          value: "true"
-        - name: S3_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: storage-secret
-              key: s3-access-key
-        - name: S3_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: storage-secret
-              key: s3-secret-key
-        - name: MEILI_URL
-          value: http://search:7700
-        - name: MEILI_CONNECT_KEY
-          valueFrom:
-            secretKeyRef:
-              name: connect-secret
-              key: meili-connect-key
-        - name: REDPANDA_BROKERS
-          value: broker:9092
-        resources:
-          limits:
-            memory: 256Mi
-          requests:
-            memory: 128Mi
-            cpu: 100m
-        startupProbe:
-          httpGet:
-            path: /ready
-            port: 4195
-          failureThreshold: 30
-          periodSeconds: 2
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 4195
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
-        livenessProbe:
-          httpGet:
-            path: /ready
-            port: 4195
-          failureThreshold: 6
-          periodSeconds: 10
-          timeoutSeconds: 3
-        volumeMounts:
-        - name: broker-pipelines
-          mountPath: /etc/connect
+        - name: connect
+          image: docker.redpanda.com/redpandadata/connect:4.38.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          command: ["/redpanda-connect", "run", "/etc/connect/relay.yaml"]
+          env:
+            - name: CONNECT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: connect-secret
+                  key: connect-db-password
+            - name: POSTGRES_DB
+              value: phasma
+            - name: DATABASE_URL
+              value: postgresql://phasma_connect_user:$(CONNECT_DB_PASSWORD)@database:5432/$(POSTGRES_DB)?sslmode=require
+            - name: S3_ENDPOINT
+              value: http://storage:8333
+            - name: S3_BUCKET
+              value: phasma
+            - name: S3_REGION
+              value: us-east-1
+            - name: S3_FORCE_PATH_STYLE
+              value: "true"
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: storage-secret
+                  key: s3-access-key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: storage-secret
+                  key: s3-secret-key
+            - name: MEILI_URL
+              value: http://search:7700
+            - name: MEILI_CONNECT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: connect-secret
+                  key: meili-connect-key
+            - name: REDPANDA_BROKERS
+              value: broker:9092
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 128Mi
+              cpu: 100m
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 4195
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4195
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 4195
+            failureThreshold: 6
+            periodSeconds: 10
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: broker-pipelines
+              mountPath: /etc/connect
       volumes:
-      - name: broker-pipelines
-        configMap:
-          name: broker-pipelines
-          defaultMode: 0444
+        - name: broker-pipelines
+          configMap:
+            name: broker-pipelines
+            defaultMode: 0444
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: phasma
+  name: broker-backfill
+  labels:
+    app: phasma
+    tier: broker
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: phasma
+        tier: broker
+    spec:
+      restartPolicy: Never
+      serviceAccountName: connect
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: provision-connect-user
+          image: postgres:18.4-alpine
+          imagePullPolicy: IfNotPresent
+          command: [sh, -c]
+          args:
+            - |
+              psql "postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/phasma?sslmode=require" \
+                -v app_pass="${CONNECT_DB_PASSWORD}" \
+                -c "DO \$\$
+                    DECLARE v text := :'app_pass';
+                    BEGIN
+                      IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'phasma_connect_user') THEN
+                        EXECUTE format('CREATE USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
+                      ELSE
+                        EXECUTE format('ALTER USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
+                      END IF;
+                      GRANT phasma_connect TO phasma_connect_user;
+                    END \$\$;"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            limits:
+              memory: 64Mi
+            requests:
+              memory: 64Mi
+              cpu: 50m
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: postgres-password
+            - name: CONNECT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: connect-secret
+                  key: connect-db-password
+      containers:
+        - name: connect
+          image: docker.redpanda.com/redpandadata/connect:4.38.0
+          command: ["/redpanda-connect", "run", "/etc/connect/backfill.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: CONNECT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: connect-secret
+                  key: connect-db-password
+            - name: POSTGRES_DB
+              value: phasma
+            - name: DATABASE_URL
+              value: postgresql://phasma_connect_user:$(CONNECT_DB_PASSWORD)@database:5432/$(POSTGRES_DB)?sslmode=require
+            - name: S3_ENDPOINT
+              value: http://storage:8333
+            - name: S3_BUCKET
+              value: phasma
+            - name: S3_REGION
+              value: us-east-1
+            - name: S3_FORCE_PATH_STYLE
+              value: "true"
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: storage-secret
+                  key: s3-access-key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: storage-secret
+                  key: s3-secret-key
+            - name: MEILI_URL
+              value: http://search:7700
+            - name: MEILI_CONNECT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: connect-secret
+                  key: meili-connect-key
+            - name: REDPANDA_BROKERS
+              value: broker:9092
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 128Mi
+              cpu: 100m
+          volumeMounts:
+            - name: pipelines
+              mountPath: /etc/connect
+      volumes:
+        - name: pipelines
+          configMap:
+            name: broker-pipelines
+            defaultMode: 0444

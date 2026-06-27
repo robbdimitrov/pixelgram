@@ -2,7 +2,8 @@
 
 ## Stack
 
-SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@lucide/svelte`, strict TypeScript.
+SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI,
+`@lucide/svelte`, strict TypeScript.
 
 ## Route Groups and Guards
 
@@ -45,24 +46,26 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI, `@luci
 
 ## Route Parameters and Matchers
 
-| Param | Matcher | Pattern |
-|---|---|---|
-| `username` | `src/params/username.ts` | `^@[a-z0-9._]{3,30}$` (with leading `@`) |
-| `mode` | `src/params/connections.ts` | `followers` or `following` |
-| `publicId` | none | UUID validated in backend handler |
+| Param      | Matcher                     | Pattern                                  |
+| ---------- | --------------------------- | ---------------------------------------- |
+| `username` | `src/params/username.ts`    | `^@[a-z0-9._]{3,30}$` (with leading `@`) |
+| `mode`     | `src/params/connections.ts` | `followers` or `following`               |
+| `publicId` | none                        | UUID validated in backend handler        |
 
-`stripAt()` removes the leading `@` before passing the username to backend API calls.
+`stripAt()` removes the leading `@` before passing the username to backend API
+calls.
 
 ## Data Fetching Strategy
 
-| Pattern | When used |
-|---|---|
-| `+page.server.ts` `load` | Initial page data — runs server-side |
+| Pattern                     | When used                                            |
+| --------------------------- | ---------------------------------------------------- |
+| `+page.server.ts` `load`    | Initial page data — runs server-side                 |
 | `+page.server.ts` `actions` | All mutations — POST form actions with `use:enhance` |
-| `+server.ts` `GET` | Client-driven pagination "load more" — returns JSON |
-| `createPagination()` | Client-side state for progressive list loading |
+| `+server.ts` `GET`          | Client-driven pagination "load more" — returns JSON  |
+| `createPagination()`        | Client-side state for progressive list loading       |
 
-No data is fetched on component mount. The browser never calls the backend directly.
+No data is fetched on component mount. The browser never calls the backend
+directly.
 
 Backend error bodies are not rendered as UI copy. Server API helpers preserve
 HTTP status codes for control flow, then map failures to frontend-owned messages
@@ -70,54 +73,64 @@ before they can reach SvelteKit error pages, form failures, or pagination state.
 
 ## SSR Boundary
 
-Everything runs in the Node server. `apiClient(event)` resolves backend paths against `BACKEND_URL` env var and forwards the session cookie. These requests are server-to-server and never cross CORS.
+Everything runs in the Node server. `apiClient(event)` resolves backend paths
+against `BACKEND_URL` env var and forwards the session cookie. These requests
+are server-to-server and never cross CORS.
 
-`hooks.server.ts` sets browser security headers for every response and adds `Strict-Transport-Security` when the public request URL is HTTPS.
+`hooks.server.ts` sets browser security headers for every response and adds
+`Strict-Transport-Security` when the public request URL is HTTPS.
 
-Browser → SvelteKit server: form POST or page navigation.
-Browser fetches for pagination: `GET /feed`, `GET /@{username}`, `GET /posts/{id}/comments`, `GET /search` — all route to SvelteKit `+server.ts` handlers, which call the backend server-side.
+Browser → SvelteKit server: form POST or page navigation. Browser fetches for
+pagination: `GET /feed`, `GET /@{username}`, `GET /posts/{id}/comments`,
+`GET /search` — all route to SvelteKit `+server.ts` handlers, which call the
+backend server-side.
 
 ## Image Proxy
 
 `GET /uploads/[key]` in `src/routes/uploads/[key]/+server.ts`:
+
 - Validates `key` against `^[A-Za-z0-9._-]{1,255}$` and rejects `..` traversal.
 - Streams response body directly from backend without buffering.
-- Forwards: `content-type`, `content-length`, `etag`, `last-modified`, `cache-control`.
+- Forwards: `content-type`, `content-length`, `etag`, `last-modified`,
+  `cache-control`.
 
 ## Upload Actions
 
 Post image and avatar form actions validate that submitted files are JPEG, PNG,
 GIF, or WEBP images and no larger than 1 MB before forwarding them to the
-backend. The production SvelteKit server sets `BODY_SIZE_LIMIT=1100K` so the
-900 KB client-side resize target plus multipart overhead reaches the action
-handler for explicit validation.
+backend. The production SvelteKit server sets `BODY_SIZE_LIMIT=1100K` so the 900
+KB client-side resize target plus multipart overhead reaches the action handler
+for explicit validation.
 
 ## Key Frontend Routes (API Endpoints)
 
-| Path | Method | Handler | Backend call |
-|---|---|---|---|
-| `/feed` | GET | page load | GET /feed |
-| `/feed` | GET | +server.ts | GET /feed?cursor= |
-| `/notifications` | GET | page load | GET /notifications + PUT /notifications/{id}/read |
-| `/notifications` | GET | +server.ts | GET /notifications?cursor= + PUT /notifications/{id}/read |
-| `/search` | GET | page load | GET /search |
-| `/search` | GET | +server.ts | GET /search?cursor= |
-| `/suggest` | GET | +server.ts | GET /users/search or /hashtags/search |
-| `/@{username}` | GET | page load | GET /users/{u} + GET /users/{u}/posts |
-| `/@{username}` | GET | +server.ts | GET /users/{u}/posts?cursor= |
-| `/@{username}/likes` | GET | page load | GET /users/{u}/likes |
-| `/@{username}/likes` | GET | +server.ts | GET /users/{u}/likes?cursor= |
-| `/@{username}/{mode}` | GET | page load | GET /users/{u}/followers or /following |
-| `/@{username}/{mode}` | GET | +server.ts | GET /users/{u}/followers or /following?cursor= |
-| `/posts/{id}/comments` | GET | +server.ts | GET /posts/{id}/comments?cursor= |
-| `/settings/sessions` | GET | page load | GET /sessions |
-| `/settings/sessions?/revoke` | POST | named form action | DELETE /sessions/{sessionId} |
-| `/uploads/[key]` | GET | +server.ts | GET /uploads/{key} (proxied) |
-| `/health` | GET | +server.ts | returns `ok` text |
+| Path                         | Method | Handler           | Backend call                                              |
+| ---------------------------- | ------ | ----------------- | --------------------------------------------------------- |
+| `/feed`                      | GET    | page load         | GET /feed                                                 |
+| `/feed`                      | GET    | +server.ts        | GET /feed?cursor=                                         |
+| `/notifications`             | GET    | page load         | GET /notifications + PUT /notifications/{id}/read         |
+| `/notifications`             | GET    | +server.ts        | GET /notifications?cursor= + PUT /notifications/{id}/read |
+| `/search`                    | GET    | page load         | GET /search                                               |
+| `/search`                    | GET    | +server.ts        | GET /search?cursor=                                       |
+| `/suggest`                   | GET    | +server.ts        | GET /users/search or /hashtags/search                     |
+| `/@{username}`               | GET    | page load         | GET /users/{u} + GET /users/{u}/posts                     |
+| `/@{username}`               | GET    | +server.ts        | GET /users/{u}/posts?cursor=                              |
+| `/@{username}/likes`         | GET    | page load         | GET /users/{u}/likes                                      |
+| `/@{username}/likes`         | GET    | +server.ts        | GET /users/{u}/likes?cursor=                              |
+| `/@{username}/{mode}`        | GET    | page load         | GET /users/{u}/followers or /following                    |
+| `/@{username}/{mode}`        | GET    | +server.ts        | GET /users/{u}/followers or /following?cursor=            |
+| `/posts/{id}/comments`       | GET    | +server.ts        | GET /posts/{id}/comments?cursor=                          |
+| `/settings/sessions`         | GET    | page load         | GET /sessions                                             |
+| `/settings/sessions?/revoke` | POST   | named form action | DELETE /sessions/{sessionId}                              |
+| `/uploads/[key]`             | GET    | +server.ts        | GET /uploads/{key} (proxied)                              |
+| `/health`                    | GET    | +server.ts        | returns `ok` text                                         |
 
 ## `createPagination` (Svelte rune)
 
-State: `items`, `cursor`, `loading`, `error`. Resets when `getInitial()` returns a new array reference (client-side navigation). `more()` appends and advances cursor. Used in feed, profile, liked posts, connections, search, and comment lists.
+State: `items`, `cursor`, `loading`, `error`. Resets when `getInitial()` returns
+a new array reference (client-side navigation). `more()` appends and advances
+cursor. Used in feed, profile, liked posts, connections, search, and comment
+lists.
 
 ## Session Cookie Relay
 
@@ -138,10 +151,10 @@ mount.
 
 Remote revocation uses the enhanced named `revoke` form action. The action
 validates the submitted public UUID, calls
-`DELETE /sessions/{encodeURIComponent(sessionId)}` through `apiClient`, and
-maps backend failures to safe UI messages. The page removes a session from its
-local list only after a successful response. The current session has no revoke
-control and must be terminated through the existing Logout action.
+`DELETE /sessions/{encodeURIComponent(sessionId)}` through `apiClient`, and maps
+backend failures to safe UI messages. The page removes a session from its local
+list only after a successful response. The current session has no revoke control
+and must be terminated through the existing Logout action.
 
 ## Type Mapping
 

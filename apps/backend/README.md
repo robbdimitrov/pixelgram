@@ -1,7 +1,7 @@
 # Phasma Go Backend
 
-The backend is a stateless Go HTTP service built with `net/http` and `pgx`.
-It owns users, sessions, posts, comments, likes, and image upload metadata.
+The backend is a stateless Go HTTP service built with `net/http` and `pgx`. It
+owns users, sessions, posts, comments, likes, and image upload metadata.
 
 ## Local Commands
 
@@ -24,14 +24,15 @@ development. Database-backed behavior requires:
 - Composition and authentication boundaries: `internal/app/`
 - HTTP helpers and middleware: `internal/httpx/`
 - Feature modules: `internal/{users,sessions,uploads,posts,comments}/`
-- Shared PostgreSQL lifecycle, retries, and circuit breaking: `internal/database/`
+- Shared PostgreSQL lifecycle, retries, and circuit breaking:
+  `internal/database/`
 - Module PostgreSQL repositories: `internal/store/postgres/`
 - Explicit local no-op repositories: `internal/noop/`
 - Entrypoint and process lifecycle: `cmd/api/main.go`
 
 Each feature module owns its domain types, repository interface, application
-service, HTTP handler, and route registration. Handlers parse transport data
-and map responses; services own workflows and authorization distinctions.
+service, HTTP handler, and route registration. Handlers parse transport data and
+map responses; services own workflows and authorization distinctions.
 
 ## PostgreSQL Integration Tests
 

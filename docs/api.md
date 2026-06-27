@@ -1,25 +1,37 @@
 # API
 
-All endpoints are served by the Go backend on port 8080. All responses are JSON. Error bodies are `{"message": "..."}`.
+All endpoints are served by the Go backend on port 8080. All responses are JSON.
+Error bodies are `{"message": "..."}`.
 
 ## Middleware Stack (outermost → innermost)
 
-1. `RequestID` — accepts `X-Request-ID` (max 64 chars; generates a new 16-byte hex id if absent or over the limit) and echoes it in the response header.
-2. `Logger` — structured JSON request log with method, route pattern, path, status, duration.
-3. `SecurityHeaders` — sets `X-XSS-Protection: 0`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'`, and `Strict-Transport-Security: max-age=31536000; includeSubDomains` on HTTPS or trusted forwarded HTTPS requests.
-4. `OriginGuard` — for POST/PUT/PATCH/DELETE, rejects requests where `Origin` header is present but does not match the request host.
-5. `RateLimit` — token bucket via Dragonfly Lua script; key priority: user id > session cookie > client IP.
-6. `RequireSession` — validates `session` cookie; refreshes sliding TTL; injects `userID` into context. Exempt: `POST /sessions`, `POST /users`, `GET /health`, `OPTIONS`.
+1. `RequestID` — accepts `X-Request-ID` (max 64 chars; generates a new 16-byte
+   hex id if absent or over the limit) and echoes it in the response header.
+2. `Logger` — structured JSON request log with method, route pattern, path,
+   status, duration.
+3. `SecurityHeaders` — sets `X-XSS-Protection: 0`,
+   `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`,
+   `Referrer-Policy: no-referrer`,
+   `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'`,
+   and `Strict-Transport-Security: max-age=31536000; includeSubDomains` on HTTPS
+   or trusted forwarded HTTPS requests.
+4. `OriginGuard` — for POST/PUT/PATCH/DELETE, rejects requests where `Origin`
+   header is present but does not match the request host.
+5. `RateLimit` — token bucket via Dragonfly Lua script; key priority: user id >
+   session cookie > client IP.
+6. `RequireSession` — validates `session` cookie; refreshes sliding TTL; injects
+   `userID` into context. Exempt: `POST /sessions`, `POST /users`,
+   `GET /health`, `OPTIONS`.
 
 ## Rate Limit Policies
 
-| Policy | Endpoints | Burst | Rate (req/s) |
-|---|---|---|---|
-| strict | POST /sessions, POST /users, POST /uploads | 5 | 0.2 |
-| typeahead | GET /users/search, GET /hashtags/search, GET /search | 20 | 5 |
-| read | GET/HEAD (all others) | 120 | 2 |
-| mutation | POST/PUT/PATCH/DELETE (all others) | 30 | 1 |
-| exempt | GET /health, GET /ready | — | — |
+| Policy    | Endpoints                                            | Burst | Rate (req/s) |
+| --------- | ---------------------------------------------------- | ----- | ------------ |
+| strict    | POST /sessions, POST /users, POST /uploads           | 5     | 0.2          |
+| typeahead | GET /users/search, GET /hashtags/search, GET /search | 20    | 5            |
+| read      | GET/HEAD (all others)                                | 120   | 2            |
+| mutation  | POST/PUT/PATCH/DELETE (all others)                   | 30    | 1            |
+| exempt    | GET /health, GET /ready                              | —     | —            |
 
 Defaults are overridable via env vars `RATE_LIMIT_{POLICY}_{BURST,RATE}`.
 
@@ -27,22 +39,23 @@ Defaults are overridable via env vars `RATE_LIMIT_{POLICY}_{BURST,RATE}`.
 
 ### Public (no auth required)
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /health | Liveness check — 204 No Content |
-| GET | /ready | Readiness check — pings PostgreSQL (2 s timeout) |
-| POST | /users | Create account — returns `{"username": "..."}` on 201 |
-| POST | /sessions | Login — sets `session` cookie, returns `{"username": "..."}` on 201 |
-| GET | /uploads/ | Serve uploaded file blob |
+| Method | Path      | Purpose                                                             |
+| ------ | --------- | ------------------------------------------------------------------- |
+| GET    | /health   | Liveness check — 204 No Content                                     |
+| GET    | /ready    | Readiness check — pings PostgreSQL (2 s timeout)                    |
+| POST   | /users    | Create account — returns `{"username": "..."}` on 201               |
+| POST   | /sessions | Login — sets `session` cookie, returns `{"username": "..."}` on 201 |
+| GET    | /uploads/ | Serve uploaded file blob                                            |
 
 ### Protected (session cookie required)
 
 #### Sessions
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /sessions | List the authenticated user's active sessions |
-| DELETE | /sessions | Logout — clears session cookie |
-| DELETE | /sessions/{sessionId} | Revoke one remote session by public UUID |
+
+| Method | Path                  | Purpose                                       |
+| ------ | --------------------- | --------------------------------------------- |
+| GET    | /sessions             | List the authenticated user's active sessions |
+| DELETE | /sessions             | Logout — clears session cookie                |
+| DELETE | /sessions/{sessionId} | Revoke one remote session by public UUID      |
 
 `GET /sessions` returns active sessions newest first:
 
@@ -73,78 +86,92 @@ user, `409` when it identifies the current session, and `500` on repository
 failure. Use `DELETE /sessions` to terminate the current session.
 
 #### Users
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /users/me | Get current authenticated user |
-| GET | /users/{username} | Get user by username |
-| PUT | /users/me | Update profile or change password |
-| GET | /users/{username}/followers | List followers (cursor-paginated) |
-| GET | /users/{username}/following | List following (cursor-paginated) |
-| POST | /users/{username}/follow | Follow a user |
-| DELETE | /users/{username}/follow | Unfollow a user |
+
+| Method | Path                        | Purpose                           |
+| ------ | --------------------------- | --------------------------------- |
+| GET    | /users/me                   | Get current authenticated user    |
+| GET    | /users/{username}           | Get user by username              |
+| PUT    | /users/me                   | Update profile or change password |
+| GET    | /users/{username}/followers | List followers (cursor-paginated) |
+| GET    | /users/{username}/following | List following (cursor-paginated) |
+| POST   | /users/{username}/follow    | Follow a user                     |
+| DELETE | /users/{username}/follow    | Unfollow a user                   |
 
 #### Discovery
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /users/suggested | Get up to 10 suggested users to follow |
-| GET | /posts/popular | Get up to 20 popular posts from the last 7 days |
 
-`GET /users/suggested` returns users ordered by `follower_count` descending, excluding users the authenticated user already follows and the authenticated user themselves. Response:
+| Method | Path             | Purpose                                         |
+| ------ | ---------------- | ----------------------------------------------- |
+| GET    | /users/suggested | Get up to 10 suggested users to follow          |
+| GET    | /posts/popular   | Get up to 20 popular posts from the last 7 days |
+
+`GET /users/suggested` returns users ordered by `follower_count` descending,
+excluding users the authenticated user already follows and the authenticated
+user themselves. Response:
 
 ```json
 {"items": [<user>]}
 ```
 
-`GET /posts/popular` returns posts from the last 7 days ordered by like count descending, up to 20 results. Response:
+`GET /posts/popular` returns posts from the last 7 days ordered by like count
+descending, up to 20 results. Response:
 
 ```json
 {"items": [<post>]}
 ```
 
 #### Feed
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /feed | Get the authenticated user's feed (cursor-paginated) |
 
-`GET /feed` returns posts from the feed table for the authenticated user, ordered `(created DESC, id DESC)`. Response shape matches the post list shape. Returns an empty items array (not an error) when the feed is empty.
+| Method | Path  | Purpose                                              |
+| ------ | ----- | ---------------------------------------------------- |
+| GET    | /feed | Get the authenticated user's feed (cursor-paginated) |
+
+`GET /feed` returns posts from the feed table for the authenticated user,
+ordered `(created DESC, id DESC)`. Response shape matches the post list shape.
+Returns an empty items array (not an error) when the feed is empty.
 
 #### Posts
-| Method | Path | Purpose |
-|---|---|---|
-| POST | /posts | Create post from an upload |
-| GET | /posts/{publicId} | Get single post |
-| DELETE | /posts/{publicId} | Delete own post |
-| POST | /posts/{publicId}/likes | Like a post |
-| DELETE | /posts/{publicId}/likes | Unlike a post |
-| GET | /users/{username}/posts | List user's posts (cursor-paginated) |
-| GET | /users/{username}/likes | List user's liked posts (cursor-paginated) |
+
+| Method | Path                    | Purpose                                    |
+| ------ | ----------------------- | ------------------------------------------ |
+| POST   | /posts                  | Create post from an upload                 |
+| GET    | /posts/{publicId}       | Get single post                            |
+| DELETE | /posts/{publicId}       | Delete own post                            |
+| POST   | /posts/{publicId}/likes | Like a post                                |
+| DELETE | /posts/{publicId}/likes | Unlike a post                              |
+| GET    | /users/{username}/posts | List user's posts (cursor-paginated)       |
+| GET    | /users/{username}/likes | List user's liked posts (cursor-paginated) |
 
 #### Comments
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /posts/{publicId}/comments | List comments on a post (cursor-paginated) |
-| POST | /posts/{publicId}/comments | Create a comment |
-| DELETE | /posts/{publicId}/comments/{commentId} | Delete own comment |
+
+| Method | Path                                   | Purpose                                    |
+| ------ | -------------------------------------- | ------------------------------------------ |
+| GET    | /posts/{publicId}/comments             | List comments on a post (cursor-paginated) |
+| POST   | /posts/{publicId}/comments             | Create a comment                           |
+| DELETE | /posts/{publicId}/comments/{commentId} | Delete own comment                         |
 
 #### Uploads
-| Method | Path | Purpose |
-|---|---|---|
-| POST | /uploads | Upload an image file; returns `{filename}` |
+
+| Method | Path     | Purpose                                    |
+| ------ | -------- | ------------------------------------------ |
+| POST   | /uploads | Upload an image file; returns `{filename}` |
 
 #### Search
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /users/search?q= | Typeahead user search (up to 8 results) |
-| GET | /hashtags/search?q= | Typeahead hashtag search (up to 8 results) |
-| GET | /search?q=&type=&cursor= | Full search — type: `users`, `posts`, or `hashtags`; requires Meilisearch |
+
+| Method | Path                     | Purpose                                                                   |
+| ------ | ------------------------ | ------------------------------------------------------------------------- |
+| GET    | /users/search?q=         | Typeahead user search (up to 8 results)                                   |
+| GET    | /hashtags/search?q=      | Typeahead hashtag search (up to 8 results)                                |
+| GET    | /search?q=&type=&cursor= | Full search — type: `users`, `posts`, or `hashtags`; requires Meilisearch |
 
 #### Notifications
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /notifications | List notifications for the authenticated user (cursor-paginated) |
-| PUT | /notifications/{id}/read | Mark one notification as read |
 
-`GET /notifications` returns cursor-paginated notifications ordered `(created DESC, id DESC)`:
+| Method | Path                     | Purpose                                                          |
+| ------ | ------------------------ | ---------------------------------------------------------------- |
+| GET    | /notifications           | List notifications for the authenticated user (cursor-paginated) |
+| PUT    | /notifications/{id}/read | Mark one notification as read                                    |
+
+`GET /notifications` returns cursor-paginated notifications ordered
+`(created DESC, id DESC)`:
 
 ```json
 {
@@ -162,29 +189,38 @@ failure. Use `DELETE /sessions` to terminate the current session.
 }
 ```
 
-Notification types: `like` (entityId = post public_id), `comment` (entityId = comment id), `follow` (entityId = actor user id as string).
+Notification types: `like` (entityId = post public_id), `comment` (entityId =
+comment id), `follow` (entityId = actor user id as string).
 
-`PUT /notifications/{id}/read` requires `id` to be a valid UUID. Returns `204` on success, `400` for an invalid UUID, `404` when the notification does not exist or belongs to another user, and `500` on repository failure. Ownership is enforced in the UPDATE query.
+`PUT /notifications/{id}/read` requires `id` to be a valid UUID. Returns `204`
+on success, `400` for an invalid UUID, `404` when the notification does not
+exist or belongs to another user, and `500` on repository failure. Ownership is
+enforced in the UPDATE query.
 
 ## Pagination Model
 
-- All paginated endpoints accept `cursor` (base64url-encoded JSON `{created, id}`) and `limit` (1–50, default 10; values above 50 are silently clamped to 50) query parameters.
+- All paginated endpoints accept `cursor` (base64url-encoded JSON
+  `{created, id}`) and `limit` (1–50, default 10; values above 50 are silently
+  clamped to 50) query parameters.
 - Response shape: `{"items": [...], "nextCursor": "<string or null>"}`.
 - `page` parameter is rejected (returns 400).
 - Ordering: `(created DESC, id DESC)` throughout.
 
 ## Search Endpoint (`GET /search`)
 
-- `type=posts`: full-text search on description and username; supports `q=#hashtag` to filter by hashtag (exact match via Meilisearch filter).
+- `type=posts`: full-text search on description and username; supports
+  `q=#hashtag` to filter by hashtag (exact match via Meilisearch filter).
 - `type=users`: full-text search on username and name.
 - `type=hashtags`: full-text search on name.
-- Cursor encodes a Meilisearch offset (base64-encoded integer string); page size is 20.
+- Cursor encodes a Meilisearch offset (base64-encoded integer string); page size
+  is 20.
 - Returns 503 if Meilisearch is not configured.
 - Query must be 1–50 UTF-8 runes.
 
 ## User Object Shape
 
-User objects returned by `/users/me`, `/users/{username}`, follower/following lists, and suggested users share this shape:
+User objects returned by `/users/me`, `/users/{username}`, follower/following
+lists, and suggested users share this shape:
 
 ```json
 {
@@ -203,4 +239,6 @@ User objects returned by `/users/me`, `/users/{username}`, follower/following li
 }
 ```
 
-`id` is the user's public UUID (`public_id` column). The internal integer primary key is never exposed. `email` is stripped from user responses unless the requester's session belongs to that user.
+`id` is the user's public UUID (`public_id` column). The internal integer
+primary key is never exposed. `email` is stripped from user responses unless the
+requester's session belongs to that user.

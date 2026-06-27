@@ -2,90 +2,117 @@
 
 ## Theme Structure
 
-Themes are defined CSS-first in `src/app.css` using `@plugin "daisyui/theme"`. The `data-theme` attribute on `<html>` selects the active theme. Theme selection persists via a `theme` cookie (1-year max-age, SameSite=Lax) and `localStorage`; the cookie is read in a nonce-bearing `<script>` in `app.html` before paint to prevent FOUC.
+Themes are defined CSS-first in `src/app.css` using `@plugin "daisyui/theme"`.
+The `data-theme` attribute on `<html>` selects the active theme. Theme selection
+persists via a `theme` cookie (1-year max-age, SameSite=Lax) and `localStorage`;
+the cookie is read in a nonce-bearing `<script>` in `app.html` before paint to
+prevent FOUC.
 
 ### Light Theme (default)
 
-| Token | Value |
-|---|---|
-| `--color-primary` | `#ff4a85` |
-| `--color-secondary` | `#8b5cf6` |
-| `--color-accent` | `#06b6d4` |
-| `--color-neutral` | `#020617` |
+| Token                     | Value     |
+| ------------------------- | --------- |
+| `--color-primary`         | `#ff4a85` |
+| `--color-secondary`       | `#8b5cf6` |
+| `--color-accent`          | `#06b6d4` |
+| `--color-neutral`         | `#020617` |
 | `--color-neutral-content` | `#ffffff` |
-| `--color-base-100` | `#ffffff` |
-| `--color-base-200` | `#f1f5f9` |
-| `--color-base-300` | `#e2e8f0` |
-| `--color-base-content` | `#020617` |
+| `--color-base-100`        | `#ffffff` |
+| `--color-base-200`        | `#f1f5f9` |
+| `--color-base-300`        | `#e2e8f0` |
+| `--color-base-content`    | `#020617` |
 
 ### Dark Theme
 
-| Token | Value |
-|---|---|
-| `--color-primary` | `#ff4a85` |
-| `--color-secondary` | `#a78bfa` |
-| `--color-accent` | `#22d3ee` |
-| `--color-neutral` | `#ffffff` |
+| Token                     | Value     |
+| ------------------------- | --------- |
+| `--color-primary`         | `#ff4a85` |
+| `--color-secondary`       | `#a78bfa` |
+| `--color-accent`          | `#22d3ee` |
+| `--color-neutral`         | `#ffffff` |
 | `--color-neutral-content` | `#020617` |
-| `--color-base-100` | `#020617` |
-| `--color-base-200` | `#151d30` |
-| `--color-base-300` | `#1e293b` |
-| `--color-base-content` | `#ffffff` |
+| `--color-base-100`        | `#020617` |
+| `--color-base-200`        | `#151d30` |
+| `--color-base-300`        | `#1e293b` |
+| `--color-base-content`    | `#ffffff` |
 
 `neutral` is an inverted accent for solid buttons; its polarity flips per theme.
 
 ### Custom Tokens (`@theme`)
 
-| Token | Value | Use |
-|---|---|---|
-| `--shadow-glass` | `0 8px 32px 0 rgba(31,38,135,0.07)` | Glassmorphism card shadow (light) |
-| `--shadow-glass-dark` | `0 8px 32px 0 rgba(0,0,0,0.37)` | Glassmorphism card shadow (dark) |
-| `--shadow-glass-glow` | `0 0 15px rgba(255,51,102,0.2)` | Primary glow effect |
-| `--animate-like-pop` | `like-pop 220ms ease-out` | Heart like animation |
+| Token                 | Value                               | Use                               |
+| --------------------- | ----------------------------------- | --------------------------------- |
+| `--shadow-glass`      | `0 8px 32px 0 rgba(31,38,135,0.07)` | Glassmorphism card shadow (light) |
+| `--shadow-glass-dark` | `0 8px 32px 0 rgba(0,0,0,0.37)`     | Glassmorphism card shadow (dark)  |
+| `--shadow-glass-glow` | `0 0 15px rgba(255,51,102,0.2)`     | Primary glow effect               |
+| `--animate-like-pop`  | `like-pop 220ms ease-out`           | Heart like animation              |
 
 ## Component Inventory
 
 ### `Navbar`
-Fixed-height pill header (`h-16`, `rounded-full`, backdrop blur). Contains app logo and primary navigation links (Home, Search, Upload, Profile). Active state: white background + shadow on the icon pill.
+
+Fixed-height pill header (`h-16`, `rounded-full`, backdrop blur). Contains app
+logo and primary navigation links (Home, Search, Upload, Profile). Active state:
+white background + shadow on the icon pill.
 
 ### `Avatar`
-Circular image link to `/@{username}`. Wraps `imageUrl()` for fallback. Props: `username`, `avatar`, `size` (default `h-11 w-11`).
+
+Circular image link to `/@{username}`. Wraps `imageUrl()` for fallback. Props:
+`username`, `avatar`, `size` (default `h-11 w-11`).
 
 ### `PostCard`
+
 Full-width card (`rounded-2xl`, `border-base-300`, `bg-base-100`). Two modes:
-- Default (feed): shows image, like button with `animate-like-pop`, comment count link, description (linkified), timestamp.
-- `singleView=true`: adds comment input form, comment list with pagination, delete buttons per own comments.
-- Owner sees a delete button; triggers a confirmation modal (`role="dialog"`, `aria-modal`).
+
+- Default (feed): shows image, like button with `animate-like-pop`, comment
+  count link, description (linkified), timestamp.
+- `singleView=true`: adds comment input form, comment list with pagination,
+  delete buttons per own comments.
+- Owner sees a delete button; triggers a confirmation modal (`role="dialog"`,
+  `aria-modal`).
 - Optimistic like/unlike with rollback on failure.
 
 ### `Thumbnail`
-Square aspect-ratio image link to the post detail page. Shows like count overlay on hover. Used in profile grid layouts.
+
+Square aspect-ratio image link to the post detail page. Shows like count overlay
+on hover. Used in profile grid layouts.
 
 ### `ProfileHeader`
-Horizontal card with avatar, display name, `@username`, bio (linkified), post/like/follower/following counts (all linking to relevant pages). Current user sees Settings link; others see Follow/Unfollow button with optimistic state and rollback.
+
+Horizontal card with avatar, display name, `@username`, bio (linkified),
+post/like/follower/following counts (all linking to relevant pages). Current
+user sees Settings link; others see Follow/Unfollow button with optimistic state
+and rollback.
 
 ### `Linkified`
-Inline `<span>` that parses text into `mention`, `hashtag`, `url`, and `text` tokens and renders links. Mentions link to `/@{username}`, hashtags link to `/search?q=%23{tag}`.
+
+Inline `<span>` that parses text into `mention`, `hashtag`, `url`, and `text`
+tokens and renders links. Mentions link to `/@{username}`, hashtags link to
+`/search?q=%23{tag}`.
 
 ### `LoadMoreButton`
+
 Loading-state-aware button that calls `createPagination().more()`.
 
 ### `EmptyState`
+
 Placeholder UI for empty lists.
 
 ### `Typeahead`
-Keyboard-navigable dropdown list (arrow keys, Enter to select, Escape to clear). Used in upload description and search inputs.
+
+Keyboard-navigable dropdown list (arrow keys, Enter to select, Escape to clear).
+Used in upload description and search inputs.
 
 ## Layout Widths
 
-| Context | Width |
-|---|---|
-| Auth pages (login, signup) | `max-w-xl` |
-| Settings pages | `max-w-xl` |
-| Feed | `max-w-xl` |
-| Single post view | `max-w-xl` |
+| Context                              | Width       |
+| ------------------------------------ | ----------- |
+| Auth pages (login, signup)           | `max-w-xl`  |
+| Settings pages                       | `max-w-xl`  |
+| Feed                                 | `max-w-xl`  |
+| Single post view                     | `max-w-xl`  |
 | Profile page grid, upload, app shell | `max-w-5xl` |
-| Connections (followers/following) | `max-w-xl` |
+| Connections (followers/following)    | `max-w-xl`  |
 
 ## Icons
 
