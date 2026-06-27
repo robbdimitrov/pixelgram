@@ -7,7 +7,8 @@ async function resolveURL(rawURL: string) {
 	const resolve = vi.fn().mockResolvedValue(response);
 	const event = {
 		url: new URL(rawURL),
-		request: new Request(rawURL)
+		request: new Request(rawURL),
+		cookies: { get: vi.fn().mockReturnValue(null) }
 	};
 
 	return handle({

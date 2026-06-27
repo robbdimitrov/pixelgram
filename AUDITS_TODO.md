@@ -24,10 +24,10 @@
 |---|---|---|
 | CRITICAL | 0 | 0 |
 | HIGH | 0 | 0 |
-| MEDIUM | 16 | 6 |
-| LOW | 35 | 7 |
-| INFO | 15 | 8 |
-| **Total** | **66** | **21** |
+| MEDIUM | 16 | 0 |
+| LOW | 35 | 0 |
+| INFO | 15 | 5 |
+| **Total** | **66** | **5** |
 
 ---
 
@@ -103,6 +103,22 @@
 | I-11 | Corrected `docs/data-model.md` feed FK column types from `integer` to `bigint`. |
 | I-12 | Added inline comment to `database.yaml` explaining why `readOnlyRootFilesystem` is intentionally omitted for PostgreSQL. |
 | I-14 | Combined the `INSERT INTO posts RETURNING id, public_id, created` to eliminate the extra `SELECT created FROM posts` round-trip in `CreatePost`. |
+| M-15 | Required TLS for PostgreSQL connections; generated self-signed cert mounted in database pod; updated both DSNs to `sslmode=require`. |
+| M-16 | Split monolithic `database-credentials` Secret into five per-service Secrets (`database-secret`, `backend-secret`, `storage-secret`, `cache-secret`, `search-secret`); updated all `secretKeyRef` references and deploy script. |
+| M-20 | Added denormalized `post_count` and `like_count` columns to `users` (migration 000015); replaced correlated subqueries in `userColumns`; maintained atomically in `CreatePost`, `DeletePost`, `LikePost`, `UnlikePost`. |
+| M-21 | Added denormalized `like_count` and `comment_count` columns to `posts` (migration 000015); replaced correlated subqueries in `postColumns`; maintained atomically in `LikePost`, `UnlikePost`, `CreateComment`, `DeleteComment`. |
+| M-22 | Added denormalized `post_count` to `hashtags` (migration 000015); replaced correlated COUNT subquery in `SearchHashtags`; maintained in `CreatePost` and `DeletePost`. |
+| M-25 | Standardized all FK columns to `bigint` (migration 000019); changed `pagination.Cursor.ID` from `int` to `int64` with cascading fixes to all cursor construction sites. |
+| L-04 | Replaced two-query `DeletePost` with a single atomic `SELECT … FOR UPDATE` transaction that returns typed `ErrNotFound`/`ErrForbidden`; eliminated TOCTOU between ownership check and delete. |
+| L-05 | Removed `PostExists` from `comments.Repository`; merged existence detection into `ListComments` with a `UNION ALL` sentinel row that returns `ErrNotFound` atomically. |
+| L-06 | Merged `DeleteExpiredUploads` + `CreateUpload` into one transaction with `SELECT … FOR UPDATE`; `DeleteExpiredUploads` removed from the interface. |
+| L-13 | Added hourly `reconcileFollowerCounts` goroutine in `main.go` that issues a single `UPDATE users SET follower_count = (SELECT count(*) FROM follows …)` to correct counter drift. |
+| L-14 | Added `audit_log` table (migration 000016); writes a row inside the same transaction as `ChangePassword` and `UpdateUser`. |
+| L-15 | Added `public_id uuid` to `comments` (migration 000017); `Comment` exposes it as `json:"id"`; `DeleteComment` path param validates UUID; outbox payloads and notification `entity_id` use the UUID string. |
+| L-35 | Added `public_id uuid` to `notifications` (migration 000018); `Notification` exposes it as `json:"id"`; `MarkRead` endpoint accepts UUID; removed `userId` and `actorId` from JSON. |
+| I-01 | Added `validation.ValidUsername` check in `GetUser` before the DB query; returns HTTP 400 on malformed username. |
+| I-13 | Merged `usernameExists` into `GetPosts`, `GetLikedPosts`, `ListFollowers`, `ListFollowing` via `UNION ALL` sentinel; `usernameExists` helper removed. |
+| I-15 | Added `published_at timestamptz` to `outbox` (migration 000020); `sweepExpiredOutbox` only deletes rows where `published_at IS NOT NULL`; logs WARN for unconsumed rows nearing expiry. |
 
 ---
 
@@ -171,32 +187,6 @@ spec:
 
 ---
 
-## M-15 · Database connections unencrypted — migration uses `sslmode=disable`, backend has no sslmode
-
-**Layer:** Infrastructure
-**Files:**
-- `apps/database/run.sh` line 5
-- `deploy/backend.yaml` line 87
-**Category:** Transport security / data in transit
-
-**What's wrong:** `run.sh` builds the migration DSN with `?sslmode=disable`. The backend `DATABASE_URL` has no `sslmode` parameter — pgx defaults to `prefer`, which falls back to plaintext when the server has no TLS configured. Combined with no NetworkPolicy (H-08), all database traffic is interceptable.
-
-**Fix:** Configure PostgreSQL with a TLS certificate (mounted as a Secret). Update both DSNs to `sslmode=require`. Alternatively deploy a service mesh (Linkerd, Istio) for pod-to-pod mTLS.
-
----
-
-## M-16 · All credentials consolidated in a single `database-credentials` Secret — large blast radius
-
-**Layer:** Infrastructure
-**File:** `deploy/backend.yaml` (all `secretKeyRef` references)
-**Category:** Secret management
-
-**What's wrong:** Six distinct credentials (PostgreSQL password, session HMAC key, S3 access key, S3 secret key, Dragonfly password, Meilisearch master key) are in one Secret. Any RBAC misconfiguration or pod compromise that can read this Secret gains all credentials simultaneously, including the session HMAC key (usable to forge session tokens).
-
-**Fix:** Split into per-service Secrets (`backend-secret`, `database-secret`, `cache-secret`, `search-secret`, `storage-secret`). Mount only the Secrets each workload needs. Consider an external secret store (Vault, AWS Secrets Manager) with dynamic short-lived credentials.
-
----
-
 ## M-17 · No `metadata.namespace` in any manifest — accidental default-namespace deployment if `-n phasma` is omitted
 
 **Layer:** Infrastructure
@@ -238,42 +228,6 @@ Reference the tag explicitly in deployment manifests.
 
 ---
 
-## M-20 · Correlated N+1 subqueries per user row — 5 extra queries per row in every user list
-
-**Layer:** Database
-**File:** `apps/backend/internal/store/postgres/users_postgres.go` lines 19–25
-**Category:** N+1 / performance / DoS amplification
-
-**What's wrong:** `userColumns` embeds five correlated subqueries per returned user row (`COUNT posts`, `COUNT likes`, `COUNT followers`, `COUNT following`, `EXISTS is_following`). `ListSuggestedUsers` returns up to 10 users → 50 inner queries per request. `ListFollowers`/`ListFollowing` fire up to `limit × 5` inner queries.
-
-**Fix:** Use the existing denormalized `users.follower_count` for followers. Add similar denormalized `post_count` and `like_count` columns for posts/likes on the users table, maintained within write transactions. The `is_following` subquery can remain as it is user-specific and not cacheable.
-
----
-
-## M-21 · Correlated N+1 subqueries per post row — 3 extra queries per row in every post list
-
-**Layer:** Database
-**File:** `apps/backend/internal/store/postgres/posts_postgres.go` lines 19–25
-**Category:** N+1 / performance / DoS amplification
-
-**What's wrong:** `postColumns` embeds three correlated subqueries per returned post row (`COUNT likes`, `EXISTS liked`, `COUNT comments`). With `limit=50` this is 150 subqueries per page. `ListPopularPosts` additionally re-computes like count in its `ORDER BY`, meaning the count fires twice per row for that endpoint.
-
-**Fix:** Add denormalized `like_count` and `comment_count` columns on `posts`, maintained by triggers or within like/comment write transactions. The `liked` boolean can remain as a parameterized subquery.
-
----
-
-## M-22 · `SearchHashtags` fires one correlated COUNT subquery per result row
-
-**Layer:** Database
-**File:** `apps/backend/internal/store/postgres/search_postgres.go` lines 50–77
-**Category:** N+1 / performance
-
-**What's wrong:** Up to 8 correlated `COUNT(*)` subqueries fire for every typeahead keystroke request.
-
-**Fix:** Add a `post_count int NOT NULL DEFAULT 0` column to `hashtags`, maintained by post creation/deletion transactions.
-
----
-
 ## M-23 · `notifications.type` has no CHECK constraint — arbitrary type values accepted
 
 **Layer:** Database
@@ -302,20 +256,6 @@ ALTER TABLE notifications ALTER COLUMN type TYPE varchar(20);
 ```sql
 ALTER TABLE follows ADD CONSTRAINT follows_no_self_follow CHECK (follower_id <> followee_id);
 ```
-
----
-
-## M-25 · `bigint` FK columns in `notifications` and `feed` reference `serial` (int4) PKs — type mismatch
-
-**Layer:** Database
-**Files:**
-- `apps/database/migrations/000010_create_notifications.up.sql`
-- `apps/database/migrations/000011_create_feed.up.sql`
-**Category:** Schema inconsistency / correctness
-
-**What's wrong:** `notifications.user_id`, `notifications.actor_id`, `feed.user_id`, `feed.post_id` are all `bigint`, while the referenced `users.id` and `posts.id` are `serial` (int4, 32-bit). PostgreSQL allows this via implicit cast but may cause index type mismatches under some plan conditions. `pagination.Cursor.ID` is typed as `int` — on a theoretical 32-bit host, notification IDs exceeding `MaxInt32` would silently truncate.
-
-**Fix:** Standardize on `integer` to match existing PKs (update `notifications` and `feed`), or migrate `users.id` and `posts.id` to `bigserial` for future-proofing. Update `pagination.Cursor.ID` from `int` to `int64` regardless.
 
 ---
 
@@ -379,46 +319,6 @@ if size > 0 {
     w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 }
 ```
-
----
-
-## L-04 · `DeletePost` two-query pattern returns wrong error code under concurrent deletion
-
-**Layer:** Backend
-**File:** `apps/backend/internal/posts/service.go` lines 85–105
-**Category:** TOCTOU / correctness
-
-**What's wrong:** `DeletePost` makes two separate DB round-trips: delete attempt, then existence check. If the post's real owner deletes it concurrently between the two queries, `GetPost` returns not-found, and the requester (a different user who should get 403) receives 404.
-
-**Fix:** Encode the distinction in a single SQL CTE that atomically distinguishes "deleted", "forbidden", and "not found" outcomes.
-
----
-
-## L-05 · `ListComments` `PostExists` check is not atomic with the list query
-
-**Layer:** Backend + Database
-**Files:**
-- `apps/backend/internal/comments/service.go` lines 47–55
-- `apps/backend/internal/store/postgres/comments_postgres.go` lines 81–118
-**Category:** TOCTOU / correctness
-
-**What's wrong:** `PostExists` and `ListComments` are two separate DB calls. If the post is deleted between them, `ListComments` returns an empty array (HTTP 200) instead of 404. A client receives a misleading success response.
-
-**Fix:** Remove `PostExists` and let `ListComments` detect missing post inline via a CTE that returns a `post_exists` flag, returning `ErrNotFound` if zero rows and post is absent.
-
----
-
-## L-06 · Pending-upload count cap not atomically enforced — can be exceeded under concurrent requests
-
-**Layer:** Backend + Database
-**Files:**
-- `apps/backend/internal/store/postgres/uploads_postgres.go` lines 22–29
-- `apps/backend/internal/uploads/service.go` lines 28–35
-**Category:** Race condition / quota enforcement
-
-**What's wrong:** Under PostgreSQL `READ COMMITTED`, two concurrent transactions can both evaluate `count(*) < 20` as true before either commits. Both insert, momentarily exceeding the cap. Additionally, `DeleteExpiredUploads` and `CreateUpload` are separate DB calls with no wrapping transaction.
-
-**Fix:** Merge both operations into one transaction scoped to the requesting user. Add `FOR UPDATE` to the count subquery to serialize concurrent requests per user.
 
 ---
 
@@ -510,46 +410,6 @@ CREATE INDEX posts_filename_idx ON posts(filename) WHERE filename IS NOT NULL;
 ```sql
 AND posts.created > now() - interval '90 days'
 ```
-
----
-
-## L-13 · `users.follower_count` denormalized counter has no recovery mechanism
-
-**Layer:** Database
-**File:** `apps/database/migrations/000012_add_follower_count.up.sql`
-**Category:** Data integrity / denormalization drift
-
-**What's wrong:** All correctness depends on `FollowUser` and `UnfollowUser` atomically incrementing/decrementing `follower_count`. Any bypass (direct DB write, admin script, migration bug, partial commit) silently skews the counter. Because `follower_count > 10000` gates the celebrity fan-out path, drift causes incorrect feed behavior at scale with no visibility.
-
-**Fix:** Add a periodic reconciliation job:
-```sql
-UPDATE users SET follower_count = (SELECT count(*) FROM follows WHERE followee_id = users.id);
-```
-Or add a trigger on `follows` INSERT/DELETE to maintain the count independently of application code.
-
----
-
-## L-14 · No audit trail for sensitive mutations — password changes, email changes, session revocations
-
-**Layer:** Database
-**Files:** `apps/backend/internal/store/postgres/users_postgres.go`, `sessions_postgres.go`
-**Category:** Missing audit trail / OWASP A09
-
-**What's wrong:** Password changes, email/username updates, and session revocations leave no durable record in the database. If an account is compromised and the attacker changes the password (revoking all other sessions), there is no database-level record of when the change occurred or from which session.
-
-**Fix:** Add an `audit_log` table and write a row (action type + timestamp, no credential values) inside the same transaction as password changes, email/username changes, and bulk session revocations.
-
----
-
-## L-15 · Sequential integer PKs on `comments` exposed externally — no `public_id`
-
-**Layer:** Database
-**File:** `apps/database/migrations/000006_create_comments.up.sql`
-**Category:** Information disclosure / OWASP A01
-
-**What's wrong:** `comments.id` is a `serial` (auto-increment) integer. It is the only identifier, returned directly in API responses and stored as `entity_id` in notifications. An attacker who receives any comment ID can infer the total comment count and iterate all comments by ID.
-
-**Fix:** Add `public_id uuid UNIQUE NOT NULL DEFAULT gen_random_uuid()` to `comments` and use it as the external identifier in API responses, outbox payloads, and notification `entity_id`.
 
 ---
 
@@ -805,16 +665,6 @@ adduser -S -u 1000 -G phasma phasma
 
 ---
 
-## I-01 · Username path parameter not validated before DB query
-
-**Layer:** Backend
-**File:** `apps/backend/internal/users/handler.go` lines 88–107
-**Category:** Input validation (defense-in-depth)
-
-The query is fully parameterized; no injection risk. A malformed username returns not-found with minimal overhead. Adding format validation returns 400 fast and is consistent with other identifier validation. Not an active vulnerability.
-
----
-
 ## I-02 · Users can like their own posts — business rule unspecified, notification suppressed but count inflated
 
 **Layer:** Backend
@@ -936,30 +786,6 @@ PostgreSQL requires write access to `PGDATA`. The omission is correct and docume
 
 ---
 
-## I-13 · `usernameExists` TOCTOU in `GetPosts`, `GetLikedPosts`, `ListFollowers`, `ListFollowing`
-
-**Layer:** Backend
-**Files:** `apps/backend/internal/store/postgres/posts_postgres.go` lines 124–138, 140–156; `apps/backend/internal/store/postgres/users_postgres.go` lines 89–106, 108–128
-**Category:** TOCTOU / correctness
-
-`GetPosts`, `GetLikedPosts`, `ListFollowers`, and `ListFollowing` all call `usernameExists` as a separate DB query before the main list query. If the target user account is deleted between the two queries, the main query returns an empty result set (HTTP 200, empty list) instead of 404. This is the same pattern as L-05 (`ListComments`), but across four more endpoints. Not a security issue — the worst case is a misleading empty list.
-
-**Fix:** Merge the existence check into the main query via a CTE or an `EXISTS` condition on the result, consistent with the single-query approach already used in `GetPost`.
-
----
-
-## I-15 · Outbox rows deleted unconditionally after 7 days regardless of relay consumption
-
-**Layer:** Backend
-**File:** `apps/backend/cmd/api/main.go` lines 293–295
-**Category:** Data loss / operational reliability
-
-`sweepExpiredOutbox` deletes all outbox rows older than 7 days without checking whether Redpanda Connect has already consumed and published them. If the `connect` deployment (the relay between the outbox table and Kafka) is down for more than 7 days — due to a crash, a bad config, or an unnoticed issue — those outbox events are permanently discarded without any alert. The corresponding feed entries, search index updates, and notification side effects are silently lost.
-
-**Fix:** Options in order of preference: (1) Track a `consumed_at` timestamp or `published bool` column on the outbox table and only delete rows where `published = true`; (2) Log a warning when the hourly sweep deletes rows that have not been flagged as consumed; (3) Shorten the sweep window to 24 hours and add monitoring on the Redpanda Connect lag.
-
----
-
 ## I-14 · `CreatePost` issues a separate `SELECT created FROM posts` inside the transaction — unnecessary round-trip
 
 **Layer:** Backend
@@ -1044,26 +870,6 @@ PostgreSQL executes both subqueries independently, doubling the work on the `lik
 ```sql
 ORDER BY likes DESC, posts.created DESC
 ```
-
----
-
-## L-35 · `Notification.ID`, `Notification.UserID`, `Notification.ActorID` are sequential integers in API JSON and URL paths
-
-**Layer:** Backend
-**Files:** `apps/backend/internal/notifications/domain.go` lines 6–9; `apps/backend/internal/notifications/handler.go` lines 68–73
-**Category:** Information disclosure / OWASP A01
-
-**What's wrong:** The `Notification` struct serializes `ID int64 \`json:"id"\``, `UserID int64 \`json:"userId"\``, and `ActorID int64 \`json:"actorId"\`` — all sequential bigserial/integer primary keys — into every `GET /notifications` response. Additionally, `PATCH /notifications/{id}` accepts the sequential integer ID directly in the URL path. This leaks:
-
-- `ID`: total notification count and creation order across all users.
-- `UserID`: the recipient's sequential user ID (redundant with the current session, but confirms the mapping).
-- `ActorID`: the actor's sequential user ID, linking username to internal integer across responses.
-
-The `MarkRead` URL `PATCH /notifications/12345` reveals that at least 12,345 notification rows exist in the system. While ownership is checked (`WHERE id = $1 AND user_id = $2`), the integer ID itself is an oracle.
-
-**Fix:**
-1. Add a `public_id uuid DEFAULT gen_random_uuid()` column to `notifications` and use it in the list response and the `MarkRead` URL path.
-2. Remove `json:"userId"` and `json:"actorId"` from the `Notification` struct — neither integer is needed by the frontend (the actor username and entity data are sufficient).
 
 ---
 

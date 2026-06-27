@@ -9,7 +9,7 @@ export const load: LayoutServerLoad = async ({ fetch, cookies, depends }) => {
 	const client = apiClient({ fetch, cookies });
 	const fullUser = await getCurrent(client);
 	if (!fullUser) throw redirect(303, '/login');
-	const { email: _email, ...currentUser } = fullUser;
+	const { email: _, ...currentUser } = fullUser;
 	const unreadCount = await getUnreadCount(client).catch(() => 0);
 	return { currentUser, unreadCount };
 };

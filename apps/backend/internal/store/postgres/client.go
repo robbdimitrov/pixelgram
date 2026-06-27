@@ -36,4 +36,3 @@ func (c *Client) DB() *database.DB {
 func (c *Client) Ping(ctx context.Context) error {
 	return c.db.Pool().Ping(ctx)
 }
-
