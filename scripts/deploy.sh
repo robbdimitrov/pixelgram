@@ -114,6 +114,53 @@ ensure_app_db_secret() {
   fi
 }
 
+ensure_connect_secret() {
+  if ! kubectl -n "${NS}" get secret connect-secret >/dev/null 2>&1; then
+    # meili-connect-key starts empty; provision_meili_connect_key fills it after Meilisearch is ready.
+    kubectl -n "${NS}" create secret generic connect-secret \
+      --from-literal=connect-db-password="$(random_secret)" \
+      --from-literal=meili-connect-key=""
+  else
+    ensure_secret_key connect-secret connect-db-password
+  fi
+}
+
+provision_meili_connect_key() {
+  local existing
+  existing="$(kubectl -n "${NS}" get secret connect-secret -o go-template="{{ index .data \"meili-connect-key\" }}" 2>/dev/null || true)"
+  if [[ -n "${existing}" && "${existing}" != "<no value>" && "${existing}" != "$(printf '' | base64)" ]]; then
+    return
+  fi
+
+  log "provisioning Meilisearch connect key"
+  local master_key pf_pid key encoded
+  master_key="$(kubectl -n "${NS}" get secret search-secret -o go-template="{{ index .data \"meili-master-key\" }}" | base64 -d)"
+
+  kubectl -n "${NS}" port-forward service/search 7701:7700 >/dev/null 2>&1 &
+  pf_pid=$!
+  trap 'kill "${pf_pid}" 2>/dev/null || true' RETURN
+
+  local i=0
+  until curl -sf "http://localhost:7701/health" -H "Authorization: Bearer ${master_key}" >/dev/null 2>&1; do
+    i=$((i + 1))
+    [[ $i -lt 20 ]] || { kill "${pf_pid}" 2>/dev/null || true; die "Meilisearch did not become ready in time"; }
+    sleep 1
+  done
+
+  key="$(curl -sf -X POST "http://localhost:7701/keys" \
+    -H "Authorization: Bearer ${master_key}" \
+    -H "Content-Type: application/json" \
+    -d "{\"actions\":[\"documents.add\",\"documents.delete\"],\"indexes\":[\"users\",\"posts\",\"hashtags\"],\"expiresAt\":null,\"description\":\"phasma-connect scoped key\"}" \
+    | grep -o '"key":"[^"]*"' | cut -d'"' -f4)"
+  [[ -n "${key}" ]] || die "failed to provision Meilisearch connect key"
+
+  encoded="$(printf '%s' "${key}" | base64 | tr -d '\n')"
+  kubectl -n "${NS}" patch secret connect-secret --type merge \
+    -p "{\"data\":{\"meili-connect-key\":\"${encoded}\"}}" >/dev/null
+  kill "${pf_pid}" 2>/dev/null || true
+  trap - RETURN
+}
+
 ensure_secret_key() {
   local secret_name="$1"
   local key="$2"
@@ -240,6 +287,7 @@ apply_manifests() {
   ensure_namespace
   ensure_secret
   ensure_app_db_secret
+  ensure_connect_secret
   ensure_tls_secret
   ensure_database_tls_secret
   kubectl apply -f "${K8S_DIR}" -n "${NS}"
@@ -290,6 +338,8 @@ restart_stack() {
 
   log "waiting for application services"
   wait_for_rollouts "${ROLL_OUT_REST[@]}"
+
+  provision_meili_connect_key
 
   log "restarting connect (after broker is ready)"
   rollout_restart "${ROLL_OUT_CONNECT[@]}"

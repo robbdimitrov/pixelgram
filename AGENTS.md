@@ -44,6 +44,9 @@ kubectl create secret generic search-secret -n phasma \
   --from-literal=meili-master-key="$(openssl rand -hex 32)"
 kubectl create secret generic app-db-secret -n phasma \
   --from-literal=app-db-password="$(openssl rand -hex 32)"
+kubectl create secret generic connect-secret -n phasma \
+  --from-literal=connect-db-password="$(openssl rand -hex 32)" \
+  --from-literal=meili-connect-key=""  # filled by deploy.sh after Meilisearch is ready
 kubectl apply -f ./deploy -n phasma
 kubectl port-forward service/frontend 8080 -n phasma
 ```
