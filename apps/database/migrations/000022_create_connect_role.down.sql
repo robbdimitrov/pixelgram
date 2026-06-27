@@ -1,3 +1,4 @@
+REVOKE SELECT ON users FROM phasma_connect;
 REVOKE SELECT ON outbox FROM phasma_connect;
 REVOKE USAGE ON SCHEMA public FROM phasma_connect;
 REVOKE CONNECT ON DATABASE phasma FROM phasma_connect;

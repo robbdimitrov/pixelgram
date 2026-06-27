@@ -308,9 +308,9 @@ spec:
                 DECLARE v text := :'app_pass';
                 BEGIN
                   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'phasma_connect_user') THEN
-                    EXECUTE format('CREATE USER phasma_connect_user WITH PASSWORD %%L', v);
+                    EXECUTE format('CREATE USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
                   ELSE
-                    EXECUTE format('ALTER USER phasma_connect_user WITH PASSWORD %%L', v);
+                    EXECUTE format('ALTER USER phasma_connect_user WITH REPLICATION PASSWORD %%L', v);
                   END IF;
                   GRANT phasma_connect TO phasma_connect_user;
                 END \$\$;"
