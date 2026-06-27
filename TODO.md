@@ -50,7 +50,7 @@ Fix: Create a dedicated role (e.g. `phasma_connect`) with `SELECT` on `outbox` o
 
 ### M-03 — Integer user IDs exposed in API responses ✅
 
-Fixed: migration `000023_add_user_public_id` adds `public_id UUID` to users. User profiles now expose the UUID as `id`; the integer PK is hidden (`json:"-"`). Post responses drop `userId`. Login and user-creation endpoints return `{"username": "..."}`. Follow/unfollow routes changed from `{userId}` to `{username}`. Frontend types and API client updated; `PostCard` ownership check now compares username strings.
+Fixed in commit `a8d607c`: migration `000023_add_user_public_id` adds `public_id UUID` to users. User profiles now expose the UUID as `id`; the integer PK is hidden (`json:"-"`). Post responses drop `userId`. Login and user-creation endpoints return `{"username": "..."}`. Follow/unfollow routes changed from `{userId}` to `{username}`. Frontend types and API client updated; `PostCard` ownership check now compares username strings.
 
 ---
 
