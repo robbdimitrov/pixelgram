@@ -504,6 +504,26 @@ func TestPostgresRepositoryCommentOwnershipAndNotFoundOutcomes(t *testing.T) {
 	}
 }
 
+func TestPostgresRepositorySelfLikeIsNoop(t *testing.T) {
+	client := openTestClient(t)
+	ctx := context.Background()
+	ownerID := createTestUser(t, client, "self_like_owner")
+	post := insertTestPost(t, client, ownerID, "self-like-post", time.Now())
+
+	if err := client.LikePost(ctx, post.PublicID, stringID(ownerID)); err != nil {
+		t.Fatalf("LikePost(self) error = %v, want nil", err)
+	}
+	var count int
+	if err := client.db.Pool().QueryRow(ctx,
+		`SELECT count(*) FROM likes WHERE post_id = $1 AND user_id = $2`,
+		post.ID, ownerID).Scan(&count); err != nil {
+		t.Fatalf("like count query error = %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("self-like inserted %d like rows, want 0", count)
+	}
+}
+
 func TestPostgresRepositorySessionHashExpirationAndConditionalRefresh(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
