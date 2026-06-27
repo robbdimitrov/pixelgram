@@ -132,8 +132,8 @@ func TestCreateSessionSuccess(t *testing.T) {
 
 	handler.CreateSession(res, req)
 
-	if res.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d; body=%s", res.Code, http.StatusOK, res.Body.String())
+	if res.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body=%s", res.Code, http.StatusCreated, res.Body.String())
 	}
 	if service.loginInput.Email != "test@example.com" {
 		t.Fatalf("service email = %q, want normalized email", service.loginInput.Email)
@@ -297,8 +297,8 @@ func TestRegisterRoutes(t *testing.T) {
 		"/sessions",
 		strings.NewReader(`{"email":"test@example.com","password":"password123"}`),
 	))
-	if login.Code != http.StatusOK {
-		t.Fatalf("login status = %d, want %d", login.Code, http.StatusOK)
+	if login.Code != http.StatusCreated {
+		t.Fatalf("login status = %d, want %d", login.Code, http.StatusCreated)
 	}
 
 	logout := httptest.NewRecorder()

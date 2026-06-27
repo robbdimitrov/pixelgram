@@ -91,7 +91,7 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Invalid username.")
 		return
 	}
-	currentUserID, _ := httpx.UserID(r)
+	currentUserID, currentUserOK := httpx.UserID(r)
 
 	user, found, err := h.Service.GetUserByUsername(r.Context(), username, currentUserID)
 	if err != nil {
@@ -103,7 +103,7 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if currentUserID, ok := httpx.UserID(r); !ok || currentUserID != strconv.Itoa(user.ID) {
+	if !currentUserOK || currentUserID != strconv.Itoa(user.ID) {
 		user.Email = ""
 	}
 
@@ -200,8 +200,8 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(body.Name)
 	username := strings.ToLower(strings.TrimSpace(body.Username))
 	email := strings.ToLower(strings.TrimSpace(body.Email))
-	if name == "" || username == "" {
-		httpx.WriteMessage(w, http.StatusBadRequest, "Name and username are required.")
+	if name == "" || username == "" || email == "" {
+		httpx.WriteMessage(w, http.StatusBadRequest, "Name, username, and email are required.")
 		return
 	}
 	if len([]rune(name)) > 100 {

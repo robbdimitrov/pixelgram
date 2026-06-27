@@ -63,7 +63,7 @@ func (h Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.SetSessionCookie(w, r, output.SessionID)
-	httpx.WriteJSON(w, http.StatusOK, map[string]int{"id": output.UserID})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]int{"id": output.UserID})
 }
 
 func (h Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
