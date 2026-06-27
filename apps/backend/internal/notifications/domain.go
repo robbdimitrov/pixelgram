@@ -6,8 +6,8 @@ type Notification struct {
 	ID         int64     `json:"-"`
 	PublicID   string    `json:"id"`
 	ExternalID string    `json:"-"`
-	UserID     int64     `json:"userId"`
-	ActorID    int64     `json:"actorId"`
+	UserID     int64     `json:"-"`
+	ActorID    int64     `json:"-"`
 	Type       string    `json:"type"`
 	EntityID   string    `json:"entityId"`
 	Read       bool      `json:"read"`

@@ -65,9 +65,6 @@ export function mapSession(dto: SessionDto): Session {
 export function mapNotification(dto: NotificationDto): Notification {
 	return {
 		id: dto.id,
-		externalId: dto.externalId,
-		userId: dto.userId,
-		actorId: dto.actorId,
 		type: dto.type,
 		entityId: dto.entityId,
 		read: dto.read,

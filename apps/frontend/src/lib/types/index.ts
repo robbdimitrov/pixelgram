@@ -100,10 +100,7 @@ export interface Session {
 export type NotificationType = 'like' | 'comment' | 'follow';
 
 export interface NotificationDto {
-	id: number;
-	externalId: string;
-	userId: number;
-	actorId: number;
+	id: string;
 	type: NotificationType;
 	entityId: string;
 	read: boolean;
@@ -111,10 +108,7 @@ export interface NotificationDto {
 }
 
 export interface Notification {
-	id: number;
-	externalId: string;
-	userId: number;
-	actorId: number;
+	id: string;
 	type: NotificationType;
 	entityId: string;
 	read: boolean;

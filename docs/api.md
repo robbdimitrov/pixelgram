@@ -150,12 +150,10 @@ failure. Use `DELETE /sessions` to terminate the current session.
 {
   "items": [
     {
-      "id": 42,
+      "id": "01904d2e-7f4d-7c33-ae21-2f94737eaa10",
       "externalId": "activity-0-1234",
-      "userId": 7,
-      "actorId": 3,
       "type": "like",
-      "entityId": "01904d2e-7f4d-7c33-ae21-2f94737eaa10",
+      "entityId": "01904d2e-7f4d-7c33-ae21-2f94737eab20",
       "read": false,
       "created": "2026-06-22T12:00:00Z"
     }
@@ -166,7 +164,7 @@ failure. Use `DELETE /sessions` to terminate the current session.
 
 Notification types: `like` (entityId = post public_id), `comment` (entityId = comment id), `follow` (entityId = actor user id as string).
 
-`PUT /notifications/{id}/read` requires `id` to be a positive integer. Returns `204` on success, `400` for an invalid ID, and `500` on repository failure. Ownership is enforced in the UPDATE query.
+`PUT /notifications/{id}/read` requires `id` to be a valid UUID. Returns `204` on success, `400` for an invalid UUID, `404` when the notification does not exist or belongs to another user, and `500` on repository failure. Ownership is enforced in the UPDATE query.
 
 ## Pagination Model
 

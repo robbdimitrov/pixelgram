@@ -10,11 +10,11 @@ export async function getNotifications(
 	return getCursorPage(fetch, '/notifications', cursor, mapNotification);
 }
 
-export async function markNotificationRead(fetch: ApiClient, id: number): Promise<null> {
-	if (!Number.isInteger(id) || id <= 0) {
-		throw new Error('Invalid notification id');
-	}
-	const res = await fetch(`/notifications/${id}/read`, { method: 'PUT', body: '' });
+export async function markNotificationRead(fetch: ApiClient, id: string): Promise<null> {
+	const res = await fetch(`/notifications/${encodeURIComponent(id)}/read`, {
+		method: 'PUT',
+		body: ''
+	});
 	return unwrap<null>(res);
 }
 
