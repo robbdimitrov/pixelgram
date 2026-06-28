@@ -52,7 +52,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: seaweedfs
+      - name: storage
         image: chrislusf/seaweedfs:3.76
         imagePullPolicy: IfNotPresent
         command:

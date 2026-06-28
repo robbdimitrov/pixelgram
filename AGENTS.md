@@ -36,21 +36,21 @@ Images are tagged `localhost:5000/phasma/<service>`.
 ```sh
 kubectl create namespace phasma
 kubectl create secret generic database-secret -n phasma \
-  --from-literal=postgres-password="$(openssl rand -hex 32)"
+  --from-literal=database-password="$(openssl rand -hex 32)"
 kubectl create secret generic backend-secret -n phasma \
   --from-literal=session-hash-secret="$(openssl rand -hex 32)"
 kubectl create secret generic storage-secret -n phasma \
   --from-literal=s3-access-key="$(openssl rand -hex 32)" \
   --from-literal=s3-secret-key="$(openssl rand -hex 32)"
 kubectl create secret generic cache-secret -n phasma \
-  --from-literal=dragonfly-password="$(openssl rand -hex 32)"
+  --from-literal=cache-password="$(openssl rand -hex 32)"
 kubectl create secret generic search-secret -n phasma \
-  --from-literal=meili-master-key="$(openssl rand -hex 32)"
+  --from-literal=search-master-key="$(openssl rand -hex 32)"
 kubectl create secret generic app-db-secret -n phasma \
   --from-literal=app-db-password="$(openssl rand -hex 32)"
 kubectl create secret generic connect-secret -n phasma \
   --from-literal=connect-db-password="$(openssl rand -hex 32)" \
-  --from-literal=meili-connect-key=""  # filled by deploy.sh after Meilisearch is ready
+  --from-literal=search-connect-key=""  # filled by deploy.sh after Meilisearch is ready
 kubectl apply -f ./deploy -n phasma
 kubectl port-forward service/frontend 8080 -n phasma
 ```

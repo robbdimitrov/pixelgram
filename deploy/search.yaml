@@ -52,7 +52,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: meilisearch
+      - name: search
         image: getmeili/meilisearch:v1.11.3
         imagePullPolicy: IfNotPresent
         securityContext:
@@ -75,7 +75,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: search-secret
-              key: meili-master-key
+              key: search-master-key
         - name: MEILI_ENV
           value: production
         readinessProbe:

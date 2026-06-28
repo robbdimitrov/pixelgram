@@ -6,8 +6,7 @@
 | ---------- | ---------------------------------------------------- | ----------------------------------------------------- |
 | `frontend` | SvelteKit SSR BFF — sole public entry point          | `localhost:5000/phasma/frontend`                      |
 | `backend`  | Go HTTP API — all business logic                     | `localhost:5000/phasma/backend`                       |
-| `database` | Migration runner — init container only               | `localhost:5000/phasma/database`                      |
-| `postgres` | PostgreSQL — primary data store                      | `postgres`                                            |
+| `database` | PostgreSQL — primary data store; migration init container | `postgres:18.4-alpine` / `localhost:5000/phasma/database` |
 | `storage`  | SeaweedFS — S3-compatible object storage             | `chrislusf/seaweedfs:3.76`                            |
 | `cache`    | Dragonfly — rate limiting and login throttle         | `docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0` |
 | `search`   | Meilisearch — full-text search                       | `getmeili/meilisearch:v1.11.3`                        |
@@ -22,13 +21,13 @@ Browser → nginx Ingress → frontend:8080 (SvelteKit SSR)
                               └─ server-side only ─→ backend:8080 (Go HTTP)
                                                           │
                                            ┌──────────────┼──────────────┐
-                                        postgres        storage        cache
-                                        (pgx)          (S3 SDK)      (Valkey)
+                                        database        storage        cache
+                                        (pgx)          (S3 SDK)      (Dragonfly)
                                            │
                                         search
                                         (HTTP)
 
-postgres (WAL) → connect (pg_cdc on outbox)
+database (WAL) → connect (pg_cdc on outbox)
                      │
                      ├── topic: entity-changes ──► connect sync-search → search
                      │                         ──► connect cleanup-s3  → storage

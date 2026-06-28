@@ -15,9 +15,9 @@ REMOTE_PORT="${REMOTE_PORT:-8080}"
 LOCAL_ORIGIN="${LOCAL_ORIGIN:-http://${APP_HOST}:${LOCAL_PORT}}"
 PORT_FORWARD_LOG="${PORT_FORWARD_LOG:-/tmp/phasma-port-forward-${LOCAL_PORT}.log}"
 PORT_FORWARD_PID_FILE="${PORT_FORWARD_PID_FILE:-/tmp/phasma-port-forward-${LOCAL_PORT}.pid}"
-SEAWEEDFS_IMAGE="chrislusf/seaweedfs:3.76"
-DRAGONFLY_IMAGE="docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0"
-MEILISEARCH_IMAGE="getmeili/meilisearch:v1.11.3"
+STORAGE_IMAGE="chrislusf/seaweedfs:3.76"
+CACHE_IMAGE="docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0"
+SEARCH_IMAGE="getmeili/meilisearch:v1.11.3"
 
 SERVICES=(backend database frontend)
 ROLL_OUT_DATABASE=(statefulset/database)
@@ -71,9 +71,9 @@ ensure_secret() {
   # database-secret
   if ! kubectl -n "${NS}" get secret database-secret >/dev/null 2>&1; then
     kubectl -n "${NS}" create secret generic database-secret \
-      --from-literal=postgres-password="$(random_secret)"
+      --from-literal=database-password="$(random_secret)"
   else
-    ensure_secret_key database-secret postgres-password
+    ensure_secret_key database-secret database-password
   fi
   # backend-secret
   if ! kubectl -n "${NS}" get secret backend-secret >/dev/null 2>&1; then
@@ -94,16 +94,16 @@ ensure_secret() {
   # cache-secret
   if ! kubectl -n "${NS}" get secret cache-secret >/dev/null 2>&1; then
     kubectl -n "${NS}" create secret generic cache-secret \
-      --from-literal=dragonfly-password="$(random_secret)"
+      --from-literal=cache-password="$(random_secret)"
   else
-    ensure_secret_key cache-secret dragonfly-password
+    ensure_secret_key cache-secret cache-password
   fi
   # search-secret
   if ! kubectl -n "${NS}" get secret search-secret >/dev/null 2>&1; then
     kubectl -n "${NS}" create secret generic search-secret \
-      --from-literal=meili-master-key="$(random_secret)"
+      --from-literal=search-master-key="$(random_secret)"
   else
-    ensure_secret_key search-secret meili-master-key
+    ensure_secret_key search-secret search-master-key
   fi
 }
 
@@ -116,10 +116,10 @@ ensure_app_db_secret() {
 
 ensure_connect_secret() {
   if ! kubectl -n "${NS}" get secret connect-secret >/dev/null 2>&1; then
-    # meili-connect-key starts empty; provision_meili_connect_key fills it after Meilisearch is ready.
+    # search-connect-key starts empty; provision_meili_connect_key fills it after Meilisearch is ready.
     kubectl -n "${NS}" create secret generic connect-secret \
       --from-literal=connect-db-password="$(random_secret)" \
-      --from-literal=meili-connect-key=""
+      --from-literal=search-connect-key=""
   else
     ensure_secret_key connect-secret connect-db-password
   fi
@@ -127,14 +127,14 @@ ensure_connect_secret() {
 
 provision_meili_connect_key() {
   local existing
-  existing="$(kubectl -n "${NS}" get secret connect-secret -o go-template="{{ index .data \"meili-connect-key\" }}" 2>/dev/null || true)"
+  existing="$(kubectl -n "${NS}" get secret connect-secret -o go-template="{{ index .data \"search-connect-key\" }}" 2>/dev/null || true)"
   if [[ -n "${existing}" && "${existing}" != "<no value>" && "${existing}" != "$(printf '' | base64)" ]]; then
     return
   fi
 
   log "provisioning Meilisearch connect key"
   local master_key pf_pid key encoded
-  master_key="$(kubectl -n "${NS}" get secret search-secret -o go-template="{{ index .data \"meili-master-key\" }}" | base64 -d)"
+  master_key="$(kubectl -n "${NS}" get secret search-secret -o go-template="{{ index .data \"search-master-key\" }}" | base64 -d)"
 
   kubectl -n "${NS}" port-forward service/search 7701:7700 >/dev/null 2>&1 &
   pf_pid=$!
@@ -156,7 +156,7 @@ provision_meili_connect_key() {
 
   encoded="$(printf '%s' "${key}" | base64 | tr -d '\n')"
   kubectl -n "${NS}" patch secret connect-secret --type merge \
-    -p "{\"data\":{\"meili-connect-key\":\"${encoded}\"}}" >/dev/null
+    -p "{\"data\":{\"search-connect-key\":\"${encoded}\"}}" >/dev/null
   kill "${pf_pid}" 2>/dev/null || true
   trap - RETURN
 }
@@ -270,15 +270,15 @@ build_images() {
   make -C "${ROOT}" GIT_SHA="${GIT_SHA}"
   if docker container inspect --format '{{.State.Running}}' phasma-control-plane 2>/dev/null | grep -qx true; then
     log "loading images into kind node"
-    docker pull "${SEAWEEDFS_IMAGE}"
-    docker pull "${DRAGONFLY_IMAGE}"
-    docker pull "${MEILISEARCH_IMAGE}"
+    docker pull "${STORAGE_IMAGE}"
+    docker pull "${CACHE_IMAGE}"
+    docker pull "${SEARCH_IMAGE}"
     docker save "${REGISTRY}/backend:${GIT_SHA}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save "${REGISTRY}/database:${GIT_SHA}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
     docker save "${REGISTRY}/frontend:${GIT_SHA}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save "${SEAWEEDFS_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save "${DRAGONFLY_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
-    docker save "${MEILISEARCH_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${STORAGE_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${CACHE_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
+    docker save "${SEARCH_IMAGE}" | docker exec -i phasma-control-plane ctr --namespace k8s.io images import -
   fi
 }
 

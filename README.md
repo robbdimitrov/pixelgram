@@ -5,8 +5,6 @@ architecture. Combining a robust Go API with a modern SvelteKit frontend, it
 provides a seamless experience for users to upload, browse, and interact with
 images.
 
-[![Phasma Rewrite: Glassmorphic Redesign via Multi-Model AI Refactor](https://img.youtube.com/vi/nTqpn376k_g/maxresdefault.jpg)](https://www.youtube.com/watch?v=nTqpn376k_g)
-
 ## Features
 
 - **Image sharing**: Upload, browse, like, and comment on images with a

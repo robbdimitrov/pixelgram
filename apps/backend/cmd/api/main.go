@@ -235,19 +235,19 @@ func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, er
 }
 
 func openRateLimiter() (httpx.RateLimiterStore, error) {
-	dragonflyURL := os.Getenv("DRAGONFLY_URL")
+	dragonflyURL := os.Getenv("CACHE_URL")
 	if dragonflyURL == "" {
 		return httpx.NoopRateLimiterStore{}, nil
 	}
-	return httpx.NewDragonflyRateLimiterStore(dragonflyURL, os.Getenv("DRAGONFLY_PASSWORD"))
+	return httpx.NewDragonflyRateLimiterStore(dragonflyURL, os.Getenv("CACHE_PASSWORD"))
 }
 
 func openLoginThrottle() (sessions.LoginThrottle, error) {
-	dragonflyURL := os.Getenv("DRAGONFLY_URL")
+	dragonflyURL := os.Getenv("CACHE_URL")
 	if dragonflyURL == "" {
 		return sessions.NoopLoginThrottle{}, nil
 	}
-	return sessions.NewDragonflyLoginThrottle(dragonflyURL, os.Getenv("DRAGONFLY_PASSWORD"))
+	return sessions.NewDragonflyLoginThrottle(dragonflyURL, os.Getenv("CACHE_PASSWORD"))
 }
 
 type sessionSweeper interface {

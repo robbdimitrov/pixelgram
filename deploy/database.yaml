@@ -10,9 +10,9 @@ spec:
     app: phasma
     tier: database
   ports:
-  - name: postgres
+  - name: database
     port: 5432
-    targetPort: postgres
+    targetPort: database
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -69,7 +69,7 @@ spec:
             drop:
             - ALL
         ports:
-        - name: postgres
+        - name: database
           containerPort: 5432
         resources:
           limits:
@@ -82,7 +82,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: database-secret
-              key: postgres-password
+              key: database-password
         - name: POSTGRES_DB
           value: phasma
         - name: PGDATA

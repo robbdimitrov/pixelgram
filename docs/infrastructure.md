@@ -102,15 +102,15 @@ Secrets are split per service to limit blast radius:
 
 | Secret            | Key                   | Consumer                                                                                                        |
 | ----------------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `database-secret` | `postgres-password`   | PostgreSQL, migration init container, provision-app-user init container                                         |
+| `database-secret` | `database-password`   | PostgreSQL, migration init container, provision-app-user init container                                         |
 | `app-db-secret`   | `app-db-password`     | provision-app-user init container, backend DATABASE_URL                                                         |
 | `backend-secret`  | `session-hash-secret` | Backend HMAC session hashing                                                                                    |
 | `storage-secret`  | `s3-access-key`       | Backend S3 client, SeaweedFS config                                                                             |
 | `storage-secret`  | `s3-secret-key`       | Backend S3 client, SeaweedFS config                                                                             |
-| `cache-secret`    | `dragonfly-password`  | Backend Dragonfly client                                                                                        |
-| `search-secret`   | `meili-master-key`    | Backend Meilisearch key provisioning, Meilisearch service                                                       |
+| `cache-secret`    | `cache-password`      | Backend cache client                                                                                            |
+| `search-secret`   | `search-master-key`   | Backend search key provisioning, search service                                                                 |
 | `connect-secret`  | `connect-db-password` | provision-connect-user init container, connect DATABASE_URL                                                     |
-| `connect-secret`  | `meili-connect-key`   | connect Meilisearch scoped key (documents.add/delete only; provisioned by deploy.sh after Meilisearch is ready) |
+| `connect-secret`  | `search-connect-key`  | connect Meilisearch scoped key (documents.add/delete only; provisioned by deploy.sh after Meilisearch is ready) |
 
 ## Security Context (all pods)
 
@@ -203,8 +203,8 @@ tables require `REPLICA IDENTITY` changes.
 | `S3_BUCKET`                       | literal                          | S3 bucket name                                                                                              |
 | `S3_REGION`                       | literal                          | S3 region                                                                                                   |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | secrets                          | S3 credentials                                                                                              |
-| `DRAGONFLY_URL`                   | literal                          | Dragonfly connection                                                                                        |
-| `DRAGONFLY_PASSWORD`              | secret                           | Dragonfly auth                                                                                              |
+| `CACHE_URL`                       | literal                          | Cache connection                                                                                            |
+| `CACHE_PASSWORD`                  | secret                           | Cache auth                                                                                                  |
 | `TRUST_PROXY`                     | literal `"true"`                 | Honor valid X-Forwarded-* headers from the ingress, which must overwrite client-supplied forwarding headers |
 | `MEILI_URL`                       | literal                          | Meilisearch endpoint                                                                                        |
 | `MEILI_MASTER_KEY`                | secret                           | Meilisearch key provisioning                                                                                |

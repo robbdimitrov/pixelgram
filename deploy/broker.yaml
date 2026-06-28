@@ -49,7 +49,7 @@ data:
                   url: "${MEILI_URL}/indexes/users/documents"
                   verb: POST
                   headers:
-                    Authorization: "Bearer ${MEILI_CONNECT_KEY}"
+                    Authorization: "Bearer ${SEARCH_CONNECT_KEY}"
         - branch:
             request_map: |
               root = if this.table == "users" && this.op == "delete" { this } else { deleted() }
@@ -58,7 +58,7 @@ data:
                   url: "${MEILI_URL}/indexes/users/documents/${! json(\"id\") }"
                   verb: DELETE
                   headers:
-                    Authorization: "Bearer ${MEILI_CONNECT_KEY}"
+                    Authorization: "Bearer ${SEARCH_CONNECT_KEY}"
         - branch:
             request_map: |
               root = if this.table == "posts" && this.op == "upsert" { this } else { deleted() }
@@ -67,7 +67,7 @@ data:
                   url: "${MEILI_URL}/indexes/posts/documents"
                   verb: POST
                   headers:
-                    Authorization: "Bearer ${MEILI_CONNECT_KEY}"
+                    Authorization: "Bearer ${SEARCH_CONNECT_KEY}"
         - branch:
             request_map: |
               root = if this.table == "posts" && this.op == "delete" { this } else { deleted() }
@@ -76,7 +76,7 @@ data:
                   url: "${MEILI_URL}/indexes/posts/documents/${! json(\"id\") }"
                   verb: DELETE
                   headers:
-                    Authorization: "Bearer ${MEILI_CONNECT_KEY}"
+                    Authorization: "Bearer ${SEARCH_CONNECT_KEY}"
         - branch:
             request_map: |
               root = if this.table == "hashtags" && this.op == "upsert" && this.post_count > 0 { this } else { deleted() }
@@ -85,7 +85,7 @@ data:
                   url: "${MEILI_URL}/indexes/hashtags/documents"
                   verb: POST
                   headers:
-                    Authorization: "Bearer ${MEILI_CONNECT_KEY}"
+                    Authorization: "Bearer ${SEARCH_CONNECT_KEY}"
         - branch:
             request_map: |
               root = if this.table == "hashtags" && this.op == "upsert" && this.post_count == 0 { this } else { deleted() }
@@ -94,7 +94,7 @@ data:
                   url: "${MEILI_URL}/indexes/hashtags/documents/${! json(\"name\") }"
                   verb: DELETE
                   headers:
-                    Authorization: "Bearer ${MEILI_CONNECT_KEY}"
+                    Authorization: "Bearer ${SEARCH_CONNECT_KEY}"
 
     output:
       drop: {}
@@ -153,9 +153,9 @@ spec:
     app: phasma
     tier: broker
   ports:
-    - name: kafka
+    - name: broker
       port: 9092
-      targetPort: kafka
+      targetPort: broker
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -192,7 +192,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: redpanda
+        - name: broker
           image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
           securityContext:
             allowPrivilegeEscalation: false
@@ -214,7 +214,7 @@ spec:
             - --set=redpanda.write_caching_default=false
             - --set=redpanda.auto_create_topics_enabled=false
           ports:
-            - name: kafka
+            - name: broker
               containerPort: 9092
             - name: admin
               containerPort: 9644
@@ -331,7 +331,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: database-secret
-                  key: postgres-password
+                  key: database-password
             - name: CONNECT_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -377,11 +377,11 @@ spec:
                   key: s3-secret-key
             - name: MEILI_URL
               value: http://search:7700
-            - name: MEILI_CONNECT_KEY
+            - name: SEARCH_CONNECT_KEY
               valueFrom:
                 secretKeyRef:
                   name: connect-secret
-                  key: meili-connect-key
+                  key: search-connect-key
             - name: REDPANDA_BROKERS
               value: broker:9092
           resources:
@@ -482,7 +482,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: database-secret
-                  key: postgres-password
+                  key: database-password
             - name: CONNECT_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -528,11 +528,11 @@ spec:
                   key: s3-secret-key
             - name: MEILI_URL
               value: http://search:7700
-            - name: MEILI_CONNECT_KEY
+            - name: SEARCH_CONNECT_KEY
               valueFrom:
                 secretKeyRef:
                   name: connect-secret
-                  key: meili-connect-key
+                  key: search-connect-key
             - name: REDPANDA_BROKERS
               value: broker:9092
           resources:

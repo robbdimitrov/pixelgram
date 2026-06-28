@@ -78,7 +78,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: database-secret
-              key: postgres-password
+              key: database-password
       - name: provision-app-user
         image: postgres:18.4-alpine
         imagePullPolicy: IfNotPresent
@@ -114,7 +114,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: database-secret
-              key: postgres-password
+              key: database-password
         - name: APP_DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -166,13 +166,13 @@ spec:
             secretKeyRef:
               name: storage-secret
               key: s3-secret-key
-        - name: DRAGONFLY_URL
+        - name: CACHE_URL
           value: redis://cache:6379
-        - name: DRAGONFLY_PASSWORD
+        - name: CACHE_PASSWORD
           valueFrom:
             secretKeyRef:
               name: cache-secret
-              key: dragonfly-password
+              key: cache-password
         - name: TRUST_PROXY
           value: "true"
         - name: SESSION_HASH_SECRET
@@ -186,7 +186,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: search-secret
-              key: meili-master-key
+              key: search-master-key
         - name: REDPANDA_BROKERS
           value: broker:9092
         readinessProbe:

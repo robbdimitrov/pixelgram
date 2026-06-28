@@ -13,9 +13,9 @@ spec:
     app: phasma
     tier: cache
   ports:
-  - name: redis
+  - name: cache
     port: 6379
-    targetPort: redis
+    targetPort: cache
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -52,14 +52,14 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: dragonfly
+      - name: cache
         image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.25.0
         imagePullPolicy: IfNotPresent
         command:
         - /bin/sh
         - -ec
         args:
-        - exec dragonfly "--requirepass=${DRAGONFLY_PASSWORD}" --dir=/data
+        - exec dragonfly "--requirepass=${CACHE_PASSWORD}" --dir=/data
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -67,7 +67,7 @@ spec:
             drop:
             - ALL
         ports:
-        - name: redis
+        - name: cache
           containerPort: 6379
         resources:
           limits:
@@ -76,25 +76,25 @@ spec:
             memory: 128Mi
             cpu: 100m
         env:
-        - name: DRAGONFLY_PASSWORD
+        - name: CACHE_PASSWORD
           valueFrom:
             secretKeyRef:
               name: cache-secret
-              key: dragonfly-password
+              key: cache-password
         readinessProbe:
           tcpSocket:
-            port: redis
+            port: cache
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
         startupProbe:
           tcpSocket:
-            port: redis
+            port: cache
           failureThreshold: 30
           periodSeconds: 2
         livenessProbe:
           tcpSocket:
-            port: redis
+            port: cache
           failureThreshold: 6
           periodSeconds: 10
           timeoutSeconds: 3
