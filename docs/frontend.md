@@ -11,7 +11,7 @@ SvelteKit with Svelte runes, `@sveltejs/adapter-node`, Tailwind, DaisyUI,
 /                           → redirect 303 → /feed
 ├── (auth)/                 no layout guard; public
 │   ├── login/              form action: POST /sessions
-│   └── signup/             form action: POST /users then POST /sessions
+│   └── register/           form action: POST /users then POST /sessions
 └── (app)/                  +layout.server.ts: GET /users/me → redirect /login if 401; GET /notifications (unread count badge)
     ├── feed/               load: GET /feed
     ├── notifications/      load: GET /notifications + PUT /notifications/{id}/read (mark all unread as read)

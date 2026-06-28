@@ -107,7 +107,7 @@ Used in upload description and search inputs.
 
 | Context                              | Width       |
 | ------------------------------------ | ----------- |
-| Auth pages (login, signup)           | `max-w-xl`  |
+| Auth pages (login, register)         | `max-w-xl`  |
 | Settings pages                       | `max-w-xl`  |
 | Feed                                 | `max-w-xl`  |
 | Single post view                     | `max-w-xl`  |

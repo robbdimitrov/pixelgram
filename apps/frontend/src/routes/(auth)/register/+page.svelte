@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign up — Phasma</title>
+	<title>Register — Phasma</title>
 </svelte:head>
 
 <section

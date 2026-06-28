@@ -108,8 +108,9 @@
 		>
 		<p class="text-sm text-base-content/70">
 			Don't have an account?
-			<a href={resolve('/signup')} class="ml-1 font-extrabold text-base-content hover:text-primary"
-				>Create one</a
+			<a
+				href={resolve('/register')}
+				class="ml-1 font-extrabold text-base-content hover:text-primary">Create one</a
 			>
 		</p>
 	</div>
