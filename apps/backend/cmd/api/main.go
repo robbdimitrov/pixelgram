@@ -14,37 +14,38 @@ import (
 
 	"phasma/backend/internal/app"
 	"phasma/backend/internal/blobstore"
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/env"
 	"phasma/backend/internal/feed"
 	"phasma/backend/internal/httpx"
-	"phasma/backend/internal/noop"
 	"phasma/backend/internal/notifications"
 	"phasma/backend/internal/search"
 	"phasma/backend/internal/sessions"
-	"phasma/backend/internal/store/postgres"
+	"phasma/backend/internal/store/database"
 )
+
+const defaultDatabaseURL = "postgres://postgres:postgres@localhost:5432/phasma?sslmode=disable"
 
 func main() {
 	setupLogger()
 
 	port := env.String("PORT", "8080")
-	databaseURL := os.Getenv("DATABASE_URL")
+	databaseURL := env.String("DATABASE_URL", defaultDatabaseURL)
 
-	repositories, db, readiness, closeRepositories, err := openRepositories(databaseURL)
+	repositories, databaseHandle, readiness, closeRepositories, err := openRepositories(databaseURL)
 	if err != nil {
 		slog.Error("failed to initialize repositories", "error", err)
 		os.Exit(1)
 	}
 	defer closeRepositories()
 
-	blobs, err := openBlobStore(context.Background(), databaseURL)
+	blobs, err := openBlobStore(context.Background())
 	if err != nil {
 		slog.Error("failed to initialize blob store", "error", err)
 		os.Exit(1)
 	}
 
-	meili, err := openMeiliClient(context.Background(), databaseURL)
+	searchClient, err := openSearchClient(context.Background())
 	if err != nil {
 		slog.Error("failed to initialize search client", "error", err)
 		os.Exit(1)
@@ -67,22 +68,22 @@ func main() {
 	sessionCleanupDone := startSessionCleanup(signalContext, repositories.Sessions)
 
 	var sweepOutboxDone <-chan struct{}
-	if db != nil {
+	if databaseHandle != nil {
 		ch := make(chan struct{})
 		sweepOutboxDone = ch
 		go func() {
 			defer close(ch)
-			sweepOutboxPeriodically(signalContext, db)
+			sweepOutboxPeriodically(signalContext, databaseHandle)
 		}()
 	}
 
 	var reconcileFollowersDone <-chan struct{}
-	if db != nil {
+	if databaseHandle != nil {
 		ch := make(chan struct{})
 		reconcileFollowersDone = ch
 		go func() {
 			defer close(ch)
-			reconcileFollowerCountsPeriodically(signalContext, db)
+			reconcileFollowerCountsPeriodically(signalContext, databaseHandle)
 		}()
 	}
 
@@ -120,7 +121,7 @@ func main() {
 		RateLimiter:   rateLimiter,
 		LoginThrottle: loginThrottle,
 		Readiness:     readiness,
-		Meili:         meili,
+		SearchClient:  searchClient,
 	}, repositories)
 
 	addr := ":" + port
@@ -173,58 +174,38 @@ func setupLogger() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 }
 
-func openRepositories(databaseURL string) (app.Repositories, *database.DB, func(context.Context) error, func(), error) {
-	if databaseURL == "" {
-		return app.Repositories{
-			SessionAuth:   noop.SessionAuth{},
-			Users:         noop.Users{},
-			Sessions:      noop.Sessions{},
-			Uploads:       noop.Uploads{},
-			Posts:         noop.Posts{},
-			Comments:      noop.Comments{},
-			Search:        noop.Search{},
-			Feed:          noop.Feed{},
-			Notifications: noop.Notifications{},
-		}, nil, func(context.Context) error { return nil }, func() {}, nil
-	}
-
+func openRepositories(databaseURL string) (app.Repositories, *db.DB, func(context.Context) error, func(), error) {
 	sessionSecret := os.Getenv("SESSION_HASH_SECRET")
 	if sessionSecret == "" {
-		return app.Repositories{}, nil, nil, func() {}, errors.New("SESSION_HASH_SECRET is required when DATABASE_URL is set")
+		return app.Repositories{}, nil, nil, func() {}, errors.New("SESSION_HASH_SECRET is required")
 	}
 
-	client, err := postgres.New(context.Background(), databaseURL, sessionSecret)
+	client, err := database.New(context.Background(), databaseURL, sessionSecret)
 	if err != nil {
 		return app.Repositories{}, nil, nil, func() {}, err
 	}
 
 	return app.Repositories{
-		SessionAuth:   postgres.NewSessionRepository(client),
-		Users:         postgres.NewUserRepository(client),
-		Sessions:      postgres.NewSessionRepository(client),
-		Uploads:       postgres.NewUploadRepository(client),
-		Posts:         postgres.NewPostRepository(client),
-		Comments:      postgres.NewCommentRepository(client),
-		Search:        postgres.NewSearchRepository(client),
-		Feed:          postgres.NewFeedRepository(client, feed.CelebThreshold),
-		Notifications: postgres.NewNotificationRepository(client),
+		SessionAuth:   database.NewSessionRepository(client),
+		Users:         database.NewUserRepository(client),
+		Sessions:      database.NewSessionRepository(client),
+		Uploads:       database.NewUploadRepository(client),
+		Posts:         database.NewPostRepository(client),
+		Comments:      database.NewCommentRepository(client),
+		Search:        database.NewSearchRepository(client),
+		Feed:          database.NewFeedRepository(client, feed.CelebThreshold),
+		Notifications: database.NewNotificationRepository(client),
 	}, client.DB(), client.Ping, client.Close, nil
 }
 
-func openMeiliClient(ctx context.Context, databaseURL string) (*search.MeiliClient, error) {
-	if databaseURL == "" {
-		return nil, nil
-	}
-	meiliURL := env.String("MEILI_URL", "http://search:7700")
+func openSearchClient(ctx context.Context) (*search.SearchClient, error) {
+	searchURL := env.String("MEILI_URL", "http://search:7700")
 	masterKey := os.Getenv("MEILI_MASTER_KEY")
-	return search.NewMeiliClient(ctx, meiliURL, masterKey)
+	return search.NewSearchClient(ctx, searchURL, masterKey)
 }
 
-func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, error) {
-	if databaseURL == "" {
-		return blobstore.NewMemoryStore(), nil
-	}
-	return blobstore.NewS3Store(
+func openBlobStore(ctx context.Context) (blobstore.Store, error) {
+	return blobstore.NewStorageStore(
 		ctx,
 		env.String("S3_ENDPOINT", "http://storage:8333"),
 		env.String("S3_BUCKET", "phasma"),
@@ -235,19 +216,19 @@ func openBlobStore(ctx context.Context, databaseURL string) (blobstore.Store, er
 }
 
 func openRateLimiter() (httpx.RateLimiterStore, error) {
-	dragonflyURL := os.Getenv("CACHE_URL")
-	if dragonflyURL == "" {
+	cacheURL := os.Getenv("CACHE_URL")
+	if cacheURL == "" {
 		return httpx.NoopRateLimiterStore{}, nil
 	}
-	return httpx.NewDragonflyRateLimiterStore(dragonflyURL, os.Getenv("CACHE_PASSWORD"))
+	return httpx.NewCacheRateLimiterStore(cacheURL, os.Getenv("CACHE_PASSWORD"))
 }
 
 func openLoginThrottle() (sessions.LoginThrottle, error) {
-	dragonflyURL := os.Getenv("CACHE_URL")
-	if dragonflyURL == "" {
+	cacheURL := os.Getenv("CACHE_URL")
+	if cacheURL == "" {
 		return sessions.NoopLoginThrottle{}, nil
 	}
-	return sessions.NewDragonflyLoginThrottle(dragonflyURL, os.Getenv("CACHE_PASSWORD"))
+	return sessions.NewCacheLoginThrottle(cacheURL, os.Getenv("CACHE_PASSWORD"))
 }
 
 type sessionSweeper interface {
@@ -284,7 +265,7 @@ func runSessionCleanup(
 	return done
 }
 
-func sweepOutboxPeriodically(ctx context.Context, db *database.DB) {
+func sweepOutboxPeriodically(ctx context.Context, db *db.DB) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 	for {
@@ -297,7 +278,7 @@ func sweepOutboxPeriodically(ctx context.Context, db *database.DB) {
 	}
 }
 
-func sweepExpiredOutbox(ctx context.Context, db *database.DB) {
+func sweepExpiredOutbox(ctx context.Context, db *db.DB) {
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("outbox cleanup panicked", "panic", r)
@@ -331,7 +312,7 @@ func sweepExpiredSessions(ctx context.Context, repository sessionSweeper) {
 	}
 }
 
-func reconcileFollowerCountsPeriodically(ctx context.Context, db *database.DB) {
+func reconcileFollowerCountsPeriodically(ctx context.Context, db *db.DB) {
 	reconcileFollowerCounts(ctx, db)
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
@@ -345,7 +326,7 @@ func reconcileFollowerCountsPeriodically(ctx context.Context, db *database.DB) {
 	}
 }
 
-func reconcileFollowerCounts(ctx context.Context, db *database.DB) {
+func reconcileFollowerCounts(ctx context.Context, db *db.DB) {
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("follower count reconciliation panicked", "panic", r)

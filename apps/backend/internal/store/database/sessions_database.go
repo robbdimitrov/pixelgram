@@ -1,4 +1,4 @@
-package postgres
+package database
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/env"
 	"phasma/backend/internal/httpx"
 	"phasma/backend/internal/sessions"
@@ -21,7 +21,7 @@ const (
 )
 
 type SessionRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewSessionRepository(client *Client) *SessionRepository {
@@ -51,7 +51,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string,
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		// Serialize session creation per user so concurrent replicas cannot
 		// exceed the bounded active-session policy.

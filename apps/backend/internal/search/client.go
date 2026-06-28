@@ -11,26 +11,26 @@ import (
 )
 
 const (
-	meiliTimeout      = 5 * time.Second
-	meiliMaxResponse  = 1 << 20 // 1 MiB
-	meiliScopedKeyTTL = 365 * 24 * time.Hour
+	searchTimeout      = 5 * time.Second
+	searchMaxResponse  = 1 << 20 // 1 MiB
+	searchScopedKeyTTL = 365 * 24 * time.Hour
 )
 
-var meiliScopedIndexes = []string{"users", "posts", "hashtags"}
+var searchScopedIndexes = []string{"users", "posts", "hashtags"}
 
-// MeiliClient wraps net/http to communicate with a Meilisearch instance.
+// SearchClient wraps net/http to communicate with the search backend.
 // It provisions a scoped key on construction and uses it for all subsequent
 // document and search operations. The master key is never used after startup.
-type MeiliClient struct {
+type SearchClient struct {
 	baseURL    string
 	scopedKey  string
 	httpClient *http.Client
 }
 
-// NewMeiliClient creates a MeiliClient, provisions a scoped API key using the
+// NewSearchClient creates a SearchClient, provisions a scoped API key using the
 // master key, and configures index settings for users, posts, and hashtags.
-func NewMeiliClient(ctx context.Context, baseURL, masterKey string) (*MeiliClient, error) {
-	c := &MeiliClient{
+func NewSearchClient(ctx context.Context, baseURL, masterKey string) (*SearchClient, error) {
+	c := &SearchClient{
 		baseURL:    baseURL,
 		httpClient: &http.Client{},
 	}
@@ -49,11 +49,11 @@ func NewMeiliClient(ctx context.Context, baseURL, masterKey string) (*MeiliClien
 
 // provisionScopedKey creates a finite-lived scoped API key with document and
 // search actions on the indexes owned by this service using the master key.
-func (c *MeiliClient) provisionScopedKey(ctx context.Context, masterKey string) (string, error) {
+func (c *SearchClient) provisionScopedKey(ctx context.Context, masterKey string) (string, error) {
 	body := map[string]any{
 		"actions":     []string{"search", "documents.add", "documents.delete"},
-		"indexes":     meiliScopedIndexes,
-		"expiresAt":   time.Now().UTC().Add(meiliScopedKeyTTL).Format(time.RFC3339),
+		"indexes":     searchScopedIndexes,
+		"expiresAt":   time.Now().UTC().Add(searchScopedKeyTTL).Format(time.RFC3339),
 		"description": "phasma-backend scoped key",
 	}
 	var result struct {
@@ -70,7 +70,7 @@ func (c *MeiliClient) provisionScopedKey(ctx context.Context, masterKey string) 
 
 // ApplySettings configures searchable, filterable, and sortable attributes for
 // each index.
-func (c *MeiliClient) ApplySettings(ctx context.Context) error {
+func (c *SearchClient) ApplySettings(ctx context.Context) error {
 	type indexSettings struct {
 		index    string
 		settings map[string]any
@@ -106,27 +106,27 @@ func (c *MeiliClient) ApplySettings(ctx context.Context) error {
 	return nil
 }
 
-func (c *MeiliClient) applyIndexSettings(ctx context.Context, index string, settings map[string]any) error {
+func (c *SearchClient) applyIndexSettings(ctx context.Context, index string, settings map[string]any) error {
 	return c.doJSON(ctx, http.MethodPatch, "/indexes/"+index+"/settings", c.scopedKey, settings, nil)
 }
 
 // UpsertDocuments adds or replaces documents in the given index.
-func (c *MeiliClient) UpsertDocuments(ctx context.Context, index string, documents any) error {
+func (c *SearchClient) UpsertDocuments(ctx context.Context, index string, documents any) error {
 	return c.doJSON(ctx, http.MethodPost, "/indexes/"+index+"/documents", c.scopedKey, documents, nil)
 }
 
 // DeleteDocument removes a single document by its ID from the given index.
-func (c *MeiliClient) DeleteDocument(ctx context.Context, index, id string) error {
+func (c *SearchClient) DeleteDocument(ctx context.Context, index, id string) error {
 	return c.doJSON(ctx, http.MethodDelete, "/indexes/"+index+"/documents/"+id, c.scopedKey, nil, nil)
 }
 
-// SearchResult holds a raw Meilisearch search response body.
+// SearchResult holds a raw search response body.
 type SearchResult struct {
 	Hits json.RawMessage `json:"hits"`
 }
 
 // Search executes a query against the given index and returns the parsed response.
-func (c *MeiliClient) Search(ctx context.Context, index string, params map[string]any) (*SearchResult, error) {
+func (c *SearchClient) Search(ctx context.Context, index string, params map[string]any) (*SearchResult, error) {
 	var result SearchResult
 	if err := c.doJSON(ctx, http.MethodPost, "/indexes/"+index+"/search", c.scopedKey, params, &result); err != nil {
 		return nil, err
@@ -135,11 +135,11 @@ func (c *MeiliClient) Search(ctx context.Context, index string, params map[strin
 }
 
 // doJSON performs an HTTP request with a JSON body (if non-nil), reads the
-// response up to meiliMaxResponse bytes, and optionally decodes it into out.
+// response up to searchMaxResponse bytes, and optionally decodes it into out.
 // The key is passed as the Authorization bearer token and is never included
 // in returned errors.
-func (c *MeiliClient) doJSON(ctx context.Context, method, path, key string, body any, out any) error {
-	tctx, cancel := context.WithTimeout(ctx, meiliTimeout)
+func (c *SearchClient) doJSON(ctx context.Context, method, path, key string, body any, out any) error {
+	tctx, cancel := context.WithTimeout(ctx, searchTimeout)
 	defer cancel()
 
 	var bodyReader io.Reader
@@ -166,7 +166,7 @@ func (c *MeiliClient) doJSON(ctx context.Context, method, path, key string, body
 	}
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(io.LimitReader(resp.Body, meiliMaxResponse))
+	data, err := io.ReadAll(io.LimitReader(resp.Body, searchMaxResponse))
 	if err != nil {
 		return fmt.Errorf("search: read response: %w", err)
 	}

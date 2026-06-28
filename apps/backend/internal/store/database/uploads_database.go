@@ -1,16 +1,16 @@
-package postgres
+package database
 
 import (
 	"context"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/uploads"
 )
 
 const maxPendingUploads = 20
 
 type UploadRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewUploadRepository(client *Client) *UploadRepository {
@@ -25,7 +25,7 @@ func (r *UploadRepository) CreateUpload(ctx context.Context, userID, filename st
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		// Delete this user's expired uploads inside the transaction.
 		rows, err := tx.Query(ctx, `DELETE FROM uploads

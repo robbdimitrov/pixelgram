@@ -14,14 +14,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-const s3Timeout = 10 * time.Second
+const storageTimeout = 10 * time.Second
 
-type S3Store struct {
+type StorageStore struct {
 	client *s3.Client
 	bucket string
 }
 
-func NewS3Store(ctx context.Context, endpoint, bucket, region, accessKey, secretKey string) (*S3Store, error) {
+func NewStorageStore(ctx context.Context, endpoint, bucket, region, accessKey, secretKey string) (*StorageStore, error) {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(region),
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -35,28 +35,28 @@ func NewS3Store(ctx context.Context, endpoint, bucket, region, accessKey, secret
 		o.UsePathStyle = true
 	})
 
-	store := &S3Store{client: client, bucket: bucket}
+	store := &StorageStore{client: client, bucket: bucket}
 	if err := store.ensureBucket(ctx); err != nil {
 		return nil, fmt.Errorf("blobstore: ensure bucket: %w", err)
 	}
 	return store, nil
 }
 
-func (s *S3Store) ensureBucket(ctx context.Context) error {
-	tctx, cancel := context.WithTimeout(ctx, s3Timeout)
+func (s *StorageStore) ensureBucket(ctx context.Context) error {
+	tctx, cancel := context.WithTimeout(ctx, storageTimeout)
 	defer cancel()
 	_, err := s.client.HeadBucket(tctx, &s3.HeadBucketInput{Bucket: aws.String(s.bucket)})
 	if err == nil {
 		return nil
 	}
-	cctx, ccancel := context.WithTimeout(context.Background(), s3Timeout)
+	cctx, ccancel := context.WithTimeout(context.Background(), storageTimeout)
 	defer ccancel()
 	_, err = s.client.CreateBucket(cctx, &s3.CreateBucketInput{Bucket: aws.String(s.bucket)})
 	return err
 }
 
-func (s *S3Store) Put(ctx context.Context, key, contentType string, r io.Reader, size int64) error {
-	ctx, cancel := context.WithTimeout(ctx, s3Timeout)
+func (s *StorageStore) Put(ctx context.Context, key, contentType string, r io.Reader, size int64) error {
+	ctx, cancel := context.WithTimeout(ctx, storageTimeout)
 	defer cancel()
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(s.bucket),
@@ -68,8 +68,8 @@ func (s *S3Store) Put(ctx context.Context, key, contentType string, r io.Reader,
 	return err
 }
 
-func (s *S3Store) Get(ctx context.Context, key string) (io.ReadCloser, string, int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, s3Timeout)
+func (s *StorageStore) Get(ctx context.Context, key string) (io.ReadCloser, string, int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, storageTimeout)
 	resp, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
@@ -106,8 +106,8 @@ func (b *cancelBody) Close() error {
 	return err
 }
 
-func (s *S3Store) Delete(ctx context.Context, key string) error {
-	ctx, cancel := context.WithTimeout(ctx, s3Timeout)
+func (s *StorageStore) Delete(ctx context.Context, key string) error {
+	ctx, cancel := context.WithTimeout(ctx, storageTimeout)
 	defer cancel()
 	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucket),
@@ -116,4 +116,4 @@ func (s *S3Store) Delete(ctx context.Context, key string) error {
 	return err
 }
 
-var _ Store = (*S3Store)(nil)
+var _ Store = (*StorageStore)(nil)

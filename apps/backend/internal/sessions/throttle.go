@@ -29,32 +29,32 @@ return n
 
 const throttleKeyPrefix = "login:"
 
-type DragonflyLoginThrottle struct {
+type CacheLoginThrottle struct {
 	client valkey.Client
 	script *valkey.Lua
 	window time.Duration
 }
 
-func NewDragonflyLoginThrottle(dragonflyURL, password string) (*DragonflyLoginThrottle, error) {
-	opt, err := valkey.ParseURL(dragonflyURL)
+func NewCacheLoginThrottle(cacheURL, password string) (*CacheLoginThrottle, error) {
+	opt, err := valkey.ParseURL(cacheURL)
 	if err != nil {
-		return nil, fmt.Errorf("login throttle: parse dragonfly url: %w", err)
+		return nil, fmt.Errorf("login throttle: parse cache url: %w", err)
 	}
 	if password != "" {
 		opt.Password = password
 	}
 	client, err := valkey.NewClient(opt)
 	if err != nil {
-		return nil, fmt.Errorf("login throttle: connect to dragonfly: %w", err)
+		return nil, fmt.Errorf("login throttle: connect to cache: %w", err)
 	}
-	return &DragonflyLoginThrottle{
+	return &CacheLoginThrottle{
 		client: client,
 		script: valkey.NewLuaScript(recordFailureLua),
 		window: rateLimitDuration,
 	}, nil
 }
 
-func (t *DragonflyLoginThrottle) GetFailures(ctx context.Context, keys []string) ([]LoginFailure, error) {
+func (t *CacheLoginThrottle) GetFailures(ctx context.Context, keys []string) ([]LoginFailure, error) {
 	vkeys := make([]string, len(keys))
 	for i, k := range keys {
 		vkeys[i] = throttleKeyPrefix + k
@@ -82,7 +82,7 @@ func (t *DragonflyLoginThrottle) GetFailures(ctx context.Context, keys []string)
 	return failures, nil
 }
 
-func (t *DragonflyLoginThrottle) RecordFailure(ctx context.Context, key string) error {
+func (t *CacheLoginThrottle) RecordFailure(ctx context.Context, key string) error {
 	windowMs := strconv.FormatInt(t.window.Milliseconds(), 10)
 	return t.script.Exec(ctx, t.client,
 		[]string{throttleKeyPrefix + key},
@@ -90,7 +90,7 @@ func (t *DragonflyLoginThrottle) RecordFailure(ctx context.Context, key string) 
 	).Error()
 }
 
-func (t *DragonflyLoginThrottle) Clear(ctx context.Context, keys []string) error {
+func (t *CacheLoginThrottle) Clear(ctx context.Context, keys []string) error {
 	vkeys := make([]string, len(keys))
 	for i, k := range keys {
 		vkeys[i] = throttleKeyPrefix + k

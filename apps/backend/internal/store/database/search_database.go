@@ -1,15 +1,15 @@
-package postgres
+package database
 
 import (
 	"context"
 	"database/sql"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/search"
 )
 
 type SearchRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewSearchRepository(client *Client) *SearchRepository {
@@ -35,7 +35,7 @@ func (r *SearchRepository) SearchUsers(ctx context.Context, q string) ([]search.
 			if err := rows.Scan(&u.Username, &avatar); err != nil {
 				return err
 			}
-			u.Avatar = database.NullableString(avatar)
+			u.Avatar = db.NullableString(avatar)
 			results = append(results, u)
 		}
 		return rows.Err()

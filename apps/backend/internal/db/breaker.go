@@ -1,4 +1,4 @@
-package database
+package db
 
 import (
 	"errors"
@@ -57,7 +57,7 @@ func (b *circuitBreaker) success() {
 }
 
 func (b *circuitBreaker) failure(err error) {
-	if !isTransientPostgresError(err) {
+	if !isTransientDatabaseError(err) {
 		return
 	}
 	b.mu.Lock()
@@ -70,7 +70,7 @@ func (b *circuitBreaker) failure(err error) {
 	}
 }
 
-func isTransientPostgresError(err error) bool {
+func isTransientDatabaseError(err error) bool {
 	if err == nil {
 		return false
 	}

@@ -1,4 +1,4 @@
-package postgres
+package database
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/feed"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
@@ -27,7 +27,7 @@ const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,
 	u.public_id::text`
 
 type UserRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewUserRepository(client *Client) *UserRepository {
@@ -41,7 +41,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 		if err := tx.QueryRow(ctx, `INSERT INTO users (name, username, email, password)
 			VALUES ($1, $2, $3, $4) RETURNING id`, name, username, email, passwordHash).Scan(&id); err != nil {
 			return err
@@ -65,7 +65,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 		return tx.Commit(ctx)
 	})
 	if err != nil {
-		if database.UniqueViolation(err) {
+		if db.UniqueViolation(err) {
 			return 0, store.ErrConflict
 		}
 		return 0, err
@@ -155,8 +155,8 @@ func (r *UserRepository) getUser(ctx context.Context, column, value, currentUser
 	if err != nil {
 		return users.User{}, false, err
 	}
-	user.Avatar = database.NullableString(avatar)
-	user.Bio = database.NullableString(bio)
+	user.Avatar = db.NullableString(avatar)
+	user.Bio = db.NullableString(bio)
 	return user, true, nil
 }
 
@@ -182,8 +182,8 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 				&item.user.Created, &item.user.PublicID, &item.cursorCreated); err != nil {
 				return err
 			}
-			item.user.Avatar = database.NullableString(avatar)
-			item.user.Bio = database.NullableString(bio)
+			item.user.Avatar = db.NullableString(avatar)
+			item.user.Bio = db.NullableString(bio)
 			result = append(result, item)
 		}
 		return rows.Err()
@@ -251,8 +251,8 @@ func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query stri
 			item.user.Name = *name
 			item.user.Username = *username
 			item.user.Email = *email
-			item.user.Avatar = database.NullableString(avatar)
-			item.user.Bio = database.NullableString(bio)
+			item.user.Avatar = db.NullableString(avatar)
+			item.user.Bio = db.NullableString(bio)
 			item.user.Posts = *userPosts
 			item.user.Likes = *userLikes
 			item.user.Followers = *followers
@@ -289,7 +289,7 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 		var followInserted bool
 		if err := tx.QueryRow(ctx, `WITH target AS (
 				SELECT id FROM users WHERE id = $2
@@ -343,7 +343,7 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 		tag, err := tx.Exec(ctx,
 			`DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID)
 		if err != nil {
@@ -379,7 +379,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		var oldAvatar sql.NullString
 		if err := tx.QueryRow(ctx, `SELECT avatar FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&oldAvatar); err != nil {
@@ -453,7 +453,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 		return users.UpdateUserResult{Updated: false}, nil
 	}
 	if err != nil {
-		if database.UniqueViolation(err) {
+		if db.UniqueViolation(err) {
 			return users.UpdateUserResult{}, store.ErrConflict
 		}
 		return users.UpdateUserResult{}, err
@@ -467,7 +467,7 @@ func (r *UserRepository) ChangePassword(ctx context.Context, userID, passwordHas
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 		if _, err := tx.Exec(ctx, `UPDATE users SET password = $1 WHERE id = $2`, passwordHash, userID); err != nil {
 			return err
 		}
@@ -508,8 +508,8 @@ func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string
 				&user.Created, &user.PublicID); err != nil {
 				return err
 			}
-			user.Avatar = database.NullableString(avatar)
-			user.Bio = database.NullableString(bio)
+			user.Avatar = db.NullableString(avatar)
+			user.Bio = db.NullableString(bio)
 			result = append(result, user)
 		}
 		return rows.Err()

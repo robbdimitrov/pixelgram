@@ -1,4 +1,4 @@
-package database
+package db
 
 import (
 	"context"
@@ -27,10 +27,10 @@ func withRetry(ctx context.Context, cfg retryConfig, fn func() error) error {
 		if err == nil {
 			return nil
 		}
-		if !isTransientPostgresError(err) || attempt == cfg.maxAttempts {
+		if !isTransientDatabaseError(err) || attempt == cfg.maxAttempts {
 			return err
 		}
-		slog.Warn("retrying postgres operation", "attempt", attempt, "error", err)
+		slog.Warn("retrying database operation", "attempt", attempt, "error", err)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()

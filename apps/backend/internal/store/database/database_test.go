@@ -1,4 +1,4 @@
-package postgres
+package database
 
 import (
 	"context"
@@ -128,7 +128,7 @@ func stringID(id int) string {
 	return strconv.Itoa(id)
 }
 
-func TestPostgresRepositoryRejectsDuplicateUsernameAndEmail(t *testing.T) {
+func TestDatabaseRepositoryRejectsDuplicateUsernameAndEmail(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	createTestUser(t, client, "unique")
@@ -141,7 +141,7 @@ func TestPostgresRepositoryRejectsDuplicateUsernameAndEmail(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryProfilePostCursorPagination(t *testing.T) {
+func TestDatabaseRepositoryProfilePostCursorPagination(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	authorID := createTestUser(t, client, "profile_author")
@@ -175,7 +175,7 @@ func TestPostgresRepositoryProfilePostCursorPagination(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryFollowListCursorPagination(t *testing.T) {
+func TestDatabaseRepositoryFollowListCursorPagination(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	profileID := createTestUser(t, client, "follow_profile")
@@ -253,7 +253,7 @@ func TestPostgresRepositoryFollowListCursorPagination(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryLikedPostCursorPagination(t *testing.T) {
+func TestDatabaseRepositoryLikedPostCursorPagination(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	authorID := createTestUser(t, client, "liked_author")
@@ -294,7 +294,7 @@ func TestPostgresRepositoryLikedPostCursorPagination(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryCommentCursorPagination(t *testing.T) {
+func TestDatabaseRepositoryCommentCursorPagination(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	ownerID := createTestUser(t, client, "comment_page_owner")
@@ -347,7 +347,7 @@ func TestPostgresRepositoryCommentCursorPagination(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryConsumesUploadAndRollsBackFailedPost(t *testing.T) {
+func TestDatabaseRepositoryConsumesUploadAndRollsBackFailedPost(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "upload_owner")
@@ -390,7 +390,7 @@ func TestPostgresRepositoryConsumesUploadAndRollsBackFailedPost(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryProfileAvatarOwnershipAndUnusedAvatar(t *testing.T) {
+func TestDatabaseRepositoryProfileAvatarOwnershipAndUnusedAvatar(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "profile_owner")
@@ -443,7 +443,7 @@ func TestPostgresRepositoryProfileAvatarOwnershipAndUnusedAvatar(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryFollowIsIdempotentAndRejectsMissingTarget(t *testing.T) {
+func TestDatabaseRepositoryFollowIsIdempotentAndRejectsMissingTarget(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	followerID := createTestUser(t, client, "follower")
@@ -467,7 +467,7 @@ func TestPostgresRepositoryFollowIsIdempotentAndRejectsMissingTarget(t *testing.
 	}
 }
 
-func TestPostgresRepositoryCommentOwnershipAndNotFoundOutcomes(t *testing.T) {
+func TestDatabaseRepositoryCommentOwnershipAndNotFoundOutcomes(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	postOwnerID := createTestUser(t, client, "comment_post_owner")
@@ -504,7 +504,7 @@ func TestPostgresRepositoryCommentOwnershipAndNotFoundOutcomes(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryPostOwnerCanDeleteComments(t *testing.T) {
+func TestDatabaseRepositoryPostOwnerCanDeleteComments(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	postOwnerID := createTestUser(t, client, "mod_post_owner")
@@ -530,7 +530,7 @@ func TestPostgresRepositoryPostOwnerCanDeleteComments(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositorySelfLikeIsNoop(t *testing.T) {
+func TestDatabaseRepositorySelfLikeIsNoop(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	ownerID := createTestUser(t, client, "self_like_owner")
@@ -550,7 +550,7 @@ func TestPostgresRepositorySelfLikeIsNoop(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositorySessionHashExpirationAndConditionalRefresh(t *testing.T) {
+func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_user")
@@ -656,7 +656,7 @@ func TestPostgresRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 	}
 }
 
-func TestPostgresRepositoryListsAndRevokesActiveSessions(t *testing.T) {
+func TestDatabaseRepositoryListsAndRevokesActiveSessions(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_list_owner")
@@ -811,7 +811,7 @@ func TestPostgresRepositoryListsAndRevokesActiveSessions(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryConcurrentSessionRevocationHasOneWinner(t *testing.T) {
+func TestDatabaseRepositoryConcurrentSessionRevocationHasOneWinner(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_revoke_concurrent")
@@ -879,7 +879,7 @@ func TestPostgresRepositoryConcurrentSessionRevocationHasOneWinner(t *testing.T)
 	}
 }
 
-func TestPostgresRepositoryConcurrentRevocationPreservesCurrentSession(t *testing.T) {
+func TestDatabaseRepositoryConcurrentRevocationPreservesCurrentSession(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_current_race")
@@ -940,7 +940,7 @@ func TestPostgresRepositoryConcurrentRevocationPreservesCurrentSession(t *testin
 	}
 }
 
-func TestPostgresSessionPublicIDGeneratedAndUnique(t *testing.T) {
+func TestDatabaseSessionPublicIDGeneratedAndUnique(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_public_id")
@@ -981,7 +981,7 @@ func TestPostgresSessionPublicIDGeneratedAndUnique(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryCapsSessionsPerUser(t *testing.T) {
+func TestDatabaseRepositoryCapsSessionsPerUser(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_limit")
@@ -1006,7 +1006,7 @@ func TestPostgresRepositoryCapsSessionsPerUser(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *testing.T) {
+func TestDatabaseRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_concurrent_limit")
@@ -1073,7 +1073,7 @@ func TestPostgresRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *tes
 	}
 }
 
-func TestPostgresRepositorySessionListHasHardLimit(t *testing.T) {
+func TestDatabaseRepositorySessionListHasHardLimit(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_list_limit")
@@ -1099,7 +1099,7 @@ func TestPostgresRepositorySessionListHasHardLimit(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryListsEffectiveAbsoluteExpiry(t *testing.T) {
+func TestDatabaseRepositoryListsEffectiveAbsoluteExpiry(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_effective_expiry")
@@ -1183,7 +1183,7 @@ func TestSearchRepositoryTypeaheadResultsAndLimit(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryChangePasswordRemovesOtherSessions(t *testing.T) {
+func TestDatabaseRepositoryChangePasswordRemovesOtherSessions(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "password_user")
@@ -1230,7 +1230,7 @@ func TestPostgresRepositoryChangePasswordRemovesOtherSessions(t *testing.T) {
 	}
 }
 
-func TestPostgresRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *testing.T) {
+func TestDatabaseRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	userID := createTestUser(t, client, "password_rollback")
@@ -1284,7 +1284,7 @@ func TestPostgresRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *tes
 	}
 }
 
-func TestPostgresRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *testing.T) {
+func TestDatabaseRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
 	ownerID := createTestUser(t, client, "delete_owner")

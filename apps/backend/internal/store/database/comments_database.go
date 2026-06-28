@@ -1,4 +1,4 @@
-package postgres
+package database
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"phasma/backend/internal/comments"
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
 )
 
 type CommentRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewCommentRepository(client *Client) *CommentRepository {
@@ -30,7 +30,7 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		if err := tx.QueryRow(ctx, `INSERT INTO comments (post_id, user_id, body)
 			SELECT id, $2, $3 FROM posts WHERE public_id = $1
@@ -76,7 +76,7 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 	if err != nil {
 		return comments.Comment{}, err
 	}
-	comment.Avatar = database.NullableString(avatar)
+	comment.Avatar = db.NullableString(avatar)
 	return comment, nil
 }
 
@@ -130,7 +130,7 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 			cr.PostID = *postID
 			cr.UserID = *userID
 			cr.Username = *username
-			cr.Avatar = database.NullableString(avatar)
+			cr.Avatar = db.NullableString(avatar)
 			cr.Body = *body
 			if created != nil {
 				cr.Created = *created
@@ -157,7 +157,7 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		var deletedPublicID string
 		err = tx.QueryRow(ctx, `DELETE FROM comments

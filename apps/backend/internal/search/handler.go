@@ -16,7 +16,7 @@ import (
 )
 
 // hashtagNameRe matches valid hashtag names as stored in the database.
-// Using this against user input prevents filter injection into Meilisearch.
+// Using this against user input prevents filter injection into search backend.
 var hashtagNameRe = regexp.MustCompile(`^[A-Za-z0-9_]{1,50}$`)
 
 const (
@@ -31,7 +31,7 @@ type Application interface {
 
 type Handler struct {
 	Service Application
-	Meili   *MeiliClient
+	Client  *SearchClient
 }
 
 func (h Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +40,8 @@ func (h Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Query must be 1 to 50 characters.")
 		return
 	}
-	if h.Meili != nil {
-		results, err := meiliSearchUsers(r.Context(), h.Meili, q)
+	if h.Client != nil {
+		results, err := searchUsersWithClient(r.Context(), h.Client, q)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -63,8 +63,8 @@ func (h Handler) SearchHashtags(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteMessage(w, http.StatusBadRequest, "Query must be 1 to 50 characters.")
 		return
 	}
-	if h.Meili != nil {
-		results, err := meiliSearchHashtags(r.Context(), h.Meili, q)
+	if h.Client != nil {
+		results, err := searchHashtagsWithClient(r.Context(), h.Client, q)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -80,9 +80,9 @@ func (h Handler) SearchHashtags(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, results)
 }
 
-// Search requires Meilisearch; returns 503 when not configured.
+// Search requires search backend; returns 503 when not configured.
 func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
-	if h.Meili == nil {
+	if h.Client == nil {
 		httpx.WriteMessage(w, http.StatusServiceUnavailable, "Search service unavailable.")
 		return
 	}
@@ -119,7 +119,7 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	switch searchType {
 	case "users":
-		hits, err := meiliSearch(ctx, h.Meili, "users", q, "", offset, limit)
+		hits, err := searchIndex(ctx, h.Client, "users", q, "", offset, limit)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -136,7 +136,7 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 		count = len(users)
 
 	case "hashtags":
-		hits, err := meiliSearch(ctx, h.Meili, "hashtags", q, "", offset, limit)
+		hits, err := searchIndex(ctx, h.Client, "hashtags", q, "", offset, limit)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -163,7 +163,7 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 			filter = fmt.Sprintf(`hashtags = "%s"`, tag)
 			searchQ = ""
 		}
-		hits, err := meiliSearch(ctx, h.Meili, "posts", searchQ, filter, offset, limit)
+		hits, err := searchIndex(ctx, h.Client, "posts", searchQ, filter, offset, limit)
 		if err != nil {
 			httpx.WriteMessage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -192,8 +192,8 @@ func (h Handler) Search(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func meiliSearchUsers(ctx context.Context, mc *MeiliClient, q string) ([]UserResult, error) {
-	hits, err := meiliSearch(ctx, mc, "users", q, "", 0, typeaheadLen)
+func searchUsersWithClient(ctx context.Context, mc *SearchClient, q string) ([]UserResult, error) {
+	hits, err := searchIndex(ctx, mc, "users", q, "", 0, typeaheadLen)
 	if err != nil {
 		return nil, err
 	}
@@ -208,8 +208,8 @@ func meiliSearchUsers(ctx context.Context, mc *MeiliClient, q string) ([]UserRes
 	return results, nil
 }
 
-func meiliSearchHashtags(ctx context.Context, mc *MeiliClient, q string) ([]HashtagResult, error) {
-	hits, err := meiliSearch(ctx, mc, "hashtags", q, "", 0, typeaheadLen)
+func searchHashtagsWithClient(ctx context.Context, mc *SearchClient, q string) ([]HashtagResult, error) {
+	hits, err := searchIndex(ctx, mc, "hashtags", q, "", 0, typeaheadLen)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func meiliSearchHashtags(ctx context.Context, mc *MeiliClient, q string) ([]Hash
 	return results, nil
 }
 
-func meiliSearch(ctx context.Context, mc *MeiliClient, index, q, filter string, offset, limit int) ([]map[string]any, error) {
+func searchIndex(ctx context.Context, mc *SearchClient, index, q, filter string, offset, limit int) ([]map[string]any, error) {
 	params := map[string]any{
 		"q":      q,
 		"offset": offset,
@@ -268,7 +268,7 @@ func stringField(m map[string]any, key string) string {
 	return v
 }
 
-// Meilisearch returns JSON numbers as float64.
+// search backend returns JSON numbers as float64.
 func intField(m map[string]any, key string) int {
 	v, _ := m[key].(float64)
 	return int(v)

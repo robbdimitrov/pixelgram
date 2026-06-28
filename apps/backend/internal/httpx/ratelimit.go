@@ -52,32 +52,32 @@ type RateLimiterStore interface {
 	Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error)
 }
 
-type DragonflyRateLimiterStore struct {
+type CacheRateLimiterStore struct {
 	client   valkey.Client
 	script   *valkey.Lua
 	failOpen bool
 }
 
-func NewDragonflyRateLimiterStore(dragonflyURL, password string) (*DragonflyRateLimiterStore, error) {
-	opt, err := valkey.ParseURL(dragonflyURL)
+func NewCacheRateLimiterStore(cacheURL, password string) (*CacheRateLimiterStore, error) {
+	opt, err := valkey.ParseURL(cacheURL)
 	if err != nil {
-		return nil, fmt.Errorf("rate limiter: parse dragonfly url: %w", err)
+		return nil, fmt.Errorf("rate limiter: parse cache url: %w", err)
 	}
 	if password != "" {
 		opt.Password = password
 	}
 	client, err := valkey.NewClient(opt)
 	if err != nil {
-		return nil, fmt.Errorf("rate limiter: connect to dragonfly: %w", err)
+		return nil, fmt.Errorf("rate limiter: connect to cache: %w", err)
 	}
-	return &DragonflyRateLimiterStore{
+	return &CacheRateLimiterStore{
 		client:   client,
 		script:   valkey.NewLuaScript(tokenBucketLua),
 		failOpen: env.Bool("RATE_LIMIT_FAIL_OPEN", false),
 	}, nil
 }
 
-func (s *DragonflyRateLimiterStore) Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error) {
+func (s *CacheRateLimiterStore) Allow(ctx context.Context, identifier string, policy RateLimitPolicy) (RateLimitDecision, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 

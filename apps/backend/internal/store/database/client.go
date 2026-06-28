@@ -1,26 +1,26 @@
-package postgres
+package database
 
 import (
 	"context"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 )
 
 // Client owns the shared database lifecycle and implements session
 // authentication. Repository constructors retain only the underlying DB.
 type Client struct {
-	db *database.DB
+	db *db.DB
 }
 
 func New(ctx context.Context, databaseURL, sessionSecret string) (*Client, error) {
-	db, err := database.Open(ctx, databaseURL, sessionSecret)
+	handle, err := db.Open(ctx, databaseURL, sessionSecret)
 	if err != nil {
 		return nil, err
 	}
-	return NewWithDB(db), nil
+	return NewWithDB(handle), nil
 }
 
-func NewWithDB(db *database.DB) *Client {
+func NewWithDB(db *db.DB) *Client {
 	return &Client{db: db}
 }
 
@@ -29,7 +29,7 @@ func (c *Client) Close() {
 }
 
 // DB returns the underlying database handle for use by background workers.
-func (c *Client) DB() *database.DB {
+func (c *Client) DB() *db.DB {
 	return c.db
 }
 

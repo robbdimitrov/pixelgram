@@ -21,7 +21,7 @@ type Config struct {
 	RateLimiter   httpx.RateLimiterStore
 	LoginThrottle sessions.LoginThrottle
 	Readiness     func(context.Context) error
-	Meili         *search.MeiliClient
+	SearchClient  *search.SearchClient
 }
 
 type Repositories struct {
@@ -56,7 +56,7 @@ func New(cfg Config, repositories Repositories) http.Handler {
 		repositories.Posts, uploads.Files{Store: cfg.Blobs},
 	)}
 	commentHandler := comments.Handler{Service: comments.NewService(repositories.Comments)}
-	searchHandler := search.Handler{Service: search.NewService(repositories.Search), Meili: cfg.Meili}
+	searchHandler := search.Handler{Service: search.NewService(repositories.Search), Client: cfg.SearchClient}
 	feedHandler := feed.Handler{Service: feed.NewService(repositories.Feed)}
 	notificationHandler := notifications.Handler{Service: notifications.NewService(repositories.Notifications)}
 

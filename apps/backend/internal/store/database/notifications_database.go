@@ -1,17 +1,17 @@
-package postgres
+package database
 
 import (
 	"context"
 	"time"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/notifications"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
 )
 
 type NotificationRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewNotificationRepository(client *Client) *NotificationRepository {

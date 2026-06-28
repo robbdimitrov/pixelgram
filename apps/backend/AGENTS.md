@@ -10,9 +10,8 @@ These rules extend the repository-level `AGENTS.md` for files under
 - HTTP helpers and middleware: `internal/httpx/`
 - Feature modules:
   `internal/{users,sessions,uploads,posts,comments,search,notifications,feed}/`
-- PostgreSQL lifecycle, retries, and circuit breaker: `internal/database/`
-- PostgreSQL repositories: `internal/store/postgres/`
-- No-op local repositories: `internal/noop/`
+- Database lifecycle, retries, and circuit breaker: `internal/db/`
+- Database repositories: `internal/store/database/`
 - Process lifecycle: `cmd/api/main.go`
 
 Each feature module owns its domain types, repository interface, service,
@@ -32,8 +31,7 @@ go build ./cmd/api
 Run `make test-integration` from the repository root for PostgreSQL repository
 tests.
 
-When `DATABASE_URL` is unset, the backend uses no-op repositories for local
-handler development.
+Missing or unreachable PostgreSQL fails startup.
 
 ## Go and API Conventions
 

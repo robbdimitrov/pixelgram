@@ -12,18 +12,18 @@ import (
 	"time"
 )
 
-// newTestMeiliClient builds a MeiliClient that points at srv and bypasses
+// newTestSearchClient builds a SearchClient that points at srv and bypasses
 // key provisioning and settings so unit tests can call lower-level methods
 // directly.
-func newTestMeiliClient(baseURL string) *MeiliClient {
-	return &MeiliClient{
+func newTestSearchClient(baseURL string) *SearchClient {
+	return &SearchClient{
 		baseURL:    baseURL,
 		scopedKey:  "test-key",
 		httpClient: &http.Client{},
 	}
 }
 
-func TestMeiliDoJSONSetsAuthHeader(t *testing.T) {
+func TestSearchClientDoJSONSetsAuthHeader(t *testing.T) {
 	var gotAuth string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotAuth = r.Header.Get("Authorization")
@@ -31,7 +31,7 @@ func TestMeiliDoJSONSetsAuthHeader(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	_ = c.doJSON(context.Background(), http.MethodGet, "/test", "my-key", nil, nil)
 
 	if gotAuth != "Bearer my-key" {
@@ -39,7 +39,7 @@ func TestMeiliDoJSONSetsAuthHeader(t *testing.T) {
 	}
 }
 
-func TestMeiliDoJSONSetsContentTypeForBody(t *testing.T) {
+func TestSearchClientDoJSONSetsContentTypeForBody(t *testing.T) {
 	var gotCT string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotCT = r.Header.Get("Content-Type")
@@ -47,7 +47,7 @@ func TestMeiliDoJSONSetsContentTypeForBody(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	_ = c.doJSON(context.Background(), http.MethodPost, "/test", "key", map[string]string{"a": "b"}, nil)
 
 	if gotCT != "application/json" {
@@ -55,14 +55,14 @@ func TestMeiliDoJSONSetsContentTypeForBody(t *testing.T) {
 	}
 }
 
-func TestMeiliDoJSONDecodesResponse(t *testing.T) {
+func TestSearchClientDoJSONDecodesResponse(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"key":"scoped-abc"}`))
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	var out struct {
 		Key string `json:"key"`
 	}
@@ -74,34 +74,34 @@ func TestMeiliDoJSONDecodesResponse(t *testing.T) {
 	}
 }
 
-func TestMeiliDoJSONReturnsErrorOnBadStatus(t *testing.T) {
+func TestSearchClientDoJSONReturnsErrorOnBadStatus(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	err := c.doJSON(context.Background(), http.MethodGet, "/test", "bad-key", nil, nil)
 	if err == nil {
 		t.Fatal("expected error for 401 response")
 	}
 }
 
-func TestMeiliDoJSONErrorDoesNotLeakKey(t *testing.T) {
+func TestSearchClientDoJSONErrorDoesNotLeakKey(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 	}))
 	defer srv.Close()
 
 	secretKey := "super-secret-master-key"
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	err := c.doJSON(context.Background(), http.MethodPost, "/keys", secretKey, nil, nil)
 	if err != nil && strings.Contains(err.Error(), secretKey) {
 		t.Fatalf("error leaks key: %v", err)
 	}
 }
 
-func TestMeiliProvisionScopedKeyLimitsScopeAndExpiry(t *testing.T) {
+func TestSearchClientProvisionScopedKeyLimitsScopeAndExpiry(t *testing.T) {
 	var payload struct {
 		Actions     []string `json:"actions"`
 		Indexes     []string `json:"indexes"`
@@ -122,10 +122,10 @@ func TestMeiliProvisionScopedKeyLimitsScopeAndExpiry(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	before := time.Now().UTC().Add(meiliScopedKeyTTL - time.Minute)
-	c := newTestMeiliClient(srv.URL)
+	before := time.Now().UTC().Add(searchScopedKeyTTL - time.Minute)
+	c := newTestSearchClient(srv.URL)
 	key, err := c.provisionScopedKey(context.Background(), "master-key")
-	after := time.Now().UTC().Add(meiliScopedKeyTTL + time.Minute)
+	after := time.Now().UTC().Add(searchScopedKeyTTL + time.Minute)
 	if err != nil {
 		t.Fatalf("provisionScopedKey: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestMeiliProvisionScopedKeyLimitsScopeAndExpiry(t *testing.T) {
 	}
 }
 
-func TestMeiliUpsertDocumentsSendsCorrectPath(t *testing.T) {
+func TestSearchClientUpsertDocumentsSendsCorrectPath(t *testing.T) {
 	var gotPath string
 	var gotMethod string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +163,7 @@ func TestMeiliUpsertDocumentsSendsCorrectPath(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	docs := []map[string]string{{"id": "1", "username": "alice"}}
 	if err := c.UpsertDocuments(context.Background(), "users", docs); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -176,7 +176,7 @@ func TestMeiliUpsertDocumentsSendsCorrectPath(t *testing.T) {
 	}
 }
 
-func TestMeiliDeleteDocumentSendsCorrectPath(t *testing.T) {
+func TestSearchClientDeleteDocumentSendsCorrectPath(t *testing.T) {
 	var gotPath string
 	var gotMethod string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -186,7 +186,7 @@ func TestMeiliDeleteDocumentSendsCorrectPath(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	if err := c.DeleteDocument(context.Background(), "posts", "post-42"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -198,14 +198,14 @@ func TestMeiliDeleteDocumentSendsCorrectPath(t *testing.T) {
 	}
 }
 
-func TestMeiliSearchReturnsHits(t *testing.T) {
+func TestSearchClientSearchReturnsHits(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"hits":[{"name":"cats","post_count":5}],"limit":20}`))
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	result, err := c.Search(context.Background(), "hashtags", map[string]any{"q": "cat"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -219,7 +219,7 @@ func TestMeiliSearchReturnsHits(t *testing.T) {
 	}
 }
 
-func TestMeiliApplySettingsSendsCorrectPaths(t *testing.T) {
+func TestSearchClientApplySettingsSendsCorrectPaths(t *testing.T) {
 	var paths []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paths = append(paths, r.URL.Path)
@@ -227,7 +227,7 @@ func TestMeiliApplySettingsSendsCorrectPaths(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := newTestMeiliClient(srv.URL)
+	c := newTestSearchClient(srv.URL)
 	if err := c.ApplySettings(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -246,18 +246,18 @@ func TestMeiliApplySettingsSendsCorrectPaths(t *testing.T) {
 	}
 }
 
-// TestMeiliNewClientLive requires a live Meilisearch instance and is skipped
+// TestSearchClientNewClientLive requires a live search backend and is skipped
 // unless MEILI_TEST_URL is set.
-func TestMeiliNewClientLive(t *testing.T) {
-	meiliURL := os.Getenv("MEILI_TEST_URL")
-	if meiliURL == "" {
-		t.Skip("MEILI_TEST_URL not set; skipping live Meilisearch test")
+func TestSearchClientNewClientLive(t *testing.T) {
+	searchURL := os.Getenv("MEILI_TEST_URL")
+	if searchURL == "" {
+		t.Skip("MEILI_TEST_URL not set; skipping live search backend test")
 	}
 	masterKey := os.Getenv("MEILI_TEST_MASTER_KEY")
 
-	client, err := NewMeiliClient(context.Background(), meiliURL, masterKey)
+	client, err := NewSearchClient(context.Background(), searchURL, masterKey)
 	if err != nil {
-		t.Fatalf("NewMeiliClient: %v", err)
+		t.Fatalf("NewSearchClient: %v", err)
 	}
 	if client.scopedKey == "" {
 		t.Fatal("scoped key is empty after construction")

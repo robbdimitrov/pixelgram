@@ -95,7 +95,7 @@ database (WAL) → connect (pg_cdc on outbox)
   Meilisearch) and `cleanup-s3` (post deletes → S3 DELETE). A one-shot
   Kubernetes Job (`broker-backfill`) seeds existing data on first deploy.
 - **Circuit breaker**: all PostgreSQL operations go through
-  `database.DB.Read`/`Write`, which runs through a circuit breaker (5
+  `db.DB.Read`/`Write`, which runs through a circuit breaker (5
   consecutive transient failures → open; 30 s cooldown).
 - **Token bucket rate limiting**: implemented in Lua on Dragonfly; keyed by
   `{policy}:user:{id}` > `{policy}:session:{id}` > `{policy}:ip:{ip}`.

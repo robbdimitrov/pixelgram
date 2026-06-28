@@ -1,4 +1,4 @@
-package postgres
+package database
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/posts"
 	"phasma/backend/internal/store"
@@ -23,7 +23,7 @@ const postColumns = `posts.id, posts.public_id, posts.user_id, u.username, u.nam
 	posts.created`
 
 type PostRepository struct {
-	db *database.DB
+	db *db.DB
 }
 
 func NewPostRepository(client *Client) *PostRepository {
@@ -37,7 +37,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 		var consumed string
 		if err := tx.QueryRow(ctx, `DELETE FROM uploads WHERE user_id = $1 AND filename = $2
 			RETURNING filename`, userID, filename).Scan(&consumed); err != nil {
@@ -183,7 +183,7 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		// Lock the row to prevent concurrent deletes from racing on ownership.
 		var postDBID int
@@ -312,7 +312,7 @@ func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) er
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		// user_id != $1 prevents the post owner from liking their own post.
 		likeTag, err := tx.Exec(ctx, `INSERT INTO likes (user_id, post_id)
@@ -373,7 +373,7 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 
 		unlikeTag, err := tx.Exec(ctx, `DELETE FROM likes
 			WHERE user_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)`,
@@ -444,8 +444,8 @@ func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...a
 				&post.Liked, &post.Comments, &post.Created); err != nil {
 				return err
 			}
-			post.Avatar = database.NullableString(avatar)
-			post.Description = database.NullableString(description)
+			post.Avatar = db.NullableString(avatar)
+			post.Description = db.NullableString(description)
 			result = append(result, post)
 		}
 		return rows.Err()
@@ -478,8 +478,8 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 				&item.post.Created, &item.cursorCreated); err != nil {
 				return err
 			}
-			item.post.Avatar = database.NullableString(avatar)
-			item.post.Description = database.NullableString(description)
+			item.post.Avatar = db.NullableString(avatar)
+			item.post.Description = db.NullableString(description)
 			result = append(result, item)
 		}
 		return rows.Err()
@@ -549,9 +549,9 @@ func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query stri
 			item.post.UserID = *userID
 			item.post.Username = *username
 			item.post.Name = *name
-			item.post.Avatar = database.NullableString(avatar)
+			item.post.Avatar = db.NullableString(avatar)
 			item.post.Filename = *filename
-			item.post.Description = database.NullableString(description)
+			item.post.Description = db.NullableString(description)
 			item.post.Likes = *likes
 			item.post.Liked = *liked
 			item.post.Comments = *comments

@@ -8,24 +8,13 @@ import (
 	"time"
 )
 
-func TestOpenRepositoriesWithoutDatabaseUsesNoopAdapters(t *testing.T) {
-	repositories, _, readiness, closeRepositories, err := openRepositories("")
-	if err != nil {
-		t.Fatalf("openRepositories() error = %v", err)
-	}
-	closeRepositories()
-	if repositories.SessionAuth == nil || repositories.Users == nil ||
-		repositories.Sessions == nil || repositories.Uploads == nil ||
-		repositories.Posts == nil || repositories.Comments == nil ||
-		repositories.Search == nil || readiness == nil {
-		t.Fatal("openRepositories() returned nil no-op adapter")
-	}
-	if err := readiness(context.Background()); err != nil {
-		t.Fatalf("no-op readiness error = %v", err)
+func TestDefaultDatabaseURLTargetsLocalPostgres(t *testing.T) {
+	if !strings.Contains(defaultDatabaseURL, "localhost:5432") {
+		t.Fatalf("defaultDatabaseURL = %q, want local PostgreSQL port", defaultDatabaseURL)
 	}
 }
 
-func TestOpenRepositoriesRequiresSessionSecretWithDatabase(t *testing.T) {
+func TestOpenRepositoriesRequiresSessionSecret(t *testing.T) {
 	t.Setenv("SESSION_HASH_SECRET", "")
 
 	_, _, _, _, err := openRepositories("postgres://unused")

@@ -12,8 +12,7 @@ make test-integration
 go build ./cmd/api
 ```
 
-When `DATABASE_URL` is unset, the service uses no-op stores for local handler
-development. Database-backed behavior requires:
+Startup fails when PostgreSQL is unavailable or `SESSION_HASH_SECRET` is unset.
 
 - `DATABASE_URL`
 - `SESSION_HASH_SECRET`
@@ -25,9 +24,8 @@ development. Database-backed behavior requires:
 - HTTP helpers and middleware: `internal/httpx/`
 - Feature modules: `internal/{users,sessions,uploads,posts,comments}/`
 - Shared PostgreSQL lifecycle, retries, and circuit breaking:
-  `internal/database/`
-- Module PostgreSQL repositories: `internal/store/postgres/`
-- Explicit local no-op repositories: `internal/noop/`
+  `internal/db/`
+- Database-backed repositories: `internal/store/database/`
 - Entrypoint and process lifecycle: `cmd/api/main.go`
 
 Each feature module owns its domain types, repository interface, application

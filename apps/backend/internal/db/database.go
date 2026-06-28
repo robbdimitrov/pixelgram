@@ -1,4 +1,4 @@
-package database
+package db
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func Open(ctx context.Context, databaseURL, sessionSecret string) (*DB, error) {
 	return &DB{
 		pool:          pool,
 		sessionSecret: sessionSecret,
-		breaker:       newCircuitBreaker("postgres"),
+		breaker:       newCircuitBreaker("database"),
 		retryCfg:      defaultRetryConfig(),
 	}, nil
 }

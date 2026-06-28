@@ -266,7 +266,7 @@ func TestServiceLoginThrottleDownFailsOpen(t *testing.T) {
 	repository := &fakeRepository{
 		credentials: &UserCredentials{ID: 5, PasswordHash: "encoded-hash"},
 	}
-	throttle := &fakeThrottle{err: errors.New("dragonfly down")}
+	throttle := &fakeThrottle{err: errors.New("cache down")}
 	service := newTestService(repository, throttle, now)
 	service.verifyPassword = func(context.Context, string, string) (bool, error) { return true, nil }
 

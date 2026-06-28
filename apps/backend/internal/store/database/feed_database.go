@@ -1,4 +1,4 @@
-package postgres
+package database
 
 import (
 	"context"
@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"phasma/backend/internal/database"
+	"phasma/backend/internal/db"
 	"phasma/backend/internal/feed"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/posts"
 )
 
 type FeedRepository struct {
-	db             *database.DB
+	db             *db.DB
 	celebThreshold int64
 }
 
@@ -65,7 +65,7 @@ func (r *FeedRepository) InsertEntries(ctx context.Context, entries []feed.Entry
 		if err != nil {
 			return err
 		}
-		defer database.Rollback(ctx, tx)
+		defer db.Rollback(ctx, tx)
 		for i := 0; i < len(entries); i += insertEntriesBatchSize {
 			end := i + insertEntriesBatchSize
 			if end > len(entries) {
@@ -178,8 +178,8 @@ func (r *FeedRepository) queryFeedPage(ctx context.Context, query string, limit 
 				&item.post.Created, &item.cursorCreated); err != nil {
 				return err
 			}
-			item.post.Avatar = database.NullableString(avatar)
-			item.post.Description = database.NullableString(description)
+			item.post.Avatar = db.NullableString(avatar)
+			item.post.Description = db.NullableString(description)
 			result = append(result, item)
 		}
 		return rows.Err()
