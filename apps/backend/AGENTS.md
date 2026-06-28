@@ -10,13 +10,16 @@ These rules extend the repository-level `AGENTS.md` for files under
 - HTTP helpers and middleware: `internal/httpx/`
 - Feature modules:
   `internal/{users,sessions,uploads,posts,comments,search,notifications,feed}/`
-- Database lifecycle, retries, and circuit breaker: `internal/db/`
-- Database repositories: `internal/store/database/`
+- Feature-owned PostgreSQL repositories: each feature module's `database.go`
+- Shared PostgreSQL lifecycle and resilience configuration:
+  `internal/store/database/`
+- Reusable retry and circuit-breaker primitives: `internal/resilience/`
 - Process lifecycle: `cmd/api/main.go`
 
-Each feature module owns its domain types, repository interface, service,
-handler, and route registration. Handlers parse transport data and map
-responses. Services own workflows and authorization distinctions.
+Each feature module owns its domain types, repository interface, PostgreSQL
+repository implementation, service, handler, and route registration. Handlers
+parse transport data and map responses. Services own workflows and
+authorization distinctions.
 
 ## Commands
 

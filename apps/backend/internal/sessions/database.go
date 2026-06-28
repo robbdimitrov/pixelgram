@@ -1,4 +1,4 @@
-package database
+package sessions
 
 import (
 	"context"
@@ -7,11 +7,9 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-
-	"phasma/backend/internal/db"
 	"phasma/backend/internal/env"
 	"phasma/backend/internal/httpx"
-	"phasma/backend/internal/sessions"
+	"phasma/backend/internal/store/database"
 )
 
 const (
@@ -21,15 +19,15 @@ const (
 )
 
 type SessionRepository struct {
-	db *db.DB
+	db *database.DB
 }
 
-func NewSessionRepository(client *Client) *SessionRepository {
-	return &SessionRepository{db: client.db}
+func NewSessionRepository(client *database.Client) *SessionRepository {
+	return &SessionRepository{db: client.DB()}
 }
 
-func (r *SessionRepository) FindLoginCredentialsByEmail(ctx context.Context, email string) (*sessions.UserCredentials, error) {
-	var credentials sessions.UserCredentials
+func (r *SessionRepository) FindLoginCredentialsByEmail(ctx context.Context, email string) (*UserCredentials, error) {
+	var credentials UserCredentials
 	err := r.db.Read(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx, `SELECT id, username, password FROM users WHERE email = $1`, email).
 			Scan(&credentials.ID, &credentials.Username, &credentials.PasswordHash)
@@ -43,15 +41,15 @@ func (r *SessionRepository) FindLoginCredentialsByEmail(ctx context.Context, ema
 	return &credentials, nil
 }
 
-func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
-	var session sessions.CreatedSession
+func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (CreatedSession, error) {
+	var session CreatedSession
 	hashedSessionID := r.db.HashSession(sessionID)
 	err := r.db.Write(ctx, func() error {
 		tx, err := r.db.Pool().Begin(ctx)
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		// Serialize session creation per user so concurrent replicas cannot
 		// exceed the bounded active-session policy.
@@ -85,7 +83,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, sessionID string,
 		return tx.Commit(ctx)
 	})
 	if err != nil {
-		return sessions.CreatedSession{}, err
+		return CreatedSession{}, err
 	}
 	return session, nil
 }
@@ -141,10 +139,10 @@ func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string)
 	return r.exec(ctx, `DELETE FROM sessions WHERE id = $1`, r.db.HashSession(sessionID))
 }
 
-func (r *SessionRepository) ListActiveSessions(ctx context.Context, userID, currentSessionToken string) ([]sessions.Session, error) {
-	var items []sessions.Session
+func (r *SessionRepository) ListActiveSessions(ctx context.Context, userID, currentSessionToken string) ([]Session, error) {
+	var items []Session
 	err := r.db.Read(ctx, func() error {
-		attemptItems := make([]sessions.Session, 0)
+		attemptItems := make([]Session, 0)
 		rows, err := r.db.Pool().Query(ctx, `SELECT public_id, created,
 			  LEAST(expires_at, created + ($3 * interval '1 hour')), id = $2
 			FROM sessions
@@ -160,7 +158,7 @@ func (r *SessionRepository) ListActiveSessions(ctx context.Context, userID, curr
 		defer rows.Close()
 
 		for rows.Next() {
-			var session sessions.Session
+			var session Session
 			if err := rows.Scan(&session.ID, &session.Created, &session.ExpiresAt, &session.Current); err != nil {
 				return err
 			}
@@ -181,7 +179,7 @@ func (r *SessionRepository) ListActiveSessions(ctx context.Context, userID, curr
 func (r *SessionRepository) DeleteSessionByID(
 	ctx context.Context,
 	publicID, userID, currentSessionToken string,
-) (sessions.DeleteSessionOutcome, error) {
+) (DeleteSessionOutcome, error) {
 	var result string
 	err := r.db.Write(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx, `WITH deleted AS (
@@ -200,15 +198,15 @@ func (r *SessionRepository) DeleteSessionByID(
 			publicID, userID, r.db.HashSession(currentSessionToken)).Scan(&result)
 	})
 	if err != nil {
-		return sessions.DeleteSessionNotFound, err
+		return DeleteSessionNotFound, err
 	}
 	switch result {
 	case "deleted":
-		return sessions.DeleteSessionDeleted, nil
+		return DeleteSessionDeleted, nil
 	case "current":
-		return sessions.DeleteSessionCurrent, nil
+		return DeleteSessionCurrent, nil
 	default:
-		return sessions.DeleteSessionNotFound, nil
+		return DeleteSessionNotFound, nil
 	}
 }
 
@@ -224,6 +222,6 @@ func (r *SessionRepository) exec(ctx context.Context, query string, args ...any)
 }
 
 var (
-	_ sessions.Repository = (*SessionRepository)(nil)
-	_ httpx.SessionStore  = (*SessionRepository)(nil)
+	_ Repository         = (*SessionRepository)(nil)
+	_ httpx.SessionStore = (*SessionRepository)(nil)
 )

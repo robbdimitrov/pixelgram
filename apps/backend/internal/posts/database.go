@@ -1,4 +1,4 @@
-package database
+package posts
 
 import (
 	"context"
@@ -7,11 +7,9 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-
-	"phasma/backend/internal/db"
 	"phasma/backend/internal/pagination"
-	"phasma/backend/internal/posts"
 	"phasma/backend/internal/store"
+	"phasma/backend/internal/store/database"
 )
 
 const postColumns = `posts.id, posts.public_id, posts.user_id, u.username, u.name, u.avatar,
@@ -23,11 +21,11 @@ const postColumns = `posts.id, posts.public_id, posts.user_id, u.username, u.nam
 	posts.created`
 
 type PostRepository struct {
-	db *db.DB
+	db *database.DB
 }
 
-func NewPostRepository(client *Client) *PostRepository {
-	return &PostRepository{db: client.db}
+func NewPostRepository(client *database.Client) *PostRepository {
+	return &PostRepository{db: client.DB()}
 }
 
 func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string, description *string, tags []string) (string, bool, error) {
@@ -37,7 +35,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 		var consumed string
 		if err := tx.QueryRow(ctx, `DELETE FROM uploads WHERE user_id = $1 AND filename = $2
 			RETURNING filename`, userID, filename).Scan(&consumed); err != nil {
@@ -68,7 +66,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 			hashtags = []string{}
 		}
 
-		postPayload, err := marshalOutboxPayload(entityPostUpsertPayload{
+		postPayload, err := database.MarshalOutboxPayload(database.EntityPostUpsertPayload{
 			Table:       "posts",
 			Op:          "upsert",
 			ID:          int64(postID),
@@ -101,7 +99,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 				SELECT $1, id FROM hashtags WHERE name = $2 ON CONFLICT DO NOTHING`, postID, tag); err != nil {
 				return err
 			}
-			hashtagPayload, err := marshalOutboxPayload(entityHashtagUpsertPayload{
+			hashtagPayload, err := database.MarshalOutboxPayload(database.EntityHashtagUpsertPayload{
 				Table:     "hashtags",
 				Op:        "upsert",
 				Name:      tag,
@@ -126,8 +124,8 @@ func (r *PostRepository) CreatePost(ctx context.Context, userID, filename string
 	return publicID, true, nil
 }
 
-func (r *PostRepository) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+func (r *PostRepository) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := database.CursorValues(cursor)
 	return r.queryPostPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
 page AS (
     SELECT `+postColumns+`, posts.created AS cursor_created
@@ -144,8 +142,8 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
-func (r *PostRepository) GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+func (r *PostRepository) GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]Post, *pagination.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := database.CursorValues(cursor)
 	return r.queryPostPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
 page AS (
     SELECT `+postColumns+`, likes.created AS cursor_created
@@ -163,15 +161,15 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
-func (r *PostRepository) GetPost(ctx context.Context, postID, currentUserID string) (posts.Post, bool, error) {
+func (r *PostRepository) GetPost(ctx context.Context, postID, currentUserID string) (Post, bool, error) {
 	result, err := r.queryPosts(ctx, `SELECT `+postColumns+`
 		FROM posts JOIN users u ON u.id = posts.user_id
 		WHERE posts.public_id = $2`, currentUserID, postID)
 	if err != nil {
-		return posts.Post{}, false, err
+		return Post{}, false, err
 	}
 	if len(result) == 0 {
-		return posts.Post{}, false, nil
+		return Post{}, false, nil
 	}
 	return result[0], true, nil
 }
@@ -183,7 +181,7 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		// Lock the row to prevent concurrent deletes from racing on ownership.
 		var postDBID int
@@ -253,7 +251,7 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 
-		postPayload, err := marshalOutboxPayload(entityPostDeletePayload{
+		postPayload, err := database.MarshalOutboxPayload(database.EntityPostDeletePayload{
 			Table:            "posts",
 			Op:               "delete",
 			ID:               int64(postDBID),
@@ -277,7 +275,7 @@ func (r *PostRepository) DeletePost(ctx context.Context, postID, userID string) 
 				WHERE name = $1 RETURNING post_count`, tag).Scan(&postCount); err != nil {
 				return err
 			}
-			hashtagPayload, err := marshalOutboxPayload(entityHashtagUpsertPayload{
+			hashtagPayload, err := database.MarshalOutboxPayload(database.EntityHashtagUpsertPayload{
 				Table:     "hashtags",
 				Op:        "upsert",
 				Name:      tag,
@@ -312,7 +310,7 @@ func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) er
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		// user_id != $1 prevents the post owner from liking their own post.
 		likeTag, err := tx.Exec(ctx, `INSERT INTO likes (user_id, post_id)
@@ -345,7 +343,7 @@ func (r *PostRepository) LikePost(ctx context.Context, postID, userID string) er
 			return err
 		}
 
-		payload, err := marshalOutboxPayload(activityPayload{
+		payload, err := database.MarshalOutboxPayload(database.ActivityPayload{
 			Op:          "like",
 			PostID:      postID,
 			ActorID:     userID,
@@ -373,7 +371,7 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		unlikeTag, err := tx.Exec(ctx, `DELETE FROM likes
 			WHERE user_id = $1 AND post_id = (SELECT id FROM posts WHERE public_id = $2)`,
@@ -405,7 +403,7 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 			return err
 		}
 
-		payload, err := marshalOutboxPayload(activityPayload{
+		payload, err := database.MarshalOutboxPayload(database.ActivityPayload{
 			Op:          "unlike",
 			PostID:      postID,
 			ActorID:     userID,
@@ -427,25 +425,25 @@ func (r *PostRepository) UnlikePost(ctx context.Context, postID, userID string) 
 	return err
 }
 
-func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...any) ([]posts.Post, error) {
-	var result []posts.Post
+func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...any) ([]Post, error) {
+	var result []Post
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx, query, args...)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
-		result = []posts.Post{}
+		result = []Post{}
 		for rows.Next() {
-			var post posts.Post
+			var post Post
 			var description, avatar sql.NullString
 			if err := rows.Scan(&post.ID, &post.PublicID, &post.UserID, &post.Username,
 				&post.Name, &avatar, &post.Filename, &description, &post.Likes,
 				&post.Liked, &post.Comments, &post.Created); err != nil {
 				return err
 			}
-			post.Avatar = db.NullableString(avatar)
-			post.Description = db.NullableString(description)
+			post.Avatar = database.NullableString(avatar)
+			post.Description = database.NullableString(description)
 			result = append(result, post)
 		}
 		return rows.Err()
@@ -456,9 +454,9 @@ func (r *PostRepository) queryPosts(ctx context.Context, query string, args ...a
 	return result, nil
 }
 
-func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *pagination.Cursor, error) {
+func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit int, args ...any) ([]Post, *pagination.Cursor, error) {
 	type row struct {
-		post          posts.Post
+		post          Post
 		cursorCreated time.Time
 	}
 	var result []row
@@ -478,8 +476,8 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 				&item.post.Created, &item.cursorCreated); err != nil {
 				return err
 			}
-			item.post.Avatar = db.NullableString(avatar)
-			item.post.Description = db.NullableString(description)
+			item.post.Avatar = database.NullableString(avatar)
+			item.post.Description = database.NullableString(description)
 			result = append(result, item)
 		}
 		return rows.Err()
@@ -491,7 +489,7 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 	if hasMore {
 		result = result[:limit]
 	}
-	items := make([]posts.Post, len(result))
+	items := make([]Post, len(result))
 	for i, item := range result {
 		items[i] = item.post
 	}
@@ -506,9 +504,9 @@ func (r *PostRepository) queryPostPage(ctx context.Context, query string, limit 
 // The query must produce 14 columns: the 12 from postColumns, cursor_created, and
 // user_exists bool. The sentinel row fires (with all NULLs except user_exists) when
 // the page is empty, allowing a single round-trip to distinguish not-found from empty.
-func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]posts.Post, *pagination.Cursor, error) {
+func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]Post, *pagination.Cursor, error) {
 	type row struct {
-		post          posts.Post
+		post          Post
 		cursorCreated time.Time
 	}
 	var result []row
@@ -549,9 +547,9 @@ func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query stri
 			item.post.UserID = *userID
 			item.post.Username = *username
 			item.post.Name = *name
-			item.post.Avatar = db.NullableString(avatar)
+			item.post.Avatar = database.NullableString(avatar)
 			item.post.Filename = *filename
-			item.post.Description = db.NullableString(description)
+			item.post.Description = database.NullableString(description)
 			item.post.Likes = *likes
 			item.post.Liked = *liked
 			item.post.Comments = *comments
@@ -568,7 +566,7 @@ func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query stri
 	if hasMore {
 		result = result[:limit]
 	}
-	items := make([]posts.Post, len(result))
+	items := make([]Post, len(result))
 	for i, item := range result {
 		items[i] = item.post
 	}
@@ -579,14 +577,7 @@ func (r *PostRepository) queryPostPageOrNotFound(ctx context.Context, query stri
 	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.post.ID)}, nil
 }
 
-func cursorValues(cursor *pagination.Cursor) (bool, time.Time, int64) {
-	if cursor == nil {
-		return false, time.Time{}, 0
-	}
-	return true, cursor.Created, cursor.ID
-}
-
-func (r *PostRepository) ListPopularPosts(ctx context.Context, viewerID string, limit int) ([]posts.Post, error) {
+func (r *PostRepository) ListPopularPosts(ctx context.Context, viewerID string, limit int) ([]Post, error) {
 	return r.queryPosts(ctx, `SELECT `+postColumns+`
         FROM posts
         JOIN users u ON u.id = posts.user_id
@@ -597,4 +588,4 @@ func (r *PostRepository) ListPopularPosts(ctx context.Context, viewerID string, 
         LIMIT $2`, viewerID, limit)
 }
 
-var _ posts.Repository = (*PostRepository)(nil)
+var _ Repository = (*PostRepository)(nil)

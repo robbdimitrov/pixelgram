@@ -1,4 +1,4 @@
-package database
+package database_test
 
 import (
 	"context"
@@ -17,19 +17,32 @@ import (
 	"phasma/backend/internal/httpx"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/posts"
+	"phasma/backend/internal/search"
 	"phasma/backend/internal/sessions"
 	"phasma/backend/internal/store"
+	"phasma/backend/internal/store/database"
+	"phasma/backend/internal/uploads"
 	"phasma/backend/internal/users"
 )
 
 const testSessionSecret = "integration-secret"
+
+const (
+	sessionTTL                     = 7 * 24 * time.Hour
+	defaultSessionAbsoluteTTLHours = 720
+	maxSessionsPerUser             = 100
+)
 
 type testPost struct {
 	ID       int
 	PublicID string
 }
 
-func openTestClient(t *testing.T) *Client {
+type testClient struct {
+	*database.Client
+}
+
+func openTestClient(t *testing.T) *testClient {
 	t.Helper()
 	if testing.Short() {
 		t.Skip("PostgreSQL integration test")
@@ -38,21 +51,21 @@ func openTestClient(t *testing.T) *Client {
 	if databaseURL == "" {
 		t.Skip("PHASMA_TEST_DATABASE_URL is not set")
 	}
-	client, err := New(context.Background(), databaseURL, testSessionSecret)
+	client, err := database.New(context.Background(), databaseURL, testSessionSecret)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
 	t.Cleanup(client.Close)
-	_, err = client.db.Pool().Exec(context.Background(),
+	_, err = client.DB().Pool().Exec(context.Background(),
 		`TRUNCATE post_hashtags, hashtags, comments, likes, follows, posts,
 		 uploads, sessions, users RESTART IDENTITY CASCADE`)
 	if err != nil {
 		t.Fatalf("truncate error = %v", err)
 	}
-	return client
+	return &testClient{Client: client}
 }
 
-func createTestUser(t *testing.T, client *Client, suffix string) int {
+func createTestUser(t *testing.T, client *testClient, suffix string) int {
 	t.Helper()
 	id, err := client.CreateUser(
 		context.Background(),
@@ -67,10 +80,10 @@ func createTestUser(t *testing.T, client *Client, suffix string) int {
 	return id
 }
 
-func insertTestPost(t *testing.T, client *Client, userID int, filename string, created time.Time) testPost {
+func insertTestPost(t *testing.T, client *testClient, userID int, filename string, created time.Time) testPost {
 	t.Helper()
 	var post testPost
-	err := client.db.Pool().QueryRow(
+	err := client.DB().Pool().QueryRow(
 		context.Background(),
 		`INSERT INTO posts (user_id, filename, created)
 		VALUES ($1, $2, $3) RETURNING id, public_id`,
@@ -203,7 +216,7 @@ func TestDatabaseRepositoryFollowListCursorPagination(t *testing.T) {
 		{viewerID, followedBID, base.Add(3 * time.Minute)},
 	}
 	for _, follow := range follows {
-		if _, err := client.db.Pool().Exec(
+		if _, err := client.DB().Pool().Exec(
 			ctx,
 			`INSERT INTO follows (follower_id, followee_id, created) VALUES ($1, $2, $3)`,
 			follow.follower, follow.followee, follow.created,
@@ -263,7 +276,7 @@ func TestDatabaseRepositoryLikedPostCursorPagination(t *testing.T) {
 	var want []int
 	for i := 0; i < 5; i++ {
 		post := insertTestPost(t, client, authorID, fmt.Sprintf("liked-%d", i), base)
-		if _, err := client.db.Pool().Exec(
+		if _, err := client.DB().Pool().Exec(
 			ctx,
 			`INSERT INTO likes (post_id, user_id, created) VALUES ($1, $2, $3)`,
 			post.ID, likerID, base.Add(time.Duration(i)*time.Minute),
@@ -305,7 +318,7 @@ func TestDatabaseRepositoryCommentCursorPagination(t *testing.T) {
 	var want []int
 	for i := 0; i < 5; i++ {
 		var id int
-		err := client.db.Pool().QueryRow(
+		err := client.DB().Pool().QueryRow(
 			ctx,
 			`INSERT INTO comments (post_id, user_id, body, created)
 			VALUES ($1, $2, $3, $4) RETURNING id`,
@@ -361,7 +374,7 @@ func TestDatabaseRepositoryConsumesUploadAndRollsBackFailedPost(t *testing.T) {
 	}
 
 	var uploadExists bool
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT EXISTS (SELECT 1 FROM uploads WHERE filename = 'successful-upload')`,
 	).Scan(&uploadExists); err != nil {
@@ -378,7 +391,7 @@ func TestDatabaseRepositoryConsumesUploadAndRollsBackFailedPost(t *testing.T) {
 	if _, _, err := client.CreatePost(ctx, stringID(userID), "rollback-upload", &tooLong); err == nil {
 		t.Fatal("CreatePost(invalid description) error = nil, want constraint failure")
 	}
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT EXISTS (SELECT 1 FROM uploads WHERE filename = 'rollback-upload')`,
 	).Scan(&uploadExists); err != nil || !uploadExists {
@@ -434,7 +447,7 @@ func TestDatabaseRepositoryProfileAvatarOwnershipAndUnusedAvatar(t *testing.T) {
 	}
 
 	var remaining int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM uploads WHERE user_id = $1 AND filename IN ('first-avatar', 'second-avatar')`,
 		userID,
@@ -458,7 +471,7 @@ func TestDatabaseRepositoryFollowIsIdempotentAndRejectsMissingTarget(t *testing.
 		}
 	}
 	var count int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM follows WHERE follower_id = $1 AND followee_id = $2`,
 		followerID, followeeID,
@@ -521,7 +534,7 @@ func TestDatabaseRepositoryPostOwnerCanDeleteComments(t *testing.T) {
 		t.Fatalf("DeleteComment(post owner) = %v, %v; want true, nil", deleted, err)
 	}
 	var remaining int
-	if err := client.db.Pool().QueryRow(ctx,
+	if err := client.DB().Pool().QueryRow(ctx,
 		`SELECT count(*) FROM comments WHERE id = $1`, comment.ID).Scan(&remaining); err != nil {
 		t.Fatalf("comment count query error = %v", err)
 	}
@@ -540,7 +553,7 @@ func TestDatabaseRepositorySelfLikeIsNoop(t *testing.T) {
 		t.Fatalf("LikePost(self) error = %v, want nil", err)
 	}
 	var count int
-	if err := client.db.Pool().QueryRow(ctx,
+	if err := client.DB().Pool().QueryRow(ctx,
 		`SELECT count(*) FROM likes WHERE post_id = $1 AND user_id = $2`,
 		post.ID, ownerID).Scan(&count); err != nil {
 		t.Fatalf("like count query error = %v", err)
@@ -562,7 +575,7 @@ func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 	}
 	hashedFresh := auth.HashSessionToken(freshToken, testSessionSecret)
 	var persistedID string
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT id FROM sessions WHERE user_id = $1`, userID,
 	).Scan(&persistedID); err != nil {
 		t.Fatalf("fresh session query error = %v", err)
@@ -576,7 +589,7 @@ func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 		t.Fatalf("RefreshSession(fresh) = %+v, %v", session, err)
 	}
 	var unchangedExpiry time.Time
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT expires_at FROM sessions WHERE id = $1`, hashedFresh,
 	).Scan(&unchangedExpiry); err != nil {
 		t.Fatalf("fresh expiry query error = %v", err)
@@ -596,7 +609,7 @@ func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 		t.Fatalf("RefreshSession(stale) = %+v, %v", session, err)
 	}
 	var refreshedExpiry time.Time
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT expires_at FROM sessions WHERE id = $1`,
 		auth.HashSessionToken(staleToken, testSessionSecret),
 	).Scan(&refreshedExpiry); err != nil {
@@ -622,7 +635,7 @@ func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 		t.Fatalf("CreateSession(absolute expired) error = %v", err)
 	}
 	hashedAbsoluteExpired := auth.HashSessionToken(absoluteExpiredToken, testSessionSecret)
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`UPDATE sessions SET created = now() - interval '2 hours' WHERE id = $1`,
 		hashedAbsoluteExpired,
@@ -634,7 +647,7 @@ func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 		t.Fatalf("RefreshSession(absolute expired) = %+v, %v; want zero session", session, err)
 	}
 	var unchangedAbsoluteExpiry time.Time
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT expires_at FROM sessions WHERE id = $1`, hashedAbsoluteExpired,
 	).Scan(&unchangedAbsoluteExpiry); err != nil {
 		t.Fatalf("absolute-expired expiry query error = %v", err)
@@ -646,7 +659,7 @@ func TestDatabaseRepositorySessionHashExpirationAndConditionalRefresh(t *testing
 		t.Fatalf("DeleteExpiredSessions() error = %v", err)
 	}
 	var remaining int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT count(*) FROM sessions WHERE id = $1`, hashedAbsoluteExpired,
 	).Scan(&remaining); err != nil {
 		t.Fatalf("absolute-expired session count error = %v", err)
@@ -718,7 +731,7 @@ func TestDatabaseRepositoryListsAndRevokesActiveSessions(t *testing.T) {
 		if _, err := client.CreateSession(ctx, session.token, session.userID, session.expires); err != nil {
 			t.Fatalf("CreateSession(%q) error = %v", session.token, err)
 		}
-		if _, err := client.db.Pool().Exec(
+		if _, err := client.DB().Pool().Exec(
 			ctx,
 			`UPDATE sessions SET public_id = $1, created = $2 WHERE id = $3`,
 			session.publicID,
@@ -764,7 +777,7 @@ func TestDatabaseRepositoryListsAndRevokesActiveSessions(t *testing.T) {
 		t.Fatalf("DeleteSessionByID(other user) = %v, %v", outcome, err)
 	}
 	var otherUserSessionCount int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM sessions WHERE public_id = $1 AND user_id = $2`,
 		"30000000-0000-0000-0000-000000000001",
@@ -783,7 +796,7 @@ func TestDatabaseRepositoryListsAndRevokesActiveSessions(t *testing.T) {
 		t.Fatalf("DeleteSessionByID(current) = %v, %v", outcome, err)
 	}
 	var currentSessionCount int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM sessions WHERE public_id = $1 AND id = $2`,
 		"10000000-0000-0000-0000-000000000002",
@@ -802,7 +815,7 @@ func TestDatabaseRepositoryListsAndRevokesActiveSessions(t *testing.T) {
 		t.Fatalf("DeleteSessionByID(remote) = %v, %v", outcome, err)
 	}
 	var remaining int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM sessions WHERE public_id = $1`,
 		"10000000-0000-0000-0000-000000000003",
@@ -822,7 +835,7 @@ func TestDatabaseRepositoryConcurrentSessionRevocationHasOneWinner(t *testing.T)
 	if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`UPDATE sessions SET public_id = $1 WHERE id = $2`,
 		publicID,
@@ -891,7 +904,7 @@ func TestDatabaseRepositoryConcurrentRevocationPreservesCurrentSession(t *testin
 	if _, err := client.CreateSession(ctx, token, userID, time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`UPDATE sessions SET public_id = $1 WHERE id = $2`,
 		publicID,
@@ -930,7 +943,7 @@ func TestDatabaseRepositoryConcurrentRevocationPreservesCurrentSession(t *testin
 		}
 	}
 	var remaining int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM sessions WHERE public_id = $1 AND id = $2`,
 		publicID,
@@ -952,7 +965,7 @@ func TestDatabaseSessionPublicIDGeneratedAndUnique(t *testing.T) {
 	}
 
 	var count, distinct int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(public_id), count(DISTINCT public_id) FROM sessions WHERE user_id = $1`,
 		userID,
@@ -964,14 +977,14 @@ func TestDatabaseSessionPublicIDGeneratedAndUnique(t *testing.T) {
 	}
 
 	var firstPublicID string
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT public_id FROM sessions WHERE id = $1`,
 		auth.HashSessionToken("first-token", testSessionSecret),
 	).Scan(&firstPublicID); err != nil {
 		t.Fatalf("first public ID query error = %v", err)
 	}
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`UPDATE sessions SET public_id = $1 WHERE id = $2`,
 		firstPublicID,
@@ -994,7 +1007,7 @@ func TestDatabaseRepositoryCapsSessionsPerUser(t *testing.T) {
 	}
 
 	var count int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM sessions WHERE user_id = $1`,
 		userID,
@@ -1011,7 +1024,7 @@ func TestDatabaseRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *tes
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_concurrent_limit")
 
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`INSERT INTO sessions (id, user_id, created, expires_at)
 		SELECT 'existing-' || value, $1,
@@ -1047,7 +1060,7 @@ func TestDatabaseRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *tes
 	}
 
 	var count int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT count(*) FROM sessions WHERE user_id = $1`,
 		userID,
@@ -1060,7 +1073,7 @@ func TestDatabaseRepositoryConcurrentSessionCreationRetainsIssuedSessions(t *tes
 	for i := 0; i < callers; i++ {
 		token := fmt.Sprintf("concurrent-issued-%d", i)
 		var exists bool
-		if err := client.db.Pool().QueryRow(
+		if err := client.DB().Pool().QueryRow(
 			ctx,
 			`SELECT EXISTS (SELECT 1 FROM sessions WHERE id = $1)`,
 			auth.HashSessionToken(token, testSessionSecret),
@@ -1078,7 +1091,7 @@ func TestDatabaseRepositorySessionListHasHardLimit(t *testing.T) {
 	ctx := context.Background()
 	userID := createTestUser(t, client, "session_list_limit")
 
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`INSERT INTO sessions (id, user_id, created, expires_at)
 		SELECT 'direct-' || value, $1,
@@ -1109,7 +1122,7 @@ func TestDatabaseRepositoryListsEffectiveAbsoluteExpiry(t *testing.T) {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
 	created := time.Now().UTC().Add(-29 * 24 * time.Hour).Truncate(time.Microsecond)
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx,
 		`UPDATE sessions SET created = $1, expires_at = $2 WHERE id = $3`,
 		created,
@@ -1135,11 +1148,11 @@ func TestDatabaseRepositoryListsEffectiveAbsoluteExpiry(t *testing.T) {
 func TestSearchRepositoryTypeaheadResultsAndLimit(t *testing.T) {
 	client := openTestClient(t)
 	ctx := context.Background()
-	repository := NewSearchRepository(client)
+	repository := search.NewSearchRepository(client.Client)
 
 	for i := 0; i < 10; i++ {
 		userID := createTestUser(t, client, fmt.Sprintf("typeahead_%02d", i))
-		if _, err := client.db.Pool().Exec(
+		if _, err := client.DB().Pool().Exec(
 			ctx,
 			`UPDATE users SET avatar = $1 WHERE id = $2`,
 			fmt.Sprintf("avatar-%02d", i),
@@ -1147,7 +1160,7 @@ func TestSearchRepositoryTypeaheadResultsAndLimit(t *testing.T) {
 		); err != nil {
 			t.Fatalf("set avatar error = %v", err)
 		}
-		if _, err := client.db.Pool().Exec(
+		if _, err := client.DB().Pool().Exec(
 			ctx,
 			`INSERT INTO hashtags (name) VALUES ($1)`,
 			fmt.Sprintf("typeahead_%02d", i),
@@ -1200,7 +1213,7 @@ func TestDatabaseRepositoryChangePasswordRemovesOtherSessions(t *testing.T) {
 	}
 
 	var password string
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT password FROM users WHERE id = $1`, userID,
 	).Scan(&password); err != nil {
 		t.Fatalf("password query error = %v", err)
@@ -1209,7 +1222,7 @@ func TestDatabaseRepositoryChangePasswordRemovesOtherSessions(t *testing.T) {
 		t.Fatalf("password = %q, want new-password-hash", password)
 	}
 	var sessionIDs []string
-	rows, err := client.db.Pool().Query(ctx, `SELECT id FROM sessions ORDER BY id`)
+	rows, err := client.DB().Pool().Query(ctx, `SELECT id FROM sessions ORDER BY id`)
 	if err != nil {
 		t.Fatalf("session query error = %v", err)
 	}
@@ -1242,7 +1255,7 @@ func TestDatabaseRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *tes
 		}
 	}
 
-	_, err := client.db.Pool().Exec(ctx, `
+	_, err := client.DB().Pool().Exec(ctx, `
 		CREATE FUNCTION fail_session_delete() RETURNS trigger
 		LANGUAGE plpgsql AS $$
 		BEGIN
@@ -1257,7 +1270,7 @@ func TestDatabaseRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *tes
 		t.Fatalf("create failure trigger error = %v", err)
 	}
 	t.Cleanup(func() {
-		_, _ = client.db.Pool().Exec(
+		_, _ = client.DB().Pool().Exec(
 			context.Background(),
 			`DROP TRIGGER IF EXISTS fail_session_delete ON sessions;
 			DROP FUNCTION IF EXISTS fail_session_delete();`,
@@ -1268,7 +1281,7 @@ func TestDatabaseRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *tes
 		t.Fatal("ChangePassword() error = nil, want forced delete failure")
 	}
 	var password string
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT password FROM users WHERE id = $1`, userID,
 	).Scan(&password); err != nil {
 		t.Fatalf("password query error = %v", err)
@@ -1277,7 +1290,7 @@ func TestDatabaseRepositoryChangePasswordRollsBackWhenSessionRemovalFails(t *tes
 		t.Fatalf("password = %q, want original password-hash", password)
 	}
 	var sessionCount int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT count(*) FROM sessions WHERE user_id = $1`, userID,
 	).Scan(&sessionCount); err != nil || sessionCount != 2 {
 		t.Fatalf("session count = %d, error = %v; want 2", sessionCount, err)
@@ -1291,7 +1304,7 @@ func TestDatabaseRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *tes
 	otherID := createTestUser(t, client, "delete_other")
 	post := insertTestPost(t, client, ownerID, "shared-post-file", time.Now())
 
-	if _, err := client.db.Pool().Exec(
+	if _, err := client.DB().Pool().Exec(
 		ctx, `UPDATE users SET avatar = 'shared-post-file' WHERE id = $1`, ownerID,
 	); err != nil {
 		t.Fatalf("set avatar error = %v", err)
@@ -1308,7 +1321,7 @@ func TestDatabaseRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *tes
 		t.Fatalf("DeletePost() = %q, %v", filename, err)
 	}
 	var posts, likes, comments int
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx,
 		`SELECT
 		  (SELECT count(*) FROM posts WHERE id = $1),
@@ -1322,7 +1335,7 @@ func TestDatabaseRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *tes
 		t.Fatalf("remaining post data = posts %d, likes %d, comments %d", posts, likes, comments)
 	}
 	var avatar string
-	if err := client.db.Pool().QueryRow(
+	if err := client.DB().Pool().QueryRow(
 		ctx, `SELECT avatar FROM users WHERE id = $1`, ownerID,
 	).Scan(&avatar); err != nil {
 		t.Fatalf("avatar query error = %v", err)
@@ -1334,128 +1347,128 @@ func TestDatabaseRepositoryDeletePostCascadesLikesCommentsAndClearsAvatar(t *tes
 
 // The following forwarding methods preserve the integration test API.
 // They were extracted from client.go to dismantle the monolith.
-func (c *Client) RefreshSession(ctx context.Context, sessionID string) (httpx.Session, error) {
-	return NewSessionRepository(c).RefreshSession(ctx, sessionID)
+func (c *testClient) RefreshSession(ctx context.Context, sessionID string) (httpx.Session, error) {
+	return sessions.NewSessionRepository(c.Client).RefreshSession(ctx, sessionID)
 }
 
 // The forwarding methods below preserve the package's integration-test API.
 // Application code uses the focused repositories directly.
-func (c *Client) CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error) {
-	return NewUserRepository(c).CreateUser(ctx, name, username, email, passwordHash)
+func (c *testClient) CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error) {
+	return users.NewUserRepository(c.Client).CreateUser(ctx, name, username, email, passwordHash)
 }
 
-func (c *Client) GetUserWithEmail(ctx context.Context, email string) (sessions.UserCredentials, bool, error) {
-	credentials, err := NewSessionRepository(c).FindLoginCredentialsByEmail(ctx, email)
+func (c *testClient) GetUserWithEmail(ctx context.Context, email string) (sessions.UserCredentials, bool, error) {
+	credentials, err := sessions.NewSessionRepository(c.Client).FindLoginCredentialsByEmail(ctx, email)
 	if err != nil || credentials == nil {
 		return sessions.UserCredentials{}, false, err
 	}
 	return *credentials, true, nil
 }
 
-func (c *Client) GetUserWithID(ctx context.Context, userID string) (users.UserCredentials, bool, error) {
-	return NewUserRepository(c).GetUserWithID(ctx, userID)
+func (c *testClient) GetUserWithID(ctx context.Context, userID string) (users.UserCredentials, bool, error) {
+	return users.NewUserRepository(c.Client).GetUserWithID(ctx, userID)
 }
 
-func (c *Client) GetUserByUsername(ctx context.Context, username, currentUserID string) (users.User, bool, error) {
-	return NewUserRepository(c).GetUserByUsername(ctx, username, currentUserID)
+func (c *testClient) GetUserByUsername(ctx context.Context, username, currentUserID string) (users.User, bool, error) {
+	return users.NewUserRepository(c.Client).GetUserByUsername(ctx, username, currentUserID)
 }
 
-func (c *Client) GetUserByID(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
-	return NewUserRepository(c).GetUserByID(ctx, userID, currentUserID)
+func (c *testClient) GetUserByID(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
+	return users.NewUserRepository(c.Client).GetUserByID(ctx, userID, currentUserID)
 }
 
-func (c *Client) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
-	return NewUserRepository(c).ListFollowers(ctx, username, cursor, limit, currentUserID)
+func (c *testClient) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
+	return users.NewUserRepository(c.Client).ListFollowers(ctx, username, cursor, limit, currentUserID)
 }
 
-func (c *Client) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
-	return NewUserRepository(c).ListFollowing(ctx, username, cursor, limit, currentUserID)
+func (c *testClient) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
+	return users.NewUserRepository(c.Client).ListFollowing(ctx, username, cursor, limit, currentUserID)
 }
 
-func (c *Client) FollowUser(ctx context.Context, followerID, followeeID string) error {
-	return NewUserRepository(c).FollowUser(ctx, followerID, followeeID)
+func (c *testClient) FollowUser(ctx context.Context, followerID, followeeID string) error {
+	return users.NewUserRepository(c.Client).FollowUser(ctx, followerID, followeeID)
 }
 
-func (c *Client) UnfollowUser(ctx context.Context, followerID, followeeID string) error {
-	return NewUserRepository(c).UnfollowUser(ctx, followerID, followeeID)
+func (c *testClient) UnfollowUser(ctx context.Context, followerID, followeeID string) error {
+	return users.NewUserRepository(c.Client).UnfollowUser(ctx, followerID, followeeID)
 }
 
-func (c *Client) UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
-	return NewUserRepository(c).UpdateUser(ctx, userID, name, username, email, avatar, bio)
+func (c *testClient) UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
+	return users.NewUserRepository(c.Client).UpdateUser(ctx, userID, name, username, email, avatar, bio)
 }
 
-func (c *Client) ChangePassword(ctx context.Context, userID, passwordHash, currentSessionID string) error {
-	return NewUserRepository(c).ChangePassword(ctx, userID, passwordHash, currentSessionID)
+func (c *testClient) ChangePassword(ctx context.Context, userID, passwordHash, currentSessionID string) error {
+	return users.NewUserRepository(c.Client).ChangePassword(ctx, userID, passwordHash, currentSessionID)
 }
 
-func (c *Client) CreateUpload(ctx context.Context, userID, filename string) (bool, error) {
-	created, _, err := NewUploadRepository(c).CreateUpload(ctx, userID, filename)
+func (c *testClient) CreateUpload(ctx context.Context, userID, filename string) (bool, error) {
+	created, _, err := uploads.NewUploadRepository(c.Client).CreateUpload(ctx, userID, filename)
 	return created, err
 }
 
-func (c *Client) CreatePost(ctx context.Context, userID, filename string, description *string, tags ...string) (string, bool, error) {
-	return NewPostRepository(c).CreatePost(ctx, userID, filename, description, tags)
+func (c *testClient) CreatePost(ctx context.Context, userID, filename string, description *string, tags ...string) (string, bool, error) {
+	return posts.NewPostRepository(c.Client).CreatePost(ctx, userID, filename, description, tags)
 }
 
-func (c *Client) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	return NewPostRepository(c).GetPosts(ctx, username, cursor, limit, currentUserID)
+func (c *testClient) GetPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
+	return posts.NewPostRepository(c.Client).GetPosts(ctx, username, cursor, limit, currentUserID)
 }
 
-func (c *Client) GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
-	return NewPostRepository(c).GetLikedPosts(ctx, username, cursor, limit, currentUserID)
+func (c *testClient) GetLikedPosts(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]posts.Post, *pagination.Cursor, error) {
+	return posts.NewPostRepository(c.Client).GetLikedPosts(ctx, username, cursor, limit, currentUserID)
 }
 
-func (c *Client) GetPost(ctx context.Context, postID, currentUserID string) (posts.Post, bool, error) {
-	return NewPostRepository(c).GetPost(ctx, postID, currentUserID)
+func (c *testClient) GetPost(ctx context.Context, postID, currentUserID string) (posts.Post, bool, error) {
+	return posts.NewPostRepository(c.Client).GetPost(ctx, postID, currentUserID)
 }
 
-func (c *Client) DeletePost(ctx context.Context, postID, userID string) (string, error) {
-	return NewPostRepository(c).DeletePost(ctx, postID, userID)
+func (c *testClient) DeletePost(ctx context.Context, postID, userID string) (string, error) {
+	return posts.NewPostRepository(c.Client).DeletePost(ctx, postID, userID)
 }
 
-func (c *Client) PostExists(ctx context.Context, postID string) (bool, error) {
-	return NewPostRepository(c).PostExists(ctx, postID)
+func (c *testClient) PostExists(ctx context.Context, postID string) (bool, error) {
+	return posts.NewPostRepository(c.Client).PostExists(ctx, postID)
 }
 
-func (c *Client) LikePost(ctx context.Context, postID, userID string) error {
-	return NewPostRepository(c).LikePost(ctx, postID, userID)
+func (c *testClient) LikePost(ctx context.Context, postID, userID string) error {
+	return posts.NewPostRepository(c.Client).LikePost(ctx, postID, userID)
 }
 
-func (c *Client) UnlikePost(ctx context.Context, postID, userID string) error {
-	return NewPostRepository(c).UnlikePost(ctx, postID, userID)
+func (c *testClient) UnlikePost(ctx context.Context, postID, userID string) error {
+	return posts.NewPostRepository(c.Client).UnlikePost(ctx, postID, userID)
 }
 
-func (c *Client) CreateComment(ctx context.Context, postID, userID, body string) (comments.Comment, error) {
-	return NewCommentRepository(c).CreateComment(ctx, postID, userID, body)
+func (c *testClient) CreateComment(ctx context.Context, postID, userID, body string) (comments.Comment, error) {
+	return comments.NewCommentRepository(c.Client).CreateComment(ctx, postID, userID, body)
 }
 
-func (c *Client) ListComments(ctx context.Context, postID string, cursor *pagination.Cursor, limit int) ([]comments.Comment, *pagination.Cursor, error) {
-	return NewCommentRepository(c).ListComments(ctx, postID, cursor, limit)
+func (c *testClient) ListComments(ctx context.Context, postID string, cursor *pagination.Cursor, limit int) ([]comments.Comment, *pagination.Cursor, error) {
+	return comments.NewCommentRepository(c.Client).ListComments(ctx, postID, cursor, limit)
 }
 
-func (c *Client) DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error) {
-	return NewCommentRepository(c).DeleteComment(ctx, postID, commentID, userID)
+func (c *testClient) DeleteComment(ctx context.Context, postID, commentID, userID string) (bool, error) {
+	return comments.NewCommentRepository(c.Client).DeleteComment(ctx, postID, commentID, userID)
 }
 
-func (c *Client) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
-	return NewSessionRepository(c).CreateSession(ctx, sessionID, userID, expiresAt)
+func (c *testClient) CreateSession(ctx context.Context, sessionID string, userID int, expiresAt time.Time) (sessions.CreatedSession, error) {
+	return sessions.NewSessionRepository(c.Client).CreateSession(ctx, sessionID, userID, expiresAt)
 }
 
-func (c *Client) DeleteExpiredSessions(ctx context.Context) error {
-	return NewSessionRepository(c).DeleteExpiredSessions(ctx)
+func (c *testClient) DeleteExpiredSessions(ctx context.Context) error {
+	return sessions.NewSessionRepository(c.Client).DeleteExpiredSessions(ctx)
 }
 
-func (c *Client) DeleteSession(ctx context.Context, sessionID string) error {
-	return NewSessionRepository(c).DeleteSession(ctx, sessionID)
+func (c *testClient) DeleteSession(ctx context.Context, sessionID string) error {
+	return sessions.NewSessionRepository(c.Client).DeleteSession(ctx, sessionID)
 }
 
-func (c *Client) ListActiveSessions(ctx context.Context, userID, currentSessionToken string) ([]sessions.Session, error) {
-	return NewSessionRepository(c).ListActiveSessions(ctx, userID, currentSessionToken)
+func (c *testClient) ListActiveSessions(ctx context.Context, userID, currentSessionToken string) ([]sessions.Session, error) {
+	return sessions.NewSessionRepository(c.Client).ListActiveSessions(ctx, userID, currentSessionToken)
 }
 
-func (c *Client) DeleteSessionByID(
+func (c *testClient) DeleteSessionByID(
 	ctx context.Context,
 	publicID, userID, currentSessionToken string,
 ) (sessions.DeleteSessionOutcome, error) {
-	return NewSessionRepository(c).DeleteSessionByID(ctx, publicID, userID, currentSessionToken)
+	return sessions.NewSessionRepository(c.Client).DeleteSessionByID(ctx, publicID, userID, currentSessionToken)
 }

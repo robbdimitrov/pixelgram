@@ -1,4 +1,4 @@
-package database
+package feed
 
 import (
 	"context"
@@ -7,24 +7,31 @@ import (
 	"strings"
 	"time"
 
-	"phasma/backend/internal/db"
-	"phasma/backend/internal/feed"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/posts"
+	"phasma/backend/internal/store/database"
 )
 
+const feedPostColumns = `posts.id, posts.public_id, posts.user_id, u.username, u.name, u.avatar,
+	posts.filename, posts.description,
+	posts.like_count AS likes,
+	EXISTS (SELECT 1 FROM likes
+	WHERE post_id = posts.id AND likes.user_id = $1) AS liked,
+	posts.comment_count AS comments,
+	posts.created`
+
 type FeedRepository struct {
-	db             *db.DB
+	db             *database.DB
 	celebThreshold int64
 }
 
-func NewFeedRepository(client *Client, threshold int64) *FeedRepository {
-	return &FeedRepository{db: client.db, celebThreshold: threshold}
+func NewFeedRepository(client *database.Client, threshold int64) *FeedRepository {
+	return &FeedRepository{db: client.DB(), celebThreshold: threshold}
 }
 
 func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pagination.Cursor, limit int) ([]posts.Post, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	return r.queryFeedPage(ctx, `SELECT `+postColumns+`, posts.created AS cursor_created
+	hasCursor, cursorCreated, cursorID := database.CursorValues(cursor)
+	return r.queryFeedPage(ctx, `SELECT `+feedPostColumns+`, posts.created AS cursor_created
 		FROM feed f
 		JOIN posts ON posts.id = f.post_id
 		JOIN users u ON u.id = posts.user_id
@@ -33,7 +40,7 @@ func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pa
 
 		UNION ALL
 
-		SELECT `+postColumns+`, posts.created AS cursor_created
+		SELECT `+feedPostColumns+`, posts.created AS cursor_created
 		FROM posts
 		JOIN users u ON u.id = posts.user_id
 		WHERE posts.user_id IN (
@@ -56,7 +63,7 @@ func (r *FeedRepository) ListFeed(ctx context.Context, userID string, cursor *pa
 // insertEntriesBatchSize keeps bind parameters well under Postgres's 65,535 limit (3 per row).
 const insertEntriesBatchSize = 5000
 
-func (r *FeedRepository) InsertEntries(ctx context.Context, entries []feed.Entry) error {
+func (r *FeedRepository) InsertEntries(ctx context.Context, entries []Entry) error {
 	if len(entries) == 0 {
 		return nil
 	}
@@ -65,7 +72,7 @@ func (r *FeedRepository) InsertEntries(ctx context.Context, entries []feed.Entry
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 		for i := 0; i < len(entries); i += insertEntriesBatchSize {
 			end := i + insertEntriesBatchSize
 			if end > len(entries) {
@@ -122,8 +129,8 @@ func (r *FeedRepository) GetFollowers(ctx context.Context, userID int64) ([]int6
 	return followers, err
 }
 
-func (r *FeedRepository) GetRecentPostEntries(ctx context.Context, userID int64, limit int) ([]feed.Entry, error) {
-	var entries []feed.Entry
+func (r *FeedRepository) GetRecentPostEntries(ctx context.Context, userID int64, limit int) ([]Entry, error) {
+	var entries []Entry
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx,
 			`SELECT id, created FROM posts WHERE user_id = $1 ORDER BY created DESC LIMIT $2`,
@@ -132,9 +139,9 @@ func (r *FeedRepository) GetRecentPostEntries(ctx context.Context, userID int64,
 			return err
 		}
 		defer rows.Close()
-		entries = []feed.Entry{}
+		entries = []Entry{}
 		for rows.Next() {
-			var e feed.Entry
+			var e Entry
 			if err := rows.Scan(&e.PostID, &e.Created); err != nil {
 				return err
 			}
@@ -178,8 +185,8 @@ func (r *FeedRepository) queryFeedPage(ctx context.Context, query string, limit 
 				&item.post.Created, &item.cursorCreated); err != nil {
 				return err
 			}
-			item.post.Avatar = db.NullableString(avatar)
-			item.post.Description = db.NullableString(description)
+			item.post.Avatar = database.NullableString(avatar)
+			item.post.Description = database.NullableString(description)
 			result = append(result, item)
 		}
 		return rows.Err()
@@ -202,4 +209,4 @@ func (r *FeedRepository) queryFeedPage(ctx context.Context, query string, limit 
 	return items, &pagination.Cursor{Created: last.cursorCreated, ID: int64(last.post.ID)}, nil
 }
 
-var _ feed.Repository = (*FeedRepository)(nil)
+var _ Repository = (*FeedRepository)(nil)

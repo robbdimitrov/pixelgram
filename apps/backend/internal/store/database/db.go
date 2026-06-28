@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"context"
@@ -12,14 +12,15 @@ import (
 
 	"phasma/backend/internal/auth"
 	"phasma/backend/internal/env"
+	"phasma/backend/internal/resilience"
 	"phasma/backend/internal/store"
 )
 
 type DB struct {
 	pool          *pgxpool.Pool
 	sessionSecret string
-	breaker       *circuitBreaker
-	retryCfg      retryConfig
+	breaker       *resilience.CircuitBreaker
+	retryCfg      resilience.RetryConfig
 }
 
 func Open(ctx context.Context, databaseURL, sessionSecret string) (*DB, error) {
@@ -42,7 +43,7 @@ func Open(ctx context.Context, databaseURL, sessionSecret string) (*DB, error) {
 	return &DB{
 		pool:          pool,
 		sessionSecret: sessionSecret,
-		breaker:       newCircuitBreaker("database"),
+		breaker:       newCircuitBreaker(),
 		retryCfg:      defaultRetryConfig(),
 	}, nil
 }
@@ -59,10 +60,10 @@ func (db *DB) Pool() *pgxpool.Pool {
 // pgx.ErrNoRows is treated as a healthy outcome, not a breaker failure, so
 // callers can inspect the returned error for it without tripping the breaker.
 func (db *DB) Read(ctx context.Context, fn func() error) error {
-	if !db.breaker.allow() {
+	if !db.breaker.Allow() {
 		return store.ErrUnavailable
 	}
-	err := withRetry(ctx, db.retryCfg, fn)
+	err := resilience.WithRetry(ctx, db.retryCfg, "database", fn)
 	db.record(err)
 	return err
 }
@@ -70,7 +71,7 @@ func (db *DB) Read(ctx context.Context, fn func() error) error {
 // Write runs a mutating operation through the circuit breaker without retry,
 // since writes may be non-idempotent.
 func (db *DB) Write(ctx context.Context, fn func() error) error {
-	if !db.breaker.allow() {
+	if !db.breaker.Allow() {
 		return store.ErrUnavailable
 	}
 	err := fn()
@@ -80,10 +81,10 @@ func (db *DB) Write(ctx context.Context, fn func() error) error {
 
 func (db *DB) record(err error) {
 	if err == nil || errors.Is(err, pgx.ErrNoRows) {
-		db.breaker.success()
+		db.breaker.Success()
 		return
 	}
-	db.breaker.failure(err)
+	db.breaker.Failure(err)
 }
 
 func (db *DB) HashSession(sessionID string) string {

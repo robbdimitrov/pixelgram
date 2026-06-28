@@ -6,7 +6,7 @@ import (
 )
 
 func TestMarshalOutboxPayloadEscapesControlCharactersAsJSON(t *testing.T) {
-	payload, err := marshalOutboxPayload(entityPostUpsertPayload{
+	payload, err := MarshalOutboxPayload(EntityPostUpsertPayload{
 		Table:       "posts",
 		Op:          "upsert",
 		ID:          42,
@@ -19,13 +19,13 @@ func TestMarshalOutboxPayloadEscapesControlCharactersAsJSON(t *testing.T) {
 		IsCelebrity: false,
 	})
 	if err != nil {
-		t.Fatalf("marshalOutboxPayload() error = %v", err)
+		t.Fatalf("MarshalOutboxPayload() error = %v", err)
 	}
 	if !json.Valid([]byte(payload)) {
 		t.Fatalf("payload is not valid JSON: %q", payload)
 	}
 
-	var decoded entityPostUpsertPayload
+	var decoded EntityPostUpsertPayload
 	if err := json.Unmarshal([]byte(payload), &decoded); err != nil {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
@@ -45,7 +45,7 @@ func TestMarshalOutboxPayloadUsesEmptyArrays(t *testing.T) {
 	}{
 		{
 			name: "post hashtags",
-			payload: entityPostUpsertPayload{
+			payload: EntityPostUpsertPayload{
 				Table:    "posts",
 				Op:       "upsert",
 				Hashtags: []string{},
@@ -54,7 +54,7 @@ func TestMarshalOutboxPayloadUsesEmptyArrays(t *testing.T) {
 		},
 		{
 			name: "deleted post comment public ids",
-			payload: entityPostDeletePayload{
+			payload: EntityPostDeletePayload{
 				Table:            "posts",
 				Op:               "delete",
 				CommentPublicIDs: []string{},
@@ -65,9 +65,9 @@ func TestMarshalOutboxPayloadUsesEmptyArrays(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			payload, err := marshalOutboxPayload(tt.payload)
+			payload, err := MarshalOutboxPayload(tt.payload)
 			if err != nil {
-				t.Fatalf("marshalOutboxPayload() error = %v", err)
+				t.Fatalf("MarshalOutboxPayload() error = %v", err)
 			}
 
 			var decoded map[string]json.RawMessage
@@ -90,13 +90,13 @@ func TestMarshalOutboxPayloadUsesEmptyArrays(t *testing.T) {
 }
 
 func TestMarshalOutboxPayloadPreservesActivityContract(t *testing.T) {
-	payload, err := marshalOutboxPayload(activityPayload{
+	payload, err := MarshalOutboxPayload(ActivityPayload{
 		Op:        "uncomment",
 		CommentID: "550e8400-e29b-41d4-a716-446655440099",
 		ActorID:   "7",
 	})
 	if err != nil {
-		t.Fatalf("marshalOutboxPayload() error = %v", err)
+		t.Fatalf("MarshalOutboxPayload() error = %v", err)
 	}
 	if !json.Valid([]byte(payload)) {
 		t.Fatalf("payload is not valid JSON: %q", payload)

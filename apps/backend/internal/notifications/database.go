@@ -1,24 +1,23 @@
-package database
+package notifications
 
 import (
 	"context"
 	"time"
 
-	"phasma/backend/internal/db"
-	"phasma/backend/internal/notifications"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
+	"phasma/backend/internal/store/database"
 )
 
 type NotificationRepository struct {
-	db *db.DB
+	db *database.DB
 }
 
-func NewNotificationRepository(client *Client) *NotificationRepository {
-	return &NotificationRepository{db: client.db}
+func NewNotificationRepository(client *database.Client) *NotificationRepository {
+	return &NotificationRepository{db: client.DB()}
 }
 
-func (r *NotificationRepository) ListNotifications(ctx context.Context, userID int64, cursor *pagination.Cursor, limit int) ([]notifications.Notification, error) {
+func (r *NotificationRepository) ListNotifications(ctx context.Context, userID int64, cursor *pagination.Cursor, limit int) ([]Notification, error) {
 	hasCursor, cursorCreated, cursorID := false, time.Time{}, int64(0)
 	if cursor != nil {
 		hasCursor = true
@@ -26,7 +25,7 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 		cursorID = cursor.ID
 	}
 
-	var result []notifications.Notification
+	var result []Notification
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx, `SELECT id, public_id::text, external_id, user_id, actor_id, type, entity_id, read, created
 			FROM notifications
@@ -38,9 +37,9 @@ func (r *NotificationRepository) ListNotifications(ctx context.Context, userID i
 			return err
 		}
 		defer rows.Close()
-		result = []notifications.Notification{}
+		result = []Notification{}
 		for rows.Next() {
-			var n notifications.Notification
+			var n Notification
 			if err := rows.Scan(&n.ID, &n.PublicID, &n.ExternalID, &n.UserID, &n.ActorID,
 				&n.Type, &n.EntityID, &n.Read, &n.Created); err != nil {
 				return err
@@ -102,7 +101,7 @@ func (r *NotificationRepository) DeleteByActorAndType(ctx context.Context, actor
 	})
 }
 
-func (r *NotificationRepository) CreateNotification(ctx context.Context, n notifications.Notification) error {
+func (r *NotificationRepository) CreateNotification(ctx context.Context, n Notification) error {
 	return r.db.Write(ctx, func() error {
 		_, err := r.db.Pool().Exec(ctx,
 			`INSERT INTO notifications (external_id, user_id, actor_id, type, entity_id)
@@ -113,4 +112,4 @@ func (r *NotificationRepository) CreateNotification(ctx context.Context, n notif
 	})
 }
 
-var _ notifications.Repository = (*NotificationRepository)(nil)
+var _ Repository = (*NotificationRepository)(nil)

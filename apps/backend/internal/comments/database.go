@@ -1,4 +1,4 @@
-package database
+package comments
 
 import (
 	"context"
@@ -7,30 +7,28 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-
-	"phasma/backend/internal/comments"
-	"phasma/backend/internal/db"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
+	"phasma/backend/internal/store/database"
 )
 
 type CommentRepository struct {
-	db *db.DB
+	db *database.DB
 }
 
-func NewCommentRepository(client *Client) *CommentRepository {
-	return &CommentRepository{db: client.db}
+func NewCommentRepository(client *database.Client) *CommentRepository {
+	return &CommentRepository{db: client.DB()}
 }
 
-func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, body string) (comments.Comment, error) {
-	var comment comments.Comment
+func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, body string) (Comment, error) {
+	var comment Comment
 	var avatar sql.NullString
 	err := r.db.Write(ctx, func() error {
 		tx, err := r.db.Pool().Begin(ctx)
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		if err := tx.QueryRow(ctx, `INSERT INTO comments (post_id, user_id, body)
 			SELECT id, $2, $3 FROM posts WHERE public_id = $1
@@ -53,7 +51,7 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 			return err
 		}
 
-		payload, err := marshalOutboxPayload(activityPayload{
+		payload, err := database.MarshalOutboxPayload(database.ActivityPayload{
 			Op:          "comment",
 			CommentID:   comment.PublicID,
 			PostID:      postID,
@@ -71,18 +69,18 @@ func (r *CommentRepository) CreateComment(ctx context.Context, postID, userID, b
 		return tx.Commit(ctx)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return comments.Comment{}, store.ErrNotFound
+		return Comment{}, store.ErrNotFound
 	}
 	if err != nil {
-		return comments.Comment{}, err
+		return Comment{}, err
 	}
-	comment.Avatar = db.NullableString(avatar)
+	comment.Avatar = database.NullableString(avatar)
 	return comment, nil
 }
 
-func (r *CommentRepository) ListComments(ctx context.Context, postID string, cursor *pagination.Cursor, limit int) ([]comments.Comment, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
-	var result []comments.Comment
+func (r *CommentRepository) ListComments(ctx context.Context, postID string, cursor *pagination.Cursor, limit int) ([]Comment, *pagination.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := database.CursorValues(cursor)
+	var result []Comment
 	err := r.db.Read(ctx, func() error {
 		// The UNION ALL sentinel row fires only when the page is empty. It carries
 		// post_exists=true/false so we can distinguish "no comments" from "post gone".
@@ -106,7 +104,7 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 			return err
 		}
 		defer rows.Close()
-		result = []comments.Comment{}
+		result = []Comment{}
 		for rows.Next() {
 			var id, postID, userID *int
 			var publicID, username *string
@@ -114,7 +112,7 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 			var body *string
 			var created *time.Time
 			var postExists bool
-			var cr comments.Comment
+			var cr Comment
 			if err := rows.Scan(&id, &publicID, &postID, &userID, &username, &avatar, &body, &created, &postExists); err != nil {
 				return err
 			}
@@ -130,7 +128,7 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 			cr.PostID = *postID
 			cr.UserID = *userID
 			cr.Username = *username
-			cr.Avatar = db.NullableString(avatar)
+			cr.Avatar = database.NullableString(avatar)
 			cr.Body = *body
 			if created != nil {
 				cr.Created = *created
@@ -157,7 +155,7 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		var deletedPublicID string
 		err = tx.QueryRow(ctx, `DELETE FROM comments
@@ -173,7 +171,7 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 				WHERE public_id = $1`, postID); err != nil {
 				return err
 			}
-			payload, err := marshalOutboxPayload(activityPayload{
+			payload, err := database.MarshalOutboxPayload(database.ActivityPayload{
 				Op:        "uncomment",
 				CommentID: deletedPublicID,
 				ActorID:   userID,
@@ -211,4 +209,4 @@ func (r *CommentRepository) DeleteComment(ctx context.Context, postID, commentID
 	return false, nil
 }
 
-var _ comments.Repository = (*CommentRepository)(nil)
+var _ Repository = (*CommentRepository)(nil)

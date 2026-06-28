@@ -1,4 +1,4 @@
-package database
+package users
 
 import (
 	"context"
@@ -9,12 +9,10 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-
-	"phasma/backend/internal/db"
 	"phasma/backend/internal/feed"
 	"phasma/backend/internal/pagination"
 	"phasma/backend/internal/store"
-	"phasma/backend/internal/users"
+	"phasma/backend/internal/store/database"
 )
 
 const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,
@@ -27,11 +25,11 @@ const userColumns = `u.id, u.name, u.username, u.email, u.avatar, u.bio,
 	u.public_id::text`
 
 type UserRepository struct {
-	db *db.DB
+	db *database.DB
 }
 
-func NewUserRepository(client *Client) *UserRepository {
-	return &UserRepository{db: client.db}
+func NewUserRepository(client *database.Client) *UserRepository {
+	return &UserRepository{db: client.DB()}
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, passwordHash string) (int, error) {
@@ -41,12 +39,12 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 		if err := tx.QueryRow(ctx, `INSERT INTO users (name, username, email, password)
 			VALUES ($1, $2, $3, $4) RETURNING id`, name, username, email, passwordHash).Scan(&id); err != nil {
 			return err
 		}
-		payload, err := marshalOutboxPayload(entityUserUpsertPayload{
+		payload, err := database.MarshalOutboxPayload(database.EntityUserUpsertPayload{
 			Table:    "users",
 			Op:       "upsert",
 			ID:       int64(id),
@@ -65,7 +63,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 		return tx.Commit(ctx)
 	})
 	if err != nil {
-		if db.UniqueViolation(err) {
+		if database.UniqueViolation(err) {
 			return 0, store.ErrConflict
 		}
 		return 0, err
@@ -73,31 +71,31 @@ func (r *UserRepository) CreateUser(ctx context.Context, name, username, email, 
 	return id, nil
 }
 
-func (r *UserRepository) GetUserWithID(ctx context.Context, userID string) (users.UserCredentials, bool, error) {
-	var user users.UserCredentials
+func (r *UserRepository) GetUserWithID(ctx context.Context, userID string) (UserCredentials, bool, error) {
+	var user UserCredentials
 	err := r.db.Read(ctx, func() error {
 		return r.db.Pool().QueryRow(ctx, `SELECT id, password FROM users WHERE id = $1`, userID).
 			Scan(&user.ID, &user.PasswordHash)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return users.UserCredentials{}, false, nil
+		return UserCredentials{}, false, nil
 	}
 	if err != nil {
-		return users.UserCredentials{}, false, err
+		return UserCredentials{}, false, err
 	}
 	return user, true, nil
 }
 
-func (r *UserRepository) GetUserByUsername(ctx context.Context, username, currentUserID string) (users.User, bool, error) {
+func (r *UserRepository) GetUserByUsername(ctx context.Context, username, currentUserID string) (User, bool, error) {
 	return r.getUser(ctx, "username", username, currentUserID)
 }
 
-func (r *UserRepository) GetUserByID(ctx context.Context, userID, currentUserID string) (users.User, bool, error) {
+func (r *UserRepository) GetUserByID(ctx context.Context, userID, currentUserID string) (User, bool, error) {
 	return r.getUser(ctx, "id", userID, currentUserID)
 }
 
-func (r *UserRepository) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+func (r *UserRepository) ListFollowers(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]User, *pagination.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := database.CursorValues(cursor)
 	return r.queryUserPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
 page AS (
     SELECT `+userColumns+`, f.created AS cursor_created
@@ -116,8 +114,8 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
-func (r *UserRepository) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]users.User, *pagination.Cursor, error) {
-	hasCursor, cursorCreated, cursorID := cursorValues(cursor)
+func (r *UserRepository) ListFollowing(ctx context.Context, username string, cursor *pagination.Cursor, limit int, currentUserID string) ([]User, *pagination.Cursor, error) {
+	hasCursor, cursorCreated, cursorID := database.CursorValues(cursor)
 	return r.queryUserPageOrNotFound(ctx, `WITH urow AS (SELECT id FROM users WHERE username = $2),
 page AS (
     SELECT `+userColumns+`, f.created AS cursor_created
@@ -136,8 +134,8 @@ WHERE NOT EXISTS (SELECT 1 FROM page)`,
 		limit, currentUserID, username, hasCursor, cursorCreated, cursorID, limit+1)
 }
 
-func (r *UserRepository) getUser(ctx context.Context, column, value, currentUserID string) (users.User, bool, error) {
-	var user users.User
+func (r *UserRepository) getUser(ctx context.Context, column, value, currentUserID string) (User, bool, error) {
+	var user User
 	var avatar, bio sql.NullString
 	// column is an internal constant ("id" or "username"), never user input,
 	// so interpolating it here is safe; values stay parameterized.
@@ -150,19 +148,19 @@ func (r *UserRepository) getUser(ctx context.Context, column, value, currentUser
 		)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return users.User{}, false, nil
+		return User{}, false, nil
 	}
 	if err != nil {
-		return users.User{}, false, err
+		return User{}, false, err
 	}
-	user.Avatar = db.NullableString(avatar)
-	user.Bio = db.NullableString(bio)
+	user.Avatar = database.NullableString(avatar)
+	user.Bio = database.NullableString(bio)
 	return user, true, nil
 }
 
-func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit int, args ...any) ([]users.User, *pagination.Cursor, error) {
+func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit int, args ...any) ([]User, *pagination.Cursor, error) {
 	type row struct {
-		user          users.User
+		user          User
 		cursorCreated time.Time
 	}
 	var result []row
@@ -182,8 +180,8 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 				&item.user.Created, &item.user.PublicID, &item.cursorCreated); err != nil {
 				return err
 			}
-			item.user.Avatar = db.NullableString(avatar)
-			item.user.Bio = db.NullableString(bio)
+			item.user.Avatar = database.NullableString(avatar)
+			item.user.Bio = database.NullableString(bio)
 			result = append(result, item)
 		}
 		return rows.Err()
@@ -195,7 +193,7 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 	if hasMore {
 		result = result[:limit]
 	}
-	items := make([]users.User, len(result))
+	items := make([]User, len(result))
 	for i, item := range result {
 		items[i] = item.user
 	}
@@ -210,9 +208,9 @@ func (r *UserRepository) queryUserPage(ctx context.Context, query string, limit 
 // The query must produce 15 columns: the 13 from userColumns, cursor_created, and
 // user_exists bool. The sentinel row fires (with all NULLs except user_exists) when
 // the page is empty, allowing a single round-trip to distinguish not-found from empty.
-func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]users.User, *pagination.Cursor, error) {
+func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query string, limit int, args ...any) ([]User, *pagination.Cursor, error) {
 	type row struct {
-		user          users.User
+		user          User
 		cursorCreated time.Time
 	}
 	var result []row
@@ -251,8 +249,8 @@ func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query stri
 			item.user.Name = *name
 			item.user.Username = *username
 			item.user.Email = *email
-			item.user.Avatar = db.NullableString(avatar)
-			item.user.Bio = db.NullableString(bio)
+			item.user.Avatar = database.NullableString(avatar)
+			item.user.Bio = database.NullableString(bio)
 			item.user.Posts = *userPosts
 			item.user.Likes = *userLikes
 			item.user.Followers = *followers
@@ -271,7 +269,7 @@ func (r *UserRepository) queryUserPageOrNotFound(ctx context.Context, query stri
 	if hasMore {
 		result = result[:limit]
 	}
-	items := make([]users.User, len(result))
+	items := make([]User, len(result))
 	for i, item := range result {
 		items[i] = item.user
 	}
@@ -289,7 +287,7 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 		var followInserted bool
 		if err := tx.QueryRow(ctx, `WITH target AS (
 				SELECT id FROM users WHERE id = $2
@@ -314,7 +312,7 @@ func (r *UserRepository) FollowUser(ctx context.Context, followerID, followeeID 
 			followeeID, feed.CelebThreshold); err != nil {
 			return err
 		}
-		payload, err := marshalOutboxPayload(activityPayload{
+		payload, err := database.MarshalOutboxPayload(database.ActivityPayload{
 			Op:          "follow",
 			ActorID:     followerID,
 			RecipientID: followeeID,
@@ -343,7 +341,7 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 		tag, err := tx.Exec(ctx,
 			`DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2`, followerID, followeeID)
 		if err != nil {
@@ -355,7 +353,7 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 				followeeID); err != nil {
 				return err
 			}
-			payload, err := marshalOutboxPayload(activityPayload{
+			payload, err := database.MarshalOutboxPayload(database.ActivityPayload{
 				Op:          "unfollow",
 				ActorID:     followerID,
 				RecipientID: followeeID,
@@ -372,14 +370,14 @@ func (r *UserRepository) UnfollowUser(ctx context.Context, followerID, followeeI
 	})
 }
 
-func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (users.UpdateUserResult, error) {
-	var result users.UpdateUserResult
+func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username, email, avatar string, bio *string) (UpdateUserResult, error) {
+	var result UpdateUserResult
 	err := r.db.Write(ctx, func() error {
 		tx, err := r.db.Pool().Begin(ctx)
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 
 		var oldAvatar sql.NullString
 		if err := tx.QueryRow(ctx, `SELECT avatar FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&oldAvatar); err != nil {
@@ -427,7 +425,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 		if bio != nil {
 			bioStr = *bio
 		}
-		payload, err := marshalOutboxPayload(entityUserUpsertPayload{
+		payload, err := database.MarshalOutboxPayload(database.EntityUserUpsertPayload{
 			Table:    "users",
 			Op:       "upsert",
 			ID:       userIDInt,
@@ -450,13 +448,13 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID, name, username,
 		return tx.Commit(ctx)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return users.UpdateUserResult{Updated: false}, nil
+		return UpdateUserResult{Updated: false}, nil
 	}
 	if err != nil {
-		if db.UniqueViolation(err) {
-			return users.UpdateUserResult{}, store.ErrConflict
+		if database.UniqueViolation(err) {
+			return UpdateUserResult{}, store.ErrConflict
 		}
-		return users.UpdateUserResult{}, err
+		return UpdateUserResult{}, err
 	}
 	return result, nil
 }
@@ -467,7 +465,7 @@ func (r *UserRepository) ChangePassword(ctx context.Context, userID, passwordHas
 		if err != nil {
 			return err
 		}
-		defer db.Rollback(ctx, tx)
+		defer database.Rollback(ctx, tx)
 		if _, err := tx.Exec(ctx, `UPDATE users SET password = $1 WHERE id = $2`, passwordHash, userID); err != nil {
 			return err
 		}
@@ -483,8 +481,8 @@ func (r *UserRepository) ChangePassword(ctx context.Context, userID, passwordHas
 	})
 }
 
-func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string, limit int) ([]users.User, error) {
-	var result []users.User
+func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string, limit int) ([]User, error) {
+	var result []User
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx, `SELECT `+userColumns+`
             FROM users u
@@ -498,9 +496,9 @@ func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string
 			return err
 		}
 		defer rows.Close()
-		result = []users.User{}
+		result = []User{}
 		for rows.Next() {
-			var user users.User
+			var user User
 			var avatar, bio sql.NullString
 			if err := rows.Scan(&user.ID, &user.Name, &user.Username,
 				&user.Email, &avatar, &bio, &user.Posts, &user.Likes,
@@ -508,8 +506,8 @@ func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string
 				&user.Created, &user.PublicID); err != nil {
 				return err
 			}
-			user.Avatar = db.NullableString(avatar)
-			user.Bio = db.NullableString(bio)
+			user.Avatar = database.NullableString(avatar)
+			user.Bio = database.NullableString(bio)
 			result = append(result, user)
 		}
 		return rows.Err()
@@ -517,4 +515,4 @@ func (r *UserRepository) ListSuggestedUsers(ctx context.Context, viewerID string
 	return result, err
 }
 
-var _ users.Repository = (*UserRepository)(nil)
+var _ Repository = (*UserRepository)(nil)

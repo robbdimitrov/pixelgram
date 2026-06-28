@@ -1,23 +1,22 @@
-package database
+package search
 
 import (
 	"context"
 	"database/sql"
 
-	"phasma/backend/internal/db"
-	"phasma/backend/internal/search"
+	"phasma/backend/internal/store/database"
 )
 
 type SearchRepository struct {
-	db *db.DB
+	db *database.DB
 }
 
-func NewSearchRepository(client *Client) *SearchRepository {
-	return &SearchRepository{db: client.db}
+func NewSearchRepository(client *database.Client) *SearchRepository {
+	return &SearchRepository{db: client.DB()}
 }
 
-func (r *SearchRepository) SearchUsers(ctx context.Context, q string) ([]search.UserResult, error) {
-	var results []search.UserResult
+func (r *SearchRepository) SearchUsers(ctx context.Context, q string) ([]UserResult, error) {
+	var results []UserResult
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx,
 			`SELECT username, avatar FROM users
@@ -28,14 +27,14 @@ func (r *SearchRepository) SearchUsers(ctx context.Context, q string) ([]search.
 			return err
 		}
 		defer rows.Close()
-		results = []search.UserResult{}
+		results = []UserResult{}
 		for rows.Next() {
-			var u search.UserResult
+			var u UserResult
 			var avatar sql.NullString
 			if err := rows.Scan(&u.Username, &avatar); err != nil {
 				return err
 			}
-			u.Avatar = db.NullableString(avatar)
+			u.Avatar = database.NullableString(avatar)
 			results = append(results, u)
 		}
 		return rows.Err()
@@ -46,8 +45,8 @@ func (r *SearchRepository) SearchUsers(ctx context.Context, q string) ([]search.
 	return results, nil
 }
 
-func (r *SearchRepository) SearchHashtags(ctx context.Context, q string) ([]search.HashtagResult, error) {
-	var results []search.HashtagResult
+func (r *SearchRepository) SearchHashtags(ctx context.Context, q string) ([]HashtagResult, error) {
+	var results []HashtagResult
 	err := r.db.Read(ctx, func() error {
 		rows, err := r.db.Pool().Query(ctx,
 			`SELECT h.name, h.post_count
@@ -59,9 +58,9 @@ func (r *SearchRepository) SearchHashtags(ctx context.Context, q string) ([]sear
 			return err
 		}
 		defer rows.Close()
-		results = []search.HashtagResult{}
+		results = []HashtagResult{}
 		for rows.Next() {
-			var h search.HashtagResult
+			var h HashtagResult
 			if err := rows.Scan(&h.Name, &h.PostCount); err != nil {
 				return err
 			}
@@ -75,4 +74,4 @@ func (r *SearchRepository) SearchHashtags(ctx context.Context, q string) ([]sear
 	return results, nil
 }
 
-var _ search.Repository = (*SearchRepository)(nil)
+var _ Repository = (*SearchRepository)(nil)

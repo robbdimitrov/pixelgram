@@ -2,7 +2,7 @@ package database
 
 import "encoding/json"
 
-type entityUserUpsertPayload struct {
+type EntityUserUpsertPayload struct {
 	Table    string `json:"table"`
 	Op       string `json:"op"`
 	ID       int64  `json:"id"`
@@ -12,7 +12,7 @@ type entityUserUpsertPayload struct {
 	Bio      string `json:"bio"`
 }
 
-type entityPostUpsertPayload struct {
+type EntityPostUpsertPayload struct {
 	Table       string   `json:"table"`
 	Op          string   `json:"op"`
 	ID          int64    `json:"id"`
@@ -25,7 +25,7 @@ type entityPostUpsertPayload struct {
 	IsCelebrity bool     `json:"is_celebrity"`
 }
 
-type entityPostDeletePayload struct {
+type EntityPostDeletePayload struct {
 	Table            string   `json:"table"`
 	Op               string   `json:"op"`
 	ID               int64    `json:"id"`
@@ -35,14 +35,14 @@ type entityPostDeletePayload struct {
 	CommentPublicIDs []string `json:"comment_public_ids"`
 }
 
-type entityHashtagUpsertPayload struct {
+type EntityHashtagUpsertPayload struct {
 	Table     string `json:"table"`
 	Op        string `json:"op"`
 	Name      string `json:"name"`
 	PostCount int    `json:"post_count"`
 }
 
-type activityPayload struct {
+type ActivityPayload struct {
 	Op          string `json:"op"`
 	PostID      string `json:"post_id,omitempty"`
 	CommentID   string `json:"comment_id,omitempty"`
@@ -50,7 +50,7 @@ type activityPayload struct {
 	RecipientID string `json:"recipient_id,omitempty"`
 }
 
-func marshalOutboxPayload(payload any) (string, error) {
+func MarshalOutboxPayload(payload any) (string, error) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return "", err

@@ -14,14 +14,17 @@ import (
 
 	"phasma/backend/internal/app"
 	"phasma/backend/internal/blobstore"
-	"phasma/backend/internal/db"
+	"phasma/backend/internal/comments"
 	"phasma/backend/internal/env"
 	"phasma/backend/internal/feed"
 	"phasma/backend/internal/httpx"
 	"phasma/backend/internal/notifications"
+	"phasma/backend/internal/posts"
 	"phasma/backend/internal/search"
 	"phasma/backend/internal/sessions"
 	"phasma/backend/internal/store/database"
+	"phasma/backend/internal/uploads"
+	"phasma/backend/internal/users"
 )
 
 const defaultDatabaseURL = "postgres://postgres:postgres@localhost:5432/phasma?sslmode=disable"
@@ -174,7 +177,7 @@ func setupLogger() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 }
 
-func openRepositories(databaseURL string) (app.Repositories, *db.DB, func(context.Context) error, func(), error) {
+func openRepositories(databaseURL string) (app.Repositories, *database.DB, func(context.Context) error, func(), error) {
 	sessionSecret := os.Getenv("SESSION_HASH_SECRET")
 	if sessionSecret == "" {
 		return app.Repositories{}, nil, nil, func() {}, errors.New("SESSION_HASH_SECRET is required")
@@ -186,15 +189,15 @@ func openRepositories(databaseURL string) (app.Repositories, *db.DB, func(contex
 	}
 
 	return app.Repositories{
-		SessionAuth:   database.NewSessionRepository(client),
-		Users:         database.NewUserRepository(client),
-		Sessions:      database.NewSessionRepository(client),
-		Uploads:       database.NewUploadRepository(client),
-		Posts:         database.NewPostRepository(client),
-		Comments:      database.NewCommentRepository(client),
-		Search:        database.NewSearchRepository(client),
-		Feed:          database.NewFeedRepository(client, feed.CelebThreshold),
-		Notifications: database.NewNotificationRepository(client),
+		SessionAuth:   sessions.NewSessionRepository(client),
+		Users:         users.NewUserRepository(client),
+		Sessions:      sessions.NewSessionRepository(client),
+		Uploads:       uploads.NewUploadRepository(client),
+		Posts:         posts.NewPostRepository(client),
+		Comments:      comments.NewCommentRepository(client),
+		Search:        search.NewSearchRepository(client),
+		Feed:          feed.NewFeedRepository(client, feed.CelebThreshold),
+		Notifications: notifications.NewNotificationRepository(client),
 	}, client.DB(), client.Ping, client.Close, nil
 }
 
@@ -265,7 +268,7 @@ func runSessionCleanup(
 	return done
 }
 
-func sweepOutboxPeriodically(ctx context.Context, db *db.DB) {
+func sweepOutboxPeriodically(ctx context.Context, db *database.DB) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 	for {
@@ -278,7 +281,7 @@ func sweepOutboxPeriodically(ctx context.Context, db *db.DB) {
 	}
 }
 
-func sweepExpiredOutbox(ctx context.Context, db *db.DB) {
+func sweepExpiredOutbox(ctx context.Context, db *database.DB) {
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("outbox cleanup panicked", "panic", r)
@@ -312,7 +315,7 @@ func sweepExpiredSessions(ctx context.Context, repository sessionSweeper) {
 	}
 }
 
-func reconcileFollowerCountsPeriodically(ctx context.Context, db *db.DB) {
+func reconcileFollowerCountsPeriodically(ctx context.Context, db *database.DB) {
 	reconcileFollowerCounts(ctx, db)
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
@@ -326,7 +329,7 @@ func reconcileFollowerCountsPeriodically(ctx context.Context, db *db.DB) {
 	}
 }
 
-func reconcileFollowerCounts(ctx context.Context, db *db.DB) {
+func reconcileFollowerCounts(ctx context.Context, db *database.DB) {
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("follower count reconciliation panicked", "panic", r)

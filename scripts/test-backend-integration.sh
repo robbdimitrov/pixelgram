@@ -47,4 +47,4 @@ export PHASMA_TEST_DATABASE_URL="postgres://postgres:${db_password}@127.0.0.1:${
 export GOCACHE="${GOCACHE:-/tmp/phasma-go-build}"
 
 cd "$root/apps/backend"
-go test -count=1 -p=1 ./internal/store/postgres
+go test -count=1 -p=1 ./internal/store/database

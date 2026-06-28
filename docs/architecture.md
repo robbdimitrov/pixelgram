@@ -65,6 +65,9 @@ database (WAL) → connect (pg_cdc on outbox)
   public allowlist.
 - Feature modules: `users`, `sessions`, `posts`, `comments`, `uploads`,
   `search`, `notifications`, `feed`.
+- Each feature module owns its PostgreSQL repository implementation in a
+  co-located `database.go`; shared PostgreSQL lifecycle, SQL helpers, and
+  database-specific resilience configuration live in `store/database`.
 - Upload handler decodes and re-encodes images to JPEG, stripping EXIF/GPS
   metadata and enforcing a 25 MP pixel dimension limit before storage.
 - `notifications-consumer` and `feed-consumer`: franz-go consumer groups, each
@@ -94,9 +97,12 @@ database (WAL) → connect (pg_cdc on outbox)
   on `outbox`. Two pipelines run in Connect: `sync-search` (entity-changes →
   Meilisearch) and `cleanup-s3` (post deletes → S3 DELETE). A one-shot
   Kubernetes Job (`broker-backfill`) seeds existing data on first deploy.
-- **Circuit breaker**: all PostgreSQL operations go through
-  `db.DB.Read`/`Write`, which runs through a circuit breaker (5
-  consecutive transient failures → open; 30 s cooldown).
+- **Resilience primitives**: reusable retry and circuit-breaker primitives live
+  in the backend's `internal/resilience` package. PostgreSQL operations go
+  through `database.DB.Read`/`Write`, which configure those primitives with the
+  database transient-error classifier (5 consecutive transient failures → open;
+  30 s cooldown). Only read operations are retried; writes are not retried
+  unless a caller can prove idempotence.
 - **Token bucket rate limiting**: implemented in Lua on Dragonfly; keyed by
   `{policy}:user:{id}` > `{policy}:session:{id}` > `{policy}:ip:{ip}`.
 - **Login throttle**: per-IP (5 failures) and per-email (50 failures) counters
