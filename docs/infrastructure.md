@@ -150,10 +150,14 @@ Secrets are split per service to limit blast radius:
 | broker                                    | 512 Mi       | 256 Mi         | 200 m       |
 | connect                                   | 256 Mi       | 128 Mi         | 100 m       |
 
-Redpanda is configured without `dev-container` mode or overprovisioning. The
-single-node local deployment keeps explicit `--smp`, `--memory`, and
-`--reserve-memory` startup values while disabling developer mode, default write
-caching, and automatic topic creation (`auto_create_topics_enabled=false`).
+Redpanda starts through `rpk redpanda start` as a single broker with explicit
+local sizing and addresses: `--smp=1`, `--memory=256M`,
+`--reserve-memory=0M`, `--node-id=0`, Kafka bound on `0.0.0.0:9092` and
+advertised as `broker-0.broker:9092`, and RPC bound on `0.0.0.0:33145` and
+advertised as `broker-0.broker:33145`. The manifest sets
+`redpanda.developer_mode=false`, `redpanda.write_caching_default=false`, and
+`redpanda.auto_create_topics_enabled=false`; it does not pass a `dev-container`
+mode flag or an overprovisioning flag.
 
 ## Health Probes
 
